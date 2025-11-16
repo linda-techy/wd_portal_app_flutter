@@ -863,7 +863,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                 IconButton(
                   onPressed: () {
                     setState(() => currentPage--);
-                    _loadLeads(resetPage: true);
+                    _loadLeads(resetPage: false);
                   },
                   icon: const Icon(Icons.chevron_left),
                 ),
@@ -872,7 +872,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                 IconButton(
                   onPressed: () {
                     setState(() => currentPage++);
-                    _loadLeads(resetPage: true);
+                    _loadLeads(resetPage: false);
                   },
                   icon: const Icon(Icons.chevron_right),
                 ),
