@@ -11,12 +11,12 @@ class ContainerStyles {
         color: boxPrimary,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: boxBorderPrimary, width: 2),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: containerShadow,
             spreadRadius: 0,
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       );
@@ -26,12 +26,12 @@ class ContainerStyles {
         color: cardBackground,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: boxBorderPrimary, width: 2),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: containerShadow,
             spreadRadius: 0,
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       );
@@ -56,12 +56,12 @@ class ContainerStyles {
         color: boxGray,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: boxBorderSecondary, width: 2),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: containerShadow,
             spreadRadius: 0,
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       );
@@ -131,12 +131,12 @@ class ContainerStyles {
         color: boxPurple,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: boxBorderPrimary, width: 2),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: containerShadow,
             spreadRadius: 0,
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       );
@@ -146,12 +146,12 @@ class ContainerStyles {
         color: cardBackground,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: containerBorder, width: 1),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: containerShadow,
             spreadRadius: 0,
             blurRadius: 16,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       );
@@ -210,12 +210,12 @@ class ContainerStyles {
         ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: containerBorder, width: 1),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: containerShadow,
             spreadRadius: 0,
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       );

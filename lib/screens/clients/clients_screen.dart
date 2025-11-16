@@ -7,7 +7,7 @@ class ClientsScreen extends StatefulWidget {
   const ClientsScreen({super.key});
 
   @override
-  _ClientsScreenState createState() => _ClientsScreenState();
+  State<ClientsScreen> createState() => _ClientsScreenState();
 }
 
 class _ClientsScreenState extends State<ClientsScreen> {
@@ -358,7 +358,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
   void _showAddEditClientDialog({Client? client}) {
     showDialog(
       context: context,
-      builder: (context) => AddEditClientDialog(
+      builder: (dialogContext) => AddEditClientDialog(
         client: client,
         onSave: (Client newClient) async {
           try {
@@ -368,16 +368,20 @@ class _ClientsScreenState extends State<ClientsScreen> {
               await _crmService.updateClient(client.id!, newClient);
             }
             _loadClients();
-            Navigator.of(context).pop();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(
-                      'Client ${client == null ? 'added' : 'updated'} successfully')),
-            );
+            if (dialogContext.mounted) {
+              Navigator.of(dialogContext).pop();
+              ScaffoldMessenger.of(dialogContext).showSnackBar(
+                SnackBar(
+                    content: Text(
+                        'Client ${client == null ? 'added' : 'updated'} successfully')),
+              );
+            }
           } catch (e) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error: ${e.toString()}')),
-            );
+            if (dialogContext.mounted) {
+              ScaffoldMessenger.of(dialogContext).showSnackBar(
+                SnackBar(content: Text('Error: ${e.toString()}')),
+              );
+            }
           }
         },
       ),
@@ -387,12 +391,12 @@ class _ClientsScreenState extends State<ClientsScreen> {
   void _showDeleteConfirmation(Client client) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Client'),
         content: Text('Are you sure you want to delete ${client.fullName}?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
@@ -400,14 +404,18 @@ class _ClientsScreenState extends State<ClientsScreen> {
               try {
                 await _crmService.deleteClient(client.id!);
                 _loadClients();
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Client deleted successfully')),
-                );
+                if (dialogContext.mounted) {
+                  Navigator.of(dialogContext).pop();
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    const SnackBar(content: Text('Client deleted successfully')),
+                  );
+                }
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error: ${e.toString()}')),
-                );
+                if (dialogContext.mounted) {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    SnackBar(content: Text('Error: ${e.toString()}')),
+                  );
+                }
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -426,7 +434,7 @@ class AddEditClientDialog extends StatefulWidget {
   const AddEditClientDialog({super.key, this.client, required this.onSave});
 
   @override
-  _AddEditClientDialogState createState() => _AddEditClientDialogState();
+  State<AddEditClientDialog> createState() => _AddEditClientDialogState();
 }
 
 class _AddEditClientDialogState extends State<AddEditClientDialog> {

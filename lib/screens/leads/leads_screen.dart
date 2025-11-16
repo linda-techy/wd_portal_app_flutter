@@ -725,8 +725,8 @@ class _LeadsScreenState extends State<LeadsScreen> {
       DropdownButton<String>(
         value: customerTypeFilter,
         hint: const Text('Customer Type'),
-        items: [
-          const DropdownMenuItem(value: null, child: Text('All Types')),
+        items: const [
+          DropdownMenuItem(value: null, child: Text('All Types')),
           ...CustomerTypeConstants.dropdownItems
         ],
         onChanged: (val) {
@@ -1275,7 +1275,7 @@ class LeadsSummaryCard extends StatelessWidget {
               numOfLeads: entry.value,
               color: color,
             );
-          }).toList(),
+          }),
         ],
       ),
     );

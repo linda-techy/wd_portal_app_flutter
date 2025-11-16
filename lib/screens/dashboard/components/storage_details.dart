@@ -12,9 +12,9 @@ class StorageDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StyledContainer(
+    return const StyledContainer(
       type: ContainerType.success,
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(

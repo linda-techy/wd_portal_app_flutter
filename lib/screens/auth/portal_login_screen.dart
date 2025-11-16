@@ -94,8 +94,8 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> {
                     Container(
                       width: 80,
                       height: 80,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
+                      decoration: const BoxDecoration(
+                        borderRadius: BorderRadius.all(Radius.circular(16)),
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
@@ -141,7 +141,7 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: primaryColor),
+                          borderSide: const BorderSide(color: primaryColor),
                         ),
                       ),
                       validator: (value) {
@@ -185,7 +185,7 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: primaryColor),
+                          borderSide: const BorderSide(color: primaryColor),
                         ),
                       ),
                       validator: (value) {

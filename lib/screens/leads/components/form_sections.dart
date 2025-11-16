@@ -57,8 +57,8 @@ class FormSections {
                     ),
                     validator: (value) =>
                         value?.isEmpty == true ? 'Name is required' : null,
-                    onChanged: (value) => onChanged('name', value ?? ''),
-                    onSaved: (value) => onChanged('name', value ?? ''),
+                    onChanged: (value) => onChanged('name', value),
+                    onSaved: (value) => onChanged('name', value),
                   ),
                 ),
                 Expanded(
@@ -78,8 +78,8 @@ class FormSections {
                       }
                       return null;
                     },
-                    onChanged: (value) => onChanged('email', value ?? ''),
-                    onSaved: (value) => onChanged('email', value ?? ''),
+                    onChanged: (value) => onChanged('email', value),
+                    onSaved: (value) => onChanged('email', value),
                   ),
                 ),
               ],
@@ -105,8 +105,8 @@ class FormSections {
                       }
                       return null;
                     },
-                    onChanged: (value) => onChanged('phone', value ?? ''),
-                    onSaved: (value) => onChanged('phone', value ?? ''),
+                    onChanged: (value) => onChanged('phone', value),
+                    onSaved: (value) => onChanged('phone', value),
                   ),
                 ),
                 Expanded(
@@ -124,9 +124,9 @@ class FormSections {
                       return null;
                     },
                     onChanged: (value) =>
-                        onChanged('whatsappNumber', value ?? ''),
+                        onChanged('whatsappNumber', value),
                     onSaved: (value) =>
-                        onChanged('whatsappNumber', value ?? ''),
+                        onChanged('whatsappNumber', value),
                   ),
                 ),
               ],
@@ -284,8 +284,8 @@ class FormSections {
                       labelText: 'Location',
                       border: OutlineInputBorder(),
                     ),
-                    onChanged: (value) => onChanged('location', value ?? ''),
-                    onSaved: (value) => onChanged('location', value ?? ''),
+                    onChanged: (value) => onChanged('location', value),
+                    onSaved: (value) => onChanged('location', value),
                   ),
                 ),
                 Expanded(
@@ -295,8 +295,8 @@ class FormSections {
                       labelText: 'Address',
                       border: OutlineInputBorder(),
                     ),
-                    onChanged: (value) => onChanged('address', value ?? ''),
-                    onSaved: (value) => onChanged('address', value ?? ''),
+                    onChanged: (value) => onChanged('address', value),
+                    onSaved: (value) => onChanged('address', value),
                   ),
                 ),
               ],
@@ -372,8 +372,8 @@ class FormSections {
                 border: OutlineInputBorder(),
               ),
               maxLines: 3,
-              onChanged: (value) =>
-                  onChanged('projectDescription', value ?? ''),
+                    onChanged: (value) =>
+                  onChanged('projectDescription', value),
             ),
             const SizedBox(height: defaultPadding),
             TextFormField(
@@ -383,7 +383,7 @@ class FormSections {
                 border: OutlineInputBorder(),
               ),
               maxLines: 3,
-              onChanged: (value) => onChanged('requirements', value ?? ''),
+              onChanged: (value) => onChanged('requirements', value),
             ),
             const SizedBox(height: defaultPadding),
             _responsiveRow(
@@ -399,7 +399,7 @@ class FormSections {
                     ),
                     keyboardType: TextInputType.number,
                     onChanged: (value) {
-                      if (value != null && value.isNotEmpty) {
+                      if (value.isNotEmpty) {
                         onChanged('budget', double.tryParse(value) ?? 0.0);
                       }
                     },
@@ -420,7 +420,7 @@ class FormSections {
                     ),
                     keyboardType: TextInputType.number,
                     onChanged: (value) {
-                      if (value != null && value.isNotEmpty) {
+                      if (value.isNotEmpty) {
                         onChanged(
                             'projectSqftArea', double.tryParse(value) ?? 0.0);
                       }
@@ -521,7 +521,7 @@ class FormSections {
                       return null;
                     },
                     onChanged: (value) => onChanged('lostReason', value),
-                    onSaved: (value) => onChanged('lostReason', value ?? ''),
+                    onSaved: (value) => onChanged('lostReason', value),
                   ),
                   const SizedBox(height: defaultPadding),
                 ],
@@ -541,7 +541,7 @@ class FormSections {
                                           .isNotEmpty ==
                                       true
                                   ? formData['assignedTeam'].toString()
-                                  : null,
+                                  : '',
                               items: [
                                 const DropdownMenuItem<String>(
                                   value: '',
@@ -554,9 +554,9 @@ class FormSections {
                                         )),
                               ],
                               onChanged: (value) =>
-                                  onChanged('assignedTeam', value ?? ''),
+                                  onChanged('assignedTeam', value),
                               onSaved: (value) =>
-                                  onChanged('assignedTeam', value ?? ''),
+                                  onChanged('assignedTeam', value),
                             )
                           : TextFormField(
                               initialValue: formData['assignedTeam'],
@@ -565,7 +565,7 @@ class FormSections {
                                 border: OutlineInputBorder(),
                               ),
                               onChanged: (value) =>
-                                  onChanged('assignedTeam', value ?? ''),
+                                  onChanged('assignedTeam', value),
                             ),
                       const SizedBox(height: defaultPadding),
                       Row(
@@ -605,7 +605,7 @@ class FormSections {
                                             .isNotEmpty ==
                                         true
                                     ? formData['assignedTeam'].toString()
-                                    : null,
+                                    : '',
                                 items: [
                                   const DropdownMenuItem<String>(
                                     value: '',
@@ -618,9 +618,9 @@ class FormSections {
                                           )),
                                 ],
                                 onChanged: (value) =>
-                                    onChanged('assignedTeam', value ?? ''),
+                                    onChanged('assignedTeam', value),
                                 onSaved: (value) =>
-                                    onChanged('assignedTeam', value ?? ''),
+                                    onChanged('assignedTeam', value),
                               )
                             : TextFormField(
                                 initialValue: formData['assignedTeam'],
@@ -629,7 +629,7 @@ class FormSections {
                                   border: OutlineInputBorder(),
                                 ),
                                 onChanged: (value) =>
-                                    onChanged('assignedTeam', value ?? ''),
+                                    onChanged('assignedTeam', value),
                               ),
                       ),
                       const SizedBox(width: defaultPadding),

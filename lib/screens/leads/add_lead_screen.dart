@@ -207,9 +207,9 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
               padding: const EdgeInsets.symmetric(vertical: defaultPadding),
             ),
             onPressed: _saveLead,
-            child: Text(
+            child: const Text(
               AddLeadConstants.saveButtonText,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+              style: TextStyle(color: Colors.white, fontSize: 16),
             ),
           ),
         ),
@@ -220,7 +220,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
               padding: const EdgeInsets.symmetric(vertical: defaultPadding),
             ),
             onPressed: () => Navigator.pop(context),
-            child: Text(AddLeadConstants.cancelButtonText),
+            child: const Text(AddLeadConstants.cancelButtonText),
           ),
         ),
       ],

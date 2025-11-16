@@ -65,12 +65,18 @@ class AppConfig {
   // Print current configuration for debugging
   static void printConfig() {
     if (isDevelopment) {
-      print('=== App Configuration ===');
-      print('Environment: ${isProduction ? 'Production' : 'Development'}');
-      print('API Base URL: $apiBaseUrl');
-      print('Full API URL: $fullApiUrl');
-      print('Debug Mode: $isDebug');
-      print('========================');
+      // ignore: avoid_print
+      debugPrint('=== App Configuration ===');
+      // ignore: avoid_print
+      debugPrint('Environment: ${isProduction ? 'Production' : 'Development'}');
+      // ignore: avoid_print
+      debugPrint('API Base URL: $apiBaseUrl');
+      // ignore: avoid_print
+      debugPrint('Full API URL: $fullApiUrl');
+      // ignore: avoid_print
+      debugPrint('Debug Mode: $isDebug');
+      // ignore: avoid_print
+      debugPrint('========================');
     }
   }
 }

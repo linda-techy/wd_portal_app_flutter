@@ -141,9 +141,9 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
               padding: const EdgeInsets.symmetric(vertical: defaultPadding),
             ),
             onPressed: _controller.isLoading ? null : _saveLead,
-            child: Text(
+            child: const Text(
               EditLeadConstants.saveButtonText,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+              style: TextStyle(color: Colors.white, fontSize: 16),
             ),
           ),
         ),

@@ -146,15 +146,15 @@ class MyApp extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: primaryColor, width: 2),
+            borderSide: const BorderSide(color: primaryColor, width: 2),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: errorColor, width: 2),
+            borderSide: const BorderSide(color: errorColor, width: 2),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: errorColor, width: 2),
+            borderSide: const BorderSide(color: errorColor, width: 2),
           ),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

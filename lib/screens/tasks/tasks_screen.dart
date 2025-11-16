@@ -23,10 +23,10 @@ class _TasksScreenState extends State<TasksScreen> {
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: defaultPadding),
-            Expanded(
+            const Expanded(
               child: StyledContainer(
                 type: ContainerType.info,
-                child: const Center(
+                child: Center(
                   child: Text(
                     "Tasks Management - Coming Soon",
                     style: TextStyle(fontSize: 18, color: textPrimary),
