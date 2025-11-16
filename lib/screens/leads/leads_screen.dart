@@ -901,233 +901,298 @@ class LeadsTable extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(defaultPadding),
       decoration: ContainerStyles.secondaryBox,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          columnSpacing: defaultPadding,
-          columns: const [
-            DataColumn(label: Text("Name")),
-            DataColumn(label: Text("Contact")),
-            DataColumn(label: Text("Status")),
-            DataColumn(label: Text("Priority")),
-            DataColumn(label: Text("Project")),
-            DataColumn(label: Text("Budget")),
-            DataColumn(label: Text("Sales Rep")),
-            DataColumn(label: Text("Next Follow-up")),
-            DataColumn(label: Text("Actions")),
-          ],
-          rows: leads.map((lead) {
-            return DataRow(
-              cells: [
-                // Name Column
-                DataCell(
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 150),
-                    child: Tooltip(
-                      message: lead.name,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            lead.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          // company field removed
-                        ],
-                      ),
-                    ),
-                  ),
-                  onTap: () => onEdit(lead),
-                ),
-
-                // Contact Column
-                DataCell(
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 180),
-                    child: Tooltip(
-                      message: '${lead.phone}\n${lead.email}',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            lead.phone,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (lead.email.isNotEmpty)
-                            Text(
-                              lead.email,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[400],
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Status Column
-                DataCell(
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(lead.status),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      lead.status,
-                      style: const TextStyle(
-                        color: textPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Priority Column
-                DataCell(
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _getPriorityColor(lead.priority),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      lead.priorityString,
-                      style: const TextStyle(
-                        color: textPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Project Column
-                DataCell(
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 120),
-                    child: Tooltip(
-                      message: '${lead.projectType}\n${lead.customerType}',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            lead.projectType.isNotEmpty
-                                ? lead.projectType
-                                : 'N/A',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          // projectStage field removed
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Budget Column
-                DataCell(
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 100),
-                    child: Tooltip(
-                      message: lead.budget != null
-                          ? '₹${lead.budget!.toStringAsFixed(0)}'
-                          : 'N/A',
-                      child: Text(
-                        lead.budget != null
-                            ? '₹${lead.budget!.toStringAsFixed(0)}'
-                            : 'N/A',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color:
-                              lead.budget != null ? Colors.green : Colors.grey,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Sales Rep Column
-                DataCell(
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 100),
-                    child: Tooltip(
-                      message: lead.assignedTeam.isNotEmpty
-                          ? lead.assignedTeam
-                          : 'Unassigned',
-                      child: Text(
-                        lead.assignedTeam.isNotEmpty
-                            ? lead.assignedTeam
-                            : 'Unassigned',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Next Follow-up Column
-                DataCell(
-                  Tooltip(
-                    message: lead.nextFollowUp?.toString() ??
-                        'No follow-up scheduled',
-                    child: Text(
-                      lead.nextFollowUp != null
-                          ? _formatDate(lead.nextFollowUp!)
-                          : 'N/A',
-                      style: TextStyle(
-                        color: lead.nextFollowUp != null &&
-                                lead.nextFollowUp!.isBefore(DateTime.now())
-                            ? Colors.red
-                            : null,
-                        fontWeight: lead.nextFollowUp != null &&
-                                lead.nextFollowUp!.isBefore(DateTime.now())
-                            ? FontWeight.bold
-                            : null,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Actions Column
-                DataCell(
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit,
-                            color: Colors.blue, size: 20),
-                        tooltip: 'Edit Lead',
-                        onPressed: () => onEdit(lead),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete,
-                            color: Colors.red, size: 20),
-                        tooltip: 'Delete Lead',
-                        onPressed: () => _showDeleteConfirmation(context, lead),
-                      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Scrollable table columns
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columnSpacing: defaultPadding,
+                    dataRowMinHeight: 52,
+                    dataRowMaxHeight: 52,
+                    headingRowHeight: 56,
+                    columns: const [
+                      DataColumn(label: Text("Name")),
+                      DataColumn(label: Text("Contact")),
+                      DataColumn(label: Text("Status")),
+                      DataColumn(label: Text("Priority")),
+                      DataColumn(label: Text("Project")),
+                      DataColumn(label: Text("Budget")),
+                      DataColumn(label: Text("Sales Rep")),
+                      DataColumn(label: Text("Next Follow-up")),
                     ],
+                    rows: leads.map((lead) {
+                      return DataRow(
+                        cells: [
+                          // Name Column
+                          DataCell(
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 150),
+                              child: Tooltip(
+                                message: lead.name,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      lead.name,
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            onTap: () => onEdit(lead),
+                          ),
+
+                          // Contact Column
+                          DataCell(
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 180),
+                              child: Tooltip(
+                                message: '${lead.phone}\n${lead.email}',
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      lead.phone,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (lead.email.isNotEmpty)
+                                      Text(
+                                        lead.email,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[400],
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Status Column
+                          DataCell(
+                            Container(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _getStatusColor(lead.status),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                lead.status,
+                                style: const TextStyle(
+                                  color: textPrimary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Priority Column
+                          DataCell(
+                            Container(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _getPriorityColor(lead.priority),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                lead.priorityString,
+                                style: const TextStyle(
+                                  color: textPrimary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Project Column
+                          DataCell(
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 120),
+                              child: Tooltip(
+                                message: '${lead.projectType}\n${lead.customerType}',
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      lead.projectType.isNotEmpty
+                                          ? lead.projectType
+                                          : 'N/A',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Budget Column
+                          DataCell(
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 100),
+                              child: Tooltip(
+                                message: lead.budget != null
+                                    ? '₹${lead.budget!.toStringAsFixed(0)}'
+                                    : 'N/A',
+                                child: Text(
+                                  lead.budget != null
+                                      ? '₹${lead.budget!.toStringAsFixed(0)}'
+                                      : 'N/A',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        lead.budget != null ? Colors.green : Colors.grey,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Sales Rep Column
+                          DataCell(
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 100),
+                              child: Tooltip(
+                                message: lead.assignedTeam.isNotEmpty
+                                    ? lead.assignedTeam
+                                    : 'Unassigned',
+                                child: Text(
+                                  lead.assignedTeam.isNotEmpty
+                                      ? lead.assignedTeam
+                                      : 'Unassigned',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Next Follow-up Column
+                          DataCell(
+                            Tooltip(
+                              message: lead.nextFollowUp?.toString() ??
+                                  'No follow-up scheduled',
+                              child: Text(
+                                lead.nextFollowUp != null
+                                    ? _formatDate(lead.nextFollowUp!)
+                                    : 'N/A',
+                                style: TextStyle(
+                                  color: lead.nextFollowUp != null &&
+                                          lead.nextFollowUp!.isBefore(DateTime.now())
+                                      ? Colors.red
+                                      : null,
+                                  fontWeight: lead.nextFollowUp != null &&
+                                          lead.nextFollowUp!.isBefore(DateTime.now())
+                                      ? FontWeight.bold
+                                      : null,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
                   ),
                 ),
-              ],
-            );
-          }).toList(),
-        ),
+              ),
+              
+              // Fixed Actions Column
+              Container(
+                width: 92,
+                decoration: BoxDecoration(
+                  border: Border(
+                    left: BorderSide(
+                      color: Colors.grey.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Header
+                    Container(
+                      height: 56,
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: const Text(
+                        "Actions",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ),
+                    // Rows
+                    ...leads.asMap().entries.map((entry) {
+                      final lead = entry.value;
+                      return Container(
+                        height: 52,
+                        alignment: Alignment.center,
+                        child: Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 2,
+                          runSpacing: 2,
+                          children: [
+                            SizedBox(
+                              width: 36,
+                              height: 36,
+                              child: IconButton(
+                                icon: const Icon(Icons.edit,
+                                    color: Colors.blue, size: 18),
+                                tooltip: 'Edit Lead',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: () {
+                                  debugPrint('Edit button pressed for lead: ${lead.name}');
+                                  onEdit(lead);
+                                },
+                              ),
+                            ),
+                            SizedBox(
+                              width: 36,
+                              height: 36,
+                              child: IconButton(
+                                icon: const Icon(Icons.delete,
+                                    color: Colors.red, size: 18),
+                                tooltip: 'Delete Lead',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: () {
+                                  debugPrint('Delete button pressed for lead: ${lead.name}');
+                                  _showDeleteConfirmation(context, lead);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

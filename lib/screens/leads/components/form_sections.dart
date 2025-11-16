@@ -18,12 +18,17 @@ class FormSections {
     bool forceColumn = false,
   }) {
     if (forceColumn || Responsive.isMobile(context)) {
+      // Expanded/Flexible cannot be inside a Column within a scroll view
+      // Unwrap Expanded to its child for mobile/column layout
+      final List<Widget> columnChildren = children
+          .map((w) => w is Expanded ? w.child : w)
+          .toList();
       return Column(
-        children: children
-            .expand(
-                (widget) => [widget, const SizedBox(height: defaultPadding)])
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: columnChildren
+            .expand((widget) => [widget, const SizedBox(height: defaultPadding)])
             .toList()
-          ..removeLast(), // Remove last spacing
+          ..removeLast(),
       );
     } else {
       return Row(
@@ -228,9 +233,7 @@ class FormSections {
                       }
                     },
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select a state';
-                      }
+                      // State is optional during edit; allow empty to avoid blocking save
                       return null;
                     },
                   ),
@@ -264,9 +267,7 @@ class FormSections {
                       }
                     },
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select a district';
-                      }
+                      // District is optional during edit; allow empty to avoid blocking save
                       return null;
                     },
                   ),
@@ -568,9 +569,12 @@ class FormSections {
                                   onChanged('assignedTeam', value),
                             ),
                       const SizedBox(height: defaultPadding),
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 4,
+                        runSpacing: 4,
                         children: [
-                          const Text('Client Rating: '),
+                          const Text('Client Rating:'),
                           ...List.generate(
                             5,
                             (index) => IconButton(
@@ -579,9 +583,9 @@ class FormSections {
                                     ? Icons.star
                                     : Icons.star_border,
                                 color: Colors.amber,
-                                size: 24,
+                                size: 22,
                               ),
-                              padding: const EdgeInsets.all(4),
+                              padding: const EdgeInsets.all(2),
                               constraints: const BoxConstraints(),
                               onPressed: () =>
                                   onChanged('clientRating', index + 1),
@@ -591,9 +595,13 @@ class FormSections {
                       ),
                     ],
                   )
-                : Row(
+                : Wrap(
+                    spacing: defaultPadding,
+                    runSpacing: defaultPadding,
+                    crossAxisAlignment: WrapCrossAlignment.start,
                     children: [
-                      Expanded(
+                      SizedBox(
+                        width: 380,
                         child: teamMembers != null && teamMembers.isNotEmpty
                             ? DropdownButtonFormField<String>(
                                 decoration: const InputDecoration(
@@ -632,27 +640,27 @@ class FormSections {
                                     onChanged('assignedTeam', value),
                               ),
                       ),
-                      const SizedBox(width: defaultPadding),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            const Text('Client Rating: '),
-                            ...List.generate(
-                              5,
-                              (index) => IconButton(
-                                icon: Icon(
-                                  index < (formData['clientRating'] as int)
-                                      ? Icons.star
-                                      : Icons.star_border,
-                                  color: Colors.amber,
-                                  size: 28,
-                                ),
-                                onPressed: () =>
-                                    onChanged('clientRating', index + 1),
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          const Text('Client Rating:'),
+                          ...List.generate(
+                            5,
+                            (index) => IconButton(
+                              icon: Icon(
+                                index < (formData['clientRating'] as int)
+                                    ? Icons.star
+                                    : Icons.star_border,
+                                color: Colors.amber,
+                                size: 26,
                               ),
+                              onPressed: () =>
+                                  onChanged('clientRating', index + 1),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
