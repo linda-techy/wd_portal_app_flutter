@@ -3,6 +3,7 @@ import 'package:admin/models/team_member_simple.dart';
 import 'package:admin/models/client.dart';
 import 'package:admin/models/customer.dart';
 import 'package:admin/models/customer_role.dart';
+import 'package:admin/models/customer_project.dart';
 import 'package:admin/models/project.dart';
 import 'package:admin/models/lead.dart';
 import 'package:admin/models/paginated_response.dart';
@@ -203,7 +204,8 @@ class CRMService {
 
   Future<Customer> createCustomer(Customer customer) async {
     try {
-      final response = await _apiService.post('/customers', customer.toCreateJson());
+      final response =
+          await _apiService.post('/customers', customer.toCreateJson());
       return Customer.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to create customer: $e');
@@ -212,7 +214,8 @@ class CRMService {
 
   Future<Customer> updateCustomer(int id, Customer customer) async {
     try {
-      final response = await _apiService.put('/customers/$id', customer.toUpdateJson());
+      final response =
+          await _apiService.put('/customers/$id', customer.toUpdateJson());
       return Customer.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to update customer: $e');
@@ -234,6 +237,58 @@ class CRMService {
       return data.map((json) => CustomerRole.fromJson(json)).toList();
     } catch (e) {
       throw Exception('Failed to fetch customer roles: $e');
+    }
+  }
+
+  // =====================================================
+  // CUSTOMER PROJECTS
+  // =====================================================
+
+  Future<List<CustomerProject>> getAllCustomerProjects() async {
+    try {
+      final response = await _apiService.get('/customer-projects');
+      final List<dynamic> data = response.data;
+      return data.map((json) => CustomerProject.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Failed to fetch customer projects: $e');
+    }
+  }
+
+  Future<CustomerProject> getCustomerProjectById(int id) async {
+    try {
+      final response = await _apiService.get('/customer-projects/$id');
+      return CustomerProject.fromJson(response.data);
+    } catch (e) {
+      throw Exception('Failed to fetch customer project: $e');
+    }
+  }
+
+  Future<CustomerProject> createCustomerProject(CustomerProject project) async {
+    try {
+      final response =
+          await _apiService.post('/customer-projects', project.toCreateJson());
+      return CustomerProject.fromJson(response.data);
+    } catch (e) {
+      throw Exception('Failed to create customer project: $e');
+    }
+  }
+
+  Future<CustomerProject> updateCustomerProject(
+      int id, CustomerProject project) async {
+    try {
+      final response = await _apiService.put(
+          '/customer-projects/$id', project.toUpdateJson());
+      return CustomerProject.fromJson(response.data);
+    } catch (e) {
+      throw Exception('Failed to update customer project: $e');
+    }
+  }
+
+  Future<void> deleteCustomerProject(int id) async {
+    try {
+      await _apiService.delete('/customer-projects/$id');
+    } catch (e) {
+      throw Exception('Failed to delete customer project: $e');
     }
   }
 
