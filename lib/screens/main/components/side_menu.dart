@@ -62,12 +62,18 @@ class SideMenu extends StatelessWidget {
                   title: leadsModule,
                   svgSrc: "assets/icons/menu_leads.svg",
                   index: 1,
-                )
+                ),
+                _buildMenuItem(
+                  context,
+                  title: customersModule,
+                  svgSrc: "assets/icons/menu_profile.svg",
+                  index: 2,
+                ),
                 // _buildMenuItem(
                 //   context,
                 //   title: clientsModule,
                 //   svgSrc: "assets/icons/menu_doc.svg",
-                //   index: 2,
+                //   index: 3,
                 // ),
                 // _buildMenuItem(
                 //   context,

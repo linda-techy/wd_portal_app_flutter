@@ -3,6 +3,7 @@ import 'package:admin/responsive.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/screens/dashboard/dashboard_screen.dart';
 import 'package:admin/screens/leads/leads_screen.dart';
+import 'package:admin/screens/customers/customers_screen.dart';
 import 'package:admin/screens/clients/clients_screen.dart';
 import 'package:admin/screens/projects/projects_screen.dart';
 import 'package:admin/screens/quotations/quotations_screen.dart';
@@ -34,6 +35,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const DashboardScreen(),
     const LeadsScreen(),
+    const CustomersScreen(),
     const ClientsScreen(),
     const ProjectsScreen(),
     const QuotationsScreen(),
@@ -61,28 +63,30 @@ class _MainScreenState extends State<MainScreen> {
       case 1:
         return 'Leads';
       case 2:
-        return 'Clients';
+        return 'Customers';
       case 3:
-        return 'Projects';
+        return 'Clients';
       case 4:
-        return 'Quotations';
+        return 'Projects';
       case 5:
-        return 'Contracts';
+        return 'Quotations';
       case 6:
-        return 'Follow Ups';
+        return 'Contracts';
       case 7:
-        return 'Site Visits';
+        return 'Follow Ups';
       case 8:
-        return 'Tasks';
+        return 'Site Visits';
       case 9:
-        return 'Team Members';
+        return 'Tasks';
       case 10:
-        return 'Communication';
+        return 'Team Members';
       case 11:
-        return 'Documents';
+        return 'Communication';
       case 12:
-        return 'Invoices';
+        return 'Documents';
       case 13:
+        return 'Invoices';
+      case 14:
         return 'Reports';
       default:
         return 'Dashboard';
