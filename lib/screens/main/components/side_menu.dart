@@ -51,12 +51,12 @@ class SideMenu extends StatelessWidget {
           Expanded(
             child: ListView(
               children: [
-                // _buildMenuItem(
-                //   context,
-                //   title: dashboardModule,
-                //   svgSrc: "assets/icons/menu_dashboard.svg",
-                //   index: 0,
-                // ),
+                _buildMenuItem(
+                  context,
+                  title: dashboardModule,
+                  svgSrc: "assets/icons/menu_dashboard.svg",
+                  index: 0,
+                ),
                 _buildMenuItem(
                   context,
                   title: leadsModule,

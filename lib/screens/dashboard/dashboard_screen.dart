@@ -1,4 +1,4 @@
-import 'package:admin/screens/dashboard/crm_dashboard.dart';
+import 'package:admin/screens/dashboard/crm_dashboard_modern.dart';
 import 'package:flutter/material.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -6,6 +6,7 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const CRMDashboard();
+    // Using the new modern dashboard with updated design system
+    return const CRMDashboardModern();
   }
 }

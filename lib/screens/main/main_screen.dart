@@ -30,7 +30,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 1;
+  int _selectedIndex = 0; // Start with Dashboard
 
   final List<Widget> _screens = [
     const DashboardScreen(),

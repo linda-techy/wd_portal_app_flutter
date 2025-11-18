@@ -1,4 +1,3 @@
-import 'package:admin/constants.dart';
 import 'package:admin/controllers/menu_app_controller.dart';
 // import 'package:admin/screens/main/main_screen.dart';
 import 'package:admin/config/app_config.dart';
@@ -7,9 +6,9 @@ import 'package:admin/services/portal_auth_service.dart';
 import 'package:admin/utils/api_connection_test.dart';
 import 'package:admin/utils/web_error_handler.dart';
 import 'package:admin/widgets/portal_auth_wrapper.dart';
+import 'package:admin/theme/app_theme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -96,70 +95,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: AppConfig.appName,
-      theme: ThemeData.light().copyWith(
-        scaffoldBackgroundColor: bgColor,
-        textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme)
-            .apply(bodyColor: Colors.black87),
-        canvasColor: secondaryColor,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: secondaryColor,
-          foregroundColor: Colors.black87,
-          elevation: 0,
-        ),
-        cardTheme: CardTheme(
-          color: cardBackground,
-          elevation: 3,
-          shadowColor: containerShadow,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: containerBorder.withOpacity(0.5), width: 1),
-          ),
-          margin: const EdgeInsets.all(12),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primaryColor,
-            foregroundColor: Colors.white,
-            elevation: 4,
-            shadowColor: primaryColor.withOpacity(0.25),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            textStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: containerBackground,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: containerBorder.withOpacity(0.8)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: containerBorder.withOpacity(0.8)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: primaryColor, width: 2),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: errorColor, width: 2),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: errorColor, width: 2),
-          ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        ),
-      ),
+      // Use new construction-appropriate theme
+      theme: AppTheme.lightTheme,
       home: MultiProvider(
         providers: [
           ChangeNotifierProvider(
