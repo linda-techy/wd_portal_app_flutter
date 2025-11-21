@@ -43,6 +43,8 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
   List<Lead> _filteredLeads = [];
   bool _isLoadingLeads = false;
   bool _isLoading = false;
+  bool _showLeadDropdown = false;
+  final FocusNode _leadSearchFocusNode = FocusNode();
 
   final List<String> _projectPhases = [
     'Planning',
@@ -74,7 +76,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
 
     _startDate = widget.project.startDate;
     _endDate = widget.project.endDate;
-    
+
     // Validate project phase - ensure it exists in the list
     final projectPhase = widget.project.projectPhase;
     if (projectPhase != null && projectPhase.isNotEmpty) {
@@ -95,7 +97,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
     } else {
       _projectPhase = null;
     }
-    
+
     // Validate state - ensure it exists in the list (try case-insensitive match)
     final state = widget.project.state;
     if (state != null && state.isNotEmpty) {
@@ -116,19 +118,44 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
     } else {
       _state = null;
     }
-    
+
     // Validate district - ensure it exists for the selected state
+    // Default to "Thrissur" if district is null
     final district = widget.project.district;
     if (_state != null && district != null) {
       final districts = IndiaLocationData.getDistricts(_state!);
-      _district = districts.contains(district) ? district : null;
+      _district = districts.contains(district) ? district : 'Thrissur';
     } else {
-      _district = null;
+      // Default to "Thrissur" if district is null
+      _district = 'Thrissur';
     }
-    
+
     _selectedLeadId = widget.project.leadId;
-    
+
     _loadLeads();
+
+    _leadSearchFocusNode.addListener(() {
+      if (!_leadSearchFocusNode.hasFocus) {
+        // Only close dropdown when losing focus if no lead is selected
+        // Use a longer delay to ensure tap events on dropdown items are processed first
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted && !_leadSearchFocusNode.hasFocus && _selectedLead == null) {
+            setState(() {
+              _showLeadDropdown = false;
+            });
+          }
+        });
+      } else {
+        // When field gets focus, show dropdown
+        setState(() {
+          _showLeadDropdown = true;
+          // Show all leads when field gets focus
+          if (_leadSearchController.text.isEmpty) {
+            _filteredLeads = _leads;
+          }
+        });
+      }
+    });
   }
 
   Future<void> _loadLeads() async {
@@ -186,6 +213,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
     _sqfeetController.dispose();
     _progressController.dispose();
     _leadSearchController.dispose();
+    _leadSearchFocusNode.dispose();
     super.dispose();
   }
 
@@ -254,11 +282,11 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
         endDate: _endDate,
         progress: _progressController.text.trim().isNotEmpty
             ? double.tryParse(_progressController.text.trim())
-            : null,
+            : widget.project.progress ?? 0.0, // Default to existing or 0.0
         // createdBy remains as original - not updated
-        projectPhase: _projectPhase,
-        state: _state,
-        district: _district,
+        projectPhase: _projectPhase ?? 'Planning', // Default to Planning if null
+        state: _state ?? 'Kerala', // Default to Kerala if null
+        district: _district ?? 'Thrissur', // Default to Thrissur if null
         sqfeet: _sqfeetController.text.trim().isNotEmpty
             ? double.tryParse(_sqfeetController.text.trim())
             : null,
@@ -300,156 +328,138 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
         title: const Text('Edit Customer Project'),
       ),
       body: AdaptiveContainer(
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Project Information',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: AppTheme.spacingLG),
-
-                // Name
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Project Name *',
-                    hintText: 'Enter project name',
+          child: SingleChildScrollView(
+            padding: ResponsiveUtils.responsivePadding(context),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Project Information',
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Project name is required';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppTheme.spacingMD),
+                  const SizedBox(height: AppTheme.spacingLG),
 
-                // Code (Editable in edit screen)
-                TextFormField(
-                  controller: _codeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Project Code *',
-                    hintText: 'Enter project code',
-                    helperText: 'Project code must be unique',
+                  // Name
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Project Name *',
+                      hintText: 'Enter project name',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Project name is required';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Project code is required';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppTheme.spacingMD),
+                  const SizedBox(height: AppTheme.spacingMD),
 
-                // Location
-                TextFormField(
-                  controller: _locationController,
-                  decoration: const InputDecoration(
-                    labelText: 'Location *',
-                    hintText: 'Enter project location',
+                  // Code (Editable in edit screen)
+                  TextFormField(
+                    controller: _codeController,
+                    decoration: const InputDecoration(
+                      labelText: 'Project Code *',
+                      hintText: 'Enter project code',
+                      helperText: 'Project code must be unique',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Project code is required';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Location is required';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppTheme.spacingMD),
+                  const SizedBox(height: AppTheme.spacingMD),
 
-                // State and District Row
-                ResponsiveLayout(
-                  mobile: Column(
-                    children: [
-                      DropdownButtonFormField<String>(
-                        value: _state,
-                        decoration: const InputDecoration(
-                          labelText: 'State',
-                          hintText: 'Select state',
-                        ),
-                        items: IndiaLocationData.states.map((state) {
-                          return DropdownMenuItem(
-                            value: state,
-                            child: Text(state),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _state = value;
-                            _district = null;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: AppTheme.spacingMD),
-                      DropdownButtonFormField<String>(
-                        value: _district,
-                        decoration: const InputDecoration(
-                          labelText: 'District',
-                          hintText: 'Select district',
-                        ),
-                        items: (_state != null
-                                ? IndiaLocationData.getDistricts(_state!)
-                                : <String>[])
-                            .map<DropdownMenuItem<String>>((district) {
-                          return DropdownMenuItem<String>(
-                            value: district,
-                            child: Text(district),
-                          );
-                        }).toList(),
-                        onChanged: _state != null
-                            ? (value) {
-                                setState(() {
-                                  _district = value;
-                                });
-                              }
-                            : null,
-                      ),
-                    ],
+                  // Location
+                  TextFormField(
+                    controller: _locationController,
+                    decoration: const InputDecoration(
+                      labelText: 'Location *',
+                      hintText: 'Enter project location',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Location is required';
+                      }
+                      return null;
+                    },
                   ),
-                  desktop: Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
+                  const SizedBox(height: AppTheme.spacingMD),
+
+                  // State and District Row
+                  ResponsiveLayout(
+                    mobile: Column(
+                      children: [
+                        DropdownButtonFormField<String>(
                           value: _state,
                           decoration: const InputDecoration(
                             labelText: 'State',
                             hintText: 'Select state',
                           ),
+                          isExpanded: true,
                           items: IndiaLocationData.states.map((state) {
                             return DropdownMenuItem(
                               value: state,
-                              child: Text(state),
+                              child: Text(
+                                state,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
                             );
                           }).toList(),
+                          selectedItemBuilder: (BuildContext context) {
+                            return IndiaLocationData.states.map((state) {
+                              return Text(
+                                state,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              );
+                            }).toList();
+                          },
                           onChanged: (value) {
                             setState(() {
                               _state = value;
-                              _district = null;
+                              _district = 'Thrissur'; // Reset district to default when state changes
                             });
                           },
                         ),
-                      ),
-                      const SizedBox(width: AppTheme.spacingMD),
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
+                        const SizedBox(height: AppTheme.spacingMD),
+                        DropdownButtonFormField<String>(
                           value: _district,
                           decoration: const InputDecoration(
                             labelText: 'District',
                             hintText: 'Select district',
                           ),
+                          isExpanded: true,
                           items: (_state != null
                                   ? IndiaLocationData.getDistricts(_state!)
                                   : <String>[])
                               .map<DropdownMenuItem<String>>((district) {
                             return DropdownMenuItem<String>(
                               value: district,
-                              child: Text(district),
+                              child: Text(
+                                district,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
                             );
                           }).toList(),
+                          selectedItemBuilder: (BuildContext context) {
+                            return (_state != null
+                                    ? IndiaLocationData.getDistricts(_state!)
+                                    : <String>[])
+                                .map((district) {
+                              return Text(
+                                district,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              );
+                            }).toList();
+                          },
                           onChanged: _state != null
                               ? (value) {
                                   setState(() {
@@ -458,63 +468,98 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                                 }
                               : null,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    desktop: Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: _state,
+                            decoration: const InputDecoration(
+                              labelText: 'State',
+                              hintText: 'Select state',
+                            ),
+                            isExpanded: true,
+                            items: IndiaLocationData.states.map((state) {
+                              return DropdownMenuItem(
+                                value: state,
+                                child: Text(
+                                  state,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              );
+                            }).toList(),
+                            selectedItemBuilder: (BuildContext context) {
+                              return IndiaLocationData.states.map((state) {
+                                return Text(
+                                  state,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                );
+                              }).toList();
+                            },
+                            onChanged: (value) {
+                              setState(() {
+                                _state = value;
+                                _district = null;
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: AppTheme.spacingMD),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: _district,
+                            decoration: const InputDecoration(
+                              labelText: 'District',
+                              hintText: 'Select district',
+                            ),
+                            isExpanded: true,
+                            items: (_state != null
+                                    ? IndiaLocationData.getDistricts(_state!)
+                                    : <String>[])
+                                .map<DropdownMenuItem<String>>((district) {
+                              return DropdownMenuItem<String>(
+                                value: district,
+                                child: Text(
+                                  district,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              );
+                            }).toList(),
+                            selectedItemBuilder: (BuildContext context) {
+                              return (_state != null
+                                      ? IndiaLocationData.getDistricts(_state!)
+                                      : <String>[])
+                                  .map((district) {
+                                return Text(
+                                  district,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                );
+                              }).toList();
+                            },
+                            onChanged: _state != null
+                                ? (value) {
+                                    setState(() {
+                                      _district = value;
+                                    });
+                                  }
+                                : null,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppTheme.spacingMD),
+                  const SizedBox(height: AppTheme.spacingMD),
 
-                // Start Date and End Date Row
-                ResponsiveLayout(
-                  mobile: Column(
-                    children: [
-                      InkWell(
-                        onTap: () => _selectDate(context, true),
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'Start Date',
-                            hintText: 'Select start date',
-                            suffixIcon: Icon(Icons.calendar_today),
-                          ),
-                          child: Text(
-                            _startDate != null
-                                ? DateFormat('MMM dd, yyyy').format(_startDate!)
-                                : 'Select start date',
-                            style: TextStyle(
-                              color: _startDate != null
-                                  ? AppTheme.textPrimary
-                                  : AppTheme.textTertiary,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppTheme.spacingMD),
-                      InkWell(
-                        onTap: () => _selectDate(context, false),
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'End Date',
-                            hintText: 'Select end date',
-                            suffixIcon: Icon(Icons.calendar_today),
-                          ),
-                          child: Text(
-                            _endDate != null
-                                ? DateFormat('MMM dd, yyyy').format(_endDate!)
-                                : 'Select end date',
-                            style: TextStyle(
-                              color: _endDate != null
-                                  ? AppTheme.textPrimary
-                                  : AppTheme.textTertiary,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  desktop: Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
+                  // Start Date and End Date Row
+                  ResponsiveLayout(
+                    mobile: Column(
+                      children: [
+                        InkWell(
                           onTap: () => _selectDate(context, true),
                           child: InputDecorator(
                             decoration: const InputDecoration(
@@ -535,10 +580,8 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: AppTheme.spacingMD),
-                      Expanded(
-                        child: InkWell(
+                        const SizedBox(height: AppTheme.spacingMD),
+                        InkWell(
                           onTap: () => _selectDate(context, false),
                           child: InputDecorator(
                             decoration: const InputDecoration(
@@ -558,60 +601,67 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    desktop: Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _selectDate(context, true),
+                            child: InputDecorator(
+                              decoration: const InputDecoration(
+                                labelText: 'Start Date',
+                                hintText: 'Select start date',
+                                suffixIcon: Icon(Icons.calendar_today),
+                              ),
+                              child: Text(
+                                _startDate != null
+                                    ? DateFormat('MMM dd, yyyy')
+                                        .format(_startDate!)
+                                    : 'Select start date',
+                                style: TextStyle(
+                                  color: _startDate != null
+                                      ? AppTheme.textPrimary
+                                      : AppTheme.textTertiary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppTheme.spacingMD),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _selectDate(context, false),
+                            child: InputDecorator(
+                              decoration: const InputDecoration(
+                                labelText: 'End Date',
+                                hintText: 'Select end date',
+                                suffixIcon: Icon(Icons.calendar_today),
+                              ),
+                              child: Text(
+                                _endDate != null
+                                    ? DateFormat('MMM dd, yyyy')
+                                        .format(_endDate!)
+                                    : 'Select end date',
+                                style: TextStyle(
+                                  color: _endDate != null
+                                      ? AppTheme.textPrimary
+                                      : AppTheme.textTertiary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppTheme.spacingMD),
+                  const SizedBox(height: AppTheme.spacingMD),
 
-                // Project Phase and Progress Row
-                ResponsiveLayout(
-                  mobile: Column(
-                    children: [
-                      DropdownButtonFormField<String>(
-                        value: _projectPhase,
-                        decoration: const InputDecoration(
-                          labelText: 'Project Phase',
-                          hintText: 'Select phase',
-                        ),
-                        items: _projectPhases.map((phase) {
-                          return DropdownMenuItem(
-                            value: phase,
-                            child: Text(phase),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _projectPhase = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: AppTheme.spacingMD),
-                      TextFormField(
-                        controller: _progressController,
-                        decoration: const InputDecoration(
-                          labelText: 'Progress (%)',
-                          hintText: '0-100',
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value != null && value.trim().isNotEmpty) {
-                            final progress = double.tryParse(value);
-                            if (progress == null ||
-                                progress < 0 ||
-                                progress > 100) {
-                              return 'Progress must be between 0 and 100';
-                            }
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
-                  ),
-                  desktop: Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
+                  // Project Phase and Progress Row
+                  ResponsiveLayout(
+                    mobile: Column(
+                      children: [
+                        DropdownButtonFormField<String>(
                           value: _projectPhase,
                           decoration: const InputDecoration(
                             labelText: 'Project Phase',
@@ -629,10 +679,8 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                             });
                           },
                         ),
-                      ),
-                      const SizedBox(width: AppTheme.spacingMD),
-                      Expanded(
-                        child: TextFormField(
+                        const SizedBox(height: AppTheme.spacingMD),
+                        TextFormField(
                           controller: _progressController,
                           decoration: const InputDecoration(
                             labelText: 'Progress (%)',
@@ -651,111 +699,157 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                             return null;
                           },
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: AppTheme.spacingMD),
-
-                // Lead Selection (Searchable Dropdown)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Lead',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
+                      ],
                     ),
-                    const SizedBox(height: AppTheme.spacingXS),
-                    _buildLeadSearchDropdown(),
-                  ],
-                ),
-                const SizedBox(height: AppTheme.spacingMD),
-
-                // Created By (Read-only info)
-                if (widget.project.createdBy != null &&
-                    widget.project.createdBy!.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(AppTheme.spacingMD),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceElevated,
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMD),
-                      border: Border.all(color: AppTheme.borderLight),
-                    ),
-                    child: Row(
+                    desktop: Row(
                       children: [
-                        Icon(Icons.person,
-                            size: 20, color: AppTheme.textSecondary),
-                        const SizedBox(width: AppTheme.spacingSM),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Created By',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
-                                      color: AppTheme.textSecondary,
-                                    ),
-                              ),
-                              Text(
-                                widget.project.createdBy!,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                              ),
-                            ],
+                          child: DropdownButtonFormField<String>(
+                            value: _projectPhase,
+                            decoration: const InputDecoration(
+                              labelText: 'Project Phase',
+                              hintText: 'Select phase',
+                            ),
+                            items: _projectPhases.map((phase) {
+                              return DropdownMenuItem(
+                                value: phase,
+                                child: Text(phase),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _projectPhase = value;
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: AppTheme.spacingMD),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _progressController,
+                            decoration: const InputDecoration(
+                              labelText: 'Progress (%)',
+                              hintText: '0-100',
+                            ),
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value != null && value.trim().isNotEmpty) {
+                                final progress = double.tryParse(value);
+                                if (progress == null ||
+                                    progress < 0 ||
+                                    progress > 100) {
+                                  return 'Progress must be between 0 and 100';
+                                }
+                              }
+                              return null;
+                            },
                           ),
                         ),
                       ],
                     ),
                   ),
-                if (widget.project.createdBy != null &&
-                    widget.project.createdBy!.isNotEmpty)
                   const SizedBox(height: AppTheme.spacingMD),
 
-                // Sq Feet
-                TextFormField(
-                  controller: _sqfeetController,
-                  decoration: const InputDecoration(
-                    labelText: 'Square Feet',
-                    hintText: 'Enter area in sqft',
+                  // Lead Selection (Searchable Dropdown)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Lead',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                      ),
+                      const SizedBox(height: AppTheme.spacingXS),
+                      _buildLeadSearchDropdown(),
+                    ],
                   ),
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: AppTheme.spacingXL),
+                  const SizedBox(height: AppTheme.spacingMD),
 
-                // Save Button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () {
-                              Navigator.pop(context);
-                            },
-                      child: const Text('Cancel'),
+                  // Created By (Read-only info)
+                  if (widget.project.createdBy != null &&
+                      widget.project.createdBy!.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(AppTheme.spacingMD),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceElevated,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                        border: Border.all(color: AppTheme.borderLight),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.person,
+                              size: 20, color: AppTheme.textSecondary),
+                          const SizedBox(width: AppTheme.spacingSM),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Created By',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                ),
+                                Text(
+                                  widget.project.createdBy!,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: AppTheme.spacingMD),
-                    ElevatedButton(
-                      onPressed: _isLoading ? null : _saveProject,
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Update Project'),
+                  if (widget.project.createdBy != null &&
+                      widget.project.createdBy!.isNotEmpty)
+                    const SizedBox(height: AppTheme.spacingMD),
+
+                  // Sq Feet
+                  TextFormField(
+                    controller: _sqfeetController,
+                    decoration: const InputDecoration(
+                      labelText: 'Square Feet',
+                      hintText: 'Enter area in sqft',
                     ),
-                  ],
-                ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: AppTheme.spacingXL),
+
+                  // Save Button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: _isLoading
+                            ? null
+                            : () {
+                                Navigator.pop(context);
+                              },
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: AppTheme.spacingMD),
+                      ElevatedButton(
+                        onPressed: _isLoading ? null : _saveProject,
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('Update Project'),
+                      ),
+                    ],
+                  ),
               ],
             ),
           ),
@@ -771,6 +865,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
         // Search field
         TextField(
           controller: _leadSearchController,
+          focusNode: _leadSearchFocusNode,
           decoration: InputDecoration(
             hintText: 'Search by lead ID or name...',
             prefixIcon: const Icon(Icons.search),
@@ -778,103 +873,148 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                 ? IconButton(
                     icon: const Icon(Icons.clear),
                     onPressed: () {
-                      _leadSearchController.clear();
-                      _filterLeads('');
+                      setState(() {
+                        _leadSearchController.clear();
+                        _filterLeads('');
+                        _selectedLead = null;
+                        _selectedLeadId = null;
+                        _showLeadDropdown = true;
+                        _filteredLeads = _leads;
+                      });
+                      _leadSearchFocusNode.requestFocus();
                     },
                   )
                 : null,
           ),
-          onChanged: _filterLeads,
+          onChanged: (value) {
+            _filterLeads(value);
+            setState(() {
+              _showLeadDropdown = true;
+            });
+          },
+          onTap: () {
+            setState(() {
+              _showLeadDropdown = true;
+              // Show all leads when clicking on empty field or when no lead is selected
+              if (_leadSearchController.text.isEmpty || _selectedLead == null) {
+                _filteredLeads = _leads;
+                _filterLeads('');
+              }
+            });
+            // Request focus to ensure dropdown stays visible
+            _leadSearchFocusNode.requestFocus();
+          },
         ),
-        const SizedBox(height: AppTheme.spacingSM),
-        // Dropdown with filtered results
-        Container(
-          constraints: const BoxConstraints(maxHeight: 200),
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            border: Border.all(color: AppTheme.borderLight),
+        // Dropdown with filtered results - only show when focused or clicked
+        if (_showLeadDropdown) ...[
+          const SizedBox(height: AppTheme.spacingSM),
+          Material(
+            elevation: 4,
             borderRadius: BorderRadius.circular(AppTheme.radiusMD),
-          ),
-          child: _isLoadingLeads
-              ? const Padding(
-                  padding: EdgeInsets.all(AppTheme.spacingMD),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              : _filteredLeads.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.all(AppTheme.spacingMD),
-                      child: Text(
-                        'No leads found',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    )
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: _filteredLeads.length,
-                      itemBuilder: (context, index) {
-                        final lead = _filteredLeads[index];
-                        final isSelected = _selectedLead?.leadId == lead.leadId;
-                        return InkWell(
-                          onTap: () {
-                            setState(() {
-                              _selectedLead = lead;
-                              _selectedLeadId = int.tryParse(lead.leadId);
-                              _leadSearchController.text =
-                                  '${lead.leadId} - ${lead.name}';
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(AppTheme.spacingMD),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppTheme.primaryBlue.withOpacity(0.1)
-                                  : Colors.transparent,
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: AppTheme.borderLight,
-                                  width: 0.5,
+            child: Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                border: Border.all(color: AppTheme.borderLight),
+                borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+              ),
+            child: _isLoadingLeads
+                ? const Padding(
+                    padding: EdgeInsets.all(AppTheme.spacingMD),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : _filteredLeads.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.all(AppTheme.spacingMD),
+                        child: Text(
+                          'No leads found',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const ClampingScrollPhysics(),
+                        itemCount: _filteredLeads.length,
+                        itemBuilder: (context, index) {
+                          final lead = _filteredLeads[index];
+                          final isSelected =
+                              _selectedLead?.leadId == lead.leadId;
+                          return GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {
+                              // Prevent focus listener from interfering
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                setState(() {
+                                  _selectedLead = lead;
+                                  _selectedLeadId = int.tryParse(lead.leadId);
+                                  _leadSearchController.text =
+                                      '${lead.leadId} - ${lead.name}';
+                                  _showLeadDropdown = false;
+                                });
+                                // Unfocus after a small delay to allow state update
+                                Future.delayed(const Duration(milliseconds: 100), () {
+                                  if (mounted) {
+                                    _leadSearchFocusNode.unfocus();
+                                  }
+                                });
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(AppTheme.spacingMD),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppTheme.primaryBlue.withOpacity(0.1)
+                                    : Colors.transparent,
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: AppTheme.borderLight,
+                                    width: 0.5,
+                                  ),
                                 ),
                               ),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'ID: ${lead.leadId}',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        lead.name,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall,
-                                      ),
-                                    ],
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'ID: ${lead.leadId}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          lead.name,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                if (isSelected)
-                                  Icon(
-                                    Icons.check_circle,
-                                    color: AppTheme.primaryBlue,
-                                    size: 20,
-                                  ),
-                              ],
+                                  if (isSelected)
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: AppTheme.primaryBlue,
+                                      size: 20,
+                                    ),
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
-        ),
+                          );
+                        },
+                      ),
+            ),
+          ),
+        ],
         if (_selectedLead != null) ...[
           const SizedBox(height: AppTheme.spacingSM),
           Container(
@@ -907,7 +1047,11 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                       _selectedLead = null;
                       _selectedLeadId = null;
                       _leadSearchController.clear();
+                      _filterLeads('');
+                      _showLeadDropdown = true;
+                      _filteredLeads = _leads;
                     });
+                    _leadSearchFocusNode.requestFocus();
                   },
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),

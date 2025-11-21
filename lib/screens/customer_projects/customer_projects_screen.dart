@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/responsive_utils.dart';
 import '../../models/customer_project.dart';
+import '../../models/lead.dart';
 import '../../services/crm_service.dart';
 import '../../widgets/components/status_indicator.dart';
 import 'add_customer_project_screen.dart';
@@ -17,6 +18,7 @@ class CustomerProjectsScreen extends StatefulWidget {
 
 class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
   List<CustomerProject> projects = [];
+  List<Lead> leads = [];
   bool isLoading = true;
   String? errorMessage;
   final CRMService _crmService = CRMService();
@@ -24,21 +26,26 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadProjects();
+    _loadData();
   }
 
-  Future<void> _loadProjects() async {
+  Future<void> _loadData() async {
     try {
       setState(() {
         isLoading = true;
         errorMessage = null;
       });
 
-      final loadedProjects = await _crmService.getAllCustomerProjects();
+      // Load projects and leads in parallel
+      final results = await Future.wait([
+        _crmService.getAllCustomerProjects(),
+        _crmService.getAllLeads(),
+      ]);
 
       if (mounted) {
         setState(() {
-          projects = loadedProjects;
+          projects = results[0] as List<CustomerProject>;
+          leads = results[1] as List<Lead>;
           isLoading = false;
         });
       }
@@ -49,6 +56,22 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
           errorMessage = _getErrorMessage(e);
         });
       }
+    }
+  }
+
+  Future<void> _loadProjects() async {
+    await _loadData();
+  }
+
+  String _getCustomerName(int? leadId) {
+    if (leadId == null) return 'N/A';
+    try {
+      final lead = leads.firstWhere(
+        (l) => int.tryParse(l.leadId) == leadId,
+      );
+      return lead.name;
+    } catch (e) {
+      return 'N/A';
     }
   }
 
@@ -237,7 +260,7 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
                         )
                       : RefreshIndicator(
                           onRefresh: _refreshProjects,
-                          child: _buildProjectsTable(),
+                          child: _buildProjectsCards(),
                         ),
             ),
           ],
@@ -246,136 +269,166 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
     );
   }
 
-  Widget _buildProjectsTable() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: SingleChildScrollView(
-        child: DataTable(
-          columns: const [
-            DataColumn(label: Text('Code')),
-            DataColumn(label: Text('Name')),
-            DataColumn(label: Text('Location')),
-            DataColumn(label: Text('Phase')),
-            DataColumn(label: Text('Progress')),
-            DataColumn(label: Text('Start Date')),
-            DataColumn(label: Text('End Date')),
-            DataColumn(label: Text('Sq. Feet')),
-            DataColumn(label: Text('Actions'), numeric: false),
-          ],
-          rows: projects.map((project) {
-            return DataRow(
-              cells: [
-                DataCell(Text(project.code ?? 'N/A')),
-                DataCell(
-                  Tooltip(
-                    message: project.name,
-                    child: SizedBox(
-                      width: 150,
-                      child: Text(
-                        project.name,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
+  Widget _buildProjectsCards() {
+    if (projects.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return ResponsiveLayout(
+      mobile: ListView.builder(
+        padding: const EdgeInsets.all(AppTheme.spacingMD),
+        itemCount: projects.length,
+        itemBuilder: (context, index) {
+          return _buildProjectCard(projects[index]);
+        },
+      ),
+      desktop: GridView.builder(
+        padding: const EdgeInsets.all(AppTheme.spacingMD),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: AppTheme.spacingMD,
+          mainAxisSpacing: AppTheme.spacingMD,
+          childAspectRatio: 1.2,
+        ),
+        itemCount: projects.length,
+        itemBuilder: (context, index) {
+          return _buildProjectCard(projects[index]);
+        },
+      ),
+    );
+  }
+
+  Widget _buildProjectCard(CustomerProject project) {
+    final customerName = _getCustomerName(project.leadId);
+    final progress = project.progress ?? 0.0;
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+        side: BorderSide(color: AppTheme.borderLight, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spacingMD),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Customer Name
+            Row(
+              children: [
+                Icon(
+                  Icons.person_outline,
+                  size: 20,
+                  color: AppTheme.primaryBlue,
                 ),
-                DataCell(
-                  Tooltip(
-                    message: project.location,
-                    child: SizedBox(
-                      width: 150,
-                      child: Text(
-                        project.location,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  project.projectPhase != null
-                      ? StatusIndicator(
-                          label: project.projectPhase!,
-                          type: _getPhaseType(project.projectPhase!),
-                          compact: true,
-                        )
-                      : const Text('N/A'),
-                ),
-                DataCell(
-                  project.progress != null
-                      ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              width: 60,
-                              child: LinearProgressIndicator(
-                                value:
-                                    (project.progress! / 100).clamp(0.0, 1.0),
-                                backgroundColor: AppTheme.borderLight,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  _getProgressColor(project.progress!),
-                                ),
-                                minHeight: 6,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(_formatProgress(project.progress)),
-                          ],
-                        )
-                      : const Text('N/A'),
-                ),
-                DataCell(Text(_formatDate(project.startDate))),
-                DataCell(Text(_formatDate(project.endDate))),
-                DataCell(Text(
-                  project.sqfeet != null
-                      ? '${project.sqfeet!.toStringAsFixed(0)} sqft'
-                      : 'N/A',
-                )),
-                DataCell(
-                  Wrap(
-                    spacing: 4,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, size: 18),
-                        color: AppTheme.primaryBlue,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => EditCustomerProjectScreen(
-                                project: project,
-                              ),
-                            ),
-                          );
-                          if (result == true) {
-                            _loadProjects();
-                          }
-                        },
-                        tooltip: 'Edit',
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, size: 18),
-                        color: AppTheme.statusError,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () => _deleteProject(project),
-                        tooltip: 'Delete',
-                      ),
-                    ],
+                const SizedBox(width: AppTheme.spacingSM),
+                Expanded(
+                  child: Text(
+                    customerName,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
-            );
-          }).toList(),
-          headingRowHeight: 56,
-          dataRowMinHeight: 52,
-          dataRowMaxHeight: 72,
-          headingRowColor: WidgetStateProperty.all(AppTheme.surfaceElevated),
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            border: Border.all(color: AppTheme.borderLight, width: 1),
-            borderRadius: BorderRadius.circular(AppTheme.radiusMD),
-          ),
+            ),
+            const SizedBox(height: AppTheme.spacingMD),
+
+            // Location
+            Row(
+              children: [
+                Icon(
+                  Icons.location_on_outlined,
+                  size: 18,
+                  color: AppTheme.textSecondary,
+                ),
+                const SizedBox(width: AppTheme.spacingSM),
+                Expanded(
+                  child: Text(
+                    project.location,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppTheme.textSecondary,
+                        ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppTheme.spacingLG),
+
+            // Progress Bar
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Progress',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.textSecondary,
+                          ),
+                    ),
+                    Text(
+                      _formatProgress(project.progress),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: _getProgressColor(progress),
+                          ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppTheme.spacingXS),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                  child: LinearProgressIndicator(
+                    value: (progress / 100).clamp(0.0, 1.0),
+                    minHeight: 8,
+                    backgroundColor: AppTheme.borderLight,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      _getProgressColor(progress),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppTheme.spacingMD),
+
+            // Actions
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit, size: 20),
+                  color: AppTheme.primaryBlue,
+                  onPressed: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditCustomerProjectScreen(
+                          project: project,
+                        ),
+                      ),
+                    );
+                    if (result == true) {
+                      _loadProjects();
+                    }
+                  },
+                  tooltip: 'Edit',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, size: 20),
+                  color: AppTheme.statusError,
+                  onPressed: () => _deleteProject(project),
+                  tooltip: 'Delete',
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

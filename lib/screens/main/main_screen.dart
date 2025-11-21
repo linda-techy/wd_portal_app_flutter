@@ -5,6 +5,7 @@ import 'package:admin/screens/dashboard/dashboard_screen.dart';
 import 'package:admin/screens/leads/leads_screen.dart';
 import 'package:admin/screens/customers/customers_screen.dart';
 import 'package:admin/screens/customer_projects/customer_projects_screen.dart';
+import 'package:admin/screens/portal_users/portal_users_screen.dart';
 import 'package:admin/screens/clients/clients_screen.dart';
 import 'package:admin/screens/projects/projects_screen.dart';
 import 'package:admin/screens/quotations/quotations_screen.dart';
@@ -38,6 +39,7 @@ class _MainScreenState extends State<MainScreen> {
     const LeadsScreen(),
     const CustomersScreen(),
     const CustomerProjectsScreen(),
+    const PortalUsersScreen(),
     const ClientsScreen(),
     const ProjectsScreen(),
     const QuotationsScreen(),
@@ -69,28 +71,30 @@ class _MainScreenState extends State<MainScreen> {
       case 3:
         return 'Customer Projects';
       case 4:
-        return 'Clients';
+        return 'Portal Users';
       case 5:
-        return 'Projects';
+        return 'Clients';
       case 6:
-        return 'Quotations';
+        return 'Projects';
       case 7:
-        return 'Contracts';
+        return 'Quotations';
       case 8:
-        return 'Follow Ups';
+        return 'Contracts';
       case 9:
-        return 'Site Visits';
+        return 'Follow Ups';
       case 10:
-        return 'Tasks';
+        return 'Site Visits';
       case 11:
-        return 'Team Members';
+        return 'Tasks';
       case 12:
-        return 'Communication';
+        return 'Team Members';
       case 13:
-        return 'Documents';
+        return 'Communication';
       case 14:
-        return 'Invoices';
+        return 'Documents';
       case 15:
+        return 'Invoices';
+      case 16:
         return 'Reports';
       default:
         return 'Dashboard';

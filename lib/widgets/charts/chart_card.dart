@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../../theme/responsive_utils.dart';
 
 /// Chart Card Wrapper
 /// Provides consistent styling and layout for charts
@@ -38,33 +39,58 @@ class ChartCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: AppTheme.spacingXS),
+          ResponsiveLayout(
+            mobile: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: AppTheme.spacingXS),
+                  Text(
+                    subtitle!,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+                if (actions != null) ...[
+                  const SizedBox(height: AppTheme.spacingSM),
+                  Wrap(
+                    spacing: AppTheme.spacingSM,
+                    children: actions!,
+                  ),
+                ],
+              ],
+            ),
+            desktop: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        subtitle!,
-                        style: Theme.of(context).textTheme.bodySmall,
+                        title,
+                        style: Theme.of(context).textTheme.headlineMedium,
                       ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: AppTheme.spacingXS),
+                        Text(
+                          subtitle!,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              if (actions != null)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: actions!,
-                ),
-            ],
+                if (actions != null)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: actions!,
+                  ),
+              ],
+            ),
           ),
           
           const SizedBox(height: AppTheme.spacingLG),

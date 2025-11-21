@@ -106,20 +106,35 @@ class ApiService {
                 'Server returned HTML instead of JSON. Please check if the API server is running on ${ApiConfig.fullApiUrl}');
           }
 
-          // Handle specific status codes
+          // Extract error message from response if available
+          String errorMessage = 'An error occurred';
+          if (responseData is Map) {
+            errorMessage = responseData['error']?.toString() ??
+                responseData['message']?.toString() ??
+                errorMessage;
+          } else if (responseData is String) {
+            errorMessage = responseData;
+          }
+
+          // Handle specific status codes with user-friendly messages
           switch (statusCode) {
             case 400:
-              return Exception('Bad Request: Invalid data provided');
+              return Exception('Invalid request: $errorMessage');
             case 401:
-              return Exception('Unauthorized: Please log in again');
+              return Exception('Authentication required. Please log in again.');
             case 403:
               return Exception(
-                  'Forbidden: You do not have permission to access this resource');
+                  'You do not have permission to perform this action.');
             case 404:
+              return Exception('The requested resource was not found.');
+            case 409:
               return Exception(
-                  'Not Found: The requested resource was not found');
+                  'This resource already exists. Please check and try again.');
+            case 422:
+              return Exception('Invalid data provided: $errorMessage');
             case 500:
-              return Exception('Internal Server Error: Please try again later');
+              return Exception(
+                  'Server error occurred. Please try again later.');
             case 502:
               return Exception(
                   'Bad Gateway: Server is temporarily unavailable');
@@ -127,7 +142,7 @@ class ApiService {
               return Exception(
                   'Service Unavailable: Server is under maintenance');
             default:
-              return Exception('Server error: $statusCode');
+              return Exception('Server error ($statusCode): $errorMessage');
           }
         case DioExceptionType.connectionError:
           return Exception(

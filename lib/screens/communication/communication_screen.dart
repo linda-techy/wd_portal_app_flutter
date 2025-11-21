@@ -5,10 +5,10 @@ class CommunicationScreen extends StatefulWidget {
   const CommunicationScreen({super.key});
 
   @override
-  _CommunicationScreenState createState() => _CommunicationScreenState();
+  CommunicationScreenState createState() => CommunicationScreenState();
 }
 
-class _CommunicationScreenState extends State<CommunicationScreen> {
+class CommunicationScreenState extends State<CommunicationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(

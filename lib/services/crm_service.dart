@@ -6,6 +6,8 @@ import 'package:admin/models/customer_role.dart';
 import 'package:admin/models/customer_project.dart';
 import 'package:admin/models/project.dart';
 import 'package:admin/models/lead.dart';
+import 'package:admin/models/portal_user.dart';
+import 'package:admin/models/role.dart';
 import 'package:admin/models/paginated_response.dart';
 import 'package:admin/models/pagination_params.dart';
 import 'package:admin/services/api_service.dart';
@@ -467,6 +469,67 @@ class CRMService {
       return response.data;
     } catch (e) {
       throw Exception('Failed to fetch project progress summary: $e');
+    }
+  }
+
+  // =====================================================
+  // PORTAL USERS
+  // =====================================================
+
+  Future<List<PortalUser>> getAllPortalUsers() async {
+    try {
+      final response = await _apiService.get('/portal-users');
+      final List<dynamic> data = response.data;
+      return data.map((json) => PortalUser.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Failed to fetch portal users: $e');
+    }
+  }
+
+  Future<PortalUser> getPortalUserById(int id) async {
+    try {
+      final response = await _apiService.get('/portal-users/$id');
+      return PortalUser.fromJson(response.data);
+    } catch (e) {
+      throw Exception('Failed to fetch portal user: $e');
+    }
+  }
+
+  Future<PortalUser> createPortalUser(PortalUser user) async {
+    try {
+      final response =
+          await _apiService.post('/portal-users', user.toCreateJson());
+      return PortalUser.fromJson(response.data);
+    } catch (e) {
+      throw Exception('Failed to create portal user: $e');
+    }
+  }
+
+  Future<PortalUser> updatePortalUser(int id, PortalUser user) async {
+    try {
+      final response =
+          await _apiService.put('/portal-users/$id', user.toUpdateJson());
+      return PortalUser.fromJson(response.data);
+    } catch (e) {
+      throw Exception('Failed to update portal user: $e');
+    }
+  }
+
+  Future<void> deletePortalUser(int id) async {
+    try {
+      await _apiService.delete('/portal-users/$id');
+    } catch (e) {
+      throw Exception('Failed to delete portal user: $e');
+    }
+  }
+
+  Future<List<PortalRole>> getPortalRoles() async {
+    try {
+      final response = await _apiService.get('/portal-users/roles');
+      final List<dynamic> data = response.data;
+      return data.map((json) => PortalRole.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Failed to fetch portal roles: $e');
     }
   }
 }

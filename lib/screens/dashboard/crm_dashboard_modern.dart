@@ -95,8 +95,20 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
 
     final monthlyRevenue = <Map<String, dynamic>>[];
     final currentYear = DateTime.now().year;
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
 
     for (int i = 0; i < 12; i++) {
       final monthRevenue = leads
@@ -167,33 +179,54 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
+                padding: ResponsiveUtils.responsivePadding(context),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Header
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'CRM Dashboard',
-                          style: Theme.of(context).textTheme.displaySmall,
-                        ),
-                        ElevatedButton.icon(
-                          onPressed: _loadDashboardData,
-                          icon: const Icon(Icons.refresh, size: 18),
-                          label: const Text('Refresh'),
-                        ),
-                      ],
+                    ResponsiveLayout(
+                      mobile: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'CRM Dashboard',
+                            style: Theme.of(context).textTheme.headlineMedium,
+                          ),
+                          const SizedBox(height: AppTheme.spacingMD),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _loadDashboardData,
+                              icon: const Icon(Icons.refresh, size: 18),
+                              label: const Text('Refresh'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      desktop: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'CRM Dashboard',
+                            style: Theme.of(context).textTheme.displaySmall,
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: _loadDashboardData,
+                            icon: const Icon(Icons.refresh, size: 18),
+                            label: const Text('Refresh'),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: AppTheme.spacingLG),
 
                     // Key Metrics Cards - Using new MetricCard component
                     ResponsiveLayout(
                       mobile: Column(
-                        children: _buildMetricsCards(),
+                        children: _buildMetricsCardsMobile(),
                       ),
                       desktop: Row(
-                        children: _buildMetricsCards(),
+                        children: _buildMetricsCardsDesktop(),
                       ),
                     ),
                     const SizedBox(height: AppTheme.spacingLG),
@@ -233,7 +266,52 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
     );
   }
 
-  List<Widget> _buildMetricsCards() {
+  List<Widget> _buildMetricsCardsMobile() {
+    final totalLeads = dashboardMetrics['totalLeads'] ?? 0;
+    final totalClients = dashboardMetrics['totalClients'] ?? 0;
+    final totalProjects = dashboardMetrics['totalProjects'] ?? 0;
+    final totalRevenue = dashboardMetrics['totalRevenue'] ?? 0.0;
+
+    return [
+      MetricCard(
+        label: 'Total Leads',
+        value: '$totalLeads',
+        change: '+12% this month',
+        isPositive: true,
+        icon: Icons.people_outline,
+        accentColor: AppTheme.primaryBlue,
+      ),
+      const SizedBox(height: AppTheme.spacingMD),
+      MetricCard(
+        label: 'Total Clients',
+        value: '$totalClients',
+        change: '+5% this month',
+        isPositive: true,
+        icon: Icons.person_outline,
+        accentColor: AppTheme.statusSuccess,
+      ),
+      const SizedBox(height: AppTheme.spacingMD),
+      MetricCard(
+        label: 'Active Projects',
+        value: '$totalProjects',
+        change: '3 new',
+        isPositive: true,
+        icon: Icons.work_outline,
+        accentColor: AppTheme.safetyOrange,
+      ),
+      const SizedBox(height: AppTheme.spacingMD),
+      MetricCard(
+        label: 'Total Revenue',
+        value: '₹${(totalRevenue / 1000000).toStringAsFixed(1)}M',
+        change: '+18% this month',
+        isPositive: true,
+        icon: Icons.attach_money,
+        accentColor: AppTheme.statusSuccess,
+      ),
+    ];
+  }
+
+  List<Widget> _buildMetricsCardsDesktop() {
     final totalLeads = dashboardMetrics['totalLeads'] ?? 0;
     final totalClients = dashboardMetrics['totalClients'] ?? 0;
     final totalProjects = dashboardMetrics['totalProjects'] ?? 0;
@@ -289,13 +367,18 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
   Widget _buildLeadsPieChart() {
     final leadsByStatus =
         dashboardMetrics['leadsByStatus'] as Map<String, dynamic>? ?? {};
+    final isMobile = ResponsiveUtils.isMobile(context);
+    final radius = isMobile ? 30.0 : 50.0;
+    final centerSpaceRadius = isMobile ? 30.0 : 50.0;
+    final titleFontSize = isMobile ? 9.0 : 11.0;
+
     final data = leadsByStatus.entries.map((entry) {
       return PieChartSectionData(
         value: entry.value.toDouble(),
-        title: '${entry.key}\n${entry.value}',
-        radius: 50,
-        titleStyle: const TextStyle(
-          fontSize: 11,
+        title: isMobile ? '${entry.value}' : '${entry.key}\n${entry.value}',
+        radius: radius,
+        titleStyle: TextStyle(
+          fontSize: titleFontSize,
           fontWeight: FontWeight.w600,
           color: Colors.white,
         ),
@@ -306,11 +389,11 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
     return ChartCard(
       title: 'Leads by Status',
       subtitle: 'Distribution of leads across different stages',
-      height: 300,
+      height: isMobile ? 250 : 300,
       chart: PieChart(
         PieChartData(
           sections: data,
-          centerSpaceRadius: 50,
+          centerSpaceRadius: centerSpaceRadius,
           sectionsSpace: 2,
         ),
       ),
@@ -320,11 +403,12 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
   Widget _buildProjectProgressChart() {
     final projectProgress =
         dashboardMetrics['projectProgress'] as List<dynamic>? ?? [];
+    final isMobile = ResponsiveUtils.isMobile(context);
 
     return ChartCard(
       title: 'Project Progress',
       subtitle: 'Projects by status',
-      height: 300,
+      height: isMobile ? 250 : 300,
       chart: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: projectProgress.map((item) {
@@ -371,11 +455,12 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
   Widget _buildRevenueChart() {
     final monthlyRevenue =
         dashboardMetrics['monthlyRevenue'] as List<dynamic>? ?? [];
+    final isMobile = ResponsiveUtils.isMobile(context);
 
     return ChartCard(
       title: 'Monthly Revenue Trend',
       subtitle: 'Revenue growth over the last 6 months',
-      height: 300,
+      height: isMobile ? 250 : 300,
       chart: LineChart(
         LineChartData(
           gridData: FlGridData(
@@ -393,11 +478,13 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 50,
+                reservedSize: isMobile ? 40 : 50,
                 getTitlesWidget: (value, meta) {
                   return Text(
                     '₹${(value / 1000).toStringAsFixed(0)}K',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontSize: isMobile ? 10 : 12,
+                        ),
                   );
                 },
               ),
@@ -405,11 +492,14 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
+                reservedSize: isMobile ? 30 : 40,
                 getTitlesWidget: (value, meta) {
                   if (value.toInt() < monthlyRevenue.length) {
                     return Text(
                       monthlyRevenue[value.toInt()]['month'],
-                      style: Theme.of(context).textTheme.bodySmall,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontSize: isMobile ? 10 : 12,
+                          ),
                     );
                   }
                   return const Text('');
@@ -478,4 +568,3 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
     return AppTheme.statusError;
   }
 }
-

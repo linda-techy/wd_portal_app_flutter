@@ -64,6 +64,7 @@ const String dashboardModule = 'Dashboard';
 const String leadsModule = 'Leads';
 const String customersModule = 'Customers';
 const String customerProjectsModule = 'Customer Projects';
+const String portalUsersModule = 'Portal Users';
 const String clientsModule = 'Clients';
 const String projectsModule = 'Projects';
 const String quotationsModule = 'Quotations';

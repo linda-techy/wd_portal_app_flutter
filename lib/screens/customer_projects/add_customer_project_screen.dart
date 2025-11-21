@@ -29,12 +29,14 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   DateTime? _endDate;
   String? _projectPhase = 'Planning'; // Default to Planning
   String? _state = 'Kerala'; // Default to Kerala
-  String? _district;
+  String? _district = 'Thrissur'; // Default to Thrissur
   Lead? _selectedLead;
   List<Lead> _leads = [];
   List<Lead> _filteredLeads = [];
   bool _isLoadingLeads = false;
   bool _isLoading = false;
+  bool _showLeadDropdown = false;
+  final FocusNode _leadSearchFocusNode = FocusNode();
 
   final List<String> _projectPhases = [
     'Planning',
@@ -50,6 +52,30 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   void initState() {
     super.initState();
     _loadLeads();
+    _leadSearchFocusNode.addListener(() {
+      if (!_leadSearchFocusNode.hasFocus) {
+        // Only close dropdown when losing focus if no lead is selected
+        // Use a longer delay to ensure tap events on dropdown items are processed first
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted &&
+              !_leadSearchFocusNode.hasFocus &&
+              _selectedLead == null) {
+            setState(() {
+              _showLeadDropdown = false;
+            });
+          }
+        });
+      } else {
+        // When field gets focus, show dropdown
+        setState(() {
+          _showLeadDropdown = true;
+          // Show all leads when field gets focus
+          if (_leadSearchController.text.isEmpty) {
+            _filteredLeads = _leads;
+          }
+        });
+      }
+    });
   }
 
   @override
@@ -58,6 +84,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
     _locationController.dispose();
     _sqfeetController.dispose();
     _leadSearchController.dispose();
+    _leadSearchFocusNode.dispose();
     super.dispose();
   }
 
@@ -159,7 +186,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
         // createdBy will be auto-captured by backend
         projectPhase: _projectPhase ?? 'Planning',
         state: _state ?? 'Kerala',
-        district: _district,
+        district: _district ?? 'Thrissur', // Default to Thrissur if null
         sqfeet: _sqfeetController.text.trim().isNotEmpty
             ? double.tryParse(_sqfeetController.text.trim())
             : null,
@@ -202,6 +229,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
       ),
       body: AdaptiveContainer(
         child: SingleChildScrollView(
+          padding: ResponsiveUtils.responsivePadding(context),
           child: Form(
             key: _formKey,
             child: Column(
@@ -283,17 +311,30 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                           labelText: 'State',
                           hintText: 'Select state',
                         ),
+                        isExpanded: true,
                         items: IndiaLocationData.states.map((state) {
                           return DropdownMenuItem(
                             value: state,
-                            child: Text(state),
+                            child: Text(
+                              state,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           );
                         }).toList(),
+                        selectedItemBuilder: (BuildContext context) {
+                          return IndiaLocationData.states.map((state) {
+                            return Text(
+                              state,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            );
+                          }).toList();
+                        },
                         onChanged: (value) {
                           setState(() {
                             _state = value;
-                            _district =
-                                null; // Reset district when state changes
+                            _district = 'Thrissur'; // Reset district to default when state changes
                           });
                         },
                       ),
@@ -304,15 +345,32 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                           labelText: 'District',
                           hintText: 'Select district',
                         ),
+                        isExpanded: true,
                         items: (_state != null
                                 ? IndiaLocationData.getDistricts(_state!)
                                 : <String>[])
                             .map<DropdownMenuItem<String>>((district) {
                           return DropdownMenuItem<String>(
                             value: district,
-                            child: Text(district),
+                            child: Text(
+                              district,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           );
                         }).toList(),
+                        selectedItemBuilder: (BuildContext context) {
+                          return (_state != null
+                                  ? IndiaLocationData.getDistricts(_state!)
+                                  : <String>[])
+                              .map((district) {
+                            return Text(
+                              district,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            );
+                          }).toList();
+                        },
                         onChanged: _state != null
                             ? (value) {
                                 setState(() {
@@ -332,16 +390,30 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                             labelText: 'State',
                             hintText: 'Select state',
                           ),
+                          isExpanded: true,
                           items: IndiaLocationData.states.map((state) {
                             return DropdownMenuItem(
                               value: state,
-                              child: Text(state),
+                              child: Text(
+                                state,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
                             );
                           }).toList(),
+                          selectedItemBuilder: (BuildContext context) {
+                            return IndiaLocationData.states.map((state) {
+                              return Text(
+                                state,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              );
+                            }).toList();
+                          },
                           onChanged: (value) {
                             setState(() {
                               _state = value;
-                              _district = null;
+                              _district = 'Thrissur'; // Reset district to default when state changes
                             });
                           },
                         ),
@@ -354,15 +426,32 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                             labelText: 'District',
                             hintText: 'Select district',
                           ),
+                          isExpanded: true,
                           items: (_state != null
                                   ? IndiaLocationData.getDistricts(_state!)
                                   : <String>[])
                               .map<DropdownMenuItem<String>>((district) {
                             return DropdownMenuItem<String>(
                               value: district,
-                              child: Text(district),
+                              child: Text(
+                                district,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
                             );
                           }).toList(),
+                          selectedItemBuilder: (BuildContext context) {
+                            return (_state != null
+                                    ? IndiaLocationData.getDistricts(_state!)
+                                    : <String>[])
+                                .map((district) {
+                              return Text(
+                                district,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              );
+                            }).toList();
+                          },
                           onChanged: _state != null
                               ? (value) {
                                   setState(() {
@@ -592,6 +681,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
         // Search field
         TextField(
           controller: _leadSearchController,
+          focusNode: _leadSearchFocusNode,
           decoration: InputDecoration(
             hintText: 'Search by lead ID or name...',
             prefixIcon: const Icon(Icons.search),
@@ -599,102 +689,149 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                 ? IconButton(
                     icon: const Icon(Icons.clear),
                     onPressed: () {
-                      _leadSearchController.clear();
-                      _filterLeads('');
+                      setState(() {
+                        _leadSearchController.clear();
+                        _filterLeads('');
+                        _selectedLead = null;
+                        _showLeadDropdown = true;
+                        _filteredLeads = _leads;
+                      });
+                      _leadSearchFocusNode.requestFocus();
                     },
                   )
                 : null,
           ),
-          onChanged: _filterLeads,
+          onChanged: (value) {
+            _filterLeads(value);
+            setState(() {
+              _showLeadDropdown = true;
+            });
+          },
+          onTap: () {
+            setState(() {
+              _showLeadDropdown = true;
+              // Show all leads when clicking on empty field or when no lead is selected
+              if (_leadSearchController.text.isEmpty || _selectedLead == null) {
+                _filteredLeads = _leads;
+                _filterLeads('');
+              }
+            });
+            // Request focus to ensure dropdown stays visible
+            _leadSearchFocusNode.requestFocus();
+          },
         ),
-        const SizedBox(height: AppTheme.spacingSM),
-        // Dropdown with filtered results
-        Container(
-          constraints: const BoxConstraints(maxHeight: 200),
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            border: Border.all(color: AppTheme.borderLight),
+        // Dropdown with filtered results - only show when focused or clicked
+        if (_showLeadDropdown) ...[
+          const SizedBox(height: AppTheme.spacingSM),
+          Material(
+            elevation: 4,
             borderRadius: BorderRadius.circular(AppTheme.radiusMD),
-          ),
-          child: _isLoadingLeads
-              ? const Padding(
-                  padding: EdgeInsets.all(AppTheme.spacingMD),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              : _filteredLeads.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.all(AppTheme.spacingMD),
-                      child: Text(
-                        'No leads found',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
+            child: Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                border: Border.all(color: AppTheme.borderLight),
+                borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+              ),
+              child: _isLoadingLeads
+                  ? const Padding(
+                      padding: EdgeInsets.all(AppTheme.spacingMD),
+                      child: Center(child: CircularProgressIndicator()),
                     )
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: _filteredLeads.length,
-                      itemBuilder: (context, index) {
-                        final lead = _filteredLeads[index];
-                        final isSelected = _selectedLead?.leadId == lead.leadId;
-                        return InkWell(
-                          onTap: () {
-                            setState(() {
-                              _selectedLead = lead;
-                              _leadSearchController.text =
-                                  '${lead.leadId} - ${lead.name}';
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(AppTheme.spacingMD),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppTheme.primaryBlue.withOpacity(0.1)
-                                  : Colors.transparent,
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: AppTheme.borderLight,
-                                  width: 0.5,
+                  : _filteredLeads.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.all(AppTheme.spacingMD),
+                          child: Text(
+                            'No leads found',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        )
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          physics: const ClampingScrollPhysics(),
+                          itemCount: _filteredLeads.length,
+                          itemBuilder: (context, index) {
+                            final lead = _filteredLeads[index];
+                            final isSelected =
+                                _selectedLead?.leadId == lead.leadId;
+                            return GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                // Prevent focus listener from interfering
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((_) {
+                                  setState(() {
+                                    _selectedLead = lead;
+                                    _leadSearchController.text =
+                                        '${lead.leadId} - ${lead.name}';
+                                    _showLeadDropdown = false;
+                                  });
+                                  // Unfocus after a small delay to allow state update
+                                  Future.delayed(
+                                      const Duration(milliseconds: 100), () {
+                                    if (mounted) {
+                                      _leadSearchFocusNode.unfocus();
+                                    }
+                                  });
+                                });
+                              },
+                              child: Container(
+                                padding:
+                                    const EdgeInsets.all(AppTheme.spacingMD),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppTheme.primaryBlue.withOpacity(0.1)
+                                      : Colors.transparent,
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: AppTheme.borderLight,
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'ID: ${lead.leadId}',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            lead.name,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: AppTheme.primaryBlue,
+                                        size: 20,
+                                      ),
+                                  ],
                                 ),
                               ),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'ID: ${lead.leadId}',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        lead.name,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                if (isSelected)
-                                  Icon(
-                                    Icons.check_circle,
-                                    color: AppTheme.primaryBlue,
-                                    size: 20,
-                                  ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-        ),
+                            );
+                          },
+                        ),
+            ),
+          ),
+        ],
         if (_selectedLead != null) ...[
           const SizedBox(height: AppTheme.spacingSM),
           Container(
@@ -726,7 +863,11 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                     setState(() {
                       _selectedLead = null;
                       _leadSearchController.clear();
+                      _filterLeads('');
+                      _showLeadDropdown = true;
+                      _filteredLeads = _leads;
                     });
+                    _leadSearchFocusNode.requestFocus();
                   },
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
