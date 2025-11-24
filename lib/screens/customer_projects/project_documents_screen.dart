@@ -1,0 +1,555 @@
+import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:admin/models/customer_project.dart';
+import 'package:admin/models/project_document.dart';
+import 'package:admin/models/document_category.dart';
+import 'package:admin/services/project_module_service.dart';
+import 'package:admin/theme/app_theme.dart';
+import 'dart:io';
+
+class ProjectDocumentsScreen extends StatefulWidget {
+  final CustomerProject project;
+
+  const ProjectDocumentsScreen({
+    super.key,
+    required this.project,
+  });
+
+  @override
+  State<ProjectDocumentsScreen> createState() => _ProjectDocumentsScreenState();
+}
+
+class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
+  final ProjectModuleService _moduleService = ProjectModuleService();
+  List<ProjectDocument> _documents = [];
+  List<DocumentCategory> _categories = [];
+  DocumentCategory? _selectedCategory;
+  bool _isLoading = true;
+  bool _isUploading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final categories = await _moduleService.getDocumentCategories(widget.project.id!);
+      final documents = await _moduleService.getProjectDocuments(widget.project.id!);
+
+      setState(() {
+        _categories = categories;
+        _documents = documents;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading documents: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _uploadDocument() async {
+    if (_categories.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No document categories available')),
+      );
+      return;
+    }
+
+    // Show category selection dialog
+    final category = await showDialog<DocumentCategory>(
+      context: context,
+      builder: (context) => _CategorySelectionDialog(categories: _categories),
+    );
+
+    if (category == null) return;
+
+    // Pick file
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+      allowMultiple: false,
+    );
+
+    if (result == null || result.files.single.path == null) return;
+
+    final file = File(result.files.single.path!);
+    final description = await _showDescriptionDialog();
+
+    setState(() {
+      _isUploading = true;
+    });
+
+    try {
+      await _moduleService.uploadDocument(
+        widget.project.id!,
+        file,
+        category.id,
+        description,
+      );
+
+      // Reload documents
+      await _loadData();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Document uploaded successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error uploading document: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
+    }
+  }
+
+  Future<String?> _showDescriptionDialog() async {
+    String? description;
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Document Description (Optional)'),
+        content: TextField(
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: 'Enter description...',
+            border: OutlineInputBorder(),
+          ),
+          onChanged: (value) => description = value,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Skip'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+    return description;
+  }
+
+  List<ProjectDocument> get _filteredDocuments {
+    if (_selectedCategory == null) {
+      return _documents;
+    }
+    return _documents.where((doc) => doc.categoryId == _selectedCategory!.id).toList();
+  }
+
+  String _formatFileSize(int? fileSize) {
+    if (fileSize == null) return '';
+    if (fileSize < 1024) {
+      return '${fileSize} B';
+    } else if (fileSize < 1024 * 1024) {
+      return '${(fileSize / 1024).toStringAsFixed(1)} KB';
+    } else {
+      return '${(fileSize / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
+  }
+
+  IconData _getFileIcon(String? fileType) {
+    if (fileType == null) return Icons.insert_drive_file;
+    final lowerType = fileType.toLowerCase();
+    if (lowerType.contains('pdf')) {
+      return Icons.picture_as_pdf;
+    } else if (lowerType.contains('doc')) {
+      return Icons.description;
+    } else if (lowerType.contains('xls')) {
+      return Icons.table_chart;
+    } else if (lowerType.contains('zip') || lowerType.contains('rar')) {
+      return Icons.folder_zip;
+    } else if (lowerType.contains('image')) {
+      return Icons.image;
+    } else {
+      return Icons.insert_drive_file;
+    }
+  }
+
+  Color _getFileIconColor(String? fileType) {
+    if (fileType == null) return AppTheme.textSecondary;
+    final lowerType = fileType.toLowerCase();
+    if (lowerType.contains('pdf')) {
+      return Colors.red;
+    } else if (lowerType.contains('doc')) {
+      return Colors.blue;
+    } else if (lowerType.contains('xls')) {
+      return Colors.green;
+    } else if (lowerType.contains('zip') || lowerType.contains('rar')) {
+      return Colors.orange;
+    } else if (lowerType.contains('image')) {
+      return Colors.purple;
+    } else {
+      return AppTheme.textSecondary;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        title: Text('Documents - ${widget.project.name}'),
+        elevation: 0,
+        backgroundColor: AppTheme.surface,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                // Filter and Upload Section
+                Container(
+                  padding: const EdgeInsets.all(AppTheme.spacingMD),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surface,
+                    border: Border(
+                      bottom: BorderSide(color: AppTheme.borderLight),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      // Category Chips (Horizontal Scroll)
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildCategoryChip('All', null),
+                            const SizedBox(width: AppTheme.spacingSM),
+                            ..._categories.map((category) => Padding(
+                                  padding: const EdgeInsets.only(
+                                      right: AppTheme.spacingSM),
+                                  child: _buildCategoryChip(
+                                      category.name, category),
+                                )),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppTheme.spacingMD),
+                      // Upload Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _isUploading ? null : _uploadDocument,
+                          icon: _isUploading
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.upload),
+                          label: Text(_isUploading
+                              ? 'Uploading...'
+                              : 'Upload Document'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppTheme.spacingMD,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Documents List
+                Expanded(
+                  child: _filteredDocuments.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.description_outlined,
+                                size: 64,
+                                color: AppTheme.textSecondary,
+                              ),
+                              const SizedBox(height: AppTheme.spacingMD),
+                              Text(
+                                'No documents found',
+                                style: TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: AppTheme.spacingSM),
+                              ElevatedButton.icon(
+                                onPressed: _uploadDocument,
+                                icon: const Icon(Icons.upload),
+                                label: const Text('Upload First Document'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _loadData,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(AppTheme.spacingMD),
+                            itemCount: _filteredDocuments.length,
+                            itemBuilder: (context, index) {
+                              final document = _filteredDocuments[index];
+                              return _buildDocumentCard(document);
+                            },
+                          ),
+                        ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  Widget _buildDocumentCard(ProjectDocument doc) {
+    final icon = _getFileIcon(doc.fileType);
+    final iconColor = _getFileIconColor(doc.fileType);
+    final sizeStr = _formatFileSize(doc.fileSize);
+    final dateStr = 'Uploaded on ${_formatDate(doc.uploadDate)}';
+
+    return GestureDetector(
+      onTap: () {
+        // Open document - you can use url_launcher or a file viewer
+        _openDocument(doc);
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: AppTheme.spacingMD),
+        padding: const EdgeInsets.all(AppTheme.spacingMD),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: AppTheme.surface,
+          border: Border.all(color: AppTheme.borderLight),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // File Icon
+            Container(
+              padding: const EdgeInsets.all(AppTheme.spacingMD),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: 32,
+              ),
+            ),
+            const SizedBox(width: AppTheme.spacingMD),
+            // File Details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    doc.filename,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${doc.categoryName} • ${doc.fileType?.toUpperCase() ?? 'FILE'}${sizeStr.isNotEmpty ? ' • $sizeStr' : ''}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppTheme.textSecondary,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$dateStr • ${doc.uploadedByName}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppTheme.textSecondary,
+                          fontSize: 11,
+                        ),
+                  ),
+                  if (doc.description != null && doc.description!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      doc.description!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.textSecondary,
+                            fontStyle: FontStyle.italic,
+                          ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            // Actions Menu
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              onSelected: (value) async {
+                switch (value) {
+                  case 'download':
+                    _downloadDocument(doc);
+                    break;
+                  case 'view':
+                    _openDocument(doc);
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'view',
+                  child: Row(
+                    children: [
+                      Icon(Icons.visibility, size: 20),
+                      SizedBox(width: 8),
+                      Text('View'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'download',
+                  child: Row(
+                    children: [
+                      Icon(Icons.download, size: 20),
+                      SizedBox(width: 8),
+                      Text('Download'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openDocument(ProjectDocument doc) {
+    // Open document in browser or viewer
+    // final url = _moduleService.getDownloadUrl(doc.filePath);
+    // You can use url_launcher package here
+    // launchUrl(Uri.parse(url));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Opening ${doc.filename}...'),
+        action: SnackBarAction(
+          label: 'Copy URL',
+          onPressed: () {
+            // Copy URL to clipboard
+          },
+        ),
+      ),
+    );
+  }
+
+  void _downloadDocument(ProjectDocument doc) {
+    // final url = _moduleService.getDownloadUrl(doc.filePath);
+    // Implement download functionality
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Downloading ${doc.filename}...'),
+      ),
+    );
+  }
+
+  Widget _buildCategoryChip(String label, DocumentCategory? category) {
+    final isSelected = _selectedCategory == null && category == null ||
+        (_selectedCategory != null &&
+            category != null &&
+            _selectedCategory!.id == category.id);
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedCategory = category;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppTheme.spacingMD,
+          vertical: 8,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppTheme.primaryBlue
+              : AppTheme.surfaceElevated,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? AppTheme.primaryBlue
+                : AppTheme.borderLight,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppTheme.textPrimary,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CategorySelectionDialog extends StatelessWidget {
+  final List<DocumentCategory> categories;
+
+  const _CategorySelectionDialog({required this.categories});
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Select Category'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: categories.length,
+          itemBuilder: (context, index) {
+            final category = categories[index];
+            return ListTile(
+              title: Text(category.name),
+              subtitle: (category.description?.isNotEmpty ?? false)
+                  ? Text(category.description!)
+                  : null,
+              onTap: () => Navigator.pop(context, category),
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+      ],
+    );
+  }
+}
+

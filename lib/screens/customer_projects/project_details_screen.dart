@@ -4,6 +4,7 @@ import '../../theme/responsive_utils.dart';
 import '../../models/customer_project.dart';
 import '../../models/lead.dart';
 import '../../services/crm_service.dart';
+import 'project_documents_screen.dart';
 import 'package:intl/intl.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
@@ -567,21 +568,29 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   }
 
   void _navigateToModule(String moduleName, CustomerProject project) {
-    // Show a placeholder dialog for now
-    // TODO: Navigate to actual module screens when implemented
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(moduleName),
-        content: Text('${moduleName} module for "${project.name}" will be implemented soon.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+    if (moduleName == 'Documents') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProjectDocumentsScreen(project: project),
+        ),
+      );
+    } else {
+      // Show a placeholder dialog for other modules
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(moduleName),
+          content: Text('${moduleName} module for "${project.name}" will be implemented soon.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 }
 
