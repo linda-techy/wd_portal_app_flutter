@@ -7,6 +7,7 @@ import '../../services/crm_service.dart';
 import '../../widgets/components/status_indicator.dart';
 import 'add_customer_project_screen.dart';
 import 'edit_customer_project_screen.dart';
+import 'project_details_screen.dart';
 import 'package:intl/intl.dart';
 
 class CustomerProjectsScreen extends StatefulWidget {
@@ -308,12 +309,22 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
         borderRadius: BorderRadius.circular(AppTheme.radiusMD),
         side: BorderSide(color: AppTheme.borderLight, width: 1),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacingMD),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProjectDetailsScreen(project: project),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.spacingMD),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
             // Customer Name
             Row(
               children: [
@@ -428,7 +439,8 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
                 ),
               ],
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
