@@ -1,0 +1,10 @@
+^N:\PROJECTS\WD PROJECTS GIT\WD_PORTAL_APP_FLUTTER\WINDOWS\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" "-SN:/Projects/wd projects git/wd_portal_app_flutter/windows" "-BN:/Projects/wd projects git/wd_portal_app_flutter/build/windows/x64" --check-stamp-file "N:/Projects/wd projects git/wd_portal_app_flutter/build/windows/x64/CMakeFiles/generate.stamp"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
