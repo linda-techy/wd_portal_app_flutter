@@ -15,7 +15,7 @@ import 'package:admin/screens/site_visits/site_visits_screen.dart';
 import 'package:admin/screens/tasks/tasks_screen.dart';
 import 'package:admin/screens/team_members/team_members_screen.dart';
 import 'package:admin/screens/communication/communication_screen.dart';
-import 'package:admin/screens/documents/documents_screen.dart';
+import 'package:admin/screens/documents/document_management_screen.dart';
 import 'package:admin/screens/invoices/invoices_screen.dart';
 import 'package:admin/screens/reports/reports_screen.dart';
 import 'package:flutter/material.dart';
@@ -49,7 +49,7 @@ class _MainScreenState extends State<MainScreen> {
     const TasksScreen(),
     const TeamMembersScreen(),
     const CommunicationScreen(),
-    const DocumentsScreen(),
+    const DocumentManagementScreen(),
     const InvoicesScreen(),
     const ReportsScreen(),
   ];

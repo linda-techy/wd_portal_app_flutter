@@ -27,7 +27,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
 
   DateTime? _startDate;
   DateTime? _endDate;
-  String? _projectPhase = 'Planning'; // Default to Planning
+  String? _projectPhase = 'Design'; // Default to Design
   String? _state = 'Kerala'; // Default to Kerala
   String? _district = 'Thrissur'; // Default to Thrissur
   Lead? _selectedLead;
@@ -39,11 +39,8 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   final FocusNode _leadSearchFocusNode = FocusNode();
 
   final List<String> _projectPhases = [
-    'Planning',
     'Design',
-    'Foundation',
     'Construction',
-    'Finishing',
     'Completed',
     'On Hold',
   ];
@@ -184,7 +181,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
         endDate: _endDate,
         progress: 0.0, // Default to 0
         // createdBy will be auto-captured by backend
-        projectPhase: _projectPhase ?? 'Planning',
+        projectPhase: _projectPhase ?? 'Design',
         state: _state ?? 'Kerala',
         district: _district ?? 'Thrissur', // Default to Thrissur if null
         sqfeet: _sqfeetController.text.trim().isNotEmpty
@@ -579,11 +576,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                       child: Text(phase),
                     );
                   }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _projectPhase = value;
-                    });
-                  },
+                  onChanged: null, // Disable selection
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Project phase is required';

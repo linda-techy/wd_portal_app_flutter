@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/responsive_utils.dart';
 import '../../models/customer_project.dart';
-import '../../models/lead.dart';
 import '../../services/crm_service.dart';
 import '../../widgets/components/status_indicator.dart';
 import 'add_customer_project_screen.dart';
@@ -19,7 +18,6 @@ class CustomerProjectsScreen extends StatefulWidget {
 
 class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
   List<CustomerProject> projects = [];
-  List<Lead> leads = [];
   bool isLoading = true;
   String? errorMessage;
   final CRMService _crmService = CRMService();
@@ -37,16 +35,12 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
         errorMessage = null;
       });
 
-      // Load projects and leads in parallel
-      final results = await Future.wait([
-        _crmService.getAllCustomerProjects(),
-        _crmService.getAllLeads(),
-      ]);
+      // Load projects
+      final results = await _crmService.getAllCustomerProjects();
 
       if (mounted) {
         setState(() {
-          projects = results[0] as List<CustomerProject>;
-          leads = results[1] as List<Lead>;
+          projects = results;
           isLoading = false;
         });
       }
@@ -64,17 +58,7 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
     await _loadData();
   }
 
-  String _getCustomerName(int? leadId) {
-    if (leadId == null) return 'N/A';
-    try {
-      final lead = leads.firstWhere(
-        (l) => int.tryParse(l.leadId) == leadId,
-      );
-      return lead.name;
-    } catch (e) {
-      return 'N/A';
-    }
-  }
+
 
   String _getErrorMessage(dynamic error) {
     if (error.toString().contains('SocketException') ||
@@ -300,7 +284,7 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
   }
 
   Widget _buildProjectCard(CustomerProject project) {
-    final customerName = _getCustomerName(project.leadId);
+    final customerName = project.name;
     final progress = project.progress ?? 0.0;
 
     return Card(

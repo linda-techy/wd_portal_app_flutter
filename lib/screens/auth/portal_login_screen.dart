@@ -126,9 +126,10 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> {
                     const SizedBox(height: 32),
 
                     // Email Field
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
+                      TextFormField(
+                        controller: _emailController,
+                        textInputAction: TextInputAction.next,
+                        keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         labelText: 'Email',
                         prefixIcon: const Icon(Icons.email_outlined),
@@ -160,6 +161,8 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> {
                     // Password Field
                     TextFormField(
                       controller: _passwordController,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _handleLogin(),
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Password',

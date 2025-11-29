@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/portal_auth_provider.dart';
 import '../constants.dart';
+import '../screens/documents/document_management_screen.dart';
 
 class PortalRoleBasedNavigation extends StatelessWidget {
   const PortalRoleBasedNavigation({super.key});
@@ -147,12 +148,18 @@ class PortalRoleBasedNavigation extends StatelessWidget {
                     ),
 
                   // Documents - Available to all authenticated users
-                  if (authProvider.hasPermission('VIEW_DOCUMENTS'))
+                  // if (authProvider.hasPermission('VIEW_DOCUMENTS'))
                     _buildMenuItem(
                       icon: Icons.folder,
                       title: 'Documents',
                       onTap: () {
-                        // Navigate to documents
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const DocumentManagementScreen(),
+                          ),
+                        );
                       },
                     ),
 
