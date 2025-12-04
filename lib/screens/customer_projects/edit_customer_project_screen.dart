@@ -53,6 +53,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
   // Team Members
   List<TeamMember> _teamMembers = [];
   List<TeamMember> _selectedTeamMembers = [];
+  Set<String> _adminIds = {};
   bool _isLoadingTeamMembers = false;
 
   final List<String> _projectPhases = [
@@ -218,16 +219,21 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
 
       // Identify Admins to auto-select
       final List<TeamMember> autoSelectedAdmins = [];
+      final Set<String> adminIds = {};
       if (adminRoleId != null) {
         for (var user in portalUsers) {
           if (user.roleId == adminRoleId) {
-            autoSelectedAdmins.add(TeamMember(
+            final adminMember = TeamMember(
               id: user.id.toString(),
               firstName: user.firstName,
               lastName: user.lastName,
               email: user.email,
               type: 'PORTAL',
-            ));
+            );
+            autoSelectedAdmins.add(adminMember);
+            if (adminMember.id != null) {
+              adminIds.add(adminMember.id!);
+            }
           }
         }
       }
@@ -286,6 +292,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
           }
 
           _selectedTeamMembers = finalSelectedMembers;
+          _adminIds = adminIds;
           _isLoadingTeamMembers = false;
         });
       }
@@ -1256,12 +1263,21 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                         itemCount: _teamMembers.length,
                         itemBuilder: (context, index) {
                           final member = _teamMembers[index];
-                          final isSelected = _selectedTeamMembers.any((m) => m.id == member.id);
+                          final isAdmin = member.id != null && _adminIds.contains(member.id);
+                          final isSelected = isAdmin || _selectedTeamMembers.any((m) => m.id == member.id);
+                          
                           return CheckboxListTile(
-                            title: Text(member.fullName),
+                            title: Text(
+                              '${member.fullName} (${member.type == 'PORTAL' ? 'Portal User' : 'Customer'})',
+                              style: TextStyle(
+                                color: member.type == 'PORTAL'
+                                    ? AppTheme.textPrimary
+                                    : AppTheme.primaryBlue,
+                              ),
+                            ),
                             subtitle: Text(member.designation ?? ''),
                             value: isSelected,
-                            onChanged: (bool? value) {
+                            onChanged: isAdmin ? null : (bool? value) {
                               setState(() {
                                 if (value == true) {
                                   _selectedTeamMembers.add(member);

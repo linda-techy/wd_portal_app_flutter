@@ -950,7 +950,14 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
               .map((member) {
             return DropdownMenuItem(
               value: member,
-              child: Text(member.fullName),
+              child: Text(
+                '${member.fullName} (${member.type == 'PORTAL' ? 'Portal User' : 'Customer'})',
+                style: TextStyle(
+                  color: member.type == 'PORTAL'
+                      ? AppTheme.textPrimary
+                      : AppTheme.primaryBlue,
+                ),
+              ),
             );
           }).toList(),
           onChanged: (member) {
