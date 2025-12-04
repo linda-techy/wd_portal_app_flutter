@@ -4,6 +4,10 @@ import '../../theme/app_theme.dart';
 import '../../theme/responsive_utils.dart';
 import '../../models/customer_project.dart';
 import '../../models/lead.dart';
+import '../../models/team_member.dart';
+import '../../models/portal_user.dart';
+import '../../models/customer.dart';
+import '../../models/role.dart';
 import '../../services/crm_service.dart';
 import '../../utils/india_location_data.dart';
 
@@ -38,6 +42,11 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   bool _showLeadDropdown = false;
   final FocusNode _leadSearchFocusNode = FocusNode();
 
+  // Team Members
+  List<TeamMember> _teamMembers = [];
+  List<TeamMember> _selectedTeamMembers = [];
+  bool _isLoadingTeamMembers = false;
+
   final List<String> _projectPhases = [
     'Design',
     'Construction',
@@ -48,7 +57,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   @override
   void initState() {
     super.initState();
-    _loadLeads();
+    _loadData();
     _leadSearchFocusNode.addListener(() {
       if (!_leadSearchFocusNode.hasFocus) {
         // Only close dropdown when losing focus if no lead is selected
@@ -85,20 +94,83 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
     super.dispose();
   }
 
-  Future<void> _loadLeads() async {
+  Future<void> _loadData() async {
     try {
-      setState(() => _isLoadingLeads = true);
+      setState(() => _isLoading = true);
+      
+      // Fetch all required data sequentially to avoid any potential race conditions
       final leads = await _crmService.getAllLeads();
+      final portalUsers = await _crmService.getAllPortalUsers();
+      final customers = await _crmService.getAllCustomers();
+      final roles = await _crmService.getPortalRoles();
+      
+      // Find admin role ID
+      int? adminRoleId;
+      try {
+        final adminRole = roles.firstWhere(
+          (r) => r.code?.toLowerCase() == 'admin' || r.name.toLowerCase() == 'admin',
+        );
+        adminRoleId = adminRole.id;
+      } catch (_) {
+        // Admin role not found, ignore
+      }
+
+      // Combine PortalUsers and Customers into TeamMembers
+      final List<TeamMember> allTeamMembers = [];
+      
+      // Add Portal Users
+      for (var user in portalUsers) {
+        allTeamMembers.add(TeamMember(
+          id: user.id.toString(),
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          type: 'PORTAL',
+        ));
+      }
+      
+      // Add Customers
+      for (var customer in customers) {
+        allTeamMembers.add(TeamMember(
+          id: customer.id.toString(),
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+          email: customer.email,
+          type: 'CUSTOMER',
+        ));
+      }
+
+      // Identify Admins to auto-select
+      final List<TeamMember> autoSelectedAdmins = [];
+      if (adminRoleId != null) {
+        for (var user in portalUsers) {
+          if (user.roleId == adminRoleId) {
+            autoSelectedAdmins.add(TeamMember(
+              id: user.id.toString(),
+              firstName: user.firstName,
+              lastName: user.lastName,
+              email: user.email,
+              type: 'PORTAL',
+            ));
+          }
+        }
+      }
+
       if (mounted) {
         setState(() {
           _leads = leads;
           _filteredLeads = leads;
-          _isLoadingLeads = false;
+          _teamMembers = allTeamMembers;
+          _selectedTeamMembers = autoSelectedAdmins;
+          _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoadingLeads = false);
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading data: $e')),
+        );
       }
     }
   }
@@ -150,9 +222,10 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   }
 
   Future<void> _saveProject() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
-    // Validate lead selection
     if (_selectedLead == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -166,28 +239,20 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Convert leadId from String to int (leadId in database is bigserial)
-      int? leadIdInt;
-      if (_selectedLead != null) {
-        // Try to parse the leadId string to int
-        leadIdInt = int.tryParse(_selectedLead!.leadId);
-      }
-
       final project = CustomerProject(
+        id: null, // Let backend generate ID
         name: _nameController.text.trim(),
         location: _locationController.text.trim(),
-        // Code will be auto-generated by backend
+        state: _state ?? 'Kerala',
+        district: _district ?? 'Thrissur',
         startDate: _startDate,
         endDate: _endDate,
-        progress: 0.0, // Default to 0
-        // createdBy will be auto-captured by backend
         projectPhase: _projectPhase ?? 'Design',
-        state: _state ?? 'Kerala',
-        district: _district ?? 'Thrissur', // Default to Thrissur if null
-        sqfeet: _sqfeetController.text.trim().isNotEmpty
-            ? double.tryParse(_sqfeetController.text.trim())
-            : null,
-        leadId: leadIdInt,
+        leadId: int.tryParse(_selectedLead!.leadId),
+        sqfeet: double.tryParse(_sqfeetController.text) ?? 0.0,
+        teamMembers: _selectedTeamMembers,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       );
 
       await _crmService.createCustomerProject(project);
@@ -623,6 +688,22 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                 ),
                 const SizedBox(height: AppTheme.spacingMD),
 
+                // Team Members Selection
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Team Members',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                    const SizedBox(height: AppTheme.spacingXS),
+                    _buildTeamMemberSelection(),
+                  ],
+                ),
+                const SizedBox(height: AppTheme.spacingMD),
+
                 // Sq Feet
                 TextFormField(
                   controller: _sqfeetController,
@@ -793,29 +874,54 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                                             'ID: ${lead.leadId}',
                                             style: Theme.of(context)
                                                 .textTheme
-                                                .bodyMedium
-                                                ?.copyWith(
-                                                  fontWeight: FontWeight.w600,
-                                                ),
+                                                .bodySmall,
                                           ),
-                                          const SizedBox(height: 4),
                                           Text(
                                             lead.name,
                                             style: Theme.of(context)
                                                 .textTheme
-                                                .bodySmall,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                                .bodyMedium,
                                           ),
                                         ],
                                       ),
                                     ),
-                                    if (isSelected)
-                                      Icon(
-                                        Icons.check_circle,
-                                        color: AppTheme.primaryBlue,
-                                        size: 20,
+                                    if (_selectedLead != null &&
+                                        _selectedLead!.leadId == lead.leadId) ...[
+                                      const SizedBox(height: AppTheme.spacingSM),
+                                      Container(
+                                        padding: const EdgeInsets.all(
+                                            AppTheme.spacingSM),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.statusSuccessBg,
+                                          borderRadius:
+                                              BorderRadius.circular(
+                                                  AppTheme.radiusSM),
+                                          border: Border.all(
+                                            color: AppTheme.statusSuccess
+                                                .withOpacity(0.3),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.check_circle,
+                                                size: 16,
+                                                color:
+                                                    AppTheme.statusSuccess),
+                                            const SizedBox(
+                                                width: AppTheme.spacingSM),
+                                            const Text(
+                                              'Selected',
+                                              style: TextStyle(
+                                                color:
+                                                    AppTheme.statusSuccess,
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
+                                    ],
                                   ],
                                 ),
                               ),
@@ -825,48 +931,51 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
             ),
           ),
         ],
-        if (_selectedLead != null) ...[
+      ],
+    );
+  }
+
+  Widget _buildTeamMemberSelection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DropdownButtonFormField<TeamMember>(
+          decoration: const InputDecoration(
+            labelText: 'Add Team Member',
+            hintText: 'Select team member',
+            prefixIcon: Icon(Icons.person_add),
+          ),
+          items: _teamMembers
+              .where((m) => !_selectedTeamMembers.any((s) => s.id == m.id))
+              .map((member) {
+            return DropdownMenuItem(
+              value: member,
+              child: Text(member.fullName),
+            );
+          }).toList(),
+          onChanged: (member) {
+            if (member != null) {
+              setState(() {
+                _selectedTeamMembers.add(member);
+              });
+            }
+          },
+        ),
+        if (_selectedTeamMembers.isNotEmpty) ...[
           const SizedBox(height: AppTheme.spacingSM),
-          Container(
-            padding: const EdgeInsets.all(AppTheme.spacingSM),
-            decoration: BoxDecoration(
-              color: AppTheme.statusSuccessBg,
-              borderRadius: BorderRadius.circular(AppTheme.radiusSM),
-              border: Border.all(
-                color: AppTheme.statusSuccess.withOpacity(0.3),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.check_circle,
-                    size: 16, color: AppTheme.statusSuccess),
-                const SizedBox(width: AppTheme.spacingSM),
-                Expanded(
-                  child: Text(
-                    'Selected: ${_selectedLead!.leadId} - ${_selectedLead!.name}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.statusSuccess,
-                          fontWeight: FontWeight.w500,
-                        ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, size: 18),
-                  onPressed: () {
-                    setState(() {
-                      _selectedLead = null;
-                      _leadSearchController.clear();
-                      _filterLeads('');
-                      _showLeadDropdown = true;
-                      _filteredLeads = _leads;
-                    });
-                    _leadSearchFocusNode.requestFocus();
-                  },
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
+          Wrap(
+            spacing: AppTheme.spacingXS,
+            runSpacing: AppTheme.spacingXS,
+            children: _selectedTeamMembers.map((member) {
+              return Chip(
+                label: Text(member.fullName),
+                onDeleted: () {
+                  setState(() {
+                    _selectedTeamMembers.removeWhere((m) => m.id == member.id);
+                  });
+                },
+              );
+            }).toList(),
           ),
         ],
       ],

@@ -4,6 +4,10 @@ import '../../theme/app_theme.dart';
 import '../../theme/responsive_utils.dart';
 import '../../models/customer_project.dart';
 import '../../models/lead.dart';
+import '../../models/team_member.dart';
+import '../../models/portal_user.dart';
+import '../../models/customer.dart';
+import '../../models/role.dart';
 import '../../services/crm_service.dart';
 import '../../utils/india_location_data.dart';
 
@@ -45,6 +49,11 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
   bool _isLoading = false;
   bool _showLeadDropdown = false;
   final FocusNode _leadSearchFocusNode = FocusNode();
+
+  // Team Members
+  List<TeamMember> _teamMembers = [];
+  List<TeamMember> _selectedTeamMembers = [];
+  bool _isLoadingTeamMembers = false;
 
   final List<String> _projectPhases = [
     'Planning',
@@ -132,7 +141,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
 
     _selectedLeadId = widget.project.leadId;
 
-    _loadLeads();
+    _loadData();
 
     _leadSearchFocusNode.addListener(() {
       if (!_leadSearchFocusNode.hasFocus) {
@@ -158,10 +167,71 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
     });
   }
 
-  Future<void> _loadLeads() async {
+  Future<void> _loadData() async {
     try {
-      setState(() => _isLoadingLeads = true);
+      setState(() {
+        _isLoadingLeads = true;
+        _isLoadingTeamMembers = true;
+      });
+
+      // Fetch all required data sequentially
       final leads = await _crmService.getAllLeads();
+      final portalUsers = await _crmService.getAllPortalUsers();
+      final customers = await _crmService.getAllCustomers();
+      final roles = await _crmService.getPortalRoles();
+
+      // Find admin role ID
+      int? adminRoleId;
+      try {
+        final adminRole = roles.firstWhere(
+          (r) => r.code?.toLowerCase() == 'admin' || r.name.toLowerCase() == 'admin',
+        );
+        adminRoleId = adminRole.id;
+      } catch (_) {
+        // Admin role not found, ignore
+      }
+
+      // Combine PortalUsers and Customers into TeamMembers
+      final List<TeamMember> allTeamMembers = [];
+      
+      // Add Portal Users
+      for (var user in portalUsers) {
+        allTeamMembers.add(TeamMember(
+          id: user.id.toString(),
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          type: 'PORTAL',
+        ));
+      }
+      
+      // Add Customers
+      for (var customer in customers) {
+        allTeamMembers.add(TeamMember(
+          id: customer.id.toString(),
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+          email: customer.email,
+          type: 'CUSTOMER',
+        ));
+      }
+
+      // Identify Admins to auto-select
+      final List<TeamMember> autoSelectedAdmins = [];
+      if (adminRoleId != null) {
+        for (var user in portalUsers) {
+          if (user.roleId == adminRoleId) {
+            autoSelectedAdmins.add(TeamMember(
+              id: user.id.toString(),
+              firstName: user.firstName,
+              lastName: user.lastName,
+              email: user.email,
+              type: 'PORTAL',
+            ));
+          }
+        }
+      }
+
       if (mounted) {
         setState(() {
           _leads = leads;
@@ -182,11 +252,52 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
             }
           }
           _isLoadingLeads = false;
+
+          _teamMembers = allTeamMembers;
+          
+          // Pre-select team members (existing + admins)
+          final Set<String> selectedIds = {};
+          final List<TeamMember> finalSelectedMembers = [];
+
+          // Add existing members if they exist in the new list
+          if (widget.project.teamMembers != null) {
+            for (var member in widget.project.teamMembers!) {
+              // Check if member exists in allTeamMembers (by ID)
+              // Note: The member object from project might have different details, 
+              // but we care about ID match.
+              // However, we should use the fresh object from allTeamMembers if possible.
+              try {
+                final freshMember = allTeamMembers.firstWhere((m) => m.id == member.id);
+                if (freshMember.id != null && selectedIds.add(freshMember.id!)) {
+                  finalSelectedMembers.add(freshMember);
+                }
+              } catch (_) {
+                // Member not found in current list (maybe deleted?), keep original if desired, 
+                // or skip. Let's skip to ensure consistency.
+              }
+            }
+          }
+
+          // Add auto-selected admins if not already selected
+          for (var admin in autoSelectedAdmins) {
+            if (admin.id != null && selectedIds.add(admin.id!)) {
+              finalSelectedMembers.add(admin);
+            }
+          }
+
+          _selectedTeamMembers = finalSelectedMembers;
+          _isLoadingTeamMembers = false;
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoadingLeads = false);
+        setState(() {
+          _isLoadingLeads = false;
+          _isLoadingTeamMembers = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading data: $e')),
+        );
       }
     }
   }
@@ -291,6 +402,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
             ? double.tryParse(_sqfeetController.text.trim())
             : null,
         leadId: leadIdInt,
+        teamMembers: _selectedTeamMembers,
       );
 
       await _crmService.updateCustomerProject(widget.project.id!, project);
@@ -750,6 +862,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                   ),
                   const SizedBox(height: AppTheme.spacingMD),
 
+
                   // Lead Selection (Searchable Dropdown)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -762,6 +875,22 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                       ),
                       const SizedBox(height: AppTheme.spacingXS),
                       _buildLeadSearchDropdown(),
+                    ],
+                  ),
+                  const SizedBox(height: AppTheme.spacingMD),
+
+                  // Team Members Selection
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Team Members',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                      ),
+                      const SizedBox(height: AppTheme.spacingXS),
+                      _buildTeamMemberSelection(),
                     ],
                   ),
                   const SizedBox(height: AppTheme.spacingMD),
@@ -1045,7 +1174,6 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                   onPressed: () {
                     setState(() {
                       _selectedLead = null;
-                      _selectedLeadId = null;
                       _leadSearchController.clear();
                       _filterLeads('');
                       _showLeadDropdown = true;
@@ -1062,5 +1190,107 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
         ],
       ],
     );
+  }
+
+  Widget _buildTeamMemberSelection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: _showTeamMemberSelectionDialog,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppTheme.spacingSM,
+              vertical: AppTheme.spacingSM,
+            ),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppTheme.borderLight),
+              borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _selectedTeamMembers.isEmpty
+                      ? Text(
+                          'Select Team Members',
+                          style: TextStyle(color: AppTheme.textTertiary),
+                        )
+                      : Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: _selectedTeamMembers.map((member) {
+                            return Chip(
+                              label: Text(member.fullName),
+                              onDeleted: () {
+                                setState(() {
+                                  _selectedTeamMembers.remove(member);
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
+                ),
+                const Icon(Icons.arrow_drop_down),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showTeamMemberSelectionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select Team Members'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: _isLoadingTeamMembers
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _teamMembers.length,
+                        itemBuilder: (context, index) {
+                          final member = _teamMembers[index];
+                          final isSelected = _selectedTeamMembers.any((m) => m.id == member.id);
+                          return CheckboxListTile(
+                            title: Text(member.fullName),
+                            subtitle: Text(member.designation ?? ''),
+                            value: isSelected,
+                            onChanged: (bool? value) {
+                              setState(() {
+                                if (value == true) {
+                                  _selectedTeamMembers.add(member);
+                                } else {
+                                  _selectedTeamMembers.removeWhere((m) => m.id == member.id);
+                                }
+                              });
+                              // Update parent state as well
+                              this.setState(() {}); 
+                            },
+                          );
+                        },
+                      ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Done'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ).then((_) {
+      // Rebuild parent widget to show updated chips
+      setState(() {});
+    });
   }
 }

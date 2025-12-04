@@ -12,6 +12,7 @@ class TeamMember {
   final bool? isActive;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String? type; // "PORTAL" or "CUSTOMER"
 
   TeamMember({
     this.id,
@@ -27,6 +28,7 @@ class TeamMember {
     this.isActive,
     this.createdAt,
     this.updatedAt,
+    this.type,
   });
 
   String get fullName => '${firstName ?? ''} ${lastName ?? ''}'.trim();
@@ -50,6 +52,7 @@ class TeamMember {
           json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       updatedAt:
           json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      type: json['type'],
     );
   }
 
@@ -68,6 +71,7 @@ class TeamMember {
       'isActive': isActive,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
+      'type': type,
     };
   }
 
@@ -85,6 +89,7 @@ class TeamMember {
     bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? type,
   }) {
     return TeamMember(
       id: id ?? this.id,
@@ -100,6 +105,7 @@ class TeamMember {
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      type: type ?? this.type,
     );
   }
 }

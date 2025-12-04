@@ -35,7 +35,7 @@ class CRMService {
 
   Future<List<TeamMember>> getAllTeamMembers() async {
     try {
-      final response = await _apiService.get('/team-members');
+      final response = await _apiService.get('/users/team-members');
       final List<dynamic> data = response.data;
       return data.map((json) => TeamMember.fromJson(json)).toList();
     } catch (e) {

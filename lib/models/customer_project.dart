@@ -1,3 +1,5 @@
+import 'team_member.dart';
+
 class CustomerProject {
   final int? id;
   final String name;
@@ -14,6 +16,8 @@ class CustomerProject {
   final String? code;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final List<TeamMember>? teamMembers;
+  final List<int>? teamMemberIds;
 
   CustomerProject({
     this.id,
@@ -31,6 +35,8 @@ class CustomerProject {
     this.code,
     this.createdAt,
     this.updatedAt,
+    this.teamMembers,
+    this.teamMemberIds,
   });
 
   factory CustomerProject.fromJson(Map<String, dynamic> json) {
@@ -82,6 +88,11 @@ class CustomerProject {
           : json['updatedAt'] != null
               ? DateTime.tryParse(json['updatedAt'])
               : null,
+      teamMembers: json['team_members'] != null
+          ? (json['team_members'] as List)
+              .map((i) => TeamMember.fromJson(i))
+              .toList()
+          : null,
     );
   }
 
@@ -101,6 +112,14 @@ class CustomerProject {
       if (sqfeet != null) 'sqfeet': sqfeet,
       if (leadId != null) 'lead_id': leadId,
       if (code != null && code!.isNotEmpty) 'code': code,
+      if (teamMembers != null)
+        'team_members': teamMembers!
+            .map((m) => {
+                  'id': int.tryParse(m.id ?? ''),
+                  'type': m.type,
+                })
+            .where((m) => m['id'] != null && m['type'] != null)
+            .toList(),
     };
   }
 
@@ -128,6 +147,8 @@ class CustomerProject {
     String? code,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<TeamMember>? teamMembers,
+    List<int>? teamMemberIds,
   }) {
     return CustomerProject(
       id: id ?? this.id,
@@ -145,6 +166,8 @@ class CustomerProject {
       code: code ?? this.code,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      teamMembers: teamMembers ?? this.teamMembers,
+      teamMemberIds: teamMemberIds ?? this.teamMemberIds,
     );
   }
 }
