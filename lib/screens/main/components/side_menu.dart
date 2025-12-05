@@ -30,21 +30,33 @@ class SideMenu extends StatelessWidget {
         children: [
           // Header
           Container(
-            height: 100,
             padding: const EdgeInsets.all(defaultPadding),
             decoration: BoxDecoration(
-              color: primaryColor.withOpacity(0.1),
+              color: Colors.white,
               border: Border(
                 bottom: BorderSide(color: Colors.grey[300]!, width: 1),
               ),
             ),
-            child: Center(
-              child: Image.asset(
-                "assets/icons/wd_logo.png",
-                width: 120,
-                height: 40,
-                fit: BoxFit.contain,
-              ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  "assets/icons/wd_logo.png",
+                  width: 120,
+                  height: 40,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Walldot Builders',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: primaryColor,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
             ),
           ),
           // Menu Items
@@ -74,6 +86,12 @@ class SideMenu extends StatelessWidget {
                   title: customerProjectsModule,
                   svgSrc: "assets/icons/menu_task.svg",
                   index: 3,
+                ),
+                _buildMenuItem(
+                  context,
+                  title: "Tasks",
+                  svgSrc: "assets/icons/menu_task.svg",
+                  index: 11, // Tasks index in MainScreen
                 ),
                 _buildMenuItem(
                   context,

@@ -35,23 +35,25 @@ class TeamMember {
 
   factory TeamMember.fromJson(Map<String, dynamic> json) {
     return TeamMember(
-      id: json['id'],
-      employeeId: json['employeeId'],
-      firstName: json['firstName'],
-      lastName: json['lastName'],
+      id: json['id']?.toString(),
+      employeeId: json['employeeId']?.toString(),
+      firstName: json['first_name'] ?? json['firstName'],
+      lastName: json['last_name'] ?? json['lastName'],
       email: json['email'],
       phone: json['phone'],
       whatsapp: json['whatsapp'],
       designation: json['designation'],
       department: json['department'],
       joiningDate: json['joiningDate'] != null
-          ? DateTime.parse(json['joiningDate'])
+          ? DateTime.tryParse(json['joiningDate'])
           : null,
       isActive: json['isActive'],
-      createdAt:
-          json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      updatedAt:
-          json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'])
+          : null,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.tryParse(json['updatedAt'])
+          : null,
       type: json['type'],
     );
   }

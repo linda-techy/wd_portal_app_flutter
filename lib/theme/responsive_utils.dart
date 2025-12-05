@@ -6,7 +6,7 @@ class ResponsiveUtils {
   // Breakpoints optimized for admin portals
   static const double mobileBreakpoint = 768;
   static const double tabletBreakpoint = 1024;
-  static const double desktopBreakpoint = 1440;
+  static const double desktopBreakpoint = 1024;
   static const double largeDesktopBreakpoint = 1920;
   
   // Check device type

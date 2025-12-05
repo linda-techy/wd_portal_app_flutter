@@ -4,8 +4,8 @@ import '../../theme/app_theme.dart';
 import '../../theme/responsive_utils.dart';
 import '../../services/crm_service.dart';
 import '../../models/lead.dart';
-import '../../models/client.dart';
-import '../../models/project.dart';
+import '../../models/customer.dart';
+import '../../models/customer_project.dart';
 import '../../widgets/components/data_card.dart';
 import '../../widgets/charts/chart_card.dart';
 
@@ -22,8 +22,8 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
   Map<String, dynamic> dashboardMetrics = {};
   bool isLoading = true;
   List<Lead> leads = [];
-  List<Client> clients = [];
-  List<Project> projects = [];
+  List<Customer> customers = [];
+  List<CustomerProject> customerProjects = [];
 
   @override
   void initState() {
@@ -38,13 +38,13 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
       });
 
       final leadsData = await _crmService.getAllLeads();
-      final clientsData = await _crmService.getAllClients();
-      final projectsData = await _crmService.getAllProjects();
+      final customersData = await _crmService.getAllCustomers();
+      final projectsData = await _crmService.getAllCustomerProjects();
 
       setState(() {
         leads = leadsData;
-        clients = clientsData;
-        projects = projectsData;
+        customers = customersData;
+        customerProjects = projectsData;
         isLoading = false;
       });
 
@@ -54,7 +54,7 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
       setState(() {
         isLoading = false;
       });
-      if (leads.isEmpty && clients.isEmpty && projects.isEmpty) {
+      if (leads.isEmpty && customers.isEmpty && customerProjects.isEmpty) {
         _loadMockData();
       } else {
         _calculateRealMetrics();
@@ -76,16 +76,18 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
 
     final projectProgress = <Map<String, dynamic>>[];
     final projectStatuses = <String, int>{};
-    for (final project in projects) {
-      final status = (project.status != null && project.status!.isNotEmpty)
-          ? project.status!
-          : 'Unknown';
+    for (final project in customerProjects) {
+      final status = (project.projectPhase != null && project.projectPhase!.isNotEmpty)
+          ? project.projectPhase!
+          : (project.state != null && project.state!.isNotEmpty)
+              ? project.state!
+              : 'Unknown';
       projectStatuses[status] = (projectStatuses[status] ?? 0) + 1;
     }
 
     projectStatuses.forEach((status, count) {
       final percentage =
-          projects.isEmpty ? 0.0 : (count / projects.length * 100);
+          customerProjects.isEmpty ? 0.0 : (count / customerProjects.length * 100);
       projectProgress.add({
         'name': status,
         'count': count,
@@ -127,8 +129,8 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
     setState(() {
       dashboardMetrics = {
         'totalLeads': totalLeads,
-        'totalClients': clients.length,
-        'totalProjects': projects.length,
+        'totalClients': customers.length,
+        'totalProjects': customerProjects.length,
         'totalRevenue': totalRevenue,
         'leadsByStatus': leadsByStatus,
         'projectProgress': projectProgress,
@@ -225,9 +227,13 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
                       mobile: Column(
                         children: _buildMetricsCardsMobile(),
                       ),
+                      tablet: Column(
+                        children: _buildMetricsCardsTablet(),
+                      ),
                       desktop: Row(
                         children: _buildMetricsCardsDesktop(),
                       ),
+
                     ),
                     const SizedBox(height: AppTheme.spacingLG),
 
@@ -360,6 +366,67 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
           icon: Icons.attach_money,
           accentColor: AppTheme.statusSuccess,
         ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildMetricsCardsTablet() {
+    final totalLeads = dashboardMetrics['totalLeads'] ?? 0;
+    final totalClients = dashboardMetrics['totalClients'] ?? 0;
+    final totalProjects = dashboardMetrics['totalProjects'] ?? 0;
+    final totalRevenue = dashboardMetrics['totalRevenue'] ?? 0.0;
+
+    return [
+      Row(
+        children: [
+          Expanded(
+            child: MetricCard(
+              label: 'Total Leads',
+              value: '$totalLeads',
+              change: '+12% this month',
+              isPositive: true,
+              icon: Icons.people_outline,
+              accentColor: AppTheme.primaryBlue,
+            ),
+          ),
+          const SizedBox(width: AppTheme.spacingMD),
+          Expanded(
+            child: MetricCard(
+              label: 'Total Clients',
+              value: '$totalClients',
+              change: '+5% this month',
+              isPositive: true,
+              icon: Icons.person_outline,
+              accentColor: AppTheme.statusSuccess,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: AppTheme.spacingMD),
+      Row(
+        children: [
+          Expanded(
+            child: MetricCard(
+              label: 'Active Projects',
+              value: '$totalProjects',
+              change: '3 new',
+              isPositive: true,
+              icon: Icons.work_outline,
+              accentColor: AppTheme.safetyOrange,
+            ),
+          ),
+          const SizedBox(width: AppTheme.spacingMD),
+          Expanded(
+            child: MetricCard(
+              label: 'Total Revenue',
+              value: '₹${(totalRevenue / 1000000).toStringAsFixed(1)}M',
+              change: '+18% this month',
+              isPositive: true,
+              icon: Icons.attach_money,
+              accentColor: AppTheme.statusSuccess,
+            ),
+          ),
+        ],
       ),
     ];
   }

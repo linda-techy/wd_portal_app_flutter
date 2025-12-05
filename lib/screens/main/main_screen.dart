@@ -18,9 +18,13 @@ import 'package:admin/screens/communication/communication_screen.dart';
 import 'package:admin/screens/documents/document_management_screen.dart';
 import 'package:admin/screens/invoices/invoices_screen.dart';
 import 'package:admin/screens/reports/reports_screen.dart';
+import 'package:admin/screens/tasks/task_list_screen.dart';
+import 'package:admin/screens/profile/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
+import 'package:admin/theme/responsive_utils.dart';
+import 'package:admin/theme/app_theme.dart';
 
 import 'components/side_menu.dart';
 
@@ -32,7 +36,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 0; // Start with Dashboard
+  int _selectedIndex = 11; // Start with Tasks
 
   final List<Widget> _screens = [
     const DashboardScreen(),
@@ -46,12 +50,13 @@ class _MainScreenState extends State<MainScreen> {
     const ContractsScreen(),
     const FollowUpsScreen(),
     const SiteVisitsScreen(),
-    const TasksScreen(),
+    const TaskListScreen(), // Index 11 - Tasks (Entry Screen)
     const TeamMembersScreen(),
     const CommunicationScreen(),
     const DocumentManagementScreen(),
     const InvoicesScreen(),
     const ReportsScreen(),
+    const ProfileScreen(), // Index 17 - Profile
   ];
 
   void _onMenuItemClick(int index) {
@@ -96,8 +101,10 @@ class _MainScreenState extends State<MainScreen> {
         return 'Invoices';
       case 16:
         return 'Reports';
+      case 17:
+        return 'Profile';
       default:
-        return 'Dashboard';
+        return 'Tasks';
     }
   }
 
@@ -111,12 +118,7 @@ class _MainScreenState extends State<MainScreen> {
               title: Text(_getScreenTitle(_selectedIndex)),
               backgroundColor: secondaryColor,
               foregroundColor: Colors.black87,
-              leading: IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () {
-                  context.read<MenuAppController>().controlMenu();
-                },
-              ),
+              automaticallyImplyLeading: false,
               actions: [
                 IconButton(
                   icon: const Icon(Icons.logout),
@@ -159,9 +161,42 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                   ),
                 ],
-              )
-            : _screens[_selectedIndex],
+               )
+             : _screens[_selectedIndex],
       ),
+      bottomNavigationBar: ResponsiveUtils.isMobile(context) || ResponsiveUtils.isTablet(context)
+          ? BottomNavigationBar(
+              backgroundColor: Colors.white,
+              selectedItemColor:AppTheme.primaryBlue,
+              unselectedItemColor: AppTheme.textTertiary,
+              currentIndex: _selectedIndex == 3 ? 1 : _selectedIndex == 17 ? 2 : 0,
+              onTap: (index) {
+                // Map bottom nav indices
+                // 0 -> Open Menu, 1 -> Projects (3), 2 -> Profile (17)
+                if (index == 0) {
+                  // Open drawer/menu
+                  context.read<MenuAppController>().controlMenu();
+                } else {
+                  final screenIndex = index == 1 ? 3 : 17;
+                  _onMenuItemClick(screenIndex);
+                }
+              },
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.menu),
+                  label: 'Menu',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.folder),
+                  label: 'Projects',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person),
+                  label: 'Profile',
+                ),
+              ],
+            )
+          : null,
     );
   }
 }
