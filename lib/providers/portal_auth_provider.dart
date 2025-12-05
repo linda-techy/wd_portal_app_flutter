@@ -122,4 +122,21 @@ class PortalAuthProvider extends ChangeNotifier {
       _clearUserData();
     }
   }
+  // Change Password
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    if (_currentUser == null) return;
+    
+    _setLoading(true);
+    try {
+      await PortalAuthService.changePassword(
+        _currentUser!.id,
+        currentPassword,
+        newPassword,
+      );
+    } catch (e) {
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
+  }
 }

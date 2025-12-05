@@ -124,7 +124,30 @@ class PortalAuthService {
       return null;
     }
   }
+
+  // Change Password
+  static Future<void> changePassword(int userId, String currentPassword, String newPassword) async {
+    try {
+      final response = await _dio.post(
+        '/portal-users/$userId/change-password',
+        data: {
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(response.data['message'] ?? 'Failed to change password');
+      }
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        throw Exception(e.response?.data ?? 'Failed to change password');
+      }
+      rethrow;
+    }
+  }
 }
+
 
 // Portal-specific auth interceptor
 class PortalAuthInterceptor extends Interceptor {
