@@ -313,26 +313,40 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                 // Customer Selection
                 DropdownButtonFormField<Customer>(
                   value: _selectedCustomer,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Customer *',
-                    hintText: 'Select customer',
+                    hintText: _isLoading ? 'Loading customers...' : 'Select customer',
+                    suffixIcon: _isLoading 
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: Padding(
+                              padding: EdgeInsets.all(12.0),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : null,
                   ),
-                  items: _customers.map((customer) {
-                    return DropdownMenuItem(
-                      value: customer,
-                      child: Text('${customer.firstName} ${customer.lastName}'),
-                    );
-                  }).toList(),
-                  onChanged: (Customer? newValue) {
-                    setState(() {
-                      _selectedCustomer = newValue;
-                      if (newValue != null) {
-                        // Auto-populate project name
-                        _nameController.text =
-                            'Project - ${newValue.firstName} ${newValue.lastName}';
-                      }
-                    });
-                  },
+                  items: _isLoading
+                      ? []
+                      : _customers.map((customer) {
+                          return DropdownMenuItem(
+                            value: customer,
+                            child: Text('${customer.firstName} ${customer.lastName}'),
+                          );
+                        }).toList(),
+                  onChanged: _isLoading
+                      ? null
+                      : (Customer? newValue) {
+                          setState(() {
+                            _selectedCustomer = newValue;
+                            if (newValue != null) {
+                              // Auto-populate project name
+                              _nameController.text =
+                                  'Project - ${newValue.firstName} ${newValue.lastName}';
+                            }
+                          });
+                        },
                   validator: (value) {
                     if (value == null) {
                       return 'Please select a customer';

@@ -1,5 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:provider/provider.dart';
+import '../providers/portal_auth_provider.dart';
+import '../utils/navigation_service.dart';
 
 class AuthInterceptor extends Interceptor {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
@@ -71,8 +74,17 @@ class AuthInterceptor extends Interceptor {
     // Handle 403 Forbidden - user doesn't have permission
     if (err.response?.statusCode == 403) {
       // For 403 errors, we don't try to refresh the token as it's a permission issue
-      // Just pass the error through with a clear message
+      // Clear tokens and redirect to login
+      await _storage.deleteAll();
       _isRefreshing = false;
+      
+      // Trigger logout via provider if context is available
+      final context = NavigationService.navigatorKey.currentContext;
+      if (context != null) {
+        // We use listen: false because we are outside the widget tree build method
+        Provider.of<PortalAuthProvider>(context, listen: false).logout();
+      }
+      
       return handler.next(err);
     }
 

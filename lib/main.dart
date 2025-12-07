@@ -10,6 +10,7 @@ import 'package:admin/theme/app_theme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:admin/utils/navigation_service.dart';
 
 void main() {
   // Initialize app configuration
@@ -94,6 +95,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      navigatorKey: NavigationService.navigatorKey,
       title: AppConfig.appName,
       // Use new construction-appropriate theme
       theme: AppTheme.lightTheme,

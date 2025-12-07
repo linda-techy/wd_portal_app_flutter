@@ -256,12 +256,22 @@ class _AddPortalUserScreenState extends State<AddPortalUserScreen> {
                 // Role Dropdown
                 DropdownButtonFormField<int>(
                   value: _roleId,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Role',
-                    hintText: 'Select role',
+                    hintText: _isLoadingRoles ? 'Loading roles...' : 'Select role',
+                    suffixIcon: _isLoadingRoles 
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: Padding(
+                              padding: EdgeInsets.all(12.0),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : null,
                   ),
                   items: _isLoadingRoles
-                      ? null
+                      ? []
                       : _roles.map((role) {
                           return DropdownMenuItem<int>(
                             value: role.id,
