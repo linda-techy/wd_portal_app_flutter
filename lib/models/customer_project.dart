@@ -124,9 +124,19 @@ class CustomerProject {
       if (code != null && code!.isNotEmpty) 'code': code,
       if (teamMembers != null)
         'team_members': teamMembers!
-            .map((m) => {
-                  'id': int.tryParse(m.id ?? ''),
-                  'type': m.type,
+            .map((m) {
+                  var idVal = int.tryParse(m.id ?? '');
+                  // If parsing fails but we have a valid ID string (e.g. UUID), use the string
+                  if (idVal == null && m.id != null && m.id!.isNotEmpty) {
+                    return {
+                      'id': m.id,
+                      'type': m.type,
+                    };
+                  }
+                  return {
+                    'id': idVal,
+                    'type': m.type,
+                  };
                 })
             .where((m) => m['id'] != null && m['type'] != null)
             .toList(),

@@ -50,6 +50,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   // Team Members
   List<TeamMember> _teamMembers = [];
   List<TeamMember> _selectedTeamMembers = [];
+  Set<String> _adminIds = {}; // Track admin IDs to prevent deselection
   bool _isLoadingTeamMembers = false;
 
   final List<String> _projectPhases = [
@@ -148,6 +149,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
       // Identify Admins to auto-select
       final List<TeamMember> autoSelectedAdmins = [];
       if (adminRoleId != null) {
+        // Add Portal Admins
         for (var user in portalUsers) {
           if (user.roleId == adminRoleId) {
             autoSelectedAdmins.add(TeamMember(
@@ -157,6 +159,25 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
               email: user.email,
               type: 'PORTAL',
             ));
+            if (user.id != null) {
+              _adminIds.add(user.id.toString());
+            }
+          }
+        }
+
+        // Add Customer Admins
+        for (var customer in customers) {
+          if (customer.roleId == adminRoleId) {
+            autoSelectedAdmins.add(TeamMember(
+              id: customer.id.toString(),
+              firstName: customer.firstName,
+              lastName: customer.lastName,
+              email: customer.email,
+              type: 'CUSTOMER',
+            ));
+            if (customer.id != null) {
+              _adminIds.add(customer.id.toString());
+            }
           }
         }
       }
@@ -1017,11 +1038,13 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                           children: _selectedTeamMembers.map((member) {
                             return Chip(
                               label: Text(member.fullName),
-                              onDeleted: () {
-                                setState(() {
-                                  _selectedTeamMembers.remove(member);
-                                });
-                              },
+                              onDeleted: _adminIds.contains(member.id) 
+                                  ? null 
+                                  : () {
+                                      setState(() {
+                                        _selectedTeamMembers.remove(member);
+                                      });
+                                    },
                             );
                           }).toList(),
                         ),
@@ -1052,20 +1075,8 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                         itemCount: _teamMembers.length,
                         itemBuilder: (context, index) {
                           final member = _teamMembers[index];
-                          // In Add screen, we might not have adminIds populated yet if I didn't add that logic.
-                          // Let's check _loadData in AddCustomerProjectScreen.
-                          // It does populate _selectedTeamMembers with admins, but maybe not a separate _adminIds set.
-                          // I should check if I need _adminIds.
-                          // In AddCustomerProjectScreen _loadData:
-                          // _selectedTeamMembers = autoSelectedAdmins;
-                          // It doesn't seem to have _adminIds set.
-                          // But for now let's just allow selecting/deselecting anyone, or I should check if they are admin.
-                          // The Edit screen uses _adminIds to disable unchecking admins.
-                          // I'll stick to simple selection for now, or better, check if they are in the initial auto-selected list?
-                          // Actually, let's just allow full control for now or copy the admin logic if needed.
-                          // The user just wants it to work like Edit screen (multi-select).
-                          
                           final isSelected = _selectedTeamMembers.any((m) => m.id == member.id);
+                          final isAdmin = _adminIds.contains(member.id);
                           
                           return CheckboxListTile(
                             title: Text(
@@ -1078,17 +1089,32 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                             ),
                             subtitle: Text(member.designation ?? ''),
                             value: isSelected,
-                            onChanged: (bool? value) {
-                              setState(() {
-                                if (value == true) {
-                                  _selectedTeamMembers.add(member);
-                                } else {
-                                  _selectedTeamMembers.removeWhere((m) => m.id == member.id);
-                                }
-                              });
-                              // Update parent state as well
-                              this.setState(() {}); 
-                            },
+                            onChanged: isAdmin 
+                                ? null // Disable interactions for admins
+                                : (bool? value) {
+                                    setState(() {
+                                      if (value == true) {
+                                        _selectedTeamMembers.add(member);
+                                      } else {
+                                        _selectedTeamMembers
+                                            .removeWhere((m) => m.id == member.id);
+                                      }
+                                    });
+                                    // Update parent state as well
+                                    this.setState(() {});
+                                  },
+                            // Visual cue for disabled state
+                            controlAffinity: ListTileControlAffinity.leading,
+                            secondary: isAdmin 
+                                ? Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.statusInfoBg,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Text('Admin', style: TextStyle(fontSize: 10)),
+                                  )
+                                : null,
                           );
                         },
                       ),

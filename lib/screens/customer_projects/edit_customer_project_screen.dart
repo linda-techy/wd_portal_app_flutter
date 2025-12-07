@@ -226,6 +226,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
       final List<TeamMember> autoSelectedAdmins = [];
       final Set<String> adminIds = {};
       if (adminRoleId != null) {
+        // Add Portal Admins
         for (var user in portalUsers) {
           if (user.roleId == adminRoleId) {
             final adminMember = TeamMember(
@@ -234,6 +235,23 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
               lastName: user.lastName,
               email: user.email,
               type: 'PORTAL',
+            );
+            autoSelectedAdmins.add(adminMember);
+            if (adminMember.id != null) {
+              adminIds.add(adminMember.id!);
+            }
+          }
+        }
+
+        // Add Customer Admins
+        for (var customer in customers) {
+          if (customer.roleId == adminRoleId) {
+            final adminMember = TeamMember(
+              id: customer.id.toString(),
+              firstName: customer.firstName,
+              lastName: customer.lastName,
+              email: customer.email,
+              type: 'CUSTOMER',
             );
             autoSelectedAdmins.add(adminMember);
             if (adminMember.id != null) {
@@ -1293,11 +1311,13 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                           children: _selectedTeamMembers.map((member) {
                             return Chip(
                               label: Text(member.fullName),
-                              onDeleted: () {
-                                setState(() {
-                                  _selectedTeamMembers.remove(member);
-                                });
-                              },
+                              onDeleted: _adminIds.contains(member.id) 
+                                  ? null 
+                                  : () {
+                                      setState(() {
+                                        _selectedTeamMembers.remove(member);
+                                      });
+                                    },
                             );
                           }).toList(),
                         ),
