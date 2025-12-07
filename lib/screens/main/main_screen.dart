@@ -119,17 +119,7 @@ class _MainScreenState extends State<MainScreen> {
               backgroundColor: secondaryColor,
               foregroundColor: Colors.black87,
               automaticallyImplyLeading: false,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.logout),
-                  onPressed: () async {
-                    final authProvider =
-                        Provider.of<PortalAuthProvider>(context, listen: false);
-                    await authProvider.logout();
-                  },
-                  tooltip: 'Logout',
-                ),
-              ],
+
             ),
       drawer: Drawer(
         child: SideMenu(

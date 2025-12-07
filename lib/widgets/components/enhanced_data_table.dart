@@ -52,9 +52,14 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
   int? _sortColumnIndex;
   bool _sortAscending = true;
   
+  final ScrollController _horizontalScrollController = ScrollController();
+  final ScrollController _verticalScrollController = ScrollController();
+
   @override
   void dispose() {
     _searchController.dispose();
+    _horizontalScrollController.dispose();
+    _verticalScrollController.dispose();
     super.dispose();
   }
   
@@ -231,24 +236,36 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
           }).toList()
         : widget.columns;
     
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+    return Scrollbar(
+      controller: _horizontalScrollController,
+      thumbVisibility: true,
+      trackVisibility: true,
       child: SingleChildScrollView(
-        child: DataTable(
-          columns: columns,
-          rows: widget.rows,
-          sortColumnIndex: widget.sortable ? _sortColumnIndex : null,
-          sortAscending: widget.sortable ? _sortAscending : true,
-          headingRowHeight: 56,
-          dataRowMinHeight: 52,
-          dataRowMaxHeight: 72,
-          headingRowColor: WidgetStateProperty.all(AppTheme.surfaceElevated),
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            border: Border.all(color: AppTheme.borderLight, width: 1),
-            borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+        controller: _horizontalScrollController,
+        scrollDirection: Axis.horizontal,
+        child: Scrollbar(
+          controller: _verticalScrollController,
+          thumbVisibility: true,
+          trackVisibility: true,
+          child: SingleChildScrollView(
+            controller: _verticalScrollController,
+            child: DataTable(
+              columns: columns,
+              rows: widget.rows,
+              sortColumnIndex: widget.sortable ? _sortColumnIndex : null,
+              sortAscending: widget.sortable ? _sortAscending : true,
+              headingRowHeight: 56,
+              dataRowMinHeight: 52,
+              dataRowMaxHeight: 72,
+              headingRowColor: WidgetStateProperty.all(AppTheme.surfaceElevated),
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                border: Border.all(color: AppTheme.borderLight, width: 1),
+                borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+              ),
+              onSelectAll: (value) {},
+            ),
           ),
-          onSelectAll: (value) {},
         ),
       ),
     );

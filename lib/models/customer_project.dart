@@ -13,6 +13,7 @@ class CustomerProject {
   final String? district;
   final double? sqfeet;
   final int? leadId;
+  final int? customerId;
   final String? code;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -32,6 +33,7 @@ class CustomerProject {
     this.district,
     this.sqfeet,
     this.leadId,
+    this.customerId,
     this.code,
     this.createdAt,
     this.updatedAt,
@@ -77,6 +79,13 @@ class CustomerProject {
               : int.tryParse(json['lead_id']?.toString() ??
                   json['leadId']?.toString() ??
                   ''),
+      customerId: json['customer_id'] is int
+          ? json['customer_id']
+          : json['customerId'] is int
+              ? json['customerId']
+              : int.tryParse(json['customer_id']?.toString() ??
+                  json['customerId']?.toString() ??
+                  ''),
       code: json['code'],
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'])
@@ -111,6 +120,7 @@ class CustomerProject {
       if (district != null && district!.isNotEmpty) 'district': district,
       if (sqfeet != null) 'sqfeet': sqfeet,
       if (leadId != null) 'lead_id': leadId,
+      if (customerId != null) 'customer_id': customerId,
       if (code != null && code!.isNotEmpty) 'code': code,
       if (teamMembers != null)
         'team_members': teamMembers!
@@ -144,6 +154,7 @@ class CustomerProject {
     String? district,
     double? sqfeet,
     int? leadId,
+    int? customerId,
     String? code,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -163,6 +174,7 @@ class CustomerProject {
       district: district ?? this.district,
       sqfeet: sqfeet ?? this.sqfeet,
       leadId: leadId ?? this.leadId,
+      customerId: customerId ?? this.customerId,
       code: code ?? this.code,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

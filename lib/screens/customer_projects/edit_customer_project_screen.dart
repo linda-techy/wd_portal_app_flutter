@@ -50,6 +50,11 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
   bool _showLeadDropdown = false;
   final FocusNode _leadSearchFocusNode = FocusNode();
 
+  // Customer Selection
+  Customer? _selectedCustomer;
+  List<Customer> _customers = [];
+  bool _isLoadingCustomers = false;
+
   // Team Members
   List<TeamMember> _teamMembers = [];
   List<TeamMember> _selectedTeamMembers = [];
@@ -242,6 +247,19 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
         setState(() {
           _leads = leads;
           _filteredLeads = leads;
+          _customers = customers;
+          
+          // Pre-select customer
+          if (widget.project.customerId != null) {
+            try {
+              _selectedCustomer = customers.firstWhere(
+                (c) => c.id == widget.project.customerId,
+              );
+            } catch (_) {
+              // Customer not found
+            }
+          }
+
           // Find and set the selected lead if leadId exists
           if (_selectedLeadId != null) {
             try {
@@ -409,6 +427,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
             ? double.tryParse(_sqfeetController.text.trim())
             : null,
         leadId: leadIdInt,
+        customerId: _selectedCustomer?.id,
         teamMembers: _selectedTeamMembers,
       );
 
@@ -459,6 +478,38 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   const SizedBox(height: AppTheme.spacingLG),
+
+                  // Customer Selection
+                  DropdownButtonFormField<Customer>(
+                    value: _selectedCustomer,
+                    decoration: const InputDecoration(
+                      labelText: 'Customer *',
+                      hintText: 'Select customer',
+                    ),
+                    items: _customers.map((customer) {
+                      return DropdownMenuItem(
+                        value: customer,
+                        child: Text('${customer.firstName} ${customer.lastName}'),
+                      );
+                    }).toList(),
+                    onChanged: (Customer? newValue) {
+                      setState(() {
+                        _selectedCustomer = newValue;
+                        if (newValue != null) {
+                          // Auto-populate project name
+                          _nameController.text =
+                              'Project - ${newValue.firstName} ${newValue.lastName}';
+                        }
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null) {
+                        return 'Please select a customer';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: AppTheme.spacingMD),
 
                   // Name
                   TextFormField(
