@@ -40,7 +40,6 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   bool _isLoadingLeads = false;
   bool _isLoading = false;
   bool _showLeadDropdown = false;
-  bool _showLeadDropdown = false;
   final FocusNode _leadSearchFocusNode = FocusNode();
 
   // Customer Selection
