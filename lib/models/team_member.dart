@@ -110,4 +110,12 @@ class TeamMember {
       type: type ?? this.type,
     );
   }
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is TeamMember && other.id == id && other.type == type;
+  }
+
+  @override
+  int get hashCode => Object.hash(id, type);
 }

@@ -184,9 +184,11 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
       final leads = await _crmService.getAllLeads();
       final portalUsers = await _crmService.getAllPortalUsers();
       final customers = await _crmService.getAllCustomers();
-      final roles = await _crmService.getPortalRoles();
 
-      // Find admin role ID
+      final roles = await _crmService.getPortalRoles();
+      final customerRoles = await _crmService.getCustomerRoles();
+
+      // Find admin role ID for Portal Users
       int? adminRoleId;
       try {
         final adminRole = roles.firstWhere(
@@ -195,6 +197,17 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
         adminRoleId = adminRole.id;
       } catch (_) {
         // Admin role not found, ignore
+      }
+
+      // Find admin role ID for Customers
+      int? customerAdminRoleId;
+      try {
+        final customerAdminRole = customerRoles.firstWhere(
+          (r) => r.name.toLowerCase() == 'admin',
+        );
+        customerAdminRoleId = customerAdminRole.id;
+      } catch (_) {
+        // Customer Admin role not found, ignore
       }
 
       // Combine PortalUsers and Customers into TeamMembers
@@ -238,24 +251,26 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
             );
             autoSelectedAdmins.add(adminMember);
             if (adminMember.id != null) {
-              adminIds.add(adminMember.id!);
+              adminIds.add('PORTAL_${adminMember.id}');
             }
           }
         }
 
         // Add Customer Admins
-        for (var customer in customers) {
-          if (customer.roleId == adminRoleId) {
-            final adminMember = TeamMember(
-              id: customer.id.toString(),
-              firstName: customer.firstName,
-              lastName: customer.lastName,
-              email: customer.email,
-              type: 'CUSTOMER',
-            );
-            autoSelectedAdmins.add(adminMember);
-            if (adminMember.id != null) {
-              adminIds.add(adminMember.id!);
+        if (customerAdminRoleId != null) {
+          for (var customer in customers) {
+            if (customer.roleId == customerAdminRoleId) {
+              final adminMember = TeamMember(
+                id: customer.id.toString(),
+                firstName: customer.firstName,
+                lastName: customer.lastName,
+                email: customer.email,
+                type: 'CUSTOMER',
+              );
+              autoSelectedAdmins.add(adminMember);
+              if (adminMember.id != null) {
+                adminIds.add('CUSTOMER_${adminMember.id}');
+              }
             }
           }
         }
@@ -1311,7 +1326,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                           children: _selectedTeamMembers.map((member) {
                             return Chip(
                               label: Text(member.fullName),
-                              onDeleted: _adminIds.contains(member.id) 
+                              onDeleted: _adminIds.contains('${member.type}_${member.id}')
                                   ? null 
                                   : () {
                                       setState(() {
@@ -1348,8 +1363,8 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                         itemCount: _teamMembers.length,
                         itemBuilder: (context, index) {
                           final member = _teamMembers[index];
-                          final isAdmin = member.id != null && _adminIds.contains(member.id);
-                          final isSelected = isAdmin || _selectedTeamMembers.any((m) => m.id == member.id);
+                          final isAdmin = member.id != null && _adminIds.contains('${member.type}_${member.id}');
+                          final isSelected = isAdmin || _selectedTeamMembers.contains(member);
                           
                           return CheckboxListTile(
                             title: Text(
