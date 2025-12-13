@@ -5,6 +5,7 @@ import '../../../models/customer_role.dart';
 import '../../../responsive.dart';
 import '../../../services/crm_service.dart';
 import '../../../utils/container_styles.dart';
+import 'package:admin/models/pagination_params.dart';
 import 'add_customer_screen.dart';
 import 'edit_customer_screen.dart';
 
@@ -21,6 +22,12 @@ class _CustomersScreenState extends State<CustomersScreen> {
   bool isLoading = true;
   String? errorMessage;
   final CRMService _crmService = CRMService();
+  
+  // Pagination State
+  int currentPage = 0;
+  int pageSize = 10;
+  int totalItems = 0;
+  int totalPages = 1;
 
   @override
   void initState() {
@@ -38,20 +45,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
         });
       }
     } catch (e) {
-      // Silently fail - roles will just not be displayed
       print('Error loading customer roles: $e');
     }
   }
-
-  String _getRoleDescription(int? roleId) {
-    if (roleId == null) return 'N/A';
-    final role = customerRoles.firstWhere(
-      (r) => r.id == roleId,
-      orElse: () => CustomerRole(id: 0, name: '', description: 'Unknown'),
-    );
-    return role.description;
-  }
-
 
   Future<void> _loadCustomers() async {
     try {
@@ -60,11 +56,20 @@ class _CustomersScreenState extends State<CustomersScreen> {
         errorMessage = null;
       });
 
-      final loadedCustomers = await _crmService.getAllCustomers();
+      final params = PaginationParams(
+        page: currentPage + 1,
+        limit: pageSize,
+        sortBy: 'id',
+        sortOrder: 'desc',
+      );
+
+      final paginatedResponse = await _crmService.getCustomersPaginated(params);
 
       if (mounted) {
         setState(() {
-          customers = loadedCustomers;
+          customers = paginatedResponse.data;
+          totalItems = paginatedResponse.totalItems;
+          totalPages = paginatedResponse.totalPages;
           isLoading = false;
         });
       }
@@ -76,6 +81,13 @@ class _CustomersScreenState extends State<CustomersScreen> {
         });
       }
     }
+  }
+  
+  void _onPageChanged(int newPage) {
+    setState(() {
+      currentPage = newPage;
+    });
+    _loadCustomers();
   }
 
   String _getErrorMessage(dynamic error) {
@@ -281,14 +293,45 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 ),
               )
             else
-              RefreshIndicator(
-                onRefresh: _refreshCustomers,
-                child: CustomersTable(
-                  customers: customers,
-                  customerRoles: customerRoles,
-                  onEdit: _editCustomer,
-                  onDelete: _deleteCustomer,
-                ),
+              Column(
+                children: [
+                  RefreshIndicator(
+                    onRefresh: _refreshCustomers,
+                    child: CustomersTable(
+                      customers: customers,
+                      customerRoles: customerRoles,
+                      onEdit: _editCustomer,
+                      onDelete: _deleteCustomer,
+                    ),
+                  ),
+                  const SizedBox(height: defaultPadding),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        "Showing ${currentPage * pageSize + 1} to ${(currentPage + 1) * pageSize > totalItems ? totalItems : (currentPage + 1) * pageSize} of $totalItems",
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(width: defaultPadding),
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left),
+                        onPressed: currentPage > 0
+                            ? () => _onPageChanged(currentPage - 1)
+                            : null,
+                      ),
+                      Text(
+                        "Page ${currentPage + 1} of $totalPages",
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right),
+                        onPressed: currentPage < totalPages - 1
+                            ? () => _onPageChanged(currentPage + 1)
+                            : null,
+                      ),
+                    ],
+                  ),
+                ],
               ),
           ],
         ),
@@ -443,14 +486,21 @@ class CustomersTable extends StatelessWidget {
                               width: 36,
                               height: 36,
                               child: IconButton(
-                                icon: const Icon(Icons.delete,
-                                    color: Colors.red, size: 18),
-                                tooltip: 'Delete Customer',
+                                icon: Icon(Icons.delete,
+                                    color: customer.projectCount > 0
+                                        ? Colors.grey
+                                        : Colors.red,
+                                    size: 18),
+                                tooltip: customer.projectCount > 0
+                                    ? 'Cannot delete customer with associated projects'
+                                    : 'Delete Customer',
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
-                                onPressed: () {
-                                  onDelete(customer);
-                                },
+                                onPressed: customer.projectCount > 0
+                                    ? null
+                                    : () {
+                                        onDelete(customer);
+                                      },
                               ),
                             ),
                           ],

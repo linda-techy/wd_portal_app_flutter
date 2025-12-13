@@ -145,6 +145,10 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text('Edit Customer: ${widget.customer.fullName}'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,

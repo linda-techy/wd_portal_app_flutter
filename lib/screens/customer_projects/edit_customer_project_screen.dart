@@ -496,6 +496,10 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text('Edit Customer Project'),
       ),
       body: AdaptiveContainer(

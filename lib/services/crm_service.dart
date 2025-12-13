@@ -195,6 +195,18 @@ class CRMService {
     }
   }
 
+  Future<PaginatedResponse<Customer>> getCustomersPaginated(
+      PaginationParams params) async {
+    try {
+      final queryParams = params.toQueryParams();
+      final response = await _apiService.get('/customers/paginated',
+          queryParams: queryParams);
+      return PaginatedResponse.fromJson(response.data, Customer.fromJson);
+    } catch (e) {
+      throw Exception('Failed to fetch paginated customers: $e');
+    }
+  }
+
   Future<Customer> getCustomerById(int id) async {
     try {
       final response = await _apiService.get('/customers/$id');

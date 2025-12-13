@@ -116,6 +116,10 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text('Create Task'),
         backgroundColor: Colors.white,
         foregroundColor: AppTheme.textPrimary,

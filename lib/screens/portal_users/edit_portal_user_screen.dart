@@ -127,6 +127,10 @@ class _EditPortalUserScreenState extends State<EditPortalUserScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text('Edit Portal User'),
       ),
       body: AdaptiveContainer(

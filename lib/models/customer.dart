@@ -8,6 +8,7 @@ class Customer {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final int? roleId;
+  final int projectCount;
 
   Customer({
     this.id,
@@ -19,6 +20,7 @@ class Customer {
     this.createdAt,
     this.updatedAt,
     this.roleId,
+    this.projectCount = 0,
   });
 
   String get fullName => '$firstName $lastName'.trim();
@@ -45,6 +47,9 @@ class Customer {
           : json['roleId'] is int
               ? json['roleId']
               : int.tryParse(json['role_id']?.toString() ?? json['roleId']?.toString() ?? ''),
+      projectCount: json['project_count'] is int
+          ? json['project_count']
+          : int.tryParse(json['project_count']?.toString() ?? '0') ?? 0,
     );
   }
 

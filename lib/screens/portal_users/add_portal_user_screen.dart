@@ -113,6 +113,10 @@ class _AddPortalUserScreenState extends State<AddPortalUserScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text('Add Portal User'),
       ),
       body: AdaptiveContainer(
