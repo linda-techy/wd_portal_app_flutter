@@ -39,7 +39,7 @@ class PaginationParams {
 
   Map<String, dynamic> toQueryParams() {
     final Map<String, dynamic> params = {
-      'page': page,
+      'page': page > 0 ? page - 1 : 0,
       'limit': limit,
       'sortBy': sortBy,
       'sortOrder': sortOrder,

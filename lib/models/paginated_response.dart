@@ -22,15 +22,15 @@ class PaginatedResponse<T> {
     T Function(Map<String, dynamic>) fromJsonT,
   ) {
     return PaginatedResponse<T>(
-      data: (json['data'] as List)
+      data: ((json['data'] ?? json['content']) as List)
           .map((item) => fromJsonT(item as Map<String, dynamic>))
           .toList(),
-      currentPage: json['currentPage'] ?? 1,
+      currentPage: json['currentPage'] ?? (json['number'] != null ? json['number'] + 1 : 1),
       totalPages: json['totalPages'] ?? 1,
-      totalItems: json['totalItems'] ?? 0,
-      itemsPerPage: json['itemsPerPage'] ?? 10,
-      hasNextPage: json['hasNextPage'] ?? false,
-      hasPreviousPage: json['hasPreviousPage'] ?? false,
+      totalItems: json['totalItems'] ?? json['totalElements'] ?? 0,
+      itemsPerPage: json['itemsPerPage'] ?? json['size'] ?? 10,
+      hasNextPage: json['hasNextPage'] ?? (json['last'] != null ? !json['last'] : false),
+      hasPreviousPage: json['hasPreviousPage'] ?? (json['first'] != null ? !json['first'] : false),
     );
   }
 }
