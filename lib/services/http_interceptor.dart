@@ -1,11 +1,12 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import '../providers/portal_auth_provider.dart';
 import '../utils/navigation_service.dart';
+import 'package:flutter/material.dart'; // Required for Colors and SnackBar
+import 'storage_service.dart';
 
 class AuthInterceptor extends Interceptor {
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final StorageService _storage = StorageService();
   final Dio _dio;
   bool _isRefreshing = false;
 
@@ -18,13 +19,19 @@ class AuthInterceptor extends Interceptor {
     if (options.path.contains('/auth/login') ||
         options.path.contains('/auth/refresh-token') ||
         options.path.contains('/auth/logout')) {
+      print('DEBUG Flutter: Skipping token for ${options.path}');
       return handler.next(options);
     }
 
     // Add access token to request
+    print('DEBUG Flutter: Reading token for ${options.path}');
     final accessToken = await _storage.read(key: 'access_token');
+    print('DEBUG Flutter: Token value: ${accessToken != null ? "EXISTS (${accessToken.substring(0, 20)}...)" : "NULL"}');
     if (accessToken != null) {
       options.headers['Authorization'] = 'Bearer $accessToken';
+      print('DEBUG Flutter: Added Bearer token to headers');
+    } else {
+      print('DEBUG Flutter: No token found in storage!');
     }
 
     return handler.next(options);
@@ -72,18 +79,20 @@ class AuthInterceptor extends Interceptor {
     }
 
     // Handle 403 Forbidden - user doesn't have permission
+    // Handle 403 Forbidden - user doesn't have permission
     if (err.response?.statusCode == 403) {
-      // For 403 errors, we don't try to refresh the token as it's a permission issue
-      // Clear tokens and redirect to login
-      await _storage.deleteAll();
-      _isRefreshing = false;
+      // Just pass the error through so UI can show permission denied
+      // Do NOT delete tokens or logout
       
-      // Trigger logout via provider if context is available
-      final context = NavigationService.navigatorKey.currentContext;
-      if (context != null) {
-        // We use listen: false because we are outside the widget tree build method
-        Provider.of<PortalAuthProvider>(context, listen: false).logout();
-      }
+      // Show global toaster for permission denied
+      NavigationService.scaffoldMessengerKey.currentState?.showSnackBar(
+        const SnackBar(
+          content: Text('Access Denied: You do not have permission to view this resource.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
       
       return handler.next(err);
     }

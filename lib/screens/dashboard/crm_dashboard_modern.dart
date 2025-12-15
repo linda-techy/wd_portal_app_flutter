@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../theme/app_theme.dart';
-import '../../theme/responsive_utils.dart';
-import '../../services/crm_service.dart';
-import '../../models/lead.dart';
-import '../../models/customer.dart';
-import '../../models/customer_project.dart';
-import '../../widgets/components/data_card.dart';
-import '../../widgets/charts/chart_card.dart';
+import 'package:admin/theme/app_theme.dart';
+import 'package:admin/theme/responsive_utils.dart';
+import 'package:admin/services/crm_service.dart';
+import 'package:admin/features/leads/data/models/lead.dart';
+import 'package:admin/features/customers/data/models/customer.dart';
+import 'package:admin/models/customer_project.dart';
+import 'package:admin/widgets/components/data_card.dart';
+import 'package:admin/widgets/charts/chart_card.dart';
 
 /// Modern CRM Dashboard using new design system components
 class CRMDashboardModern extends StatefulWidget {
@@ -54,11 +54,7 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
       setState(() {
         isLoading = false;
       });
-      if (leads.isEmpty && customers.isEmpty && customerProjects.isEmpty) {
-        _loadMockData();
-      } else {
-        _calculateRealMetrics();
-      }
+      _calculateRealMetrics();
     }
   }
 
@@ -139,39 +135,7 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
     });
   }
 
-  void _loadMockData() {
-    setState(() {
-      dashboardMetrics = {
-        'totalLeads': 150,
-        'totalClients': 89,
-        'totalProjects': 45,
-        'totalRevenue': 2500000.0,
-        'leadsByStatus': {
-          'New': 25,
-          'Contacted': 35,
-          'Qualified': 20,
-          'Proposal Sent': 15,
-          'Negotiation': 10,
-          'Won': 30,
-          'Lost': 15,
-        },
-        'projectProgress': [
-          {'name': 'Planning', 'count': 8, 'percentage': 18.0},
-          {'name': 'In Progress', 'count': 22, 'percentage': 49.0},
-          {'name': 'On Hold', 'count': 5, 'percentage': 11.0},
-          {'name': 'Completed', 'count': 10, 'percentage': 22.0},
-        ],
-        'monthlyRevenue': [
-          {'month': 'Jan', 'revenue': 180000},
-          {'month': 'Feb', 'revenue': 220000},
-          {'month': 'Mar', 'revenue': 280000},
-          {'month': 'Apr', 'revenue': 320000},
-          {'month': 'May', 'revenue': 350000},
-          {'month': 'Jun', 'revenue': 380000},
-        ],
-      };
-    });
-  }
+
 
   @override
   Widget build(BuildContext context) {

@@ -36,74 +36,11 @@ class _ClientsScreenState extends State<ClientsScreen> {
       setState(() {
         isLoading = false;
       });
-      // Load mock data for demonstration
-      _loadMockData();
+
     }
   }
 
-  void _loadMockData() {
-    final mockClients = [
-      Client(
-        id: '1',
-        clientCode: 'CL001',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@email.com',
-        phone: '+91 98765 43210',
-        whatsapp: '+91 98765 43210',
-        address: '123 Main Street',
-        city: 'Mumbai',
-        state: 'Maharashtra',
-        pincode: '400001',
-        source: 'Website',
-        assignedTo: 'Alice Smith',
-        status: 'Active',
-        createdAt: DateTime.now().subtract(const Duration(days: 30)),
-        updatedAt: DateTime.now(),
-      ),
-      Client(
-        id: '2',
-        clientCode: 'CL002',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        email: 'jane.smith@email.com',
-        phone: '+91 87654 32109',
-        whatsapp: '+91 87654 32109',
-        address: '456 Oak Avenue',
-        city: 'Delhi',
-        state: 'Delhi',
-        pincode: '110001',
-        source: 'Referral',
-        assignedTo: 'Bob Lee',
-        status: 'Active',
-        createdAt: DateTime.now().subtract(const Duration(days: 45)),
-        updatedAt: DateTime.now(),
-      ),
-      Client(
-        id: '3',
-        clientCode: 'CL003',
-        firstName: 'Mike',
-        lastName: 'Johnson',
-        email: 'mike.johnson@email.com',
-        phone: '+91 76543 21098',
-        whatsapp: '+91 76543 21098',
-        address: '789 Pine Road',
-        city: 'Bangalore',
-        state: 'Karnataka',
-        pincode: '560001',
-        source: 'Social Media',
-        assignedTo: 'Carol Johnson',
-        status: 'Inactive',
-        createdAt: DateTime.now().subtract(const Duration(days: 60)),
-        updatedAt: DateTime.now(),
-      ),
-    ];
 
-    setState(() {
-      clients = mockClients;
-      filteredClients = mockClients;
-    });
-  }
 
   void _filterClients() {
     setState(() {

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../theme/app_theme.dart';
-import '../../theme/responsive_utils.dart';
-import '../../models/customer_project.dart';
-import '../../models/lead.dart';
-import '../../models/team_member.dart';
-import '../../models/portal_user.dart';
-import '../../models/customer.dart';
-import '../../models/role.dart';
-import '../../services/crm_service.dart';
-import '../../utils/india_location_data.dart';
+import 'package:admin/theme/app_theme.dart';
+import 'package:admin/theme/responsive_utils.dart';
+import 'package:admin/models/customer_project.dart';
+import 'package:admin/features/leads/data/models/lead.dart';
+import 'package:admin/models/team_member.dart';
+import 'package:admin/models/portal_user.dart';
+import 'package:admin/features/customers/data/models/customer.dart';
+import 'package:admin/models/role.dart';
+import 'package:admin/services/crm_service.dart';
+import 'package:admin/utils/india_location_data.dart';
 
 class AddCustomerProjectScreen extends StatefulWidget {
   const AddCustomerProjectScreen({super.key});

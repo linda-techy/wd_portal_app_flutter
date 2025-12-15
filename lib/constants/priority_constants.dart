@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/lead.dart';
+import 'package:admin/features/leads/data/models/lead.dart';
 
 class PriorityConstants {
   // Priority values (using LeadPriority enum)

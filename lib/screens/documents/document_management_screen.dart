@@ -12,8 +12,8 @@ class DocumentManagementScreen extends StatefulWidget {
 }
 
 class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
-  // Mock data for now
-  int approvalPendingCount = 3;
+  // TODO: Fetch real approval pending count from API
+  int approvalPendingCount = 0;
 
   final List<Map<String, dynamic>> _documentTypes = [
     {

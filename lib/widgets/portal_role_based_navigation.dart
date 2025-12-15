@@ -84,7 +84,7 @@ class PortalRoleBasedNavigation extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 children: [
                   // Dashboard - Available to all authenticated users
-                  if (authProvider.hasPermission('VIEW_DASHBOARD'))
+                  if (authProvider.hasPermission('DASHBOARD_VIEW'))
                     _buildMenuItem(
                       icon: Icons.dashboard,
                       title: 'Dashboard',

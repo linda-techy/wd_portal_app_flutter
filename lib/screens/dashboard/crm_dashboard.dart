@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/services/crm_service.dart';
-import 'package:admin/models/lead.dart';
+import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/models/client.dart';
 import 'package:admin/models/project.dart';
 import 'package:admin/utils/container_styles.dart';
@@ -64,15 +64,10 @@ class _CRMDashboardState extends State<CRMDashboard> {
         isLoading = false;
       });
       // Only use mock data if absolutely no API data could be fetched
-      if (leads.isEmpty && clients.isEmpty && projects.isEmpty) {
-        print('No API data available, using mock data as fallback');
-        _loadMockData();
-      } else {
-        // If we have some data, calculate metrics from what we have
-        print(
-            'Using partial API data, calculating metrics from available data');
-        _calculateRealMetrics();
-      }
+      // If we have some data, calculate metrics from what we have
+      print('Using partial API data, calculating metrics from available data');
+      _calculateRealMetrics();
+    }
     }
   }
 
@@ -198,45 +193,7 @@ class _CRMDashboardState extends State<CRMDashboard> {
     print('Dashboard Metrics: $dashboardMetrics');
   }
 
-  void _loadMockData() {
-    setState(() {
-      dashboardMetrics = {
-        'totalLeads': 150,
-        'totalClients': 89,
-        'totalProjects': 45,
-        'totalRevenue': 2500000.0,
-        'leadsByStatus': {
-          'New': 25,
-          'Contacted': 35,
-          'Qualified': 20,
-          'Proposal Sent': 15,
-          'Negotiation': 10,
-          'Won': 30,
-          'Lost': 15,
-        },
-        'projectProgress': [
-          {'name': 'Planning', 'count': 8, 'percentage': 18.0},
-          {'name': 'In Progress', 'count': 22, 'percentage': 49.0},
-          {'name': 'On Hold', 'count': 5, 'percentage': 11.0},
-          {'name': 'Completed', 'count': 10, 'percentage': 22.0},
-        ],
-        'monthlyRevenue': [
-          {'month': 'Jan', 'revenue': 180000},
-          {'month': 'Feb', 'revenue': 220000},
-          {'month': 'Mar', 'revenue': 280000},
-          {'month': 'Apr', 'revenue': 320000},
-          {'month': 'May', 'revenue': 350000},
-          {'month': 'Jun', 'revenue': 380000},
-        ],
-        'teamPerformance': [
-          {'name': 'Alice Smith', 'leads': 25, 'conversion': 68.0},
-          {'name': 'Bob Lee', 'leads': 18, 'conversion': 72.0},
-          {'name': 'Carol Johnson', 'leads': 22, 'conversion': 64.0},
-          {'name': 'David Brown', 'leads': 15, 'conversion': 80.0},
-        ],
-      };
-    });
-  }
+
 
   @override
   Widget build(BuildContext context) {

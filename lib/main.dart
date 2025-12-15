@@ -3,6 +3,7 @@ import 'package:admin/controllers/menu_app_controller.dart';
 import 'package:admin/config/app_config.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
 import 'package:admin/services/portal_auth_service.dart';
+import 'package:admin/services/storage_service.dart';
 import 'package:admin/utils/api_connection_test.dart';
 import 'package:admin/utils/web_error_handler.dart';
 import 'package:admin/widgets/portal_auth_wrapper.dart';
@@ -12,7 +13,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/utils/navigation_service.dart';
 
-void main() {
+void main() async {
+  // Ensure Flutter binding is initialized
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize platform-conditional storage (CRITICAL for web)
+  await StorageService().initialize();
+
   // Initialize app configuration
   AppConfig.printConfig();
 
@@ -96,6 +103,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       navigatorKey: NavigationService.navigatorKey,
+      scaffoldMessengerKey: NavigationService.scaffoldMessengerKey,
       title: AppConfig.appName,
       // Use new construction-appropriate theme
       theme: AppTheme.lightTheme,

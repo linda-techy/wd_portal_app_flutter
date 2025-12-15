@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../models/lead.dart';
+import 'package:admin/features/leads/data/models/lead.dart';
 
 class LeadManagementDashboard extends StatelessWidget {
   final List<Lead> leads;

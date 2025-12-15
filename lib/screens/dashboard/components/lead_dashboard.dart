@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../../models/lead.dart';
-import '../../../constants.dart';
-import '../../../responsive.dart';
+import 'package:admin/features/leads/data/models/lead.dart';
+import 'package:admin/constants.dart';
+import 'package:admin/responsive.dart';
 
 class LeadDashboard extends StatelessWidget {
   final List<Lead> leads;

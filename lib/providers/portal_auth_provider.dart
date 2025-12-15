@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/auth_models.dart';
 import '../services/portal_auth_service.dart';
@@ -23,13 +24,27 @@ class PortalAuthProvider extends ChangeNotifier {
         () => PortalAuthService.isLoggedIn(),
         false,
         operationName: 'Check Login Status',
+      ).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          debugPrint('Auth check timed out after 5 seconds');
+          return false;
+        },
       );
 
       if (isLoggedIn) {
-        await _loadUserData();
+        await _loadUserData().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            debugPrint('Load user data timed out after 5 seconds');
+            throw TimeoutException('Failed to load user data');
+          },
+        );
       }
     } catch (e) {
-      // Handle error silently during initialization
+      // Handle error silently during initialization but clear state
+      debugPrint('Auth initialization error: $e');
+      _clearUserData();
     } finally {
       _setLoading(false);
     }

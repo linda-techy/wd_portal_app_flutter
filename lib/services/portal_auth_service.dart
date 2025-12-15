@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:admin/config/app_config.dart';
 import '../models/auth_models.dart';
+import 'storage_service.dart';
 
 class PortalAuthService {
   // Use environment-aware base URL
   static final String baseUrl = AppConfig.fullApiUrl;
-  static const FlutterSecureStorage _storage = FlutterSecureStorage();
+  // Platform-conditional storage
+  static final StorageService _storage = StorageService();
 
   static final Dio _dio = Dio(BaseOptions(
     baseUrl: baseUrl,
@@ -151,7 +152,7 @@ class PortalAuthService {
 
 // Portal-specific auth interceptor
 class PortalAuthInterceptor extends Interceptor {
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final StorageService _storage = StorageService();
   final Dio _dio;
   bool _isRefreshing = false;
 

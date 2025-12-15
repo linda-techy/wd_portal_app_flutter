@@ -1,11 +1,11 @@
 import 'package:admin/models/team_member.dart';
 import 'package:admin/models/team_member_simple.dart';
 import 'package:admin/models/client.dart';
-import 'package:admin/models/customer.dart';
+import 'package:admin/features/customers/data/models/customer.dart';
 import 'package:admin/models/customer_role.dart';
 import 'package:admin/models/customer_project.dart';
 import 'package:admin/models/project.dart';
-import 'package:admin/models/lead.dart';
+import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/models/portal_user.dart';
 import 'package:admin/models/role.dart';
 import 'package:admin/models/paginated_response.dart';
