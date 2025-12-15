@@ -66,7 +66,7 @@ class SideMenu extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    'BUILDERS PORTAL',
+                    'Walldot Builders',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
