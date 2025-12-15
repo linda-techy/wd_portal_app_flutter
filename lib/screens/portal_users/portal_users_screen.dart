@@ -174,8 +174,11 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Wrap(
+              spacing: AppTheme.spacingMD,
+              runSpacing: AppTheme.spacingMD,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
                   'Portal Users',
