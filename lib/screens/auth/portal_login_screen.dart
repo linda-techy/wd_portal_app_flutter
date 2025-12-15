@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../providers/portal_auth_provider.dart';
-import '../../constants.dart';
+import '../../theme/app_theme.dart';
 
 class PortalLoginScreen extends StatefulWidget {
   const PortalLoginScreen({super.key});
@@ -43,9 +44,9 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> {
 
       if (!success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login failed'),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content: const Text('Login failed'),
+            backgroundColor: AppTheme.errorRed,
           ),
         );
       }
@@ -54,7 +55,7 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Login failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorRed,
           ),
         );
       }
@@ -70,58 +71,87 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: AppTheme.background,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Card(
-            elevation: 8,
+            elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppTheme.radiusLG),
+              side: BorderSide(color: AppTheme.borderLight, width: 1),
             ),
             child: Container(
               constraints: const BoxConstraints(
                 maxWidth: 400,
-                minHeight: 400,
+                minHeight: 450,
               ),
-              padding: const EdgeInsets.all(32.0),
+              padding: const EdgeInsets.all(40.0),
               child: Form(
                 key: _formKey,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Logo and Title
+                    // Logo with Walldot brand color background
                     Container(
-                      width: 80,
-                      height: 80,
-                      decoration: const BoxDecoration(
-                        borderRadius: BorderRadius.all(Radius.circular(16)),
+                      width: 100,
+                      height: 100,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMD),
                       ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSM),
                         child: Image.asset(
                           'assets/icons/wd_logo.png',
-                          width: 80,
-                          height: 80,
                           fit: BoxFit.contain,
+                          // Removed color tint to show original logo colors
                         ),
                       ),
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'WD Portal',
+                      'Walldot Builders',
                       style:
                           Theme.of(context).textTheme.headlineMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: primaryColor,
+                                color: AppTheme.deepSlate,
                               ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Construction Management',
+                      'Portal Login',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey[600],
+                            color: AppTheme.textSecondary,
                           ),
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Motivational Quote
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceElevated,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                        border: Border.all(color: AppTheme.borderLight.withOpacity(0.5)),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(Icons.format_quote_rounded, color: AppTheme.coralRed, size: 20),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Building excellence, together.',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.caveat(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.deepSlate,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 32),
 
@@ -132,17 +162,17 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> {
                         keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         labelText: 'Email',
-                        prefixIcon: const Icon(Icons.email_outlined),
+                        prefixIcon: Icon(Icons.email_outlined, color: AppTheme.deepSlate),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMD),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                          borderSide: BorderSide(color: AppTheme.borderLight),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: primaryColor),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                          borderSide: BorderSide(color: AppTheme.coralRed, width: 2),
                         ),
                       ),
                       validator: (value) {
@@ -166,12 +196,13 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> {
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Password',
-                        prefixIcon: const Icon(Icons.lock_outlined),
+                        prefixIcon: Icon(Icons.lock_outlined, color: AppTheme.deepSlate),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
+                            color: AppTheme.deepSlate,
                           ),
                           onPressed: () {
                             setState(() {
@@ -180,15 +211,15 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> {
                           },
                         ),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMD),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                          borderSide: BorderSide(color: AppTheme.borderLight),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: primaryColor),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                          borderSide: BorderSide(color: AppTheme.coralRed, width: 2),
                         ),
                       ),
                       validator: (value) {
@@ -201,21 +232,21 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
 
-                    // Login Button
+                    // Login Button - Walldot Coral Red
                     SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
+                          backgroundColor: AppTheme.coralRed,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(AppTheme.radiusMD),
                           ),
-                          elevation: 2,
+                          elevation: 0,
                         ),
                         child: _isLoading
                             ? const SizedBox(

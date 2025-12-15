@@ -498,6 +498,36 @@ class CRMService {
     }
   }
 
+  Future<PaginatedResponse<PortalUser>> getPortalUsersPaginated({
+    int page = 0,
+    int size = 10,
+    String sort = 'id',
+    String direction = 'asc',
+    String? search,
+  }) async {
+    try {
+      final queryParams = {
+        'page': page.toString(),
+        'size': size.toString(),
+        'sort': sort,
+        'direction': direction,
+      };
+      
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search;
+      }
+      
+      final response = await _apiService.get(
+        '/portal-users/paginated',
+        queryParams: queryParams,
+      );
+      
+      return PaginatedResponse.fromJson(response.data, PortalUser.fromJson);
+    } catch (e) {
+      throw Exception('Failed to fetch paginated portal users: $e');
+    }
+  }
+
   Future<PortalUser> getPortalUserById(int id) async {
     try {
       final response = await _apiService.get('/portal-users/$id');

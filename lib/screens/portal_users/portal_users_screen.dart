@@ -16,9 +16,19 @@ class PortalUsersScreen extends StatefulWidget {
 
 class _PortalUsersScreenState extends State<PortalUsersScreen> {
   final CRMService _crmService = CRMService();
+  final TextEditingController _searchController = TextEditingController();
   List<PortalUser> _users = [];
   List<PortalRole> _roles = [];
   bool _isLoading = false;
+  
+  // Pagination state
+  int _currentPage = 0;
+  int _pageSize = 10;
+  int _totalPages = 0;
+  int _totalElements = 0;
+  String _sortBy = 'id';
+  String _sortDirection = 'asc';
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -27,13 +37,28 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
     _loadRoles();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadUsers() async {
     setState(() => _isLoading = true);
     try {
-      final users = await _crmService.getAllPortalUsers();
+      final response = await _crmService.getPortalUsersPaginated(
+        page: _currentPage,
+        size: _pageSize,
+        sort: _sortBy,
+        direction: _sortDirection,
+        search: _searchQuery.isEmpty ? null : _searchQuery,
+      );
+      
       if (mounted) {
         setState(() {
-          _users = users;
+          _users = response.data;
+          _totalPages = response.totalPages;
+          _totalElements = response.totalItems;
           _isLoading = false;
         });
       }
@@ -48,6 +73,29 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
         );
       }
     }
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {
+      _searchQuery = value;
+      _currentPage = 0; // Reset to first page on search
+    });
+    _loadUsers();
+  }
+
+  void _goToPage(int page) {
+    if (page >= 0 && page < _totalPages) {
+      setState(() => _currentPage = page);
+      _loadUsers();
+    }
+  }
+
+  void _changePageSize(int newSize) {
+    setState(() {
+      _pageSize = newSize;
+      _currentPage = 0; // Reset to first page
+    });
+    _loadUsers();
   }
 
   Future<void> _loadRoles() async {
@@ -151,6 +199,33 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
               ],
             ),
             const SizedBox(height: AppTheme.spacingLG),
+            // Search Field
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMD),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search by name or email...',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            _onSearchChanged('');
+                          },
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                  ),
+                  filled: true,
+                  fillColor: AppTheme.surface,
+                ),
+                onChanged: _onSearchChanged,
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacingMD),
             if (_isLoading)
               const Center(child: CircularProgressIndicator())
             else if (_users.isEmpty)
@@ -167,22 +242,203 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
               )
             else
               Expanded(
-                child: _PortalUsersTable(
-                  users: _users,
-                  roles: _roles,
-                  getRoleName: _getRoleName,
-                  onEdit: (user) async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EditPortalUserScreen(user: user),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: _PortalUsersTable(
+                        users: _users,
+                        roles: _roles,
+                        getRoleName: _getRoleName,
+                        onEdit: (user) async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditPortalUserScreen(user: user),
+                            ),
+                          );
+                          if (result == true) {
+                            _loadUsers();
+                          }
+                        },
+                        onDelete: _deleteUser,
                       ),
-                    );
-                    if (result == true) {
-                      _loadUsers();
-                    }
-                  },
-                  onDelete: _deleteUser,
+                    ),
+                    // Pagination Controls
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppTheme.spacingLG,
+                        vertical: AppTheme.spacingMD,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface,
+                        border: Border(
+                          top: BorderSide(color: AppTheme.borderLight, width: 1),
+                        ),
+                      ),
+                      child: Wrap(
+                        spacing: AppTheme.spacingMD,
+                        runSpacing: AppTheme.spacingMD,
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          // Page size selector
+                          Row(
+                            children: [
+                              Text(
+                                'Show',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(width: AppTheme.spacingSM),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: AppTheme.borderLight),
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                                ),
+                                child: DropdownButton<int>(
+                                  value: _pageSize,
+                                  underline: const SizedBox(),
+                                  isDense: true,
+                                  items: [10, 25, 50, 100]
+                                      .map((size) => DropdownMenuItem(
+                                            value: size,
+                                            child: Text(
+                                              size.toString(),
+                                              style: const TextStyle(fontSize: 14),
+                                            ),
+                                          ))
+                                      .toList(),
+                                  onChanged: (newSize) {
+                                    if (newSize != null) {
+                                      _changePageSize(newSize);
+                                    }
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: AppTheme.spacingSM),
+                              Text(
+                                'entries',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          // Page info and navigation
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  'Showing ${_users.isEmpty ? 0 : _currentPage * _pageSize + 1}-${(_currentPage + 1) * _pageSize > _totalElements ? _totalElements : (_currentPage + 1) * _pageSize} of $_totalElements',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: AppTheme.textSecondary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: AppTheme.spacingLG),
+                              Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: AppTheme.borderLight),
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: _currentPage > 0
+                                            ? () => _goToPage(_currentPage - 1)
+                                            : null,
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(AppTheme.radiusSM),
+                                          bottomLeft: Radius.circular(AppTheme.radiusSM),
+                                        ),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 8,
+                                          ),
+                                          child: Icon(
+                                            Icons.chevron_left,
+                                            size: 20,
+                                            color: _currentPage > 0
+                                                ? AppTheme.textPrimary
+                                                : AppTheme.textTertiary,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 1,
+                                      height: 32,
+                                      color: AppTheme.borderLight,
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 8,
+                                      ),
+                                      child: Flexible(
+                                        child: Text(
+                                          'Page ${_currentPage + 1} of $_totalPages',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: AppTheme.textPrimary,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 1,
+                                      height: 32,
+                                      color: AppTheme.borderLight,
+                                    ),
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: _currentPage < _totalPages - 1
+                                            ? () => _goToPage(_currentPage + 1)
+                                            : null,
+                                        borderRadius: BorderRadius.only(
+                                          topRight: Radius.circular(AppTheme.radiusSM),
+                                          bottomRight: Radius.circular(AppTheme.radiusSM),
+                                        ),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 8,
+                                          ),
+                                          child: Icon(
+                                            Icons.chevron_right,
+                                            size: 20,
+                                            color: _currentPage < _totalPages - 1
+                                                ? AppTheme.textPrimary
+                                                : AppTheme.textTertiary,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
           ],
@@ -192,7 +448,7 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
   }
 }
 
-class _PortalUsersTable extends StatelessWidget {
+class _PortalUsersTable extends StatefulWidget {
   final List<PortalUser> users;
   final List<PortalRole> roles;
   final String Function(int?) getRoleName;
@@ -208,6 +464,19 @@ class _PortalUsersTable extends StatelessWidget {
   });
 
   @override
+  State<_PortalUsersTable> createState() => _PortalUsersTableState();
+}
+
+class _PortalUsersTableState extends State<_PortalUsersTable> {
+  final ScrollController _verticalController = ScrollController();
+
+  @override
+  void dispose() {
+    _verticalController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -215,102 +484,187 @@ class _PortalUsersTable extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.radiusMD),
         border: Border.all(color: AppTheme.borderLight),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: SingleChildScrollView(
-          child: DataTable(
-            columnSpacing: AppTheme.spacingMD,
-            headingRowHeight: 48,
-            dataRowMinHeight: 48,
-            dataRowMaxHeight: 72,
-            columns: const [
-              DataColumn(
-                  label: Text('ID',
-                      style: TextStyle(fontWeight: FontWeight.bold))),
-              DataColumn(
-                  label: Text('Name',
-                      style: TextStyle(fontWeight: FontWeight.bold))),
-              DataColumn(
-                  label: Text('Email',
-                      style: TextStyle(fontWeight: FontWeight.bold))),
-              DataColumn(
-                  label: Text('Role',
-                      style: TextStyle(fontWeight: FontWeight.bold))),
-              DataColumn(
-                  label: Text('Status',
-                      style: TextStyle(fontWeight: FontWeight.bold))),
-              DataColumn(
-                  label: Text('Actions',
-                      style: TextStyle(fontWeight: FontWeight.bold))),
-            ],
-            rows: users.map((user) {
-              return DataRow(
-                cells: [
-                  DataCell(Text(user.id?.toString() ?? 'N/A')),
-                  DataCell(Text(user.fullName)),
-                  DataCell(Text(user.email)),
-                  DataCell(Text(getRoleName(user.roleId))),
-                  DataCell(
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: user.enabled
-                            ? AppTheme.statusSuccessBg
-                            : AppTheme.statusErrorBg,
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusSM),
-                      ),
-                      child: Text(
-                        user.enabled ? 'Enabled' : 'Disabled',
-                        style: TextStyle(
-                          color: user.enabled
-                              ? AppTheme.statusSuccess
-                              : AppTheme.statusError,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                  DataCell(
-                    Center(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                // Left Side: Scrollable Data
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width > 720 ? 720 : MediaQuery.of(context).size.width - 90, // Responsive width
+                      child: Column(
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, size: 18),
-                            color: AppTheme.primaryBlue,
-                            tooltip: 'Edit',
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                              minWidth: 32,
-                              minHeight: 32,
+                          // Header Row (Left part)
+                          Container(
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: AppTheme.background,
+                              border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
                             ),
-                            onPressed: () => onEdit(user),
+                            child: Row(
+                              children: [
+                                _buildHeaderCell('Name', 200),
+                                _buildHeaderCell('Email', 250),
+                                _buildHeaderCell('Role', 150),
+                                _buildHeaderCell('Status', 120),
+                              ],
+                            ),
                           ),
-                          const SizedBox(width: 4),
-                          IconButton(
-                            icon: const Icon(Icons.delete, size: 18),
-                            color: AppTheme.statusError,
-                            tooltip: 'Delete',
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                              minWidth: 32,
-                              minHeight: 32,
+                          // Body Rows (Left part)
+                          Expanded(
+                            child: SingleChildScrollView(
+                              controller: _verticalController,
+                              child: Column(
+                                children: widget.users.asMap().entries.map((entry) {
+                                  final index = entry.key;
+                                  final user = entry.value;
+                                  final isEven = index % 2 == 0;
+                                  return Container(
+                                    height: 64,
+                                    decoration: BoxDecoration(
+                                      color: isEven ? Colors.transparent : AppTheme.surfaceElevated.withOpacity(0.3),
+                                      border: Border(bottom: BorderSide(color: AppTheme.borderLight.withOpacity(0.5))),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        _buildDataCell(Text(user.fullName), 200),
+                                        _buildDataCell(Text(user.email), 250),
+                                        _buildDataCell(Text(widget.getRoleName(user.roleId)), 150),
+                                        _buildDataCell(
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: user.enabled ? AppTheme.statusSuccessBg : AppTheme.statusErrorBg,
+                                              borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                                            ),
+                                            child: Text(
+                                              user.enabled ? 'Enabled' : 'Disabled',
+                                              style: TextStyle(
+                                                color: user.enabled ? AppTheme.statusSuccess : AppTheme.statusError,
+                                                fontSize: 12, 
+                                                fontWeight: FontWeight.w500
+                                              ),
+                                            ),
+                                          ), 
+                                          120
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
                             ),
-                            onPressed: () => onDelete(user),
                           ),
                         ],
                       ),
                     ),
                   ),
-                ],
-              );
-            }).toList(),
+                ),
+                
+                // Right Side: Fixed Actions
+                Container(
+                  width: 90,
+                  decoration: BoxDecoration(
+                    border: Border(left: BorderSide(color: AppTheme.borderLight)),
+                    color: AppTheme.surface,
+                  ),
+                  child: Column(
+                    children: [
+                      // Actions Header
+                      Container(
+                        height: 56,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppTheme.background,
+                          border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
+                        ),
+                        child: Text(
+                          'Actions',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600, 
+                            fontSize: 14, 
+                            color: AppTheme.textPrimary
+                          ),
+                        ),
+                      ),
+                      // Actions Body
+                      Expanded(
+                        child: SingleChildScrollView(
+                          controller: _verticalController,
+                          physics: const ClampingScrollPhysics(),
+                          child: Column(
+                            children: widget.users.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final user = entry.value;
+                              final isEven = index % 2 == 0;
+                              return Container(
+                                height: 64,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: isEven ? Colors.transparent : AppTheme.surfaceElevated.withOpacity(0.3),
+                                  border: Border(bottom: BorderSide(color: AppTheme.borderLight.withOpacity(0.5))),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, size: 18),
+                                      color: AppTheme.primaryBlue,
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                      onPressed: () => widget.onEdit(user),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, size: 18),
+                                      color: AppTheme.statusError,
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                      onPressed: () => widget.onDelete(user),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderCell(String text, double width) {
+    return Container(
+      width: width,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text,
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+          color: AppTheme.textPrimary,
         ),
       ),
+    );
+  }
+
+  Widget _buildDataCell(Widget child, double width) {
+    return Container(
+      width: width,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      alignment: Alignment.centerLeft,
+      child: child,
     );
   }
 }

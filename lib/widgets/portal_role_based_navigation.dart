@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/portal_auth_provider.dart';
-import '../constants.dart';
+import '../theme/app_theme.dart';
 import '../screens/documents/document_management_screen.dart';
 
 class PortalRoleBasedNavigation extends StatelessWidget {
@@ -15,73 +15,87 @@ class PortalRoleBasedNavigation extends StatelessWidget {
 
         return Column(
           children: [
-            // User Info Section
+            // User Info Section - Walldot Branded
             if (user != null) ...[
               Container(
-                padding: const EdgeInsets.all(16),
-                margin: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(AppTheme.spacingMD),
+                margin: const EdgeInsets.all(AppTheme.spacingSM),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  gradient: LinearGradient(
+                    colors: [AppTheme.deepSlate, AppTheme.deepSlateDark],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                  boxShadow: AppTheme.shadowSM,
                 ),
                 child: Column(
                   children: [
+                    // Logo or Avatar
                     CircleAvatar(
-                      radius: 30,
-                      backgroundColor: primaryColor,
+                      radius: 32,
+                      backgroundColor: AppTheme.coralRed,
                       child: Text(
                         user.firstName[0].toUpperCase(),
                         style: const TextStyle(
-                          fontSize: 24,
+                          fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppTheme.spacingSM),
                     Text(
                       user.fullName,
                       style: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textInverse,
                       ),
+                      textAlign: TextAlign.center,
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       user.email,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: AppTheme.textInverse.withOpacity(0.7),
                       ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppTheme.spacingSM),
+                    // Role Badge
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: 12,
+                        vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: primaryColor,
-                        borderRadius: BorderRadius.circular(12),
+                        color: AppTheme.coralRed,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSM),
                       ),
                       child: Text(
                         user.roleCode,
                         style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
                           color: Colors.white,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const Divider(),
+              Divider(color: AppTheme.borderLight, height: 1),
             ],
 
             // Navigation Menu Items
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingSM),
                 children: [
                   // Dashboard - Available to all authenticated users
                   if (authProvider.hasPermission('DASHBOARD_VIEW'))
@@ -252,23 +266,25 @@ class PortalRoleBasedNavigation extends StatelessWidget {
               ),
             ),
 
-            // Logout Button
+            // Logout Button - Walldot Styled
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppTheme.spacingMD),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () async {
                     await authProvider.logout();
                   },
-                  icon: const Icon(Icons.logout),
+                  icon: const Icon(Icons.logout, size: 18),
                   label: const Text('Logout'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
+                    backgroundColor: AppTheme.errorRed,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMD),
                     ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
                   ),
                 ),
               ),
@@ -285,13 +301,24 @@ class PortalRoleBasedNavigation extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(icon, color: primaryColor),
-      title: Text(title),
+      leading: Icon(icon, color: AppTheme.coralRed, size: 22),
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
       onTap: onTap,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppTheme.radiusSM),
       ),
-      hoverColor: primaryColor.withOpacity(0.1),
+      hoverColor: AppTheme.coralRed.withOpacity(0.08),
+      dense: true,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.spacingMD,
+        vertical: AppTheme.spacingXS,
+      ),
     );
   }
 }

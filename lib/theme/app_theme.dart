@@ -1,48 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Construction Industry Design System
-/// Professional, reliable, data-dense theme optimized for admin portals
+/// Walldot Builders Design System
+/// Professional construction company theme with brand identity colors
 class AppTheme {
-  // ========== Color Palette - Construction/Engineering Sector ==========
+  // ========== Walldot Builders Color Palette ==========
   
-  // Primary Colors - Professional Blue (Trust, Reliability)
-  static const Color primaryBlue = Color(0xFF1E40AF); // Deep professional blue
-  static const Color primaryBlueLight = Color(0xFF3B82F6); // Lighter blue for accents
-  static const Color primaryBlueDark = Color(0xFF1E3A8A); // Darker for headers
+  // Primary Brand Colors
+  static const Color deepSlate = Color(0xFF2A2A3A); // Primary brand color - headers, nav
+  static const Color deepSlateDark = Color(0xFF1F1F2E); // Darker variant
+  static const Color deepSlateLight = Color(0xFF3A3A4A); // Lighter variant
   
-  // Secondary Colors - Steel Gray (Professional, Industrial)
-  static const Color steelGray = Color(0xFF475569); // Main gray
-  static const Color steelGrayLight = Color(0xFF64748B); // Light gray
-  static const Color steelGrayDark = Color(0xFF334155); // Dark gray
+  // Accent Colors - Walldot Signature
+  static const Color coralRed = Color(0xFFF36F72); // Primary accent - CTAs, highlights
+  static const Color coralRedDark = Color(0xFFE15F62); // Hover/pressed state
+  static const Color coralRedLight = Color(0xFFF58B8D); // Light variant
   
-  // High-Visibility Accent Colors (Safety-inspired)
-  static const Color safetyOrange = Color(0xFFFF6B35); // High visibility orange
-  static const Color safetyYellow = Color(0xFFFFC107); // Warning yellow
-  static const Color safetyGreen = Color(0xFF10B981); // Success/Go green
-  static const Color safetyRed = Color(0xFFEF4444); // Alert red
+  // Secondary Accent
+  static const Color constructionOrange = Color(0xFFFF8C42); // Secondary actions, warnings
+  static const Color constructionOrangeDark = Color(0xFFE67D38); // Darker variant
+  
+  // Supporting Colors
+  static const Color skyBlue = Color(0xFF56CCF2); // Info, links
+  static const Color successGreen = Color(0xFF4CAF50); // Success states
+  static const Color warningAmber = Color(0xFFFFC107); // Warnings
+  static const Color errorRed = Color(0xFFDC3545); // Errors
   
   // Neutral Colors
-  static const Color background = Color(0xFFF8FAFC); // Light background
-  static const Color surface = Color(0xFFFFFFFF); // Card/container background
-  static const Color surfaceElevated = Color(0xFFF1F5F9); // Elevated surface
+  static const Color background = Color(0xFFF7F7F7); // Main background
+  static const Color surface = Color(0xFFFFFFFF); // Cards/containers
+  static const Color surfaceElevated = Color(0xFFF1F5F9); // Elevated surfaces
   
   // Border & Divider
-  static const Color borderLight = Color(0xFFE2E8F0);
-  static const Color borderMedium = Color(0xFFCBD5E1);
+  static const Color borderLight = Color(0xFFCED4DA);
+  static const Color borderMedium = Color(0xFFADB5BD);
   static const Color divider = Color(0xFFE2E8F0);
   
   // Text Colors
-  static const Color textPrimary = Color(0xFF0F172A); // Almost black
-  static const Color textSecondary = Color(0xFF475569); // Medium gray
-  static const Color textTertiary = Color(0xFF94A3B8); // Light gray
-  static const Color textInverse = Color(0xFFFFFFFF); // White text
+  static const Color textPrimary = Color(0xFF333333); // Primary text
+  static const Color textSecondary = Color(0xFF6C757D); // Secondary text
+  static const Color textTertiary = Color(0xFF94A3B8); // Tertiary text
+  static const Color textInverse = Color(0xFFFFFFFF); // White text on dark
+  
+  // Backward compatibility aliases (maintains existing code)
+  static const Color primaryBlue = deepSlate;
+  static const Color primaryBlueLight = deepSlateLight;
+  static const Color primaryBlueDark = deepSlateDark;
+  static const Color steelGray = textSecondary;
+  static const Color steelGrayLight = Color(0xFF94A3B8);
+  static const Color steelGrayDark = deepSlate;
+  static const Color safetyOrange = constructionOrange;
+  static const Color safetyYellow = warningAmber;
+  static const Color safetyGreen = successGreen;
+  static const Color safetyRed = errorRed;
   
   // Status Colors
-  static const Color statusSuccess = safetyGreen;
-  static const Color statusWarning = safetyYellow;
-  static const Color statusError = safetyRed;
-  static const Color statusInfo = primaryBlueLight;
+  static const Color statusSuccess = successGreen;
+  static const Color statusWarning = warningAmber;
+  static const Color statusError = errorRed;
+  static const Color statusInfo = skyBlue;
   
   // Status Backgrounds (Light variants)
   static const Color statusSuccessBg = Color(0xFFD1FAE5);
@@ -50,94 +66,95 @@ class AppTheme {
   static const Color statusErrorBg = Color(0xFFFEE2E2);
   static const Color statusInfoBg = Color(0xFFDBEAFE);
   
-  // Chart Colors
+  // Chart Colors - Walldot Brand Palette
   static const List<Color> chartColors = [
-    primaryBlue,
-    safetyOrange,
-    safetyGreen,
+    coralRed,
+    constructionOrange,
+    successGreen,
+    skyBlue,
+    deepSlate,
     Color(0xFF8B5CF6), // Purple
     Color(0xFFEC4899), // Pink
-    Color(0xFF06B6D4), // Cyan
-    Color(0xFFF59E0B), // Amber
   ];
   
   // ========== Typography ==========
   static TextTheme getTextTheme() {
-    return GoogleFonts.interTextTheme().copyWith(
+    return GoogleFonts.manropeTextTheme().copyWith(
       // Display - Large headings
-      displayLarge: GoogleFonts.inter(
-        fontSize: 32,
-        fontWeight: FontWeight.w700,
+      displayLarge: GoogleFonts.manrope(
+        fontSize: 36,
+        fontWeight: FontWeight.w800,
         color: textPrimary,
-        letterSpacing: -0.5,
+        letterSpacing: -1.0,
       ),
-      displayMedium: GoogleFonts.inter(
+      displayMedium: GoogleFonts.manrope(
         fontSize: 28,
         fontWeight: FontWeight.w700,
         color: textPrimary,
         letterSpacing: -0.5,
       ),
-      displaySmall: GoogleFonts.inter(
+      displaySmall: GoogleFonts.manrope(
         fontSize: 24,
         fontWeight: FontWeight.w600,
         color: textPrimary,
         letterSpacing: -0.25,
       ),
       // Headlines
-      headlineLarge: GoogleFonts.inter(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
+      headlineLarge: GoogleFonts.manrope(
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
         color: textPrimary,
         letterSpacing: -0.25,
       ),
-      headlineMedium: GoogleFonts.inter(
-        fontSize: 18,
+      headlineMedium: GoogleFonts.manrope(
+        fontSize: 20,
         fontWeight: FontWeight.w600,
         color: textPrimary,
       ),
-      headlineSmall: GoogleFonts.inter(
+      headlineSmall: GoogleFonts.manrope(
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: textPrimary,
       ),
       // Body
-      bodyLarge: GoogleFonts.inter(
+      bodyLarge: GoogleFonts.manrope(
         fontSize: 16,
         fontWeight: FontWeight.w400,
         color: textPrimary,
         height: 1.5,
       ),
-      bodyMedium: GoogleFonts.inter(
+      bodyMedium: GoogleFonts.manrope(
         fontSize: 14,
         fontWeight: FontWeight.w400,
         color: textSecondary,
         height: 1.5,
       ),
-      bodySmall: GoogleFonts.inter(
+      bodySmall: GoogleFonts.manrope(
         fontSize: 12,
         fontWeight: FontWeight.w400,
         color: textTertiary,
         height: 1.4,
       ),
       // Labels
-      labelLarge: GoogleFonts.inter(
+      labelLarge: GoogleFonts.manrope(
         fontSize: 14,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
         color: textPrimary,
       ),
-      labelMedium: GoogleFonts.inter(
+      labelMedium: GoogleFonts.manrope(
         fontSize: 12,
         fontWeight: FontWeight.w500,
         color: textSecondary,
       ),
-      labelSmall: GoogleFonts.inter(
+      labelSmall: GoogleFonts.manrope(
         fontSize: 11,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
         color: textTertiary,
+        letterSpacing: 0.5,
       ),
     );
   }
-  
+
   // ========== Spacing System ==========
   static const double spacingXS = 4.0;
   static const double spacingSM = 8.0;
@@ -176,17 +193,17 @@ class AppTheme {
       offset: const Offset(0, 8),
     ),
   ];
-  
+
   // ========== Theme Data ==========
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.light(
-        primary: primaryBlue,
-        secondary: steelGray,
+        primary: coralRed, // Walldot accent color for primary actions
+        secondary: deepSlate, // Walldot brand color for secondary elements
         surface: surface,
         background: background,
-        error: safetyRed,
+        error: errorRed,
         onPrimary: textInverse,
         onSecondary: textInverse,
         onSurface: textPrimary,
@@ -195,7 +212,7 @@ class AppTheme {
       ),
       scaffoldBackgroundColor: background,
       textTheme: getTextTheme(),
-      fontFamily: GoogleFonts.inter().fontFamily,
+      fontFamily: GoogleFonts.manrope().fontFamily,
       
       // AppBar Theme
       appBarTheme: AppBarTheme(
@@ -226,7 +243,7 @@ class AppTheme {
       // Elevated Button Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryBlue,
+          backgroundColor: coralRed, // Walldot signature coral red for CTAs
           foregroundColor: textInverse,
           elevation: 0,
           shadowColor: Colors.transparent,
@@ -248,8 +265,8 @@ class AppTheme {
       // Outlined Button Theme
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: primaryBlue,
-          side: const BorderSide(color: primaryBlue, width: 1.5),
+          foregroundColor: deepSlate, // Walldot brand color for outlined buttons
+          side: const BorderSide(color: deepSlate, width: 1.5),
           padding: const EdgeInsets.symmetric(
             horizontal: spacingLG,
             vertical: spacingMD,

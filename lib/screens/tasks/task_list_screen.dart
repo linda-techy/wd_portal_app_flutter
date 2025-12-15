@@ -29,16 +29,18 @@ class _TaskListScreenState extends State<TaskListScreen> {
   }
 
   Future<void> _loadTasks() async {
-    setState(() => _isLoading = true);
+    if (mounted) setState(() => _isLoading = true);
     try {
       final tasks = await _taskService.getMyTasks();
-      setState(() {
-        _tasks = tasks;
-        _applyFilter();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _tasks = tasks;
+          _applyFilter();
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading tasks: $e')),

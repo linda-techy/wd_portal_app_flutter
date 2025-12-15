@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
+import 'package:admin/theme/app_theme.dart';
 
 class SideMenu extends StatelessWidget {
   const SideMenu({
@@ -28,32 +29,50 @@ class SideMenu extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Header
+          // Header - Cleaner, more professional look
           Container(
-            padding: const EdgeInsets.all(defaultPadding),
+            padding: const EdgeInsets.symmetric(
+              vertical: defaultPadding * 2,
+              horizontal: defaultPadding,
+            ),
+            width: double.infinity,
             decoration: BoxDecoration(
               color: Colors.white,
               border: Border(
-                bottom: BorderSide(color: Colors.grey[300]!, width: 1),
+                bottom: BorderSide(color: Colors.grey[200]!, width: 1),
               ),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset(
-                  "assets/icons/wd_logo.png",
-                  width: 120,
-                  height: 40,
-                  fit: BoxFit.contain,
+                Hero(
+                  tag: 'app_logo',
+                  child: Image.asset(
+                    "assets/icons/wd_logo.png",
+                    width: 140, // Slightly larger for better visibility
+                    height: 50,
+                    fit: BoxFit.contain,
+                  ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Walldot Builders',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: primaryColor,
-                    letterSpacing: 0.5,
+                // Removed redundant text as logo likely contains the name or it looks cleaner without duplication
+                // if the logo is just an icon. If logo is full wordmark, text is redundant.
+                // Keeping text if logo is just icon, but styling it more elegantly.
+                const SizedBox(height: 12),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceElevated,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'BUILDERS PORTAL',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textSecondary,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                 ),
               ],
@@ -216,7 +235,7 @@ class SideMenu extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: isSelected ? primaryColor : Colors.transparent,
+        color: isSelected ? AppTheme.coralRed : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
