@@ -111,6 +111,15 @@ class PortalAuthProvider extends ChangeNotifier {
         .every((permission) => _permissions.contains(permission));
   }
 
+  // Role checking methods
+  bool hasRole(String roleCode) {
+    return _currentUser?.roleCode == roleCode;
+  }
+
+  bool hasAnyRole(List<String> roleCodes) {
+    return roleCodes.contains(_currentUser?.roleCode);
+  }
+
   // Private methods
   void _setLoading(bool loading) {
     _isLoading = loading;

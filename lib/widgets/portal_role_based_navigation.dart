@@ -64,7 +64,7 @@ class PortalRoleBasedNavigation extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        user.role.toUpperCase(),
+                        user.roleCode,
                         style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
