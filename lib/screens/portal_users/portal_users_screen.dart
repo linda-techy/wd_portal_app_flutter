@@ -215,150 +215,101 @@ class _PortalUsersTable extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.radiusMD),
         border: Border.all(color: AppTheme.borderLight),
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Scrollable table columns
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columnSpacing: AppTheme.spacingMD,
-                    headingRowHeight: 48,
-                    dataRowMinHeight: 48,
-                    dataRowMaxHeight: 72,
-                    columns: const [
-                      DataColumn(
-                          label: Text('ID',
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                      DataColumn(
-                          label: Text('Name',
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                      DataColumn(
-                          label: Text('Email',
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                      DataColumn(
-                          label: Text('Role',
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                      DataColumn(
-                          label: Text('Status',
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                    ],
-                    rows: users.map((user) {
-                      return DataRow(
-                        cells: [
-                          DataCell(Text(user.id?.toString() ?? 'N/A')),
-                          DataCell(Text(user.fullName)),
-                          DataCell(Text(user.email)),
-                          DataCell(Text(getRoleName(user.roleId))),
-                          DataCell(
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: user.enabled
-                                    ? AppTheme.statusSuccessBg
-                                    : AppTheme.statusErrorBg,
-                                borderRadius:
-                                    BorderRadius.circular(AppTheme.radiusSM),
-                              ),
-                              child: Text(
-                                user.enabled ? 'Enabled' : 'Disabled',
-                                style: TextStyle(
-                                  color: user.enabled
-                                      ? AppTheme.statusSuccess
-                                      : AppTheme.statusError,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SingleChildScrollView(
+          child: DataTable(
+            columnSpacing: AppTheme.spacingMD,
+            headingRowHeight: 48,
+            dataRowMinHeight: 48,
+            dataRowMaxHeight: 72,
+            columns: const [
+              DataColumn(
+                  label: Text('ID',
+                      style: TextStyle(fontWeight: FontWeight.bold))),
+              DataColumn(
+                  label: Text('Name',
+                      style: TextStyle(fontWeight: FontWeight.bold))),
+              DataColumn(
+                  label: Text('Email',
+                      style: TextStyle(fontWeight: FontWeight.bold))),
+              DataColumn(
+                  label: Text('Role',
+                      style: TextStyle(fontWeight: FontWeight.bold))),
+              DataColumn(
+                  label: Text('Status',
+                      style: TextStyle(fontWeight: FontWeight.bold))),
+              DataColumn(
+                  label: Text('Actions',
+                      style: TextStyle(fontWeight: FontWeight.bold))),
+            ],
+            rows: users.map((user) {
+              return DataRow(
+                cells: [
+                  DataCell(Text(user.id?.toString() ?? 'N/A')),
+                  DataCell(Text(user.fullName)),
+                  DataCell(Text(user.email)),
+                  DataCell(Text(getRoleName(user.roleId))),
+                  DataCell(
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: user.enabled
+                            ? AppTheme.statusSuccessBg
+                            : AppTheme.statusErrorBg,
+                        borderRadius:
+                            BorderRadius.circular(AppTheme.radiusSM),
+                      ),
+                      child: Text(
+                        user.enabled ? 'Enabled' : 'Disabled',
+                        style: TextStyle(
+                          color: user.enabled
+                              ? AppTheme.statusSuccess
+                              : AppTheme.statusError,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, size: 18),
+                            color: AppTheme.primaryBlue,
+                            tooltip: 'Edit',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
                             ),
+                            onPressed: () => onEdit(user),
+                          ),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            icon: const Icon(Icons.delete, size: 18),
+                            color: AppTheme.statusError,
+                            tooltip: 'Delete',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
+                            onPressed: () => onDelete(user),
                           ),
                         ],
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-
-              // Fixed Actions Column
-              Container(
-                width: 92,
-                decoration: const BoxDecoration(
-                  border: Border(
-                    left: BorderSide(
-                      color: AppTheme.borderLight,
-                      width: 1,
-                    ),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Header
-                    Container(
-                      height: 48,
-                      alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: const BoxDecoration(
-                        color: AppTheme.surfaceElevated,
-                      ),
-                      child: const Text(
-                        'Actions',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
                       ),
                     ),
-                    // Rows
-                    ...users.asMap().entries.map((entry) {
-                      final user = entry.value;
-                      return Container(
-                        height: 48,
-                        alignment: Alignment.center,
-                        child: Wrap(
-                          alignment: WrapAlignment.center,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          spacing: 2,
-                          runSpacing: 2,
-                          children: [
-                            SizedBox(
-                              width: 36,
-                              height: 36,
-                              child: IconButton(
-                                icon: const Icon(Icons.edit, size: 18),
-                                color: AppTheme.primaryBlue,
-                                tooltip: 'Edit',
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                onPressed: () => onEdit(user),
-                              ),
-                            ),
-                            SizedBox(
-                              width: 36,
-                              height: 36,
-                              child: IconButton(
-                                icon: const Icon(Icons.delete, size: 18),
-                                color: AppTheme.statusError,
-                                tooltip: 'Delete',
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                onPressed: () => onDelete(user),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+        ),
       ),
     );
   }
