@@ -50,6 +50,7 @@ class UserInfo {
   final String firstName;
   final String lastName;
   final String role;
+  final String roleCode;
 
   UserInfo({
     required this.id,
@@ -57,6 +58,7 @@ class UserInfo {
     required this.firstName,
     required this.lastName,
     required this.role,
+    required this.roleCode,
   });
 
   factory UserInfo.fromJson(Map<String, dynamic> json) {
@@ -66,6 +68,7 @@ class UserInfo {
       firstName: json['firstName'],
       lastName: json['lastName'],
       role: json['role'],
+      roleCode: json['roleCode'] ?? json['role'], // Fallback to role name if code missing
     );
   }
 
@@ -78,6 +81,7 @@ class UserInfo {
       'firstName': firstName,
       'lastName': lastName,
       'role': role,
+      'roleCode': roleCode,
     };
   }
 }

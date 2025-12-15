@@ -53,25 +53,41 @@ class AuthInterceptor extends Interceptor {
       try {
         // Try to refresh the token
         final refreshToken = await _storage.read(key: 'refresh_token');
+        print('DEBUG Flutter: Attempting refresh with token length: ${refreshToken?.length}');
+        
         if (refreshToken != null) {
-          final response = await _dio.post(
-            '/auth/refresh-token',
-            data: {'refreshToken': refreshToken},
-          );
+          try {
+            final response = await _dio.post(
+              '/auth/refresh-token',
+              data: {'refreshToken': refreshToken},
+            );
+            
+            print('DEBUG Flutter: Refresh successful. New access token received.');
 
-          final newAccessToken = response.data['accessToken'];
-          await _storage.write(key: 'access_token', value: newAccessToken);
+            final newAccessToken = response.data['accessToken'];
+            await _storage.write(key: 'access_token', value: newAccessToken);
 
-          // Retry the original request with new token
-          final originalRequest = err.requestOptions;
-          originalRequest.headers['Authorization'] = 'Bearer $newAccessToken';
+            // Retry the original request with new token
+            final originalRequest = err.requestOptions;
+            originalRequest.headers['Authorization'] = 'Bearer $newAccessToken';
 
-          final retryResponse = await _dio.fetch(originalRequest);
-          _isRefreshing = false;
-          return handler.resolve(retryResponse);
+            final retryResponse = await _dio.fetch(originalRequest);
+            _isRefreshing = false;
+            return handler.resolve(retryResponse);
+          } catch (refreshError) {
+             print('DEBUG Flutter: Refresh API failed: $refreshError');
+             if (refreshError is DioException) {
+               print('DEBUG Flutter: Refresh API Response: ${refreshError.response?.data}');
+               print('DEBUG Flutter: Refresh API Status: ${refreshError.response?.statusCode}');
+             }
+             rethrow;
+          }
+        } else {
+           print('DEBUG Flutter: No refresh token available in storage.');
         }
       } catch (e) {
         // Refresh failed, clear tokens and redirect to login
+        print('DEBUG Flutter: Token refresh flow failed completely: $e');
         await _storage.deleteAll();
         _isRefreshing = false;
         // You might want to emit an event here to notify the app to redirect to login
