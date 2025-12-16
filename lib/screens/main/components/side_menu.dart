@@ -22,27 +22,27 @@ class SideMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: isDrawer ? null : 250,
-      decoration: BoxDecoration(
-        color: secondaryColor,
-        border: Border(
-          right: BorderSide(color: Colors.grey[300]!, width: 1),
-        ),
-      ),
-      child: Column(
-        children: [
-          // Header - Cleaner, more professional look
-          Container(
-            padding: const EdgeInsets.symmetric(
-              vertical: defaultPadding * 2,
-              horizontal: defaultPadding,
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            border: Border(
+              right: BorderSide(color: AppTheme.borderLight, width: 1),
             ),
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                bottom: BorderSide(color: Colors.grey[200]!, width: 1),
-              ),
-            ),
+          ),
+          child: Column(
+            children: [
+              // Header - Cleaner, more professional look
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: defaultPadding * 2,
+                  horizontal: defaultPadding,
+                ),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  border: const Border(
+                    bottom: BorderSide(color: AppTheme.divider, width: 1),
+                  ),
+                ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -218,7 +218,7 @@ class SideMenu extends StatelessWidget {
     if (permissions.canViewProjects) {
       menuItems.add(_buildMenuItem(
         context,
-        title: customerProjectsModule,
+        title: projectsModule,
         svgSrc: "assets/icons/menu_task.svg",
         index: 3,
       ));
@@ -228,7 +228,7 @@ class SideMenu extends StatelessWidget {
     if (permissions.canViewTasks) {
       menuItems.add(_buildMenuItem(
         context,
-        title: "Tasks",
+        title: tasksModule,
         svgSrc: "assets/icons/menu_task.svg",
         index: 11, // Tasks index in MainScreen
       ));
@@ -248,7 +248,7 @@ class SideMenu extends StatelessWidget {
     if (permissions.canView('DOCUMENT')) {
       menuItems.add(_buildMenuItem(
         context,
-        title: "Documents",
+        title: documentsModule,
         svgSrc: "assets/icons/menu_doc.svg",
         index: 14, // Matches MainScreen index
       ));

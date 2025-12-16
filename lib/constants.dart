@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:admin/config/app_config.dart';
 
-// Modern Professional Theme Colors - 2024
-const Color primaryColor = Color(0xFF2563EB); // Modern Blue
-const Color secondaryColor = Color(0xFFF8FAFC); // Clean Light Gray
-const Color bgColor = Color(0xFFFFFFFF); // Pure White
+// Modern Professional Theme Colors - 2024 (Aligned with AppTheme)
+const Color primaryColor = Color(0xFF2A2A3A); // Deep Slate (was Blue)
+const Color secondaryColor = Color(0xFFFFFFFF); // Surface White (was F8FAFC)
+const Color bgColor = Color(0xFFF7F7F7); // Background Gray (was White)
 
 // Container Colors - Modern Professional Theme
 const Color containerBackground = Color(0xFFF8FAFC); // Clean light gray
@@ -63,10 +63,9 @@ const String apiVersion = AppConfig.apiVersion;
 const String dashboardModule = 'Dashboard';
 const String leadsModule = 'Leads';
 const String customersModule = 'Customers';
-const String customerProjectsModule = 'Customer Projects';
+const String projectsModule = 'Projects';
 const String portalUsersModule = 'Portal Users';
 const String clientsModule = 'Clients';
-const String projectsModule = 'Projects';
 const String quotationsModule = 'Quotations';
 const String contractsModule = 'Contracts';
 const String followUpsModule = 'Follow-ups';

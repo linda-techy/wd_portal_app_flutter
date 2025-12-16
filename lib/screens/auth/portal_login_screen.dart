@@ -91,7 +91,7 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTicker
     final isMobile = MediaQuery.of(context).size.width < 768;
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.background,
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: isMobile ? _buildMobileLayout() : _buildDesktopLayout(),
