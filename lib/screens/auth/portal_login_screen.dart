@@ -57,6 +57,7 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTicker
       final success = await authProvider.login(
         _emailController.text.trim(),
         _passwordController.text,
+        context,
       );
 
       if (!success && mounted) {
@@ -213,8 +214,8 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTicker
   }
 
   Widget _buildFormSection({required bool isMobile}) {
-    return Center(
-      child: SingleChildScrollView(
+    final content = Center(
+      child: Padding(
         padding: EdgeInsets.all(isMobile ? 16.0 : 48.0),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 450),
@@ -438,6 +439,10 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTicker
         ),
       ),
     );
+
+    // Only scroll locally if NOT mobile (Desktop side)
+    // Mobile parent already handles scrolling
+    return isMobile ? content : SingleChildScrollView(child: content);
   }
 }
 

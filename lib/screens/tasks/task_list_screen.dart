@@ -7,6 +7,7 @@ import 'package:admin/providers/portal_auth_provider.dart';
 import 'package:provider/provider.dart';
 import 'task_detail_screen.dart';
 import 'task_create_screen.dart';
+import '../../providers/permission_provider.dart';
 
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
@@ -100,8 +101,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<PortalAuthProvider>(context);
-    final isAdmin = authProvider.currentUser?.role == 'ADMIN';
+    final permissions = Provider.of<PermissionProvider>(context);
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -131,7 +131,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                     ),
-                    if (isAdmin)
+                    // Create Task button - Only show if user has CREATE permission
+                    if (permissions.canCreateTask)
                       ElevatedButton.icon(
                         onPressed: () async {
                           final result = await Navigator.push(

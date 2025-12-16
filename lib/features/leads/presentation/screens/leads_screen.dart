@@ -11,6 +11,8 @@ import 'package:admin/constants/priority_constants.dart';
 import 'package:admin/constants/customer_type_constants.dart';
 import 'package:admin/constants/project_type_constants.dart';
 import 'package:admin/utils/container_styles.dart';
+import 'package:admin/providers/permission_provider.dart';
+import 'package:provider/provider.dart';
 import 'add_lead_screen.dart';
 import 'edit_lead_screen.dart';
 
@@ -237,6 +239,8 @@ class _LeadsScreenState extends State<LeadsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final permissions = Provider.of<PermissionProvider>(context);
+    
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(defaultPadding),
@@ -270,28 +274,30 @@ class _LeadsScreenState extends State<LeadsScreen> {
                             ),
                           ),
                           const SizedBox(width: defaultPadding / 2),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: defaultPadding,
+                          // Add Lead button - Only show if user has CREATE permission
+                          if (permissions.canCreateLead)
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: defaultPadding,
+                                  ),
                                 ),
+                                onPressed: () async {
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const AddLeadScreen()),
+                                  );
+                                  if (result == true) {
+                                    _loadLeads();
+                                  }
+                                },
+                                icon: const Icon(Icons.add, size: 18),
+                                label: const Text("Add Lead"),
                               ),
-                              onPressed: () async {
-                                final result = await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          const AddLeadScreen()),
-                                );
-                                if (result == true) {
-                                  _loadLeads();
-                                }
-                              },
-                              icon: const Icon(Icons.add, size: 18),
-                              label: const Text("Add Lead"),
                             ),
-                          ),
                         ],
                       ),
                     ],
@@ -320,28 +326,30 @@ class _LeadsScreenState extends State<LeadsScreen> {
                         label: const Text("Clear Filters"),
                       ),
                       const SizedBox(width: defaultPadding),
-                      ElevatedButton.icon(
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: defaultPadding * 1.5,
-                            vertical: defaultPadding,
+                      // Add Lead button - Only show if user has CREATE permission
+                      if (permissions.canCreateLead)
+                        ElevatedButton.icon(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: defaultPadding * 1.5,
+                              vertical: defaultPadding,
+                            ),
                           ),
-                        ),
-                        onPressed: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const AddLeadScreen()),
-                          );
+                          onPressed: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const AddLeadScreen()),
+                            );
 
-                          // Refresh the list if a new lead was added
-                          if (result == true) {
-                            _loadLeads();
-                          }
-                        },
-                        icon: const Icon(Icons.add),
-                        label: const Text("Add New Lead"),
-                      ),
+                            // Refresh the list if a new lead was added
+                            if (result == true) {
+                              _loadLeads();
+                            }
+                          },
+                          icon: const Icon(Icons.add),
+                          label: const Text("Add New Lead"),
+                        ),
                     ],
                   ),
             const SizedBox(height: defaultPadding),
@@ -1144,47 +1152,55 @@ class LeadsTable extends StatelessWidget {
                     // Rows
                     ...leads.asMap().entries.map((entry) {
                       final lead = entry.value;
-                      return Container(
-                        height: 52,
-                        alignment: Alignment.center,
-                        child: Wrap(
-                          alignment: WrapAlignment.center,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          spacing: 2,
-                          runSpacing: 2,
-                          children: [
-                            SizedBox(
-                              width: 36,
-                              height: 36,
-                              child: IconButton(
-                                icon: const Icon(Icons.edit,
-                                    color: Colors.blue, size: 18),
-                                tooltip: 'Edit Lead',
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                onPressed: () {
-                                  debugPrint('Edit button pressed for lead: ${lead.name}');
-                                  onEdit(lead);
-                                },
-                              ),
+                      return Consumer<PermissionProvider>(
+                        builder: (context, permissions, child) {
+                          return Container(
+                            height: 52,
+                            alignment: Alignment.center,
+                            child: Wrap(
+                              alignment: WrapAlignment.center,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 2,
+                              runSpacing: 2,
+                              children: [
+                                // Edit button - Only show if user has EDIT permission
+                                if (permissions.canEditLead)
+                                  SizedBox(
+                                    width: 36,
+                                    height: 36,
+                                    child: IconButton(
+                                      icon: const Icon(Icons.edit,
+                                          color: Colors.blue, size: 18),
+                                      tooltip: 'Edit Lead',
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      onPressed: () {
+                                        debugPrint('Edit button pressed for lead: ${lead.name}');
+                                        onEdit(lead);
+                                      },
+                                    ),
+                                  ),
+                                // Delete button - Only show if user has DELETE permission
+                                if (permissions.canDeleteLead)
+                                  SizedBox(
+                                    width: 36,
+                                    height: 36,
+                                    child: IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red, size: 18),
+                                      tooltip: 'Delete Lead',
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      onPressed: () {
+                                        debugPrint('Delete button pressed for lead: ${lead.name}');
+                                        _showDeleteConfirmation(context, lead);
+                                      },
+                                    ),
+                                  ),
+                              ],
                             ),
-                            SizedBox(
-                              width: 36,
-                              height: 36,
-                              child: IconButton(
-                                icon: const Icon(Icons.delete,
-                                    color: Colors.red, size: 18),
-                                tooltip: 'Delete Lead',
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                onPressed: () {
-                                  debugPrint('Delete button pressed for lead: ${lead.name}');
-                                  _showDeleteConfirmation(context, lead);
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
+                          );
+                        },
                       );
                     }),
                   ],

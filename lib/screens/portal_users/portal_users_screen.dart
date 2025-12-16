@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/responsive_utils.dart';
 import '../../models/portal_user.dart';
@@ -6,6 +7,7 @@ import '../../models/role.dart';
 import '../../services/crm_service.dart';
 import 'add_portal_user_screen.dart';
 import 'edit_portal_user_screen.dart';
+import '../../providers/permission_provider.dart';
 
 class PortalUsersScreen extends StatefulWidget {
   const PortalUsersScreen({super.key});
@@ -168,6 +170,8 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final permissions = Provider.of<PermissionProvider>(context);
+    
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: AdaptiveContainer(
@@ -184,21 +188,23 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
                   'Portal Users',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AddPortalUserScreen(),
-                      ),
-                    );
-                    if (result == true) {
-                      _loadUsers();
-                    }
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add User'),
-                ),
+                // Add User button - Only show if user has CREATE permission
+                if (permissions.canCreatePortalUser)
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AddPortalUserScreen(),
+                        ),
+                      );
+                      if (result == true) {
+                        _loadUsers();
+                      }
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add User'),
+                  ),
               ],
             ),
             const SizedBox(height: AppTheme.spacingLG),
@@ -611,24 +617,32 @@ class _PortalUsersTableState extends State<_PortalUsersTable> {
                                   color: isEven ? Colors.transparent : AppTheme.surfaceElevated.withOpacity(0.3),
                                   border: Border(bottom: BorderSide(color: AppTheme.borderLight.withOpacity(0.5))),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.edit, size: 18),
-                                      color: AppTheme.primaryBlue,
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                                      onPressed: () => widget.onEdit(user),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete, size: 18),
-                                      color: AppTheme.statusError,
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                                      onPressed: () => widget.onDelete(user),
-                                    ),
-                                  ],
+                                child: Consumer<PermissionProvider>(
+                                  builder: (context, permissions, child) {
+                                    return Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // Edit button - Only show if user has EDIT permission
+                                        if (permissions.canEditPortalUser)
+                                          IconButton(
+                                            icon: const Icon(Icons.edit, size: 18),
+                                            color: AppTheme.primaryBlue,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                            onPressed: () => widget.onEdit(user),
+                                          ),
+                                        // Delete button - Only show if user has DELETE permission
+                                        if (permissions.canDeletePortalUser)
+                                          IconButton(
+                                            icon: const Icon(Icons.delete, size: 18),
+                                            color: AppTheme.statusError,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                            onPressed: () => widget.onDelete(user),
+                                          ),
+                                      ],
+                                    );
+                                  },
                                 ),
                               );
                             }).toList(),

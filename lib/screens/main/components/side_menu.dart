@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
+import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/theme/app_theme.dart';
 
 class SideMenu extends StatelessWidget {
@@ -54,9 +55,6 @@ class SideMenu extends StatelessWidget {
                     fit: BoxFit.contain,
                   ),
                 ),
-                // Removed redundant text as logo likely contains the name or it looks cleaner without duplication
-                // if the logo is just an icon. If logo is full wordmark, text is redundant.
-                // Keeping text if logo is just icon, but styling it more elegantly.
                 const SizedBox(height: 12),
                 Container(
                   padding:
@@ -78,150 +76,195 @@ class SideMenu extends StatelessWidget {
               ],
             ),
           ),
-          // Menu Items
+          // Menu Items - DYNAMIC BASED ON PERMISSIONS
           Expanded(
-            child: ListView(
-              children: [
-                _buildMenuItem(
-                  context,
-                  title: dashboardModule,
-                  svgSrc: "assets/icons/menu_dashboard.svg",
-                  index: 0,
-                ),
-                _buildMenuItem(
-                  context,
-                  title: leadsModule,
-                  svgSrc: "assets/icons/menu_leads.svg",
-                  index: 1,
-                ),
-                _buildMenuItem(
-                  context,
-                  title: customersModule,
-                  svgSrc: "assets/icons/menu_profile.svg",
-                  index: 2,
-                ),
-                _buildMenuItem(
-                  context,
-                  title: customerProjectsModule,
-                  svgSrc: "assets/icons/menu_task.svg",
-                  index: 3,
-                ),
-                _buildMenuItem(
-                  context,
-                  title: "Tasks",
-                  svgSrc: "assets/icons/menu_task.svg",
-                  index: 11, // Tasks index in MainScreen
-                ),
-                _buildMenuItem(
-                  context,
-                  title: portalUsersModule,
-                  svgSrc: "assets/icons/menu_profile.svg",
-                  index: 4,
-                ),
-                _buildMenuItem(
-                  context,
-                  title: "Documents", // Using string directly or constant if available
-                  svgSrc: "assets/icons/menu_doc.svg",
-                  index: 14, // Matches MainScreen index
-                ),
-                // _buildMenuItem(
-                //   context,
-                //   title: projectsModule,
-                //   svgSrc: "assets/icons/menu_task.svg",
-                //   index: 3,
-                // ),
-                // _buildMenuItem(
-                //   context,
-                //   title: quotationsModule,
-                //   svgSrc: "assets/icons/menu_doc.svg",
-                //   index: 4,
-                // ),
-                // _buildMenuItem(
-                //   context,
-                //   title: contractsModule,
-                //   svgSrc: "assets/icons/menu_doc.svg",
-                //   index: 5,
-                // ),
-                // _buildMenuItem(
-                //   context,
-                //   title: followUpsModule,
-                //   svgSrc: "assets/icons/menu_notification.svg",
-                //   index: 6,
-                // ),
-                // _buildMenuItem(
-                //   context,
-                //   title: siteVisitsModule,
-                //   svgSrc: "assets/icons/menu_store.svg",
-                //   index: 7,
-                // ),
-                // _buildMenuItem(
-                //   context,
-                //   title: tasksModule,
-                //   svgSrc: "assets/icons/menu_task.svg",
-                //   index: 8,
-                // ),
-                // _buildMenuItem(
-                //   context,
-                //   title: teamMembersModule,
-                //   svgSrc: "assets/icons/menu_profile.svg",
-                //   index: 9,
-                // ),
-                // _buildMenuItem(
-                //   context,
-                //   title: communicationModule,
-                //   svgSrc: "assets/icons/menu_notification.svg",
-                //   index: 10,
-                // ),
-                // _buildMenuItem(
-                //   context,
-                //   title: documentsModule,
-                //   svgSrc: "assets/icons/menu_doc.svg",
-                //   index: 11,
-                // ),
-                // _buildMenuItem(
-                //   context,
-                //   title: invoicesModule,
-                //   svgSrc: "assets/icons/menu_tran.svg",
-                //   index: 12,
-                // ),
-                // _buildMenuItem(
-                //   context,
-                //   title: reportsModule,
-                //   svgSrc: "assets/icons/menu_setting.svg",
-                //   index: 13,
-                // ),
-              ],
+            child: Consumer<PermissionProvider>(
+              builder: (context, permissions, child) {
+                return ListView(
+                  children: _buildDynamicMenuItems(context, permissions),
+                );
+              },
             ),
           ),
-          // Logout Button
-          Container(
-            padding: const EdgeInsets.all(defaultPadding),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  final authProvider =
-                      Provider.of<PortalAuthProvider>(context, listen: false);
-                  await authProvider.logout();
-                },
-                icon: const Icon(Icons.logout, color: Colors.white),
-                label: const Text(
-                  'Logout',
-                  style: TextStyle(color: Colors.white),
+          // User Profile Section (Desktop Footer Replacement)
+          Consumer<PortalAuthProvider>(
+            builder: (context, auth, child) {
+              final user = auth.currentUser;
+              if (user == null) return const SizedBox();
+
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: defaultPadding / 2,
+                  vertical: defaultPadding,
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    top: BorderSide(color: Colors.grey[200]!, width: 1),
                   ),
                 ),
-              ),
-            ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => onMenuItemClick(17), // Navigate to Profile (Index 17)
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        children: [
+                          // Avatar
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: AppTheme.primaryBlue.withOpacity(0.1),
+                            child: Text(
+                              (user.firstName?.isNotEmpty == true) 
+                                  ? user.firstName![0].toUpperCase() 
+                                  : 'U',
+                              style: TextStyle(
+                                color: AppTheme.primaryBlue,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // User Info
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${user.firstName} ${user.lastName}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: AppTheme.deepSlate,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  user.role ?? 'User',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey[600],
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Logout Action
+                          IconButton(
+                            onPressed: () async {
+                              await auth.logout(context);
+                            },
+                            icon: const Icon(Icons.logout_rounded),
+                            color: Colors.red[300],
+                            tooltip: 'Logout',
+                            splashRadius: 20,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
     );
+  }
+
+  /// Build dynamic menu items based on permissions
+  /// CRITICAL: Menu is ONLY visible if user has VIEW permission
+  List<Widget> _buildDynamicMenuItems(
+      BuildContext context, PermissionProvider permissions) {
+    List<Widget> menuItems = [];
+
+    // DASHBOARD - Always visible (or check DASHBOARD_VIEW)
+    if (permissions.canViewDashboard) {
+      menuItems.add(_buildMenuItem(
+        context,
+        title: dashboardModule,
+        svgSrc: "assets/icons/menu_dashboard.svg",
+        index: 0,
+      ));
+    }
+
+    // LEADS - Only if can view leads
+    if (permissions.canViewLeads) {
+      menuItems.add(_buildMenuItem(
+        context,
+        title: leadsModule,
+        svgSrc: "assets/icons/menu_leads.svg",
+        index: 1,
+      ));
+    }
+
+    // CUSTOMERS - Only if can view customers
+    if (permissions.canViewCustomers) {
+      menuItems.add(_buildMenuItem(
+        context,
+        title: customersModule,
+        svgSrc: "assets/icons/menu_profile.svg",
+        index: 2,
+      ));
+    }
+
+    // CUSTOMER PROJECTS - Only if can view projects
+    if (permissions.canViewProjects) {
+      menuItems.add(_buildMenuItem(
+        context,
+        title: customerProjectsModule,
+        svgSrc: "assets/icons/menu_task.svg",
+        index: 3,
+      ));
+    }
+
+    // TASKS - Only if can view tasks
+    if (permissions.canViewTasks) {
+      menuItems.add(_buildMenuItem(
+        context,
+        title: "Tasks",
+        svgSrc: "assets/icons/menu_task.svg",
+        index: 11, // Tasks index in MainScreen
+      ));
+    }
+
+    // PORTAL USERS - Only if can view portal users
+    if (permissions.canViewPortalUsers) {
+      menuItems.add(_buildMenuItem(
+        context,
+        title: portalUsersModule,
+        svgSrc: "assets/icons/menu_profile.svg",
+        index: 4,
+      ));
+    }
+
+    // DOCUMENTS - Check for document view permission
+    if (permissions.canView('DOCUMENT')) {
+      menuItems.add(_buildMenuItem(
+        context,
+        title: "Documents",
+        svgSrc: "assets/icons/menu_doc.svg",
+        index: 14, // Matches MainScreen index
+      ));
+    }
+
+    // REPORTS - Only if can view reports
+    if (permissions.canViewReports) {
+      menuItems.add(_buildMenuItem(
+        context,
+        title: reportsModule,
+        svgSrc: "assets/icons/menu_setting.svg",
+        index: 13,
+      ));
+    }
+
+    return menuItems;
   }
 
   Widget _buildMenuItem(
@@ -236,7 +279,7 @@ class SideMenu extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: isSelected ? AppTheme.coralRed : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius:BorderRadius.circular(8),
       ),
       child: ListTile(
         onTap: () {

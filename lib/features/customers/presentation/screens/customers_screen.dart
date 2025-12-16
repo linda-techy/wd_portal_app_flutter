@@ -6,6 +6,8 @@ import 'package:admin/responsive.dart';
 import '../../data/services/customer_service.dart';
 import 'package:admin/utils/container_styles.dart';
 import 'package:admin/models/pagination_params.dart';
+import 'package:provider/provider.dart';
+import 'package:admin/providers/permission_provider.dart';
 import 'add_customer_screen.dart';
 import 'edit_customer_screen.dart';
 
@@ -168,6 +170,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final permissions = Provider.of<PermissionProvider>(context);
+    
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(defaultPadding),
@@ -188,28 +192,30 @@ class _CustomersScreenState extends State<CustomersScreen> {
                       const SizedBox(height: defaultPadding),
                       Row(
                         children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: defaultPadding,
+                          // Add Customer button - Only show if user has CREATE permission
+                          if (permissions.canCreateCustomer)
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: defaultPadding,
+                                  ),
                                 ),
+                                onPressed: () async {
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const AddCustomerScreen()),
+                                  );
+                                  if (result == true) {
+                                    _loadCustomers();
+                                  }
+                                },
+                                icon: const Icon(Icons.add, size: 18),
+                                label: const Text("Add Customer"),
                               ),
-                              onPressed: () async {
-                                final result = await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          const AddCustomerScreen()),
-                                );
-                                if (result == true) {
-                                  _loadCustomers();
-                                }
-                              },
-                              icon: const Icon(Icons.add, size: 18),
-                              label: const Text("Add Customer"),
                             ),
-                          ),
                         ],
                       ),
                     ],
@@ -226,27 +232,29 @@ class _CustomersScreenState extends State<CustomersScreen> {
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const Spacer(),
-                      ElevatedButton.icon(
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: defaultPadding * 1.5,
-                            vertical: defaultPadding,
+                      // Add Customer button - Only show if user has CREATE permission
+                      if (permissions.canCreateCustomer)
+                        ElevatedButton.icon(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: defaultPadding * 1.5,
+                              vertical: defaultPadding,
+                            ),
                           ),
-                        ),
-                        onPressed: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const AddCustomerScreen()),
-                          );
+                          onPressed: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const AddCustomerScreen()),
+                            );
 
-                          if (result == true) {
-                            _loadCustomers();
-                          }
-                        },
-                        icon: const Icon(Icons.add),
-                        label: const Text("Add New Customer"),
-                      ),
+                            if (result == true) {
+                              _loadCustomers();
+                            }
+                          },
+                          icon: const Icon(Icons.add),
+                          label: const Text("Add New Customer"),
+                        ),
                     ],
                   ),
             const SizedBox(height: defaultPadding),
@@ -459,52 +467,60 @@ class CustomersTable extends StatelessWidget {
                     // Rows
                     ...customers.asMap().entries.map((entry) {
                       final customer = entry.value;
-                      return Container(
-                        height: 52,
-                        alignment: Alignment.center,
-                        child: Wrap(
-                          alignment: WrapAlignment.center,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          spacing: 2,
-                          runSpacing: 2,
-                          children: [
-                            SizedBox(
-                              width: 36,
-                              height: 36,
-                              child: IconButton(
-                                icon: const Icon(Icons.edit,
-                                    color: Colors.blue, size: 18),
-                                tooltip: 'Edit Customer',
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                onPressed: () {
-                                  onEdit(customer);
-                                },
-                              ),
-                            ),
-                            SizedBox(
-                              width: 36,
-                              height: 36,
-                              child: IconButton(
-                                icon: Icon(Icons.delete,
-                                    color: customer.projectCount > 0
-                                        ? Colors.grey
-                                        : Colors.red,
-                                    size: 18),
-                                tooltip: customer.projectCount > 0
-                                    ? 'Cannot delete customer with associated projects'
-                                    : 'Delete Customer',
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                onPressed: customer.projectCount > 0
-                                    ? null
-                                    : () {
-                                        onDelete(customer);
+                      return Consumer<PermissionProvider>(
+                        builder: (context, permissions, child) {
+                          return Container(
+                            height: 52,
+                            alignment: Alignment.center,
+                            child: Wrap(
+                              alignment: WrapAlignment.center,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 2,
+                              runSpacing: 2,
+                              children: [
+                                // Edit button - Only show if user has EDIT permission
+                                if (permissions.canEditCustomer)
+                                  SizedBox(
+                                    width: 36,
+                                    height: 36,
+                                    child: IconButton(
+                                      icon: const Icon(Icons.edit,
+                                          color: Colors.blue, size: 18),
+                                      tooltip: 'Edit Customer',
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      onPressed: () {
+                                        onEdit(customer);
                                       },
-                              ),
+                                    ),
+                                  ),
+                                // Delete button - Only show if user has DELETE permission
+                                if (permissions.canDeleteCustomer)
+                                  SizedBox(
+                                    width: 36,
+                                    height: 36,
+                                    child: IconButton(
+                                      icon: Icon(Icons.delete,
+                                          color: customer.projectCount > 0
+                                              ? Colors.grey
+                                              : Colors.red,
+                                          size: 18),
+                                      tooltip: customer.projectCount > 0
+                                          ? 'Cannot delete customer with associated projects'
+                                          : 'Delete Customer',
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      onPressed: customer.projectCount > 0
+                                          ? null
+                                          : () {
+                                              onDelete(customer);
+                                            },
+                                    ),
+                                  ),
+                              ],
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       );
                     }),
                   ],

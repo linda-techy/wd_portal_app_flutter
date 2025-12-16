@@ -2,6 +2,7 @@ import 'package:admin/controllers/menu_app_controller.dart';
 // import 'package:admin/screens/main/main_screen.dart';
 import 'package:admin/config/app_config.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
+import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/services/portal_auth_service.dart';
 import 'package:admin/services/storage_service.dart';
 import 'package:admin/utils/api_connection_test.dart';
@@ -113,7 +114,10 @@ class MyApp extends StatelessWidget {
             create: (context) => MenuAppController(),
           ),
           ChangeNotifierProvider(
-            create: (context) => PortalAuthProvider()..initializeAuth(),
+            create: (context) => PermissionProvider(),
+          ),
+          ChangeNotifierProvider(
+            create: (context) => PortalAuthProvider()..initializeAuth(context),
           ),
         ],
         child: const PortalAuthWrapper(),

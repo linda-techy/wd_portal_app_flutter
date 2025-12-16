@@ -177,7 +177,7 @@ class ProfileScreen extends StatelessWidget {
                         );
 
                         if (confirmed == true && context.mounted) {
-                          await authProvider.logout();
+                          await authProvider.logout(context);
                         }
                       },
                     ),

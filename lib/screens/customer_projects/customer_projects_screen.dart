@@ -8,6 +8,8 @@ import 'add_customer_project_screen.dart';
 import 'edit_customer_project_screen.dart';
 import 'project_details_screen.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../providers/permission_provider.dart';
 
 class CustomerProjectsScreen extends StatefulWidget {
   const CustomerProjectsScreen({super.key});
@@ -138,6 +140,8 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final permissions = Provider.of<PermissionProvider>(context);
+    
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: AdaptiveContainer(
@@ -152,21 +156,23 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
                   'Customer Projects',
                   style: Theme.of(context).textTheme.displaySmall,
                 ),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AddCustomerProjectScreen(),
-                      ),
-                    );
-                    if (result == true) {
-                      _loadProjects();
-                    }
-                  },
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add Project'),
-                ),
+                // Add Project button - Only show if user has CREATE permission
+                if (permissions.canCreateProject)
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AddCustomerProjectScreen(),
+                        ),
+                      );
+                      if (result == true) {
+                        _loadProjects();
+                      }
+                    },
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Add Project'),
+                  ),
               ],
             ),
             const SizedBox(height: AppTheme.spacingLG),
@@ -224,22 +230,24 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
                                     ),
                               ),
                               const SizedBox(height: AppTheme.spacingSM),
-                              ElevatedButton.icon(
-                                onPressed: () async {
-                                  final result = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const AddCustomerProjectScreen(),
-                                    ),
-                                  );
-                                  if (result == true) {
-                                    _loadProjects();
-                                  }
-                                },
-                                icon: const Icon(Icons.add),
-                                label: const Text('Add First Project'),
-                              ),
+                              // Add First Project button - Only show if user has CREATE permission
+                              if (permissions.canCreateProject)
+                                ElevatedButton.icon(
+                                  onPressed: () async {
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const AddCustomerProjectScreen(),
+                                      ),
+                                    );
+                                    if (result == true) {
+                                      _loadProjects();
+                                    }
+                                  },
+                                  icon: const Icon(Icons.add),
+                                  label: const Text('Add First Project'),
+                                ),
                             ],
                           ),
                         )
@@ -394,34 +402,42 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
             const SizedBox(height: AppTheme.spacingMD),
 
             // Actions
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit, size: 20),
-                  color: AppTheme.primaryBlue,
-                  onPressed: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EditCustomerProjectScreen(
-                          project: project,
-                        ),
+            Consumer<PermissionProvider>(
+              builder: (context, permissions, child) {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    // Edit button - Only show if user has EDIT permission
+                    if (permissions.canEditProject)
+                      IconButton(
+                        icon: const Icon(Icons.edit, size: 20),
+                        color: AppTheme.primaryBlue,
+                        onPressed: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditCustomerProjectScreen(
+                                project: project,
+                              ),
+                            ),
+                          );
+                          if (result == true) {
+                            _loadProjects();
+                          }
+                        },
+                        tooltip: 'Edit',
                       ),
-                    );
-                    if (result == true) {
-                      _loadProjects();
-                    }
-                  },
-                  tooltip: 'Edit',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete, size: 20),
-                  color: AppTheme.statusError,
-                  onPressed: () => _deleteProject(project),
-                  tooltip: 'Delete',
-                ),
-              ],
+                    // Delete button - Only show if user has DELETE permission
+                    if (permissions.canDeleteProject)
+                      IconButton(
+                        icon: const Icon(Icons.delete, size: 20),
+                        color: AppTheme.statusError,
+                        onPressed: () => _deleteProject(project),
+                        tooltip: 'Delete',
+                      ),
+                  ],
+                );
+              },
             ),
             ],
           ),
