@@ -33,7 +33,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
   late final TextEditingController _locationController;
   late final TextEditingController _codeController;
   late final TextEditingController _sqfeetController;
-  late final TextEditingController _progressController;
+
   late final TextEditingController _leadSearchController;
 
   DateTime? _startDate;
@@ -82,11 +82,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
           ? widget.project.sqfeet!.toStringAsFixed(2)
           : '',
     );
-    _progressController = TextEditingController(
-      text: widget.project.progress != null
-          ? widget.project.progress!.toStringAsFixed(1)
-          : '',
-    );
+
     _leadSearchController = TextEditingController();
 
     _startDate = widget.project.startDate;
@@ -188,6 +184,14 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
       final roles = await _crmService.getPortalRoles();
       final customerRoles = await _crmService.getCustomerRoles();
 
+      // Create Role Maps
+      final Map<int, String> portalRoleMap = {
+        for (var role in roles) if (role.id != null) role.id!: role.name
+      };
+      final Map<int, String> customerRoleMap = {
+        for (var role in customerRoles) if (role.id != null) role.id!: role.name
+      };
+
       // Find admin role ID for Portal Users
       int? adminRoleId;
       try {
@@ -221,6 +225,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
           lastName: user.lastName,
           email: user.email,
           type: 'PORTAL',
+          designation: portalRoleMap[user.roleId] ?? '',
         ));
       }
       
@@ -232,12 +237,14 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
           lastName: customer.lastName,
           email: customer.email,
           type: 'CUSTOMER',
+          designation: customerRoleMap[customer.roleId] ?? '',
         ));
       }
 
       // Identify Admins to auto-select
       final List<TeamMember> autoSelectedAdmins = [];
       final Set<String> adminIds = {};
+      
       if (adminRoleId != null) {
         // Add Portal Admins
         for (var user in portalUsers) {
@@ -248,6 +255,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
               lastName: user.lastName,
               email: user.email,
               type: 'PORTAL',
+              designation: portalRoleMap[user.roleId] ?? '',
             );
             autoSelectedAdmins.add(adminMember);
             if (adminMember.id != null) {
@@ -255,22 +263,23 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
             }
           }
         }
-
-        // Add Customer Admins
-        if (customerAdminRoleId != null) {
-          for (var customer in customers) {
-            if (customer.roleId == customerAdminRoleId) {
-              final adminMember = TeamMember(
-                id: customer.id.toString(),
-                firstName: customer.firstName,
-                lastName: customer.lastName,
-                email: customer.email,
-                type: 'CUSTOMER',
-              );
-              autoSelectedAdmins.add(adminMember);
-              if (adminMember.id != null) {
-                adminIds.add('CUSTOMER_${adminMember.id}');
-              }
+      }
+      
+      // Add Customer Admins (Independent check)
+      if (customerAdminRoleId != null) {
+        for (var customer in customers) {
+          if (customer.roleId == customerAdminRoleId) {
+            final adminMember = TeamMember(
+              id: customer.id.toString(),
+              firstName: customer.firstName,
+              lastName: customer.lastName,
+              email: customer.email,
+              type: 'CUSTOMER',
+              designation: customerRoleMap[customer.roleId] ?? '',
+            );
+            autoSelectedAdmins.add(adminMember);
+            if (adminMember.id != null) {
+              adminIds.add('CUSTOMER_${adminMember.id}');
             }
           }
         }
@@ -319,18 +328,13 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
           // Add existing members if they exist in the new list
           if (widget.project.teamMembers != null) {
             for (var member in widget.project.teamMembers!) {
-              // Check if member exists in allTeamMembers (by ID)
-              // Note: The member object from project might have different details, 
-              // but we care about ID match.
-              // However, we should use the fresh object from allTeamMembers if possible.
               try {
                 final freshMember = allTeamMembers.firstWhere((m) => m.id == member.id);
                 if (freshMember.id != null && selectedIds.add(freshMember.id!)) {
                   finalSelectedMembers.add(freshMember);
                 }
               } catch (_) {
-                // Member not found in current list (maybe deleted?), keep original if desired, 
-                // or skip. Let's skip to ensure consistency.
+                // Member not found in current list
               }
             }
           }
@@ -380,7 +384,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
     _locationController.dispose();
     _codeController.dispose();
     _sqfeetController.dispose();
-    _progressController.dispose();
+
     _leadSearchController.dispose();
     _leadSearchFocusNode.dispose();
     super.dispose();
@@ -399,9 +403,8 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
       setState(() {
         if (isStartDate) {
           _startDate = picked;
-          if (_endDate != null && _endDate!.isBefore(_startDate!)) {
-            _endDate = null;
-          }
+          // Auto-set end date to 10 months from start date
+          _endDate = DateTime(picked.year, picked.month + 10, picked.day);
         } else {
           if (_startDate == null || picked.isAfter(_startDate!)) {
             _endDate = picked;
@@ -449,9 +452,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
             : null,
         startDate: _startDate,
         endDate: _endDate,
-        progress: _progressController.text.trim().isNotEmpty
-            ? double.tryParse(_progressController.text.trim())
-            : widget.project.progress ?? 0.0, // Default to existing or 0.0
+        progress: null, // Removed progress field, pass null so it's omitted in JSON if desired, or null
         // createdBy remains as original - not updated
         projectPhase: _projectPhase ?? 'Planning', // Default to Planning if null
         state: _state ?? 'Kerala', // Default to Kerala if null
@@ -526,10 +527,10 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: Padding(
-                                padding: EdgeInsets.all(12.0),
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
+                            child: Padding(
+                              padding: EdgeInsets.all(2.0),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
                             )
                           : null,
                     ),
@@ -776,58 +777,12 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                   ),
                   const SizedBox(height: AppTheme.spacingMD),
 
-                  // Start Date and End Date Row
-                  ResponsiveLayout(
-                    mobile: Column(
-                      children: [
-                        InkWell(
-                          onTap: () => _selectDate(context, true),
-                          child: InputDecorator(
-                            decoration: const InputDecoration(
-                              labelText: 'Start Date',
-                              hintText: 'Select start date',
-                              suffixIcon: Icon(Icons.calendar_today),
-                            ),
-                            child: Text(
-                              _startDate != null
-                                  ? DateFormat('MMM dd, yyyy')
-                                      .format(_startDate!)
-                                  : 'Select start date',
-                              style: TextStyle(
-                                color: _startDate != null
-                                    ? AppTheme.textPrimary
-                                    : AppTheme.textTertiary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: AppTheme.spacingMD),
-                        InkWell(
-                          onTap: () => _selectDate(context, false),
-                          child: InputDecorator(
-                            decoration: const InputDecoration(
-                              labelText: 'End Date',
-                              hintText: 'Select end date',
-                              suffixIcon: Icon(Icons.calendar_today),
-                            ),
-                            child: Text(
-                              _endDate != null
-                                  ? DateFormat('MMM dd, yyyy').format(_endDate!)
-                                  : 'Select end date',
-                              style: TextStyle(
-                                color: _endDate != null
-                                    ? AppTheme.textPrimary
-                                    : AppTheme.textTertiary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    desktop: Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
+                  // Start Date and End Date Row (Only visible for Construction phase)
+                  if (_projectPhase == 'Construction')
+                    ResponsiveLayout(
+                      mobile: Column(
+                        children: [
+                          InkWell(
                             onTap: () => _selectDate(context, true),
                             child: InputDecorator(
                               decoration: const InputDecoration(
@@ -848,10 +803,8 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: AppTheme.spacingMD),
-                        Expanded(
-                          child: InkWell(
+                          const SizedBox(height: AppTheme.spacingMD),
+                          InkWell(
                             onTap: () => _selectDate(context, false),
                             child: InputDecorator(
                               decoration: const InputDecoration(
@@ -861,8 +814,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                               ),
                               child: Text(
                                 _endDate != null
-                                    ? DateFormat('MMM dd, yyyy')
-                                        .format(_endDate!)
+                                    ? DateFormat('MMM dd, yyyy').format(_endDate!)
                                     : 'Select end date',
                                 style: TextStyle(
                                   color: _endDate != null
@@ -872,13 +824,64 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      desktop: Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => _selectDate(context, true),
+                              child: InputDecorator(
+                                decoration: const InputDecoration(
+                                  labelText: 'Start Date',
+                                  hintText: 'Select start date',
+                                  suffixIcon: Icon(Icons.calendar_today),
+                                ),
+                                child: Text(
+                                  _startDate != null
+                                      ? DateFormat('MMM dd, yyyy')
+                                          .format(_startDate!)
+                                      : 'Select start date',
+                                  style: TextStyle(
+                                    color: _startDate != null
+                                        ? AppTheme.textPrimary
+                                        : AppTheme.textTertiary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppTheme.spacingMD),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => _selectDate(context, false),
+                              child: InputDecorator(
+                                decoration: const InputDecoration(
+                                  labelText: 'End Date',
+                                  hintText: 'Select end date',
+                                  suffixIcon: Icon(Icons.calendar_today),
+                                ),
+                                child: Text(
+                                  _endDate != null
+                                      ? DateFormat('MMM dd, yyyy').format(_endDate!)
+                                      : 'Select end date',
+                                  style: TextStyle(
+                                    color: _endDate != null
+                                        ? AppTheme.textPrimary
+                                        : AppTheme.textTertiary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  if (_projectPhase == 'Construction')
+                    const SizedBox(height: AppTheme.spacingMD),
                   const SizedBox(height: AppTheme.spacingMD),
 
-                  // Project Phase and Progress Row
+                  // Project Phase Row (Progress removed)
                   ResponsiveLayout(
                     mobile: Column(
                       children: [
@@ -898,26 +901,6 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                             setState(() {
                               _projectPhase = value;
                             });
-                          },
-                        ),
-                        const SizedBox(height: AppTheme.spacingMD),
-                        TextFormField(
-                          controller: _progressController,
-                          decoration: const InputDecoration(
-                            labelText: 'Progress (%)',
-                            hintText: '0-100',
-                          ),
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value != null && value.trim().isNotEmpty) {
-                              final progress = double.tryParse(value);
-                              if (progress == null ||
-                                  progress < 0 ||
-                                  progress > 100) {
-                                return 'Progress must be between 0 and 100';
-                              }
-                            }
-                            return null;
                           },
                         ),
                       ],
@@ -941,28 +924,6 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                               setState(() {
                                 _projectPhase = value;
                               });
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: AppTheme.spacingMD),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _progressController,
-                            decoration: const InputDecoration(
-                              labelText: 'Progress (%)',
-                              hintText: '0-100',
-                            ),
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value != null && value.trim().isNotEmpty) {
-                                final progress = double.tryParse(value);
-                                if (progress == null ||
-                                    progress < 0 ||
-                                    progress > 100) {
-                                  return 'Progress must be between 0 and 100';
-                                }
-                              }
-                              return null;
                             },
                           ),
                         ),
@@ -1379,7 +1340,15 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                                     : AppTheme.primaryBlue,
                               ),
                             ),
-                            subtitle: Text(member.designation ?? ''),
+                            subtitle: null,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            secondary: Text(
+                              member.designation ?? '',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
                             value: isSelected,
                             onChanged: isAdmin ? null : (bool? value) {
                               setState(() {

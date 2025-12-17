@@ -112,6 +112,14 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
       final roles = await _crmService.getPortalRoles();
       final customerRoles = await _crmService.getCustomerRoles();
       
+      // Create Role Maps
+      final Map<int, String> portalRoleMap = {
+        for (var role in roles) if (role.id != null) role.id!: role.name
+      };
+      final Map<int, String> customerRoleMap = {
+        for (var role in customerRoles) if (role.id != null) role.id!: role.name
+      };
+      
       // Find admin role ID for Portal Users
       int? adminRoleId;
       try {
@@ -145,6 +153,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
           lastName: user.lastName,
           email: user.email,
           type: 'PORTAL',
+          designation: portalRoleMap[user.roleId] ?? '',
         ));
       }
       
@@ -156,11 +165,13 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
           lastName: customer.lastName,
           email: customer.email,
           type: 'CUSTOMER',
+          designation: customerRoleMap[customer.roleId] ?? '',
         ));
       }
 
       // Identify Admins to auto-select
       final List<TeamMember> autoSelectedAdmins = [];
+      
       if (adminRoleId != null) {
         // Add Portal Admins
         for (var user in portalUsers) {
@@ -171,27 +182,29 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
               lastName: user.lastName,
               email: user.email,
               type: 'PORTAL',
+              designation: portalRoleMap[user.roleId] ?? '',
             ));
             if (user.id != null) {
               _adminIds.add('PORTAL_${user.id}');
             }
           }
         }
+      }
 
-        // Add Customer Admins
-        if (customerAdminRoleId != null) {
-          for (var customer in customers) {
-            if (customer.roleId == customerAdminRoleId) {
-              autoSelectedAdmins.add(TeamMember(
-                id: customer.id.toString(),
-                firstName: customer.firstName,
-                lastName: customer.lastName,
-                email: customer.email,
-                type: 'CUSTOMER',
-              ));
-              if (customer.id != null) {
-                _adminIds.add('CUSTOMER_${customer.id}');
-              }
+      // Add Customer Admins (Independent check)
+      if (customerAdminRoleId != null) {
+        for (var customer in customers) {
+          if (customer.roleId == customerAdminRoleId) {
+            autoSelectedAdmins.add(TeamMember(
+              id: customer.id.toString(),
+              firstName: customer.firstName,
+              lastName: customer.lastName,
+              email: customer.email,
+              type: 'CUSTOMER',
+              designation: customerRoleMap[customer.roleId] ?? '',
+            ));
+            if (customer.id != null) {
+              _adminIds.add('CUSTOMER_${customer.id}');
             }
           }
         }
@@ -244,9 +257,8 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
       setState(() {
         if (isStartDate) {
           _startDate = picked;
-          if (_endDate != null && _endDate!.isBefore(_startDate!)) {
-            _endDate = null;
-          }
+          // Auto-set end date to 10 months from start date
+          _endDate = DateTime(picked.year, picked.month + 10, picked.day);
         } else {
           if (_startDate == null || picked.isAfter(_startDate!)) {
             _endDate = picked;
@@ -361,7 +373,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                             width: 20,
                             height: 20,
                             child: Padding(
-                              padding: EdgeInsets.all(12.0),
+                              padding: EdgeInsets.all(2.0),
                               child: CircularProgressIndicator(strokeWidth: 2),
                             ),
                           )
@@ -621,57 +633,12 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                 ),
                 const SizedBox(height: AppTheme.spacingMD),
 
-                // Start Date and End Date Row
-                ResponsiveLayout(
-                  mobile: Column(
-                    children: [
-                      InkWell(
-                        onTap: () => _selectDate(context, true),
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'Start Date',
-                            hintText: 'Select start date',
-                            suffixIcon: Icon(Icons.calendar_today),
-                          ),
-                          child: Text(
-                            _startDate != null
-                                ? DateFormat('MMM dd, yyyy').format(_startDate!)
-                                : 'Select start date',
-                            style: TextStyle(
-                              color: _startDate != null
-                                  ? AppTheme.textPrimary
-                                  : AppTheme.textTertiary,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppTheme.spacingMD),
-                      InkWell(
-                        onTap: () => _selectDate(context, false),
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'End Date',
-                            hintText: 'Select end date',
-                            suffixIcon: Icon(Icons.calendar_today),
-                          ),
-                          child: Text(
-                            _endDate != null
-                                ? DateFormat('MMM dd, yyyy').format(_endDate!)
-                                : 'Select end date',
-                            style: TextStyle(
-                              color: _endDate != null
-                                  ? AppTheme.textPrimary
-                                  : AppTheme.textTertiary,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  desktop: Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
+                // Start Date and End Date Row (Only visible for Construction phase)
+                if (_projectPhase == 'Construction')
+                  ResponsiveLayout(
+                    mobile: Column(
+                      children: [
+                        InkWell(
                           onTap: () => _selectDate(context, true),
                           child: InputDecorator(
                             decoration: const InputDecoration(
@@ -681,8 +648,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                             ),
                             child: Text(
                               _startDate != null
-                                  ? DateFormat('MMM dd, yyyy')
-                                      .format(_startDate!)
+                                  ? DateFormat('MMM dd, yyyy').format(_startDate!)
                                   : 'Select start date',
                               style: TextStyle(
                                 color: _startDate != null
@@ -692,10 +658,8 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: AppTheme.spacingMD),
-                      Expanded(
-                        child: InkWell(
+                        const SizedBox(height: AppTheme.spacingMD),
+                        InkWell(
                           onTap: () => _selectDate(context, false),
                           child: InputDecorator(
                             decoration: const InputDecoration(
@@ -715,10 +679,61 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    desktop: Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _selectDate(context, true),
+                            child: InputDecorator(
+                              decoration: const InputDecoration(
+                                labelText: 'Start Date',
+                                hintText: 'Select start date',
+                                suffixIcon: Icon(Icons.calendar_today),
+                              ),
+                              child: Text(
+                                _startDate != null
+                                    ? DateFormat('MMM dd, yyyy')
+                                        .format(_startDate!)
+                                    : 'Select start date',
+                                style: TextStyle(
+                                  color: _startDate != null
+                                      ? AppTheme.textPrimary
+                                      : AppTheme.textTertiary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppTheme.spacingMD),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _selectDate(context, false),
+                            child: InputDecorator(
+                              decoration: const InputDecoration(
+                                labelText: 'End Date',
+                                hintText: 'Select end date',
+                                suffixIcon: Icon(Icons.calendar_today),
+                              ),
+                              child: Text(
+                                _endDate != null
+                                    ? DateFormat('MMM dd, yyyy').format(_endDate!)
+                                    : 'Select end date',
+                                style: TextStyle(
+                                  color: _endDate != null
+                                      ? AppTheme.textPrimary
+                                      : AppTheme.textTertiary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                if (_projectPhase == 'Construction')
+                  const SizedBox(height: AppTheme.spacingMD),
                 const SizedBox(height: AppTheme.spacingMD),
 
                 // Project Phase (Progress defaults to 0, shown as info)
@@ -744,26 +759,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                 ),
                 const SizedBox(height: AppTheme.spacingMD),
 
-                // Info: Progress defaults to 0
-                Container(
-                  padding: const EdgeInsets.all(AppTheme.spacingSM),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceElevated,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusSM),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline,
-                          size: 16, color: AppTheme.textSecondary),
-                      const SizedBox(width: AppTheme.spacingSM),
-                      Text(
-                        'Progress will be set to 0% by default',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: AppTheme.spacingMD),
+
 
                 // Lead Selection (Searchable Dropdown)
                 Column(
@@ -1106,7 +1102,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                                     : AppTheme.primaryBlue,
                               ),
                             ),
-                            subtitle: Text(member.designation ?? ''),
+                            subtitle: null,
                             value: isSelected,
                             onChanged: isAdmin 
                                 ? null // Disable interactions for admins
@@ -1124,16 +1120,13 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                                   },
                             // Visual cue for disabled state
                             controlAffinity: ListTileControlAffinity.leading,
-                            secondary: isAdmin 
-                                ? Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.statusInfoBg,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: const Text('Admin', style: TextStyle(fontSize: 10)),
-                                  )
-                                : null,
+                            secondary: Text(
+                              member.designation ?? '',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
                           );
                         },
                       ),
