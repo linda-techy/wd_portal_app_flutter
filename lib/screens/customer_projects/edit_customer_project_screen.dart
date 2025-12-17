@@ -10,6 +10,7 @@ import 'package:admin/features/customers/data/models/customer.dart';
 import 'package:admin/models/role.dart';
 import 'package:admin/services/crm_service.dart';
 import 'package:admin/utils/india_location_data.dart';
+import 'package:admin/constants/project_type_constants.dart';
 
 class EditCustomerProjectScreen extends StatefulWidget {
   final CustomerProject project;
@@ -39,6 +40,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
   String? _projectPhase;
+  String? _projectType;
   String? _state;
   String? _district;
   int? _selectedLeadId;
@@ -109,6 +111,8 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
       _projectPhase = null;
     }
 
+    _projectType = widget.project.projectType ?? ProjectTypeConstants.defaultValue;
+
     // Validate state - ensure it exists in the list (try case-insensitive match)
     final state = widget.project.state;
     if (state != null && state.isNotEmpty) {
@@ -167,6 +171,15 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
         });
       }
     });
+    _locationController.addListener(_updateProjectName);
+  }
+
+  void _updateProjectName() {
+    if (_selectedCustomer != null) {
+      final customerName = '${_selectedCustomer!.firstName} ${_selectedCustomer!.lastName}'.trim();
+      final location = _locationController.text.trim();
+      _nameController.text = location.isNotEmpty ? '$customerName - $location' : customerName;
+    }
   }
 
   Future<void> _loadData() async {
@@ -455,6 +468,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
         progress: null, // Removed progress field, pass null so it's omitted in JSON if desired, or null
         // createdBy remains as original - not updated
         projectPhase: _projectPhase ?? 'Planning', // Default to Planning if null
+        projectType: _projectType,
         state: _state ?? 'Kerala', // Default to Kerala if null
         district: _district ?? 'Thrissur', // Default to Thrissur if null
         sqfeet: _sqfeetController.text.trim().isNotEmpty
@@ -544,13 +558,11 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                           }).toList(),
                     onChanged: _isLoading
                         ? null
-                        : (Customer? newValue) {
+                          : (Customer? newValue) {
                             setState(() {
                               _selectedCustomer = newValue;
                               if (newValue != null) {
-                                // Auto-populate project name
-                                _nameController.text =
-                                    'Project - ${newValue.firstName} ${newValue.lastName}';
+                                _updateProjectName();
                               }
                             });
                           },
@@ -562,6 +574,43 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                     },
                   ),
                   const SizedBox(height: AppTheme.spacingMD),
+
+                  // Location (Moved to 2nd position)
+                  TextFormField(
+                    controller: _locationController,
+                    decoration: const InputDecoration(
+                      labelText: 'Location *',
+                      hintText: 'Enter project location',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Location is required';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: AppTheme.spacingMD),
+
+                  // Project Type
+                  DropdownButtonFormField<String>(
+                    value: _projectType,
+                    decoration: const InputDecoration(
+                      labelText: 'Project Type',
+                      hintText: 'Select project type',
+                    ),
+                    items: ProjectTypeConstants.formDropdownItems,
+                    onChanged: (value) {
+                      setState(() {
+                        _projectType = value;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a project type';
+                      }
+                      return null;
+                    },
+                  ),
 
                   // Name
                   TextFormField(
@@ -596,20 +645,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                   ),
                   const SizedBox(height: AppTheme.spacingMD),
 
-                  // Location
-                  TextFormField(
-                    controller: _locationController,
-                    decoration: const InputDecoration(
-                      labelText: 'Location *',
-                      hintText: 'Enter project location',
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Location is required';
-                      }
-                      return null;
-                    },
-                  ),
+
                   const SizedBox(height: AppTheme.spacingMD),
 
                   // State and District Row

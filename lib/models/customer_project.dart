@@ -15,6 +15,7 @@ class CustomerProject {
   final int? leadId;
   final int? customerId;
   final String? code;
+  final String? projectType;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final List<TeamMember>? teamMembers;
@@ -35,6 +36,7 @@ class CustomerProject {
     this.leadId,
     this.customerId,
     this.code,
+    this.projectType,
     this.createdAt,
     this.updatedAt,
     this.teamMembers,
@@ -86,7 +88,9 @@ class CustomerProject {
               : int.tryParse(json['customer_id']?.toString() ??
                   json['customerId']?.toString() ??
                   ''),
+
       code: json['code'],
+      projectType: json['project_type'] ?? json['projectType'],
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'])
           : json['createdAt'] != null
@@ -122,6 +126,7 @@ class CustomerProject {
       if (leadId != null) 'lead_id': leadId,
       if (customerId != null) 'customer_id': customerId,
       if (code != null && code!.isNotEmpty) 'code': code,
+      if (projectType != null && projectType!.isNotEmpty) 'project_type': projectType,
       if (teamMembers != null)
         'team_members': teamMembers!
             .map((m) {
@@ -166,6 +171,7 @@ class CustomerProject {
     int? leadId,
     int? customerId,
     String? code,
+    String? projectType,
     DateTime? createdAt,
     DateTime? updatedAt,
     List<TeamMember>? teamMembers,
@@ -186,6 +192,7 @@ class CustomerProject {
       leadId: leadId ?? this.leadId,
       customerId: customerId ?? this.customerId,
       code: code ?? this.code,
+      projectType: projectType ?? this.projectType,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       teamMembers: teamMembers ?? this.teamMembers,

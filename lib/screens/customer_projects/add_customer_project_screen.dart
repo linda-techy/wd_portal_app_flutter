@@ -10,6 +10,7 @@ import 'package:admin/features/customers/data/models/customer.dart';
 import 'package:admin/models/role.dart';
 import 'package:admin/services/crm_service.dart';
 import 'package:admin/utils/india_location_data.dart';
+import 'package:admin/constants/project_type_constants.dart';
 
 class AddCustomerProjectScreen extends StatefulWidget {
   const AddCustomerProjectScreen({super.key});
@@ -30,8 +31,10 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   final _leadSearchController = TextEditingController();
 
   DateTime? _startDate;
+
   DateTime? _endDate;
   String? _projectPhase = 'Design'; // Default to Design
+  String? _projectType = ProjectTypeConstants.defaultValue;
   String? _state = 'Kerala'; // Default to Kerala
   String? _district = 'Thrissur'; // Default to Thrissur
   Lead? _selectedLead;
@@ -88,6 +91,15 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
         });
       }
     });
+    _locationController.addListener(_updateProjectName);
+  }
+
+  void _updateProjectName() {
+    if (_selectedCustomer != null) {
+      final customerName = '${_selectedCustomer!.firstName} ${_selectedCustomer!.lastName}'.trim();
+      final location = _locationController.text.trim();
+      _nameController.text = location.isNotEmpty ? '$customerName - $location' : customerName;
+    }
   }
 
   @override
@@ -296,12 +308,14 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
       final project = CustomerProject(
         id: null, // Let backend generate ID
         name: _nameController.text.trim(),
-        location: _locationController.text.trim(),
+        progress: null, // Initial progress is 0/null
+        projectPhase: _projectPhase,
+        projectType: _projectType,
         state: _state ?? 'Kerala',
         district: _district ?? 'Thrissur',
         startDate: _startDate,
         endDate: _endDate,
-        projectPhase: _projectPhase ?? 'Design',
+        location: _locationController.text.trim(),
         leadId: int.tryParse(_selectedLead!.leadId),
         customerId: _selectedCustomer?.id,
         sqfeet: double.tryParse(_sqfeetController.text) ?? 0.0,
@@ -393,9 +407,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                           setState(() {
                             _selectedCustomer = newValue;
                             if (newValue != null) {
-                              // Auto-populate project name
-                              _nameController.text =
-                                  'Project - ${newValue.firstName} ${newValue.lastName}';
+                              _updateProjectName();
                             }
                           });
                         },
@@ -407,6 +419,43 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                   },
                 ),
                 const SizedBox(height: AppTheme.spacingMD),
+
+                // Location (Moved to 2nd position)
+                TextFormField(
+                  controller: _locationController,
+                  decoration: const InputDecoration(
+                    labelText: 'Location *',
+                    hintText: 'Enter project location',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Location is required';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: AppTheme.spacingMD),
+
+                // Project Type
+                DropdownButtonFormField<String>(
+                  value: _projectType,
+                  decoration: const InputDecoration(
+                    labelText: 'Project Type',
+                    hintText: 'Select project type',
+                  ),
+                  items: ProjectTypeConstants.formDropdownItems,
+                  onChanged: (value) {
+                    setState(() {
+                      _projectType = value;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select a project type';
+                    }
+                    return null;
+                  },
+                ),
 
                 // Name
                 TextFormField(
@@ -452,20 +501,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                 ),
                 const SizedBox(height: AppTheme.spacingMD),
 
-                // Location
-                TextFormField(
-                  controller: _locationController,
-                  decoration: const InputDecoration(
-                    labelText: 'Location *',
-                    hintText: 'Enter project location',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Location is required';
-                    }
-                    return null;
-                  },
-                ),
+
                 const SizedBox(height: AppTheme.spacingMD),
 
                 // State and District Row
