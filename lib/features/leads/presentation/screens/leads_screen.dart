@@ -892,7 +892,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
   }
 }
 
-class LeadsTable extends StatelessWidget {
+class LeadsTable extends StatefulWidget {
   final List<Lead> leads;
   final Function(Lead) onEdit;
   final Function(Lead) onDelete;
@@ -903,6 +903,19 @@ class LeadsTable extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
   });
+
+  @override
+  State<LeadsTable> createState() => _LeadsTableState();
+}
+
+class _LeadsTableState extends State<LeadsTable> {
+  final ScrollController _horizontalScrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _horizontalScrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -916,9 +929,14 @@ class LeadsTable extends StatelessWidget {
             children: [
               // Scrollable table columns
               Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
+                child: Scrollbar(
+                  controller: _horizontalScrollController,
+                  thumbVisibility: true,
+                  trackVisibility: true,
+                  child: SingleChildScrollView(
+                    controller: _horizontalScrollController,
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
                     columnSpacing: defaultPadding,
                     dataRowMinHeight: 52,
                     dataRowMaxHeight: 52,
@@ -933,7 +951,7 @@ class LeadsTable extends StatelessWidget {
                       DataColumn(label: Text("Sales Rep")),
                       DataColumn(label: Text("Next Follow-up")),
                     ],
-                    rows: leads.map((lead) {
+                    rows: widget.leads.map((lead) {
                       return DataRow(
                         cells: [
                           // Name Column
@@ -956,7 +974,7 @@ class LeadsTable extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            onTap: () => onEdit(lead),
+                            onTap: () => widget.onEdit(lead),
                           ),
 
                           // Contact Column
@@ -1124,6 +1142,7 @@ class LeadsTable extends StatelessWidget {
                   ),
                 ),
               ),
+            ),
               
               // Fixed Actions Column
               Container(
@@ -1150,7 +1169,7 @@ class LeadsTable extends StatelessWidget {
                       ),
                     ),
                     // Rows
-                    ...leads.asMap().entries.map((entry) {
+                    ...widget.leads.asMap().entries.map((entry) {
                       final lead = entry.value;
                       return Consumer<PermissionProvider>(
                         builder: (context, permissions, child) {
@@ -1176,7 +1195,7 @@ class LeadsTable extends StatelessWidget {
                                       constraints: const BoxConstraints(),
                                       onPressed: () {
                                         debugPrint('Edit button pressed for lead: ${lead.name}');
-                                        onEdit(lead);
+                                        widget.onEdit(lead);
                                       },
                                     ),
                                   ),
@@ -1278,7 +1297,7 @@ class LeadsTable extends StatelessWidget {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                onDelete(lead);
+                widget.onDelete(lead);
               },
               style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: const Text('Delete'),
