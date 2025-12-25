@@ -6,6 +6,8 @@ import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/services/crm_service.dart';
 import 'project_documents_screen.dart';
 import 'package:intl/intl.dart';
+import '../../widgets/animations/entrance_animation.dart';
+import '../../widgets/animations/motion_button.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
   final CustomerProject project;
@@ -113,7 +115,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               )),
               
               // Project Overview Card
-              _buildProjectOverviewCard(),
+              EntranceAnimation(
+                delay: const Duration(milliseconds: 0),
+                child: _buildProjectOverviewCard(),
+              ),
               
               SizedBox(height: ResponsiveUtils.responsiveValue(
                 context: context,
@@ -132,17 +137,20 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     desktop: AppTheme.spacingMD,
                   ),
                 ),
-                child: Text(
-                  'Project Modules',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: ResponsiveUtils.responsiveFontSize(
-                          context,
-                          mobile: 20,
-                          tablet: 22,
-                          desktop: 24,
+                child: EntranceAnimation(
+                  delay: const Duration(milliseconds: 100),
+                  child: Text(
+                    'Project Modules',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: ResponsiveUtils.responsiveFontSize(
+                            context,
+                            mobile: 20,
+                            tablet: 22,
+                            desktop: 24,
+                          ),
                         ),
-                      ),
+                  ),
                 ),
               ),
               
@@ -482,17 +490,24 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
 
     return ResponsiveLayout(
       mobile: Column(
-        children: modules.map((module) => Padding(
-          padding: EdgeInsets.only(
-            bottom: ResponsiveUtils.responsiveValue(
-              context: context,
-              mobile: AppTheme.spacingMD,
-              tablet: AppTheme.spacingLG,
-              desktop: AppTheme.spacingMD,
+        children: modules.asMap().entries.map((entry) {
+          final index = entry.key;
+          final module = entry.value;
+          return EntranceAnimation(
+            delay: Duration(milliseconds: 150 + (index * 50)),
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: ResponsiveUtils.responsiveValue(
+                  context: context,
+                  mobile: AppTheme.spacingMD,
+                  tablet: AppTheme.spacingLG,
+                  desktop: AppTheme.spacingMD,
+                ),
+              ),
+              child: module,
             ),
-          ),
-          child: module,
-        )).toList(),
+          );
+        }).toList(),
       ),
       tablet: Padding(
         padding: EdgeInsets.symmetric(
@@ -528,7 +543,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             ),
           ),
           itemCount: modules.length,
-          itemBuilder: (context, index) => modules[index],
+          itemBuilder: (context, index) => EntranceAnimation(
+            delay: Duration(milliseconds: 150 + (index * 50)),
+            child: modules[index],
+          ),
         ),
       ),
       desktop: Padding(
@@ -565,7 +583,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             ),
           ),
           itemCount: modules.length,
-          itemBuilder: (context, index) => modules[index],
+          itemBuilder: (context, index) => EntranceAnimation(
+            delay: Duration(milliseconds: 150 + (index * 50)),
+            child: modules[index],
+          ),
         ),
       ),
     );
@@ -613,81 +634,84 @@ class _ModuleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMD),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(AppTheme.radiusMD),
-            border: Border.all(
-              color: AppTheme.borderLight,
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
+    return MotionButton(
+      onPressed: onTap,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+              border: Border.all(
+                color: AppTheme.borderLight,
+                width: 1,
               ),
-            ],
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(ResponsiveUtils.responsiveValue(
-              context: context,
-              mobile: AppTheme.spacingMD,
-              tablet: AppTheme.spacingLG,
-              desktop: AppTheme.spacingXL,
-            )),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(ResponsiveUtils.responsiveValue(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(ResponsiveUtils.responsiveValue(
+                context: context,
+                mobile: AppTheme.spacingMD,
+                tablet: AppTheme.spacingLG,
+                desktop: AppTheme.spacingXL,
+              )),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(ResponsiveUtils.responsiveValue(
+                      context: context,
+                      mobile: AppTheme.spacingSM,
+                      tablet: AppTheme.spacingMD,
+                      desktop: AppTheme.spacingMD,
+                    )),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      icon,
+                      size: ResponsiveUtils.responsiveFontSize(
+                        context,
+                        mobile: 28,
+                        tablet: 32,
+                        desktop: 36,
+                      ),
+                      color: color,
+                    ),
+                  ),
+                  SizedBox(height: ResponsiveUtils.responsiveValue(
                     context: context,
                     mobile: AppTheme.spacingSM,
                     tablet: AppTheme.spacingMD,
                     desktop: AppTheme.spacingMD,
                   )),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    icon,
-                    size: ResponsiveUtils.responsiveFontSize(
-                      context,
-                      mobile: 28,
-                      tablet: 32,
-                      desktop: 36,
-                    ),
-                    color: color,
-                  ),
-                ),
-                SizedBox(height: ResponsiveUtils.responsiveValue(
-                  context: context,
-                  mobile: AppTheme.spacingSM,
-                  tablet: AppTheme.spacingMD,
-                  desktop: AppTheme.spacingMD,
-                )),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontSize: ResponsiveUtils.responsiveFontSize(
-                          context,
-                          mobile: 14,
-                          tablet: 16,
-                          desktop: 18,
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: ResponsiveUtils.responsiveFontSize(
+                            context,
+                            mobile: 14,
+                            tablet: 16,
+                            desktop: 18,
+                          ),
                         ),
-                      ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

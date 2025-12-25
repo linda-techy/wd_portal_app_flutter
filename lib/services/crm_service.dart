@@ -261,10 +261,51 @@ class CRMService {
   Future<List<CustomerProject>> getAllCustomerProjects() async {
     try {
       final response = await _apiService.get('/customer-projects');
-      final List<dynamic> data = response.data;
-      return data.map((json) => CustomerProject.fromJson(json)).toList();
+      
+      // Handle either a List (old API) or a Map/Page object (new API)
+      if (response.data is List) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => CustomerProject.fromJson(json)).toList();
+      } else if (response.data is Map && response.data['content'] != null) {
+        final List<dynamic> data = response.data['content'];
+        return data.map((json) => CustomerProject.fromJson(json)).toList();
+      } else if (response.data is Map && response.data['data'] != null) {
+        final List<dynamic> data = response.data['data'];
+        return data.map((json) => CustomerProject.fromJson(json)).toList();
+      }
+      
+      return [];
     } catch (e) {
       throw Exception('Failed to fetch customer projects: $e');
+    }
+  }
+
+  Future<PaginatedResponse<CustomerProject>> getCustomerProjectsPaginated({
+    int page = 0,
+    int size = 20,
+    String sort = 'id',
+    String direction = 'desc',
+    String? search,
+  }) async {
+    try {
+      final queryParams = {
+        'page': page.toString(),
+        'size': size.toString(),
+        'sort': '$sort,$direction',
+      };
+
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search;
+      }
+
+      final response = await _apiService.get(
+        '/customer-projects',
+        queryParams: queryParams,
+      );
+
+      return PaginatedResponse.fromJson(response.data, CustomerProject.fromJson);
+    } catch (e) {
+      throw Exception('Failed to fetch paginated customer projects: $e');
     }
   }
 

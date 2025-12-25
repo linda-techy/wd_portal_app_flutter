@@ -35,19 +35,12 @@ class DataCard extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    final card = Container(
-      padding: padding ?? const EdgeInsets.all(AppTheme.spacingLG),
-      decoration: BoxDecoration(
-        color: backgroundColor ?? AppTheme.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLG),
-        border: showBorder
-            ? Border.all(
-                color: borderColor ?? AppTheme.borderLight,
-                width: 1,
-              )
-            : null,
-        boxShadow: AppTheme.shadowSM,
-      ),
+    return _HoverableCard(
+      onTap: onTap,
+      backgroundColor: backgroundColor,
+      showBorder: showBorder,
+      borderColor: borderColor,
+      padding: padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -122,16 +115,64 @@ class DataCard extends StatelessWidget {
         ],
       ),
     );
-    
-    if (onTap != null) {
-      return InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLG),
-        child: card,
-      );
-    }
-    
-    return card;
+  }
+}
+
+class _HoverableCard extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  final Color? backgroundColor;
+  final bool showBorder;
+  final Color? borderColor;
+  final EdgeInsets? padding;
+
+  const _HoverableCard({
+    required this.child,
+    this.onTap,
+    this.backgroundColor,
+    this.showBorder = true,
+    this.borderColor,
+    this.padding,
+  });
+
+  @override
+  State<_HoverableCard> createState() => _HoverableCardState();
+}
+
+class _HoverableCardState extends State<_HoverableCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: widget.onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          padding: widget.padding ?? const EdgeInsets.all(AppTheme.spacingLG),
+          transform: Matrix4.identity()..scale(_isHovered ? 1.01 : 1.0),
+          transformAlignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: widget.backgroundColor ?? AppTheme.surface,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLG),
+            border: widget.showBorder
+                ? Border.all(
+                    color: _isHovered 
+                        ? (widget.borderColor ?? AppTheme.deepSlate).withOpacity(0.5)
+                        : (widget.borderColor ?? AppTheme.borderLight),
+                    width: 1,
+                  )
+                : null,
+            boxShadow: _isHovered ? AppTheme.shadowMD : AppTheme.shadowSM,
+          ),
+          child: widget.child,
+        ),
+      ),
+    );
   }
 }
 

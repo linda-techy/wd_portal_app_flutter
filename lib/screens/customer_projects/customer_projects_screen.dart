@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../../theme/app_theme.dart';
 import '../../theme/responsive_utils.dart';
 import '../../models/customer_project.dart';
@@ -10,6 +11,9 @@ import 'project_details_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../providers/permission_provider.dart';
+import '../../widgets/animations/entrance_animation.dart';
+import '../../widgets/animations/shimmer_loading.dart';
+import '../../utils/motion_toast.dart';
 
 class CustomerProjectsScreen extends StatefulWidget {
   const CustomerProjectsScreen({super.key});
@@ -21,42 +25,110 @@ class CustomerProjectsScreen extends StatefulWidget {
 class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
   List<CustomerProject> projects = [];
   bool isLoading = true;
+  bool isMoreLoading = false;
+  bool hasMore = true;
+  int currentPage = 0;
+  final int pageSize = 20;
   String? errorMessage;
+  String searchQuery = '';
   final CRMService _crmService = CRMService();
+  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _searchController.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !isMoreLoading &&
+        hasMore &&
+        !isLoading) {
+      _loadMoreData();
+    }
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          searchQuery = query;
+          currentPage = 0;
+          projects = [];
+          hasMore = true;
+        });
+        _loadData();
+      }
+    });
   }
 
   Future<void> _loadData() async {
     try {
       setState(() {
-        isLoading = true;
+        if (currentPage == 0) isLoading = true;
         errorMessage = null;
       });
 
-      // Load projects
-      final results = await _crmService.getAllCustomerProjects();
+      final response = await _crmService.getCustomerProjectsPaginated(
+        page: currentPage,
+        size: pageSize,
+        search: searchQuery.isEmpty ? null : searchQuery,
+      );
 
       if (mounted) {
         setState(() {
-          projects = results;
+          if (currentPage == 0) {
+            projects = response.data;
+          } else {
+            projects.addAll(response.data);
+          }
+          hasMore = response.hasNextPage;
           isLoading = false;
+          isMoreLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           isLoading = false;
+          isMoreLoading = false;
           errorMessage = _getErrorMessage(e);
         });
       }
     }
   }
 
+  Future<void> _loadMoreData() async {
+    if (isMoreLoading || !hasMore) return;
+
+    setState(() {
+      isMoreLoading = true;
+      currentPage++;
+    });
+
+    _loadData();
+  }
+
   Future<void> _loadProjects() async {
+    setState(() {
+      currentPage = 0;
+      projects = [];
+      hasMore = true;
+    });
     await _loadData();
   }
 
@@ -107,21 +179,19 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
       try {
         await _crmService.deleteCustomerProject(project.id!);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Project deleted successfully'),
-              backgroundColor: AppTheme.statusSuccess,
-            ),
+          MotionToast.show(
+            context,
+            message: 'Project deleted successfully',
+            isError: false,
           );
           _loadProjects();
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to delete project: ${e.toString()}'),
-              backgroundColor: AppTheme.statusError,
-            ),
+          MotionToast.show(
+            context,
+            message: 'Failed to delete project: ${e.toString()}',
+            isError: true,
           );
         }
       }
@@ -149,31 +219,46 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Customer Projects',
-                  style: Theme.of(context).textTheme.displaySmall,
-                ),
-                // Add Project button - Only show if user has CREATE permission
-                if (permissions.canCreateProject)
-                  ElevatedButton.icon(
-                    onPressed: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AddCustomerProjectScreen(),
+            ResponsiveLayout(
+              mobile: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Customer Projects',
+                        style: Theme.of(context).textTheme.displaySmall,
+                      ),
+                      if (permissions.canCreateProject)
+                        IconButton(
+                          onPressed: () => _navigateToAddProject(),
+                          icon: const Icon(Icons.add_circle, color: AppTheme.coralRed),
                         ),
-                      );
-                      if (result == true) {
-                        _loadProjects();
-                      }
-                    },
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Add Project'),
+                    ],
                   ),
-              ],
+                  const SizedBox(height: AppTheme.spacingMD),
+                  _buildSearchBar(),
+                ],
+              ),
+              desktop: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Customer Projects',
+                    style: Theme.of(context).textTheme.displaySmall,
+                  ),
+                  const SizedBox(width: AppTheme.spacingXL),
+                  Expanded(child: _buildSearchBar()),
+                  const SizedBox(width: AppTheme.spacingXL),
+                  if (permissions.canCreateProject)
+                    ElevatedButton.icon(
+                      onPressed: () => _navigateToAddProject(),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Add Project'),
+                    ),
+                ],
+              ),
             ),
             const SizedBox(height: AppTheme.spacingLG),
 
@@ -205,10 +290,9 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
                 ),
               ),
 
-            // Projects Table
             Expanded(
               child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? _buildShimmerGrid()
                   : projects.isEmpty
                       ? Center(
                           child: Column(
@@ -262,6 +346,44 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
     );
   }
 
+  Widget _buildSearchBar() {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 500),
+      child: TextField(
+        controller: _searchController,
+        onChanged: _onSearchChanged,
+        decoration: InputDecoration(
+          hintText: 'Search projects by name, code, location...',
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear, size: 18),
+                  onPressed: () {
+                    _searchController.clear();
+                    _onSearchChanged('');
+                  },
+                )
+              : null,
+          filled: true,
+          fillColor: AppTheme.surface,
+          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _navigateToAddProject() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddCustomerProjectScreen(),
+      ),
+    );
+    if (result == true) {
+      _loadProjects();
+    }
+  }
+
   Widget _buildProjectsCards() {
     if (projects.isEmpty) {
       return const SizedBox.shrink();
@@ -269,24 +391,51 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
 
     return ResponsiveLayout(
       mobile: ListView.builder(
+        controller: _scrollController,
         padding: const EdgeInsets.all(AppTheme.spacingMD),
-        itemCount: projects.length,
+        itemCount: projects.length + (hasMore ? 1 : 0),
         itemBuilder: (context, index) {
-          return _buildProjectCard(projects[index]);
+          if (index == projects.length) {
+            return _buildLoader();
+          }
+          return EntranceAnimation(
+            delay: Duration(milliseconds: 50 * (index % pageSize)),
+            child: _buildProjectCard(projects[index]),
+          );
         },
       ),
-      desktop: GridView.builder(
-        padding: const EdgeInsets.all(AppTheme.spacingMD),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          crossAxisSpacing: AppTheme.spacingMD,
-          mainAxisSpacing: AppTheme.spacingMD,
-          childAspectRatio: 1.2,
-        ),
-        itemCount: projects.length,
-        itemBuilder: (context, index) {
-          return _buildProjectCard(projects[index]);
-        },
+      desktop: Column(
+        children: [
+          Expanded(
+            child: GridView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(AppTheme.spacingMD),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: AppTheme.spacingMD,
+                mainAxisSpacing: AppTheme.spacingMD,
+                childAspectRatio: 1.2,
+              ),
+              itemCount: projects.length,
+              itemBuilder: (context, index) {
+                return EntranceAnimation(
+                  delay: Duration(milliseconds: 50 * (index % pageSize)),
+                  child: _buildProjectCard(projects[index]),
+                );
+              },
+            ),
+          ),
+          if (isMoreLoading) _buildLoader(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoader() {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(AppTheme.spacingMD),
+        child: CircularProgressIndicator(),
       ),
     );
   }
@@ -467,5 +616,29 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
     if (progress >= 50) return AppTheme.safetyOrange;
     if (progress >= 25) return AppTheme.safetyYellow;
     return AppTheme.statusError;
+  }
+
+  Widget _buildShimmerGrid() {
+    return ResponsiveLayout(
+      mobile: ListView.builder(
+        padding: const EdgeInsets.all(AppTheme.spacingMD),
+        itemCount: 4,
+        itemBuilder: (context, index) => Padding(
+          padding: const EdgeInsets.only(bottom: AppTheme.spacingMD),
+          child: const ShimmerLoading(width: double.infinity, height: 180),
+        ),
+      ),
+      desktop: GridView.builder(
+        padding: const EdgeInsets.all(AppTheme.spacingMD),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: AppTheme.spacingMD,
+          mainAxisSpacing: AppTheme.spacingMD,
+          childAspectRatio: 1.2,
+        ),
+        itemCount: 6,
+        itemBuilder: (context, index) => const ShimmerLoading(width: double.infinity, height: double.infinity),
+      ),
+    );
   }
 }

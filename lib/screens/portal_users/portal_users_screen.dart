@@ -8,6 +8,10 @@ import '../../services/crm_service.dart';
 import 'add_portal_user_screen.dart';
 import 'edit_portal_user_screen.dart';
 import '../../providers/permission_provider.dart';
+import '../../widgets/animations/entrance_animation.dart';
+import '../../widgets/animations/shimmer_loading.dart';
+import '../../widgets/animations/motion_button.dart';
+import '../../utils/motion_toast.dart';
 
 class PortalUsersScreen extends StatefulWidget {
   const PortalUsersScreen({super.key});
@@ -67,11 +71,10 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load users: $e'),
-            backgroundColor: AppTheme.statusError,
-          ),
+        MotionToast.show(
+          context,
+          message: 'Failed to load users: $e',
+          isError: true,
         );
       }
     }
@@ -147,21 +150,19 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
       try {
         await _crmService.deletePortalUser(user.id!);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('User deleted successfully'),
-              backgroundColor: AppTheme.statusSuccess,
-            ),
+          MotionToast.show(
+            context,
+            message: 'User deleted successfully',
+            isError: false,
           );
           _loadUsers();
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to delete user: $e'),
-              backgroundColor: AppTheme.statusError,
-            ),
+          MotionToast.show(
+            context,
+            message: 'Failed to delete user: $e',
+            isError: true,
           );
         }
       }
@@ -190,7 +191,7 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
                 ),
                 // Add User button - Only show if user has CREATE permission
                 if (permissions.canCreatePortalUser)
-                  ElevatedButton.icon(
+                  MotionButton(
                     onPressed: () async {
                       final result = await Navigator.push(
                         context,
@@ -202,8 +203,11 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
                         _loadUsers();
                       }
                     },
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add User'),
+                    child: ElevatedButton.icon(
+                      onPressed: null, // Let MotionButton handle the tap
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add User'),
+                    ),
                   ),
               ],
             ),
@@ -236,7 +240,7 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
             ),
             const SizedBox(height: AppTheme.spacingMD),
             if (_isLoading)
-              const Center(child: CircularProgressIndicator())
+              Expanded(child: _buildShimmerLoading())
             else if (_users.isEmpty)
               Center(
                 child: Padding(
@@ -455,6 +459,28 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
       ),
     );
   }
+
+  Widget _buildShimmerLoading() {
+    return Column(
+      children: List.generate(
+        8,
+        (index) => Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              ShimmerLoading(width: 200, height: 40, borderRadius: AppTheme.radiusSM),
+              const SizedBox(width: 16),
+              ShimmerLoading(width: 250, height: 40, borderRadius: AppTheme.radiusSM),
+              const SizedBox(width: 16),
+              ShimmerLoading(width: 150, height: 40, borderRadius: AppTheme.radiusSM),
+              const SizedBox(width: 16),
+              ShimmerLoading(width: 100, height: 40, borderRadius: AppTheme.radiusSM),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _PortalUsersTable extends StatefulWidget {
@@ -532,36 +558,39 @@ class _PortalUsersTableState extends State<_PortalUsersTable> {
                                   final index = entry.key;
                                   final user = entry.value;
                                   final isEven = index % 2 == 0;
-                                  return Container(
-                                    height: 64,
-                                    decoration: BoxDecoration(
-                                      color: isEven ? Colors.transparent : AppTheme.surfaceElevated.withOpacity(0.3),
-                                      border: Border(bottom: BorderSide(color: AppTheme.borderLight.withOpacity(0.5))),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        _buildDataCell(Text(user.fullName), 200),
-                                        _buildDataCell(Text(user.email), 250),
-                                        _buildDataCell(Text(widget.getRoleName(user.roleId)), 150),
-                                        _buildDataCell(
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: user.enabled ? AppTheme.statusSuccessBg : AppTheme.statusErrorBg,
-                                              borderRadius: BorderRadius.circular(AppTheme.radiusSM),
-                                            ),
-                                            child: Text(
-                                              user.enabled ? 'Enabled' : 'Disabled',
-                                              style: TextStyle(
-                                                color: user.enabled ? AppTheme.statusSuccess : AppTheme.statusError,
-                                                fontSize: 12, 
-                                                fontWeight: FontWeight.w500
+                                  return EntranceAnimation(
+                                    delay: Duration(milliseconds: 50 * index),
+                                    child: Container(
+                                      height: 64,
+                                      decoration: BoxDecoration(
+                                        color: isEven ? Colors.transparent : AppTheme.surfaceElevated.withOpacity(0.3),
+                                        border: Border(bottom: BorderSide(color: AppTheme.borderLight.withOpacity(0.5))),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          _buildDataCell(Text(user.fullName), 200),
+                                          _buildDataCell(Text(user.email), 250),
+                                          _buildDataCell(Text(widget.getRoleName(user.roleId)), 150),
+                                          _buildDataCell(
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: user.enabled ? AppTheme.statusSuccessBg : AppTheme.statusErrorBg,
+                                                borderRadius: BorderRadius.circular(AppTheme.radiusSM),
                                               ),
-                                            ),
-                                          ), 
-                                          120
-                                        ),
-                                      ],
+                                              child: Text(
+                                                user.enabled ? 'Enabled' : 'Disabled',
+                                                style: TextStyle(
+                                                  color: user.enabled ? AppTheme.statusSuccess : AppTheme.statusError,
+                                                  fontSize: 12, 
+                                                  fontWeight: FontWeight.w500
+                                                ),
+                                              ),
+                                            ), 
+                                            120
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   );
                                 }).toList(),
@@ -610,41 +639,44 @@ class _PortalUsersTableState extends State<_PortalUsersTable> {
                               final index = entry.key;
                               final user = entry.value;
                               final isEven = index % 2 == 0;
-                              return Container(
-                                height: 64,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: isEven ? Colors.transparent : AppTheme.surfaceElevated.withOpacity(0.3),
-                                  border: Border(bottom: BorderSide(color: AppTheme.borderLight.withOpacity(0.5))),
-                                ),
-                                child: Consumer<PermissionProvider>(
-                                  builder: (context, permissions, child) {
-                                    return Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        // Edit button - Only show if user has EDIT permission
-                                        if (permissions.canEditPortalUser)
-                                          IconButton(
-                                            icon: const Icon(Icons.edit, size: 18),
-                                            color: AppTheme.primaryBlue,
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                                            onPressed: () => widget.onEdit(user),
-                                          ),
-                                        // Delete button - Only show if user has DELETE permission
-                                        if (permissions.canDeletePortalUser)
-                                          IconButton(
-                                            icon: const Icon(Icons.delete, size: 18),
-                                            color: AppTheme.statusError,
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                                            onPressed: () => widget.onDelete(user),
-                                          ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              );
+                                return EntranceAnimation(
+                                  delay: Duration(milliseconds: 50 * index),
+                                  child: Container(
+                                    height: 64,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: isEven ? Colors.transparent : AppTheme.surfaceElevated.withOpacity(0.3),
+                                      border: Border(bottom: BorderSide(color: AppTheme.borderLight.withOpacity(0.5))),
+                                    ),
+                                    child: Consumer<PermissionProvider>(
+                                      builder: (context, permissions, child) {
+                                        return Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            // Edit button - Only show if user has EDIT permission
+                                            if (permissions.canEditPortalUser)
+                                              IconButton(
+                                                icon: const Icon(Icons.edit, size: 18),
+                                                color: AppTheme.primaryBlue,
+                                                padding: EdgeInsets.zero,
+                                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                                onPressed: () => widget.onEdit(user),
+                                              ),
+                                            // Delete button - Only show if user has DELETE permission
+                                            if (permissions.canDeletePortalUser)
+                                              IconButton(
+                                                icon: const Icon(Icons.delete, size: 18),
+                                                color: AppTheme.statusError,
+                                                padding: EdgeInsets.zero,
+                                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                                onPressed: () => widget.onDelete(user),
+                                              ),
+                                          ],
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                );
                             }).toList(),
                           ),
                         ),

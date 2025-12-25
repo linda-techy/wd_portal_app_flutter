@@ -11,6 +11,10 @@ import 'package:admin/models/role.dart';
 import 'package:admin/services/crm_service.dart';
 import 'package:admin/utils/india_location_data.dart';
 import 'package:admin/constants/project_type_constants.dart';
+import '../../widgets/animations/entrance_animation.dart';
+import '../../widgets/animations/motion_button.dart';
+import '../../widgets/animations/shake_widget.dart';
+import '../../utils/motion_toast.dart';
 
 class AddCustomerProjectScreen extends StatefulWidget {
   const AddCustomerProjectScreen({super.key});
@@ -31,6 +35,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   final _leadSearchController = TextEditingController();
 
   DateTime? _startDate;
+  bool _shouldShake = false;
 
   DateTime? _endDate;
   String? _projectPhase = 'Design'; // Default to Design
@@ -235,8 +240,10 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading data: $e')),
+        MotionToast.show(
+          context,
+          message: 'Error loading data: $e',
+          isError: true,
         );
       }
     }
@@ -275,11 +282,10 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
           if (_startDate == null || picked.isAfter(_startDate!)) {
             _endDate = picked;
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('End date must be after start date'),
-                backgroundColor: AppTheme.statusError,
-              ),
+            MotionToast.show(
+              context,
+              message: 'End date must be after start date',
+              isError: true,
             );
           }
         }
@@ -289,15 +295,18 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
 
   Future<void> _saveProject() async {
     if (!_formKey.currentState!.validate()) {
+      setState(() => _shouldShake = true);
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) setState(() => _shouldShake = false);
+      });
       return;
     }
 
     if (_selectedLead == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a lead'),
-          backgroundColor: AppTheme.statusError,
-        ),
+      MotionToast.show(
+        context,
+        message: 'Please select a lead',
+        isError: true,
       );
       return;
     }
@@ -327,21 +336,19 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
       await _crmService.createCustomerProject(project);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Project created successfully!'),
-            backgroundColor: AppTheme.statusSuccess,
-          ),
+        MotionToast.show(
+          context,
+          message: 'Project created successfully!',
+          isError: false,
         );
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create project: ${e.toString()}'),
-            backgroundColor: AppTheme.statusError,
-          ),
+        MotionToast.show(
+          context,
+          message: 'Failed to create project: ${e.toString()}',
+          isError: true,
         );
       }
     } finally {
@@ -365,111 +372,128 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
       body: AdaptiveContainer(
         child: SingleChildScrollView(
           padding: ResponsiveUtils.responsivePadding(context),
-          child: Form(
-            key: _formKey,
-            child: Column(
+          child: ShakeWidget(
+            shouldShake: _shouldShake,
+            child: Form(
+              key: _formKey,
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Project Information',
-                  style: Theme.of(context).textTheme.headlineMedium,
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 0),
+                  child: Text(
+                    'Project Information',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
                 ),
                 const SizedBox(height: AppTheme.spacingLG),
 
                 // Customer Selection
-                DropdownButtonFormField<Customer>(
-                  value: _selectedCustomer,
-                  decoration: InputDecoration(
-                    labelText: 'Customer *',
-                    hintText: _isLoading ? 'Loading customers...' : 'Select customer',
-                    suffixIcon: _isLoading 
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: Padding(
-                              padding: EdgeInsets.all(2.0),
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          )
-                        : null,
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 50),
+                  child: DropdownButtonFormField<Customer>(
+                    value: _selectedCustomer,
+                    decoration: InputDecoration(
+                      labelText: 'Customer *',
+                      hintText: _isLoading ? 'Loading customers...' : 'Select customer',
+                      suffixIcon: _isLoading 
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: Padding(
+                                padding: EdgeInsets.all(2.0),
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            )
+                          : null,
+                    ),
+                    items: _isLoading
+                        ? []
+                        : _customers.map((customer) {
+                            return DropdownMenuItem(
+                              value: customer,
+                              child: Text('${customer.firstName} ${customer.lastName}'),
+                            );
+                          }).toList(),
+                    onChanged: _isLoading
+                        ? null
+                        : (Customer? newValue) {
+                            setState(() {
+                              _selectedCustomer = newValue;
+                              if (newValue != null) {
+                                _updateProjectName();
+                              }
+                            });
+                          },
+                    validator: (value) {
+                      if (value == null) {
+                        return 'Please select a customer';
+                      }
+                      return null;
+                    },
                   ),
-                  items: _isLoading
-                      ? []
-                      : _customers.map((customer) {
-                          return DropdownMenuItem(
-                            value: customer,
-                            child: Text('${customer.firstName} ${customer.lastName}'),
-                          );
-                        }).toList(),
-                  onChanged: _isLoading
-                      ? null
-                      : (Customer? newValue) {
-                          setState(() {
-                            _selectedCustomer = newValue;
-                            if (newValue != null) {
-                              _updateProjectName();
-                            }
-                          });
-                        },
-                  validator: (value) {
-                    if (value == null) {
-                      return 'Please select a customer';
-                    }
-                    return null;
-                  },
                 ),
                 const SizedBox(height: AppTheme.spacingMD),
 
                 // Location (Moved to 2nd position)
-                TextFormField(
-                  controller: _locationController,
-                  decoration: const InputDecoration(
-                    labelText: 'Location *',
-                    hintText: 'Enter project location',
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 100),
+                  child: TextFormField(
+                    controller: _locationController,
+                    decoration: const InputDecoration(
+                      labelText: 'Location *',
+                      hintText: 'Enter project location',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Location is required';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Location is required';
-                    }
-                    return null;
-                  },
                 ),
                 const SizedBox(height: AppTheme.spacingMD),
 
                 // Project Type
-                DropdownButtonFormField<String>(
-                  value: _projectType,
-                  decoration: const InputDecoration(
-                    labelText: 'Project Type',
-                    hintText: 'Select project type',
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 150),
+                  child: DropdownButtonFormField<String>(
+                    value: _projectType,
+                    decoration: const InputDecoration(
+                      labelText: 'Project Type',
+                      hintText: 'Select project type',
+                    ),
+                    items: ProjectTypeConstants.formDropdownItems,
+                    onChanged: (value) {
+                      setState(() {
+                        _projectType = value;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a project type';
+                      }
+                      return null;
+                    },
                   ),
-                  items: ProjectTypeConstants.formDropdownItems,
-                  onChanged: (value) {
-                    setState(() {
-                      _projectType = value;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select a project type';
-                    }
-                    return null;
-                  },
                 ),
 
                 // Name
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Project Name *',
-                    hintText: 'Enter project name',
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 200),
+                  child: TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Project Name *',
+                      hintText: 'Enter project name',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Project name is required';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Project name is required';
-                    }
-                    return null;
-                  },
                 ),
                 const SizedBox(height: AppTheme.spacingMD),
 
@@ -501,93 +525,39 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                 ),
                 const SizedBox(height: AppTheme.spacingMD),
 
-
-                const SizedBox(height: AppTheme.spacingMD),
-
-                // State and District Row
-                ResponsiveLayout(
-                  mobile: Column(
-                    children: [
-                      DropdownButtonFormField<String>(
-                        value: _state,
-                        decoration: const InputDecoration(
-                          labelText: 'State',
-                          hintText: 'Select state',
-                        ),
-                        isExpanded: true,
-                        items: IndiaLocationData.states.map((state) {
-                          return DropdownMenuItem(
-                            value: state,
-                            child: Text(
-                              state,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          );
-                        }).toList(),
-                        selectedItemBuilder: (BuildContext context) {
-                          return IndiaLocationData.states.map((state) {
-                            return Text(
-                              state,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            );
-                          }).toList();
-                        },
-                        onChanged: (value) {
-                          setState(() {
-                            _state = value;
-                            _district = 'Thrissur'; // Reset district to default when state changes
-                          });
-                        },
-                      ),
-                      const SizedBox(height: AppTheme.spacingMD),
-                      DropdownButtonFormField<String>(
-                        value: _district,
-                        decoration: const InputDecoration(
-                          labelText: 'District',
-                          hintText: 'Select district',
-                        ),
-                        isExpanded: true,
-                        items: (_state != null
-                                ? IndiaLocationData.getDistricts(_state!)
-                                : <String>[])
-                            .map<DropdownMenuItem<String>>((district) {
-                          return DropdownMenuItem<String>(
-                            value: district,
-                            child: Text(
-                              district,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          );
-                        }).toList(),
-                        selectedItemBuilder: (BuildContext context) {
-                          return (_state != null
-                                  ? IndiaLocationData.getDistricts(_state!)
-                                  : <String>[])
-                              .map((district) {
-                            return Text(
-                              district,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            );
-                          }).toList();
-                        },
-                        onChanged: _state != null
-                            ? (value) {
-                                setState(() {
-                                  _district = value;
-                                });
-                              }
-                            : null,
-                      ),
-                    ],
+                // Project Phase
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 225),
+                  child: DropdownButtonFormField<String>(
+                    value: _projectPhase,
+                    decoration: const InputDecoration(
+                      labelText: 'Project Phase *',
+                      hintText: 'Select phase',
+                    ),
+                    items: _projectPhases.map((phase) {
+                      return DropdownMenuItem(
+                        value: phase,
+                        child: Text(phase),
+                      );
+                    }).toList(),
+                    onChanged: null, // Disable selection
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Project phase is required';
+                      }
+                      return null;
+                    },
                   ),
-                  desktop: Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
+                ),
+                const SizedBox(height: AppTheme.spacingMD),
+                
+                // State and District Row
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 250),
+                  child: ResponsiveLayout(
+                    mobile: Column(
+                      children: [
+                        DropdownButtonFormField<String>(
                           value: _state,
                           decoration: const InputDecoration(
                             labelText: 'State',
@@ -620,10 +590,8 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                             });
                           },
                         ),
-                      ),
-                      const SizedBox(width: AppTheme.spacingMD),
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
+                        const SizedBox(height: AppTheme.spacingMD),
+                        DropdownButtonFormField<String>(
                           value: _district,
                           decoration: const InputDecoration(
                             labelText: 'District',
@@ -663,64 +631,102 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                                 }
                               : null,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    desktop: Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: _state,
+                            decoration: const InputDecoration(
+                              labelText: 'State',
+                              hintText: 'Select state',
+                            ),
+                            isExpanded: true,
+                            items: IndiaLocationData.states.map((state) {
+                              return DropdownMenuItem(
+                                value: state,
+                                child: Text(
+                                  state,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              );
+                            }).toList(),
+                            selectedItemBuilder: (BuildContext context) {
+                              return IndiaLocationData.states.map((state) {
+                                return Text(
+                                  state,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                );
+                              }).toList();
+                            },
+                            onChanged: (value) {
+                              setState(() {
+                                _state = value;
+                                _district = 'Thrissur'; // Reset district to default when state changes
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: AppTheme.spacingMD),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: _district,
+                            decoration: const InputDecoration(
+                              labelText: 'District',
+                              hintText: 'Select district',
+                            ),
+                            isExpanded: true,
+                            items: (_state != null
+                                    ? IndiaLocationData.getDistricts(_state!)
+                                    : <String>[])
+                                .map<DropdownMenuItem<String>>((district) {
+                              return DropdownMenuItem<String>(
+                                value: district,
+                                child: Text(
+                                  district,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              );
+                            }).toList(),
+                            selectedItemBuilder: (BuildContext context) {
+                              return (_state != null
+                                      ? IndiaLocationData.getDistricts(_state!)
+                                      : <String>[])
+                                  .map((district) {
+                                return Text(
+                                  district,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                );
+                              }).toList();
+                            },
+                            onChanged: _state != null
+                                ? (value) {
+                                    setState(() {
+                                      _district = value;
+                                    });
+                                  }
+                                : null,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: AppTheme.spacingMD),
 
                 // Start Date and End Date Row (Only visible for Construction phase)
                 if (_projectPhase == 'Construction')
-                  ResponsiveLayout(
-                    mobile: Column(
-                      children: [
-                        InkWell(
-                          onTap: () => _selectDate(context, true),
-                          child: InputDecorator(
-                            decoration: const InputDecoration(
-                              labelText: 'Start Date',
-                              hintText: 'Select start date',
-                              suffixIcon: Icon(Icons.calendar_today),
-                            ),
-                            child: Text(
-                              _startDate != null
-                                  ? DateFormat('MMM dd, yyyy').format(_startDate!)
-                                  : 'Select start date',
-                              style: TextStyle(
-                                color: _startDate != null
-                                    ? AppTheme.textPrimary
-                                    : AppTheme.textTertiary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: AppTheme.spacingMD),
-                        InkWell(
-                          onTap: () => _selectDate(context, false),
-                          child: InputDecorator(
-                            decoration: const InputDecoration(
-                              labelText: 'End Date',
-                              hintText: 'Select end date',
-                              suffixIcon: Icon(Icons.calendar_today),
-                            ),
-                            child: Text(
-                              _endDate != null
-                                  ? DateFormat('MMM dd, yyyy').format(_endDate!)
-                                  : 'Select end date',
-                              style: TextStyle(
-                                color: _endDate != null
-                                    ? AppTheme.textPrimary
-                                    : AppTheme.textTertiary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    desktop: Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
+                  EntranceAnimation(
+                    delay: const Duration(milliseconds: 300),
+                    child: ResponsiveLayout(
+                      mobile: Column(
+                        children: [
+                          InkWell(
                             onTap: () => _selectDate(context, true),
                             child: InputDecorator(
                               decoration: const InputDecoration(
@@ -730,8 +736,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                               ),
                               child: Text(
                                 _startDate != null
-                                    ? DateFormat('MMM dd, yyyy')
-                                        .format(_startDate!)
+                                    ? DateFormat('MMM dd, yyyy').format(_startDate!)
                                     : 'Select start date',
                                 style: TextStyle(
                                   color: _startDate != null
@@ -741,10 +746,8 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: AppTheme.spacingMD),
-                        Expanded(
-                          child: InkWell(
+                          const SizedBox(height: AppTheme.spacingMD),
+                          InkWell(
                             onTap: () => _selectDate(context, false),
                             child: InputDecorator(
                               decoration: const InputDecoration(
@@ -764,8 +767,58 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      desktop: Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => _selectDate(context, true),
+                              child: InputDecorator(
+                                decoration: const InputDecoration(
+                                  labelText: 'Start Date',
+                                  hintText: 'Select start date',
+                                  suffixIcon: Icon(Icons.calendar_today),
+                                ),
+                                child: Text(
+                                  _startDate != null
+                                      ? DateFormat('MMM dd, yyyy')
+                                          .format(_startDate!)
+                                      : 'Select start date',
+                                  style: TextStyle(
+                                    color: _startDate != null
+                                        ? AppTheme.textPrimary
+                                        : AppTheme.textTertiary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppTheme.spacingMD),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => _selectDate(context, false),
+                              child: InputDecorator(
+                                decoration: const InputDecoration(
+                                  labelText: 'End Date',
+                                  hintText: 'Select end date',
+                                  suffixIcon: Icon(Icons.calendar_today),
+                                ),
+                                child: Text(
+                                  _endDate != null
+                                      ? DateFormat('MMM dd, yyyy').format(_endDate!)
+                                      : 'Select end date',
+                                  style: TextStyle(
+                                    color: _endDate != null
+                                        ? AppTheme.textPrimary
+                                        : AppTheme.textTertiary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 if (_projectPhase == 'Construction')
@@ -773,70 +826,82 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                 const SizedBox(height: AppTheme.spacingMD),
 
                 // Project Phase (Progress defaults to 0, shown as info)
-                DropdownButtonFormField<String>(
-                  value: _projectPhase,
-                  decoration: const InputDecoration(
-                    labelText: 'Project Phase *',
-                    hintText: 'Select phase',
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 350),
+                  child: DropdownButtonFormField<String>(
+                    value: _projectPhase,
+                    decoration: const InputDecoration(
+                      labelText: 'Project Phase *',
+                      hintText: 'Select phase',
+                    ),
+                    items: _projectPhases.map((phase) {
+                      return DropdownMenuItem(
+                        value: phase,
+                        child: Text(phase),
+                      );
+                    }).toList(),
+                    onChanged: null, // Disable selection
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Project phase is required';
+                      }
+                      return null;
+                    },
                   ),
-                  items: _projectPhases.map((phase) {
-                    return DropdownMenuItem(
-                      value: phase,
-                      child: Text(phase),
-                    );
-                  }).toList(),
-                  onChanged: null, // Disable selection
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Project phase is required';
-                    }
-                    return null;
-                  },
                 ),
                 const SizedBox(height: AppTheme.spacingMD),
 
 
 
                 // Lead Selection (Searchable Dropdown)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Lead *',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
-                    ),
-                    const SizedBox(height: AppTheme.spacingXS),
-                    _buildLeadSearchDropdown(),
-                  ],
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 400),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Lead *',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                      ),
+                      const SizedBox(height: AppTheme.spacingXS),
+                      _buildLeadSearchDropdown(),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: AppTheme.spacingMD),
 
                 // Team Members Selection
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Team Members',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
-                    ),
-                    const SizedBox(height: AppTheme.spacingXS),
-                    _buildTeamMemberSelection(),
-                  ],
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 450),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Team Members',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                      ),
+                      const SizedBox(height: AppTheme.spacingXS),
+                      _buildTeamMemberSelection(),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: AppTheme.spacingMD),
 
                 // Sq Feet
-                TextFormField(
-                  controller: _sqfeetController,
-                  decoration: const InputDecoration(
-                    labelText: 'Square Feet',
-                    hintText: 'Enter area in sqft',
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 500),
+                  child: TextFormField(
+                    controller: _sqfeetController,
+                    decoration: const InputDecoration(
+                      labelText: 'Square Feet',
+                      hintText: 'Enter area in sqft',
+                    ),
+                    keyboardType: TextInputType.number,
                   ),
-                  keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: AppTheme.spacingXL),
 
@@ -853,15 +918,19 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                       child: const Text('Cancel'),
                     ),
                     const SizedBox(width: AppTheme.spacingMD),
-                    ElevatedButton(
-                      onPressed: _isLoading ? null : _saveProject,
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Create Project'),
+                    MotionButton(
+                      isEnabled: !_isLoading,
+                      onPressed: _saveProject,
+                      child: ElevatedButton(
+                        onPressed: null, // MotionButton handles the tap
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('Create Project'),
+                      ),
                     ),
                   ],
                 ),
@@ -870,6 +939,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 

@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:admin/widgets/animations/entrance_animation.dart';
+import 'package:admin/widgets/animations/shimmer_loading.dart';
 import '../../theme/app_theme.dart';
 
 /// Enhanced Data Table with Filtering, Sorting, and Responsive Design
@@ -172,7 +173,7 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
         // Table Section
         Expanded(
           child: widget.loading
-              ? const Center(child: CircularProgressIndicator())
+              ? _buildShimmerTable()
               : widget.rows.isEmpty
                   ? Center(
                       child: Padding(
@@ -196,7 +197,7 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
                         ),
                       ),
                     )
-                  : _buildTable(context),
+                  : EntranceAnimation(child: _buildTable(context)),
         ),
         
         // Pagination
@@ -294,6 +295,21 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
               : null,
         ),
       ],
+    );
+  }
+
+  Widget _buildShimmerTable() {
+    return Padding(
+      padding: const EdgeInsets.all(AppTheme.spacingLG),
+      child: Column(
+        children: List.generate(
+          5,
+          (index) => Padding(
+            padding: const EdgeInsets.only(bottom: AppTheme.spacingMD),
+            child: ShimmerLoading(width: double.infinity, height: 50),
+          ),
+        ),
+      ),
     );
   }
 }

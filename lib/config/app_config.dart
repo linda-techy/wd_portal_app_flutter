@@ -7,7 +7,7 @@ class AppConfig {
   static bool get isDebug => kDebugMode;
 
   // API Configuration
-  static const String localApiUrl = 'http://localhost:8080';
+  static const String localApiUrl = 'http://localhost:8081';
   static const String productionApiUrl = 'https://api.walldotbuilders.com';
   static const String apiVersion = '';
 

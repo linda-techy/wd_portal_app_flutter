@@ -3,28 +3,59 @@ import '../../theme/app_theme.dart';
 
 /// Status Indicator Component
 /// Displays status with color-coded badges and icons
-class StatusIndicator extends StatelessWidget {
+class StatusIndicator extends StatefulWidget {
   final String label;
   final StatusType type;
   final bool showIcon;
   final bool compact;
-  
+  final bool pulse;
+
   const StatusIndicator({
     super.key,
     required this.label,
     required this.type,
     this.showIcon = true,
     this.compact = false,
+    this.pulse = false,
   });
-  
+
+  @override
+  State<StatusIndicator> createState() => _StatusIndicatorState();
+}
+
+class _StatusIndicatorState extends State<StatusIndicator> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    if (widget.pulse) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final config = _getStatusConfig(type);
+    final config = _getStatusConfig(widget.type);
     
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? AppTheme.spacingSM : AppTheme.spacingMD,
-        vertical: compact ? AppTheme.spacingXS : AppTheme.spacingSM,
+        horizontal: widget.compact ? AppTheme.spacingSM : AppTheme.spacingMD,
+        vertical: widget.compact ? AppTheme.spacingXS : AppTheme.spacingSM,
       ),
       decoration: BoxDecoration(
         color: config.backgroundColor,
@@ -37,16 +68,19 @@ class StatusIndicator extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (showIcon) ...[
-            Icon(
-              config.icon,
-              size: compact ? 12 : 14,
-              color: config.color,
+          if (widget.showIcon) ...[
+            ScaleTransition(
+              scale: _pulseAnimation,
+              child: Icon(
+                config.icon,
+                size: widget.compact ? 12 : 14,
+                color: config.color,
+              ),
             ),
-            SizedBox(width: compact ? 4 : 6),
+            SizedBox(width: widget.compact ? 4 : 6),
           ],
           Text(
-            label,
+            widget.label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: config.color,
                   fontWeight: FontWeight.w600,

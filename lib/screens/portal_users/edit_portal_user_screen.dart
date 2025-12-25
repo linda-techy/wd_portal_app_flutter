@@ -4,6 +4,10 @@ import '../../theme/responsive_utils.dart';
 import '../../models/portal_user.dart';
 import '../../models/role.dart';
 import '../../services/crm_service.dart';
+import '../../widgets/animations/entrance_animation.dart';
+import '../../widgets/animations/motion_button.dart';
+import '../../widgets/animations/shake_widget.dart';
+import '../../utils/motion_toast.dart';
 
 class EditPortalUserScreen extends StatefulWidget {
   final PortalUser user;
@@ -32,6 +36,7 @@ class _EditPortalUserScreenState extends State<EditPortalUserScreen> {
   bool _isLoadingRoles = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _shouldShake = false;
 
   @override
   void initState() {
@@ -58,11 +63,10 @@ class _EditPortalUserScreenState extends State<EditPortalUserScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoadingRoles = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading roles: $e'),
-            backgroundColor: AppTheme.statusError,
-          ),
+        MotionToast.show(
+          context,
+          message: 'Error loading roles: $e',
+          isError: true,
         );
       }
     }
@@ -78,7 +82,13 @@ class _EditPortalUserScreenState extends State<EditPortalUserScreen> {
   }
 
   Future<void> _saveUser() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      setState(() => _shouldShake = true);
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) setState(() => _shouldShake = false);
+      });
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -97,24 +107,22 @@ class _EditPortalUserScreenState extends State<EditPortalUserScreen> {
 
       await _crmService.updatePortalUser(widget.user.id!, user);
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('User updated successfully!'),
-            backgroundColor: AppTheme.statusSuccess,
-          ),
-        );
-        Navigator.pop(context, true);
-      }
+        if (mounted) {
+          MotionToast.show(
+            context,
+            message: 'User updated successfully!',
+            isError: false,
+          );
+          Navigator.pop(context, true);
+        }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error updating user: $e'),
-            backgroundColor: AppTheme.statusError,
-          ),
-        );
-      }
+        if (mounted) {
+          MotionToast.show(
+            context,
+            message: 'Error updating user: $e',
+            isError: true,
+          );
+        }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -135,15 +143,21 @@ class _EditPortalUserScreenState extends State<EditPortalUserScreen> {
       ),
       body: AdaptiveContainer(
         child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'User Information',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
+          padding: const EdgeInsets.all(AppTheme.spacingLG),
+          child: ShakeWidget(
+            shouldShake: _shouldShake,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  EntranceAnimation(
+                    delay: const Duration(milliseconds: 0),
+                    child: Text(
+                      'User Information',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                  ),
                 const SizedBox(height: AppTheme.spacingLG),
                 
                 // First Name and Last Name Row
@@ -182,34 +196,40 @@ class _EditPortalUserScreenState extends State<EditPortalUserScreen> {
                   desktop: Row(
                     children: [
                       Expanded(
-                        child: TextFormField(
-                          controller: _firstNameController,
-                          decoration: const InputDecoration(
-                            labelText: 'First Name *',
-                            hintText: 'Enter first name',
+                        child: EntranceAnimation(
+                          delay: const Duration(milliseconds: 100),
+                          child: TextFormField(
+                            controller: _firstNameController,
+                            decoration: const InputDecoration(
+                              labelText: 'First Name *',
+                              hintText: 'Enter first name',
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'First name is required';
+                              }
+                              return null;
+                            },
                           ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'First name is required';
-                            }
-                            return null;
-                          },
                         ),
                       ),
                       const SizedBox(width: AppTheme.spacingMD),
                       Expanded(
-                        child: TextFormField(
-                          controller: _lastNameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Last Name *',
-                            hintText: 'Enter last name',
+                        child: EntranceAnimation(
+                          delay: const Duration(milliseconds: 150),
+                          child: TextFormField(
+                            controller: _lastNameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Last Name *',
+                              hintText: 'Enter last name',
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Last name is required';
+                              }
+                              return null;
+                            },
                           ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Last name is required';
-                            }
-                            return null;
-                          },
                         ),
                       ),
                     ],
@@ -218,101 +238,113 @@ class _EditPortalUserScreenState extends State<EditPortalUserScreen> {
                 const SizedBox(height: AppTheme.spacingMD),
 
                 // Email
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email *',
-                    hintText: 'Enter email address',
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 200),
+                  child: TextFormField(
+                    controller: _emailController,
+                    decoration: const InputDecoration(
+                      labelText: 'Email *',
+                      hintText: 'Enter email address',
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Email is required';
+                      }
+                      if (!value.contains('@')) {
+                        return 'Please enter a valid email';
+                      }
+                      return null;
+                    },
                   ),
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Email is required';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
                 ),
                 const SizedBox(height: AppTheme.spacingMD),
 
                 // Password
-                StatefulBuilder(
-                  builder: (context, setState) {
-                    return TextFormField(
-                      controller: _passwordController,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        hintText: 'Leave empty to keep current password',
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 250),
+                  child: StatefulBuilder(
+                    builder: (context, setState) {
+                      return TextFormField(
+                        controller: _passwordController,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          hintText: 'Leave empty to keep current password',
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
                           ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
                         ),
-                      ),
-                      obscureText: _obscurePassword,
-                      validator: (value) {
-                        if (value != null && value.trim().isNotEmpty && value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
-                        return null;
-                      },
-                    );
-                  },
+                        obscureText: _obscurePassword,
+                        validator: (value) {
+                          if (value != null && value.trim().isNotEmpty && value.length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
+                          return null;
+                        },
+                      );
+                    },
+                  ),
                 ),
                 const SizedBox(height: AppTheme.spacingMD),
 
                 // Role Dropdown
-                DropdownButtonFormField<int>(
-                  value: _roleId,
-                  decoration: InputDecoration(
-                    labelText: 'Role',
-                    hintText: _isLoadingRoles ? 'Loading roles...' : 'Select role',
-                    suffixIcon: _isLoadingRoles 
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: Padding(
-                              padding: EdgeInsets.all(12.0),
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          )
-                        : null,
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 300),
+                  child: DropdownButtonFormField<int>(
+                    value: _roleId,
+                    decoration: InputDecoration(
+                      labelText: 'Role',
+                      hintText: _isLoadingRoles ? 'Loading roles...' : 'Select role',
+                      suffixIcon: _isLoadingRoles 
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: Padding(
+                                padding: EdgeInsets.all(12.0),
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            )
+                          : null,
+                    ),
+                    items: _isLoadingRoles
+                        ? []
+                        : _roles.map((role) {
+                            return DropdownMenuItem<int>(
+                              value: role.id,
+                              child: Text(role.name),
+                            );
+                          }).toList(),
+                    onChanged: _isLoadingRoles
+                        ? null
+                        : (value) {
+                            setState(() {
+                              _roleId = value;
+                            });
+                          },
                   ),
-                  items: _isLoadingRoles
-                      ? []
-                      : _roles.map((role) {
-                          return DropdownMenuItem<int>(
-                            value: role.id,
-                            child: Text(role.name),
-                          );
-                        }).toList(),
-                  onChanged: _isLoadingRoles
-                      ? null
-                      : (value) {
-                          setState(() {
-                            _roleId = value;
-                          });
-                        },
                 ),
                 const SizedBox(height: AppTheme.spacingMD),
 
                 // Enabled Switch
-                SwitchListTile(
-                  title: const Text('Enabled'),
-                  subtitle: const Text('User account status'),
-                  value: _enabled,
-                  onChanged: (value) {
-                    setState(() {
-                      _enabled = value;
-                    });
-                  },
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 350),
+                  child: SwitchListTile(
+                    title: const Text('Enabled'),
+                    subtitle: const Text('User account status'),
+                    value: _enabled,
+                    onChanged: (value) {
+                      setState(() {
+                        _enabled = value;
+                      });
+                    },
+                  ),
                 ),
                 const SizedBox(height: AppTheme.spacingXL),
 
@@ -329,23 +361,28 @@ class _EditPortalUserScreenState extends State<EditPortalUserScreen> {
                       child: const Text('Cancel'),
                     ),
                     const SizedBox(width: AppTheme.spacingMD),
-                    ElevatedButton(
-                      onPressed: _isLoading ? null : _saveUser,
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Update User'),
+                    MotionButton(
+                      isEnabled: !_isLoading,
+                      onPressed: _saveUser,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _saveUser,
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('Update User'),
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
-          ),
         ),
       ),
+    ),
+    ),
     );
   }
 }

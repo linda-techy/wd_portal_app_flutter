@@ -8,6 +8,8 @@ import 'package:admin/features/customers/data/models/customer.dart';
 import 'package:admin/models/customer_project.dart';
 import 'package:admin/widgets/components/data_card.dart';
 import 'package:admin/widgets/charts/chart_card.dart';
+import '../../widgets/animations/entrance_animation.dart';
+import '../../widgets/animations/shimmer_loading.dart';
 
 /// Modern CRM Dashboard using new design system components
 class CRMDashboardModern extends StatefulWidget {
@@ -143,7 +145,7 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
       backgroundColor: AppTheme.background,
       body: AdaptiveContainer(
         child: isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? _buildShimmerLoading()
             : SingleChildScrollView(
                 padding: ResponsiveUtils.responsivePadding(context),
                 child: Column(
@@ -205,9 +207,15 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
                     ResponsiveLayout(
                       mobile: Column(
                         children: [
-                          _buildLeadsPieChart(),
+                          EntranceAnimation(
+                            delay: const Duration(milliseconds: 400),
+                            child: _buildLeadsPieChart(),
+                          ),
                           const SizedBox(height: AppTheme.spacingLG),
-                          _buildProjectProgressChart(),
+                          EntranceAnimation(
+                            delay: const Duration(milliseconds: 500),
+                            child: _buildProjectProgressChart(),
+                          ),
                         ],
                       ),
                       desktop: Row(
@@ -215,12 +223,18 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
                         children: [
                           Expanded(
                             flex: 1,
-                            child: _buildLeadsPieChart(),
+                            child: EntranceAnimation(
+                              delay: const Duration(milliseconds: 400),
+                              child: _buildLeadsPieChart(),
+                            ),
                           ),
                           const SizedBox(width: AppTheme.spacingLG),
                           Expanded(
                             flex: 1,
-                            child: _buildProjectProgressChart(),
+                            child: EntranceAnimation(
+                              delay: const Duration(milliseconds: 500),
+                              child: _buildProjectProgressChart(),
+                            ),
                           ),
                         ],
                       ),
@@ -228,10 +242,47 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
                     const SizedBox(height: AppTheme.spacingLG),
 
                     // Revenue Chart
-                    _buildRevenueChart(),
+                    EntranceAnimation(
+                      delay: const Duration(milliseconds: 600),
+                      child: _buildRevenueChart(),
+                    ),
                   ],
                 ),
               ),
+      ),
+    );
+  }
+
+  Widget _buildShimmerLoading() {
+    return SingleChildScrollView(
+      padding: ResponsiveUtils.responsivePadding(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const ShimmerLoading(width: 250, height: 32),
+          const SizedBox(height: AppTheme.spacingLG),
+          Row(
+            children: List.generate(
+              4,
+              (index) => Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: index == 3 ? 0 : AppTheme.spacingMD),
+                  child: const ShimmerLoading(width: double.infinity, height: 120),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingLG),
+          Row(
+            children: [
+              Expanded(child: const ShimmerLoading(width: double.infinity, height: 300)),
+              const SizedBox(width: AppTheme.spacingLG),
+              Expanded(child: const ShimmerLoading(width: double.infinity, height: 300)),
+            ],
+          ),
+          const SizedBox(height: AppTheme.spacingLG),
+          const ShimmerLoading(width: double.infinity, height: 300),
+        ],
       ),
     );
   }
@@ -243,40 +294,52 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
     final totalRevenue = dashboardMetrics['totalRevenue'] ?? 0.0;
 
     return [
-      MetricCard(
-        label: 'Total Leads',
-        value: '$totalLeads',
-        change: '+12% this month',
-        isPositive: true,
-        icon: Icons.people_outline,
-        accentColor: AppTheme.primaryBlue,
+      EntranceAnimation(
+        delay: const Duration(milliseconds: 0),
+        child: MetricCard(
+          label: 'Total Leads',
+          value: '$totalLeads',
+          change: '+12% this month',
+          isPositive: true,
+          icon: Icons.people_outline,
+          accentColor: AppTheme.primaryBlue,
+        ),
       ),
       const SizedBox(height: AppTheme.spacingMD),
-      MetricCard(
-        label: 'Total Clients',
-        value: '$totalClients',
-        change: '+5% this month',
-        isPositive: true,
-        icon: Icons.person_outline,
-        accentColor: AppTheme.statusSuccess,
+      EntranceAnimation(
+        delay: const Duration(milliseconds: 100),
+        child: MetricCard(
+          label: 'Total Clients',
+          value: '$totalClients',
+          change: '+5% this month',
+          isPositive: true,
+          icon: Icons.person_outline,
+          accentColor: AppTheme.statusSuccess,
+        ),
       ),
       const SizedBox(height: AppTheme.spacingMD),
-      MetricCard(
-        label: 'Active Projects',
-        value: '$totalProjects',
-        change: '3 new',
-        isPositive: true,
-        icon: Icons.work_outline,
-        accentColor: AppTheme.safetyOrange,
+      EntranceAnimation(
+        delay: const Duration(milliseconds: 200),
+        child: MetricCard(
+          label: 'Active Projects',
+          value: '$totalProjects',
+          change: '3 new',
+          isPositive: true,
+          icon: Icons.work_outline,
+          accentColor: AppTheme.safetyOrange,
+        ),
       ),
       const SizedBox(height: AppTheme.spacingMD),
-      MetricCard(
-        label: 'Total Revenue',
-        value: '₹${(totalRevenue / 1000000).toStringAsFixed(1)}M',
-        change: '+18% this month',
-        isPositive: true,
-        icon: Icons.attach_money,
-        accentColor: AppTheme.statusSuccess,
+      EntranceAnimation(
+        delay: const Duration(milliseconds: 300),
+        child: MetricCard(
+          label: 'Total Revenue',
+          value: '₹${(totalRevenue / 1000000).toStringAsFixed(1)}M',
+          change: '+18% this month',
+          isPositive: true,
+          icon: Icons.attach_money,
+          accentColor: AppTheme.statusSuccess,
+        ),
       ),
     ];
   }
@@ -289,46 +352,58 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
 
     return [
       Expanded(
-        child: MetricCard(
-          label: 'Total Leads',
-          value: '$totalLeads',
-          change: '+12% this month',
-          isPositive: true,
-          icon: Icons.people_outline,
-          accentColor: AppTheme.primaryBlue,
+        child: EntranceAnimation(
+          delay: const Duration(milliseconds: 0),
+          child: MetricCard(
+            label: 'Total Leads',
+            value: '$totalLeads',
+            change: '+12% this month',
+            isPositive: true,
+            icon: Icons.people_outline,
+            accentColor: AppTheme.primaryBlue,
+          ),
         ),
       ),
       const SizedBox(width: AppTheme.spacingMD),
       Expanded(
-        child: MetricCard(
-          label: 'Total Clients',
-          value: '$totalClients',
-          change: '+5% this month',
-          isPositive: true,
-          icon: Icons.person_outline,
-          accentColor: AppTheme.statusSuccess,
+        child: EntranceAnimation(
+          delay: const Duration(milliseconds: 100),
+          child: MetricCard(
+            label: 'Total Clients',
+            value: '$totalClients',
+            change: '+5% this month',
+            isPositive: true,
+            icon: Icons.person_outline,
+            accentColor: AppTheme.statusSuccess,
+          ),
         ),
       ),
       const SizedBox(width: AppTheme.spacingMD),
       Expanded(
-        child: MetricCard(
-          label: 'Active Projects',
-          value: '$totalProjects',
-          change: '3 new',
-          isPositive: true,
-          icon: Icons.work_outline,
-          accentColor: AppTheme.safetyOrange,
+        child: EntranceAnimation(
+          delay: const Duration(milliseconds: 200),
+          child: MetricCard(
+            label: 'Active Projects',
+            value: '$totalProjects',
+            change: '3 new',
+            isPositive: true,
+            icon: Icons.work_outline,
+            accentColor: AppTheme.safetyOrange,
+          ),
         ),
       ),
       const SizedBox(width: AppTheme.spacingMD),
       Expanded(
-        child: MetricCard(
-          label: 'Total Revenue',
-          value: '₹${(totalRevenue / 1000000).toStringAsFixed(1)}M',
-          change: '+18% this month',
-          isPositive: true,
-          icon: Icons.attach_money,
-          accentColor: AppTheme.statusSuccess,
+        child: EntranceAnimation(
+          delay: const Duration(milliseconds: 300),
+          child: MetricCard(
+            label: 'Total Revenue',
+            value: '₹${(totalRevenue / 1000000).toStringAsFixed(1)}M',
+            change: '+18% this month',
+            isPositive: true,
+            icon: Icons.attach_money,
+            accentColor: AppTheme.statusSuccess,
+          ),
         ),
       ),
     ];

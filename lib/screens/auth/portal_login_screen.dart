@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../constants/app_motion.dart';
+import '../../widgets/animations/entrance_animation.dart';
+import '../../widgets/animations/motion_button.dart';
+import '../../widgets/animations/shake_widget.dart';
 import '../../providers/portal_auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/responsive_utils.dart';
+import '../../utils/motion_toast.dart';
 
 class PortalLoginScreen extends StatefulWidget {
   const PortalLoginScreen({super.key});
@@ -18,6 +23,7 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTicker
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _shouldShake = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -26,10 +32,10 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTicker
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: AppMotion.durationSlow,
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+      CurvedAnimation(parent: _animationController, curve: AppMotion.curveEnter),
     );
     _animationController.forward();
   }
@@ -44,6 +50,10 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTicker
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) {
+      setState(() => _shouldShake = true);
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) setState(() => _shouldShake = false);
+      });
       return;
     }
 
@@ -61,20 +71,18 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTicker
       );
 
       if (!success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Login failed'),
-            backgroundColor: AppTheme.errorRed,
-          ),
+        MotionToast.show(
+          context,
+          message: 'Login failed: Invalid credentials',
+          isError: true,
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Login failed: ${e.toString()}'),
-            backgroundColor: AppTheme.errorRed,
-          ),
+        MotionToast.show(
+          context,
+          message: 'Login failed: ${e.toString()}',
+          isError: true,
         );
       }
     } finally {
@@ -219,8 +227,10 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTicker
         padding: EdgeInsets.all(isMobile ? 16.0 : 48.0),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 450),
-          child: Form(
-            key: _formKey,
+          child: ShakeWidget(
+            shouldShake: _shouldShake,
+            child: Form(
+              key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
@@ -247,8 +257,10 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTicker
                 SizedBox(height: isMobile ? 24 : 40),
 
                 // Email Field
-                TextFormField(
-                  controller: _emailController,
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 100),
+                  child: TextFormField(
+                    controller: _emailController,
                   textInputAction: TextInputAction.next,
                   keyboardType: TextInputType.emailAddress,
                   style: const TextStyle(fontSize: 15),
@@ -308,11 +320,14 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTicker
                     return null;
                   },
                 ),
+                ),
                 SizedBox(height: isMobile ? 16 : 20),
 
                 // Password Field
-                TextFormField(
-                  controller: _passwordController,
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 200),
+                  child: TextFormField(
+                    controller: _passwordController,
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => _handleLogin(),
                   obscureText: _obscurePassword,
@@ -386,50 +401,49 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTicker
                     return null;
                   },
                 ),
+                ),
                 SizedBox(height: isMobile ? 24 : 32),
 
                 // Login Button
-                SizedBox(
-                  height: 54,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.coralRed,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                      shadowColor: AppTheme.coralRed.withOpacity(0.3),
-                    ).copyWith(
-                      elevation: MaterialStateProperty.resolveWith<double>(
-                        (states) {
-                          if (states.contains(MaterialState.hovered)) {
-                            return 8;
-                          }
-                          return 0;
-                        },
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 300),
+                  child: SizedBox(
+                    height: 54,
+                    child: MotionButton(
+                      isEnabled: !_isLoading,
+                      onPressed: _handleLogin,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _handleLogin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.coralRed,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                          shadowColor: AppTheme.coralRed.withOpacity(0.3),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                'Sign In',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
                       ),
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                        : Text(
-                            'Sign In',
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -438,6 +452,7 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTicker
           ),
         ),
       ),
+    ),
     );
 
     // Only scroll locally if NOT mobile (Desktop side)
