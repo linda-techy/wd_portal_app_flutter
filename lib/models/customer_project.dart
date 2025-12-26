@@ -20,6 +20,8 @@ class CustomerProject {
   final DateTime? updatedAt;
   final List<TeamMember>? teamMembers;
   final List<int>? teamMemberIds;
+  final String? designPackage;
+  final bool isDesignAgreementSigned;
 
   CustomerProject({
     this.id,
@@ -41,6 +43,8 @@ class CustomerProject {
     this.updatedAt,
     this.teamMembers,
     this.teamMemberIds,
+    this.designPackage,
+    this.isDesignAgreementSigned = false,
   });
 
   factory CustomerProject.fromJson(Map<String, dynamic> json) {
@@ -106,6 +110,8 @@ class CustomerProject {
               .map((i) => TeamMember.fromJson(i))
               .toList()
           : null,
+      designPackage: json['design_package'] ?? json['designPackage'],
+      isDesignAgreementSigned: json['is_design_agreement_signed'] ?? json['isDesignAgreementSigned'] ?? false,
     );
   }
 
@@ -145,6 +151,8 @@ class CustomerProject {
                 })
             .where((m) => m['id'] != null && m['type'] != null)
             .toList(),
+      if (designPackage != null) 'design_package': designPackage,
+      'is_design_agreement_signed': isDesignAgreementSigned,
     };
   }
 
@@ -176,6 +184,8 @@ class CustomerProject {
     DateTime? updatedAt,
     List<TeamMember>? teamMembers,
     List<int>? teamMemberIds,
+    String? designPackage,
+    bool? isDesignAgreementSigned,
   }) {
     return CustomerProject(
       id: id ?? this.id,
@@ -197,6 +207,8 @@ class CustomerProject {
       updatedAt: updatedAt ?? this.updatedAt,
       teamMembers: teamMembers ?? this.teamMembers,
       teamMemberIds: teamMemberIds ?? this.teamMemberIds,
+      designPackage: designPackage ?? this.designPackage,
+      isDesignAgreementSigned: isDesignAgreementSigned ?? this.isDesignAgreementSigned,
     );
   }
 }

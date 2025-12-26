@@ -8,6 +8,7 @@ import '../../widgets/components/status_indicator.dart';
 import 'add_customer_project_screen.dart';
 import 'edit_customer_project_screen.dart';
 import 'project_details_screen.dart';
+import 'design_package_selection_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../providers/permission_provider.dart';
@@ -512,42 +513,70 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
             ),
             const SizedBox(height: AppTheme.spacingLG),
 
-            // Progress Bar
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Progress',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppTheme.textSecondary,
-                          ),
-                    ),
-                    Text(
-                      _formatProgress(project.progress),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: _getProgressColor(progress),
-                          ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppTheme.spacingXS),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSM),
-                  child: LinearProgressIndicator(
-                    value: (progress / 100).clamp(0.0, 1.0),
-                    minHeight: 8,
-                    backgroundColor: AppTheme.borderLight,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      _getProgressColor(progress),
+            // Progress Bar or Design Package Selection
+            if (project.isDesignAgreementSigned)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Progress',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppTheme.textSecondary,
+                            ),
+                      ),
+                      Text(
+                        _formatProgress(project.progress),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: _getProgressColor(progress),
+                            ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppTheme.spacingXS),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                    child: LinearProgressIndicator(
+                      value: (progress / 100).clamp(0.0, 1.0),
+                      minHeight: 8,
+                      backgroundColor: AppTheme.borderLight,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        _getProgressColor(progress),
+                      ),
                     ),
                   ),
+                ],
+              )
+            else if (project.projectPhase?.toLowerCase() == 'design')
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DesignPackageSelectionScreen(
+                          project: project,
+                        ),
+                      ),
+                    );
+                    if (result == true) {
+                      _loadProjects();
+                    }
+                  },
+                  icon: const Icon(Icons.design_services, size: 16),
+                  label: const Text('Design Setup'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
                 ),
-              ],
-            ),
+              )
+            else
+              const SizedBox(height: 48), // Spacer to maintain card height consistency
+            
             const SizedBox(height: AppTheme.spacingMD),
 
             // Actions

@@ -5,6 +5,7 @@ import 'package:admin/models/customer_project.dart';
 import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/services/crm_service.dart';
 import 'project_documents_screen.dart';
+import 'design_package_selection_screen.dart';
 import 'package:intl/intl.dart';
 import '../../widgets/animations/entrance_animation.dart';
 import '../../widgets/animations/motion_button.dart';
@@ -233,7 +234,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 children: [
                   Icon(Icons.person_outline, 
                     size: 20, 
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.primaryBlue,
                   ),
                   const SizedBox(width: AppTheme.spacingSM),
                   Text(
@@ -380,42 +381,72 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             ),
             const SizedBox(height: AppTheme.spacingMD),
             
-            // Progress
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Progress',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    Text(
-                      _formatProgress(widget.project.progress),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: _getProgressColor(progress),
-                          ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppTheme.spacingSM),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSM),
-                  child: LinearProgressIndicator(
-                    value: (progress / 100).clamp(0.0, 1.0),
-                    minHeight: 10,
-                    backgroundColor: AppTheme.borderLight,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      _getProgressColor(progress),
+            // Progress or Design Setup
+            if (widget.project.isDesignAgreementSigned)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Progress',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                      Text(
+                        _formatProgress(widget.project.progress),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: _getProgressColor(progress),
+                            ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppTheme.spacingSM),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                    child: LinearProgressIndicator(
+                      value: (progress / 100).clamp(0.0, 1.0),
+                      minHeight: 10,
+                      backgroundColor: AppTheme.borderLight,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        _getProgressColor(progress),
+                      ),
                     ),
                   ),
+                ],
+              )
+            else if (widget.project.projectPhase?.toLowerCase() == 'design')
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DesignPackageSelectionScreen(
+                          project: widget.project,
+                        ),
+                      ),
+                    );
+                    if (result == true) {
+                      // Optionally reload data if needed
+                      if (mounted) setState(() {});
+                    }
+                  },
+                  icon: const Icon(Icons.design_services, size: 18),
+                  label: const Text('Design Setup'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    side: const BorderSide(color: AppTheme.coralRed),
+                    foregroundColor: AppTheme.coralRed,
+                  ),
                 ),
-              ],
-            ),
+              )
+            else
+              const SizedBox(height: 20), // Placeholder if neither applies
             
             // Project Phase
             if (widget.project.projectPhase != null && 
