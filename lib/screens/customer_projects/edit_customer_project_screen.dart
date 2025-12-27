@@ -5,9 +5,7 @@ import 'package:admin/theme/responsive_utils.dart';
 import 'package:admin/models/customer_project.dart';
 import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/models/team_member.dart';
-import 'package:admin/models/portal_user.dart';
 import 'package:admin/features/customers/data/models/customer.dart';
-import 'package:admin/models/role.dart';
 import 'package:admin/services/crm_service.dart';
 import 'package:admin/utils/india_location_data.dart';
 import 'package:admin/constants/project_type_constants.dart';
@@ -60,7 +58,6 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
   // Customer Selection
   Customer? _selectedCustomer;
   List<Customer> _customers = [];
-  bool _isLoadingCustomers = false;
 
   // Team Members
   List<TeamMember> _teamMembers = [];

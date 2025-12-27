@@ -45,7 +45,11 @@ class ApiService {
     _dio.interceptors.add(LogInterceptor(
       requestBody: true,
       responseBody: true,
-      logPrint: (obj) => debugPrint(obj.toString()),
+      logPrint: (obj) {
+        if (kDebugMode) {
+          debugPrint(obj.toString());
+        }
+      },
     ));
   }
 

@@ -53,7 +53,6 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   // Customer Selection
   Customer? _selectedCustomer;
   List<Customer> _customers = [];
-  bool _isLoadingCustomers = false;
 
   // Team Members
   List<TeamMember> _teamMembers = [];

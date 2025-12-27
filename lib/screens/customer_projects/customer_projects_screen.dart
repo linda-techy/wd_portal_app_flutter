@@ -199,11 +199,6 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
     }
   }
 
-  String _formatDate(DateTime? date) {
-    if (date == null) return 'N/A';
-    return DateFormat('MMM dd, yyyy').format(date);
-  }
-
   String _formatProgress(double? progress) {
     if (progress == null) return 'N/A';
     return '${progress.toStringAsFixed(1)}%';
@@ -622,22 +617,6 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
         ),
       ),
     );
-  }
-
-  StatusType _getPhaseType(String phase) {
-    final lowerPhase = phase.toLowerCase();
-    if (lowerPhase.contains('planning') || lowerPhase.contains('design')) {
-      return StatusType.info;
-    } else if (lowerPhase.contains('progress') ||
-        lowerPhase.contains('ongoing')) {
-      return StatusType.primary;
-    } else if (lowerPhase.contains('complete') ||
-        lowerPhase.contains('finished')) {
-      return StatusType.success;
-    } else if (lowerPhase.contains('hold') || lowerPhase.contains('pause')) {
-      return StatusType.warning;
-    }
-    return StatusType.neutral;
   }
 
   Color _getProgressColor(double progress) {

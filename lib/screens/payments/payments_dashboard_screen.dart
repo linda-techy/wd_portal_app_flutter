@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:admin/models/payment_models.dart';
 import 'package:admin/services/payment_service.dart';
 import 'package:admin/theme/app_theme.dart';
@@ -24,7 +23,6 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
   bool _showPendingOnly = true;
 
   int _currentPage = 0;
-  final int _pageSize = 10;
   int _totalPages = 0;
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
