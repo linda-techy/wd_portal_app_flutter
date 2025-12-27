@@ -568,7 +568,7 @@ class _CustomerProjectsScreenState extends State<CustomerProjectsScreen> {
                     }
                   },
                   icon: const Icon(Icons.design_services, size: 16),
-                  label: const Text('Design Setup'),
+                  label: const Text('Action Required: Select Package & Sign Agreement'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                   ),

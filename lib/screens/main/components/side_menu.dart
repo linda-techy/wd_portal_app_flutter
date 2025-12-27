@@ -254,6 +254,14 @@ class SideMenu extends StatelessWidget {
       ));
     }
 
+    // PAYMENTS - Always visible for now (or add permission check)
+    menuItems.add(_buildMenuItem(
+      context,
+      title: 'Payments',
+      svgSrc: "assets/icons/menu_task.svg", // Using task icon as placeholder
+      index: 15, // Matches MainScreen index
+    ));
+
     // REPORTS - Only if can view reports
     if (permissions.canViewReports) {
       menuItems.add(_buildMenuItem(

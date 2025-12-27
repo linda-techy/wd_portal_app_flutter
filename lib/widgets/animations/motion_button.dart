@@ -42,6 +42,7 @@ class _MotionButtonState extends State<MotionButton> {
       onExit: (_) => _setHover(false),
       cursor: widget.isEnabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
       child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
         onTapDown: (_) => _setPressed(true),
         onTapUp: (_) => _setPressed(false),
         onTapCancel: () => _setPressed(false),

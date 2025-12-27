@@ -17,6 +17,7 @@ import 'package:admin/screens/team_members/team_members_screen.dart';
 import 'package:admin/screens/communication/communication_screen.dart';
 import 'package:admin/screens/documents/document_management_screen.dart';
 import 'package:admin/screens/invoices/invoices_screen.dart';
+import 'package:admin/screens/payments/payments_dashboard_screen.dart';
 import 'package:admin/screens/reports/reports_screen.dart';
 import 'package:admin/screens/tasks/task_list_screen.dart';
 import 'package:admin/screens/profile/profile_screen.dart';
@@ -54,7 +55,7 @@ class _MainScreenState extends State<MainScreen> {
     const TeamMembersScreen(),
     const CommunicationScreen(),
     const DocumentManagementScreen(),
-    const InvoicesScreen(),
+    const PaymentsDashboardScreen(), // Index 15 - Payments Dashboard
     const ReportsScreen(),
     const ProfileScreen(), // Index 17 - Profile
   ];
@@ -98,7 +99,7 @@ class _MainScreenState extends State<MainScreen> {
       case 14:
         return 'Documents';
       case 15:
-        return 'Invoices';
+        return 'Payments';
       case 16:
         return 'Reports';
       case 17:

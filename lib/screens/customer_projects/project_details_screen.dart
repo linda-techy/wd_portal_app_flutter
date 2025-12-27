@@ -5,6 +5,7 @@ import 'package:admin/models/customer_project.dart';
 import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/services/crm_service.dart';
 import 'project_documents_screen.dart';
+import 'project_payments_screen.dart';
 import 'design_package_selection_screen.dart';
 import 'package:intl/intl.dart';
 import '../../widgets/animations/entrance_animation.dart';
@@ -381,7 +382,6 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             ),
             const SizedBox(height: AppTheme.spacingMD),
             
-            // Progress or Design Setup
             if (widget.project.isDesignAgreementSigned)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -437,7 +437,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     }
                   },
                   icon: const Icon(Icons.design_services, size: 18),
-                  label: const Text('Design Setup'),
+                  label: const Text('Action Required: Select Package & Sign Agreement'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     side: const BorderSide(color: AppTheme.coralRed),
@@ -629,6 +629,13 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => ProjectDocumentsScreen(project: project),
+        ),
+      );
+    } else if (moduleName == 'Payments') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProjectPaymentsScreen(project: project),
         ),
       );
     } else {

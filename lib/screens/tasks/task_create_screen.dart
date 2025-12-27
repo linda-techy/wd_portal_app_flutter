@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:admin/models/task.dart';
+import 'package:admin/models/task_models.dart';
 import 'package:admin/services/task_service.dart';
 import 'package:admin/services/crm_service.dart';
 import 'package:admin/models/customer_project.dart';
@@ -76,14 +76,14 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final task = Task(
+      final task = CreateTaskRequest(
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         priority: _selectedPriority,
         status: _selectedStatus,
         assignedToId: _selectedAssigneeId,
         projectId: _selectedProjectId,
-        dueDate: _selectedDueDate,
+        dueDate: _selectedDueDate?.toIso8601String().split('T')[0],
       );
 
       await _taskService.createTask(task);

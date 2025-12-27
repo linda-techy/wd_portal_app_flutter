@@ -77,7 +77,25 @@ class AppTheme {
     Color(0xFFEC4899), // Pink
   ];
   
+  // Additional color aliases for backward compatibility
+  static const Color backgroundWhite = surface; // White background
+  static const Color walldotGold = Color(0xFFF9A825); // Gold accent color
+  
   // ========== Typography ==========
+  
+  // Static text style getters for convenience
+  static TextStyle get bodyLarge => getTextTheme().bodyLarge!;
+  static TextStyle get bodyMedium => getTextTheme().bodyMedium!;
+  static TextStyle get bodySmall => getTextTheme().bodySmall!;
+  static TextStyle get headlineLarge => getTextTheme().headlineLarge!;
+  static TextStyle get headlineMedium => getTextTheme().headlineMedium!;
+  static TextStyle get headlineSmall => getTextTheme().headlineSmall!;
+  static TextStyle get titleLarge => getTextTheme().titleLarge!;
+  static TextStyle get titleMedium => getTextTheme().titleMedium!;
+  static TextStyle get titleSmall => getTextTheme().titleSmall!;
+  static TextStyle get labelLarge => getTextTheme().labelLarge!;
+  static TextStyle get labelMedium => getTextTheme().labelMedium!;
+  static TextStyle get labelSmall => getTextTheme().labelSmall!;
   static TextTheme getTextTheme() {
     return GoogleFonts.manropeTextTheme().copyWith(
       // Display - Large headings

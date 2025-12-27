@@ -39,7 +39,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
 
   DateTime? _endDate;
   String? _projectPhase = 'Design'; // Default to Design
-  String? _projectType = ProjectTypeConstants.defaultValue;
+  String? _projectType; // Default to null to force selection
   String? _state = 'Kerala'; // Default to Kerala
   String? _district = 'Thrissur'; // Default to Thrissur
   Lead? _selectedLead;
@@ -477,6 +477,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                     },
                   ),
                 ),
+                const SizedBox(height: AppTheme.spacingMD),
 
                 // Name
                 EntranceAnimation(
@@ -901,6 +902,16 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                       hintText: 'Enter area in sqft',
                     ),
                     keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Square feet is required';
+                      }
+                      final val = double.tryParse(value);
+                      if (val == null || val <= 0) {
+                        return 'Please enter a valid area';
+                      }
+                      return null;
+                    },
                   ),
                 ),
                 const SizedBox(height: AppTheme.spacingXL),
@@ -921,15 +932,17 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                     MotionButton(
                       isEnabled: !_isLoading,
                       onPressed: _saveProject,
-                      child: ElevatedButton(
-                        onPressed: null, // MotionButton handles the tap
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Text('Create Project'),
+                      child: IgnorePointer(
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : () {},
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Text('Create Project'),
+                        ),
                       ),
                     ),
                   ],

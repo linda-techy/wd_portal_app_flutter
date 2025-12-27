@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:admin/models/task.dart';
+import 'package:admin/models/task_models.dart';
 import 'package:admin/services/task_service.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/theme/responsive_utils.dart';
@@ -18,8 +18,8 @@ class TaskListScreen extends StatefulWidget {
 
 class _TaskListScreenState extends State<TaskListScreen> {
   final TaskService _taskService = TaskService();
-  List<Task> _tasks = [];
-  List<Task> _filteredTasks = [];
+  List<TaskModel> _tasks = [];
+  List<TaskModel> _filteredTasks = [];
   bool _isLoading = true;
   String _selectedFilter = 'ALL';
 
@@ -54,7 +54,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
     if (_selectedFilter == 'ALL') {
       _filteredTasks = _tasks;
     } else {
-      _filteredTasks = _tasks.where((task) => task.status == _selectedFilter).toList();
+      _filteredTasks = _tasks.where((task) => task.status.toApiString() == _selectedFilter).toList();
     }
   }
 
@@ -154,9 +154,9 @@ class _TaskListScreenState extends State<TaskListScreen> {
                   child: Row(
                     children: [
                       _buildFilterChip('ALL', _filteredTasks.length),
-                      _buildFilterChip('PENDING', _tasks.where((t) => t.status == 'PENDING').length),
-                      _buildFilterChip('IN_PROGRESS', _tasks.where((t) => t.status == 'IN_PROGRESS').length),
-                      _buildFilterChip('COMPLETED', _tasks.where((t) => t.status == 'COMPLETED').length),
+                      _buildFilterChip('PENDING', _tasks.where((t) => t.status.toApiString() == 'PENDING').length),
+                      _buildFilterChip('IN_PROGRESS', _tasks.where((t) => t.status.toApiString() == 'IN_PROGRESS').length),
+                      _buildFilterChip('COMPLETED', _tasks.where((t) => t.status.toApiString() == 'COMPLETED').length),
                     ],
                   ),
                 ),
@@ -226,8 +226,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
     );
   }
 
-  Widget _buildTaskCard(Task task) {
-    final isOverdue = task.dueDate != null && task.dueDate!.isBefore(DateTime.now()) && task.status != 'COMPLETED';
+  Widget _buildTaskCard(TaskModel task) {
+    final isOverdue = task.dueDate != null && task.dueDate!.isBefore(DateTime.now()) && task.status.toApiString() != 'COMPLETED';
 
     return Card(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingMD),
@@ -263,16 +263,16 @@ class _TaskListScreenState extends State<TaskListScreen> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: _getPriorityColor(task.priority).withOpacity(0.1),
+                      color: _getPriorityColor(task.priority.toApiString()).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(AppTheme.radiusSM),
                       border: Border.all(
-                        color: _getPriorityColor(task.priority),
+                        color: _getPriorityColor(task.priority.toApiString()),
                       ),
                     ),
                     child: Text(
-                      task.priority,
+                      task.priority.toApiString(),
                       style: TextStyle(
-                        color: _getPriorityColor(task.priority),
+                        color: _getPriorityColor(task.priority.toApiString()),
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
@@ -300,13 +300,13 @@ class _TaskListScreenState extends State<TaskListScreen> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(task.status).withOpacity(0.1),
+                      color: _getStatusColor(task.status.toApiString()).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(AppTheme.radiusSM),
                     ),
                     child: Text(
-                      _formatStatus(task.status),
+                      _formatStatus(task.status.toApiString()),
                       style: TextStyle(
-                        color: _getStatusColor(task.status),
+                        color: _getStatusColor(task.status.toApiString()),
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),

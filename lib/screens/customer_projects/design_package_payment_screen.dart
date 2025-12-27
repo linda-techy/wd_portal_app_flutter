@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/responsive_utils.dart';
 import '../../models/customer_project.dart';
+import '../../models/payment_models.dart';
 import '../../services/crm_service.dart';
+import '../../services/payment_service.dart';
 import '../../utils/motion_toast.dart';
 import 'package:intl/intl.dart';
 
@@ -26,6 +28,7 @@ class _DesignPackagePaymentScreenState
   bool _isSubmitting = false;
   bool _isCustomPayment = false; // Default to pay in full (discount applied)
   final CRMService _crmService = CRMService();
+  final PaymentService _paymentService = PaymentService();
   final NumberFormat _currencyFormat = NumberFormat.currency(
     locale: 'en_IN',
     symbol: '₹',
@@ -39,11 +42,14 @@ class _DesignPackagePaymentScreenState
     return pricePerSqFt * _sqFeet;
   }
 
-  double get _discountAmount {
+  double get _discountPercentage {
     if (_isCustomPayment) return 0.0;
     final packageName = widget.packageDetails['name'].toString().toLowerCase();
-    final discountPercent = packageName == 'custom' ? 0.10 : 0.15;
-    return _basePrice * discountPercent;
+    return packageName == 'custom' ? 10.0 : 15.0;
+  }
+
+  double get _discountAmount {
+    return _basePrice * (_discountPercentage / 100);
   }
 
   double get _discountedPrice => _basePrice - _discountAmount;
@@ -58,6 +64,19 @@ class _DesignPackagePaymentScreenState
     });
 
     try {
+      // 1. Create the payment record first
+      final paymentRequest = CreateDesignPaymentRequest(
+        projectId: widget.project.id!,
+        packageName: widget.packageDetails['name'],
+        ratePerSqft: widget.packageDetails['priceValue'],
+        totalSqft: _sqFeet,
+        discountPercentage: _discountPercentage,
+        paymentType: _isCustomPayment ? 'INSTALLMENT' : 'FULL',
+      );
+      
+      await _paymentService.createDesignPayment(paymentRequest);
+
+      // 2. Update the project with design package and agreement signed
       final updatedProject = widget.project.copyWith(
         designPackage: widget.packageDetails['name'],
         isDesignAgreementSigned: true,

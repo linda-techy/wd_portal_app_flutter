@@ -116,7 +116,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
       _projectPhase = null;
     }
 
-    _projectType = widget.project.projectType ?? ProjectTypeConstants.defaultValue;
+    _projectType = widget.project.projectType;
 
     // Validate state - ensure it exists in the list (try case-insensitive match)
     final state = widget.project.state;
@@ -634,6 +634,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                       },
                     ),
                   ),
+                  const SizedBox(height: AppTheme.spacingMD),
 
                   EntranceAnimation(
                     delay: const Duration(milliseconds: 200),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:admin/models/task.dart';
+import 'package:admin/models/task_models.dart';
 import 'package:admin/services/task_service.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/theme/responsive_utils.dart';
@@ -15,7 +15,7 @@ class TaskDetailScreen extends StatefulWidget {
 
 class _TaskDetailScreenState extends State<TaskDetailScreen> {
   final TaskService _taskService = TaskService();
-  Task? _task;
+  TaskModel? _task;
   bool _isLoading = true;
 
   @override
@@ -46,9 +46,12 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     if (_task == null) return;
 
     try {
-      final updatedTask = _task!.copyWith(status: newStatus);
-      await _taskService.updateTask(widget.taskId, updatedTask);
-      setState(() => _task = updatedTask);
+      final updateRequest = UpdateTaskRequest(
+        title: _task!.title,
+        status: newStatus, // Pass as string, not TaskStatus enum
+      );
+      await _taskService.updateTask(widget.taskId, updateRequest);
+      await _loadTask(); // Reload to get updated task
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Task status updated')),
@@ -144,16 +147,16 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                                       vertical: 6,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: _getPriorityColor(_task!.priority).withOpacity(0.1),
+                                      color: _getPriorityColor(_task!.priority.toApiString()).withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(AppTheme.radiusSM),
                                       border: Border.all(
-                                        color: _getPriorityColor(_task!.priority),
+                                        color: _getPriorityColor(_task!.priority.toApiString()),
                                       ),
                                     ),
                                     child: Text(
-                                      _task!.priority,
+                                      _task!.priority.toApiString(),
                                       style: TextStyle(
-                                        color: _getPriorityColor(_task!.priority),
+                                        color: _getPriorityColor(_task!.priority.toApiString()),
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -195,21 +198,21 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                                 children: [
                                   ChoiceChip(
                                     label: Text(_formatStatus('PENDING')),
-                                    selected: _task!.status == 'PENDING',
+                                    selected: _task!.status.toApiString() == 'PENDING',
                                     onSelected: (selected) => _updateStatus('PENDING'),
                                     selectedColor: _getStatusColor('PENDING'),
                                     backgroundColor: AppTheme.surfaceElevated,
                                   ),
                                   ChoiceChip(
                                     label: Text(_formatStatus('IN_PROGRESS')),
-                                    selected: _task!.status == 'IN_PROGRESS',
+                                    selected: _task!.status.toApiString() == 'IN_PROGRESS',
                                     onSelected: (selected) => _updateStatus('IN_PROGRESS'),
                                     selectedColor: _getStatusColor('IN_PROGRESS'),
                                     backgroundColor: AppTheme.surfaceElevated,
                                   ),
                                   ChoiceChip(
                                     label: Text(_formatStatus('COMPLETED')),
-                                    selected: _task!.status == 'COMPLETED',
+                                    selected: _task!.status.toApiString() == 'COMPLETED',
                                     onSelected: (selected) => _updateStatus('COMPLETED'),
                                     selectedColor: _getStatusColor('COMPLETED'),
                                     backgroundColor: AppTheme.surfaceElevated,
