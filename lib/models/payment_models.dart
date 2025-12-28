@@ -133,6 +133,8 @@ class PaymentTransactionItem {
   final double netAmount;          // NEW: Amount after TDS
   final String tdsDeductedBy;      // NEW: Who deducted TDS
   final String paymentCategory;    // NEW: Payment type
+  final int? challanId;            // NEW: Linked challan ID
+  final String? challanNumber;     // NEW: Linked challan number
   final DateTime createdAt;
 
   PaymentTransactionItem({
@@ -152,6 +154,8 @@ class PaymentTransactionItem {
     required this.netAmount,
     this.tdsDeductedBy = 'CUSTOMER',
     this.paymentCategory = 'PROGRESS',
+    this.challanId,
+    this.challanNumber,
     required this.createdAt,
   });
 
@@ -175,9 +179,52 @@ class PaymentTransactionItem {
       netAmount: (json['netAmount'] ?? json['amount'] ?? 0).toDouble(),
       tdsDeductedBy: json['tdsDeductedBy'] ?? 'CUSTOMER',
       paymentCategory: json['paymentCategory'] ?? 'PROGRESS',
+      challanId: json['challanId'],
+      challanNumber: json['challanNumber'],
       createdAt: json['createdAt'] != null 
           ? DateTime.parse(json['createdAt']) 
           : DateTime.now(),
+    );
+  }
+}
+
+class ChallanItem {
+  final int id;
+  final int transactionId;
+  final String challanNumber;
+  final String fy;
+  final DateTime transactionDate;
+  final double amount;
+  final String clientName;
+  final String projectName;
+  final String status;
+  final DateTime generatedAt;
+
+  ChallanItem({
+    required this.id,
+    required this.transactionId,
+    required this.challanNumber,
+    required this.fy,
+    required this.transactionDate,
+    required this.amount,
+    required this.clientName,
+    required this.projectName,
+    required this.status,
+    required this.generatedAt,
+  });
+
+  factory ChallanItem.fromJson(Map<String, dynamic> json) {
+    return ChallanItem(
+      id: json['id'] ?? 0,
+      transactionId: json['transactionId'] ?? 0,
+      challanNumber: json['challanNumber'] ?? '',
+      fy: json['fy'] ?? '',
+      transactionDate: json['transactionDate'] != null ? DateTime.parse(json['transactionDate']) : DateTime.now(),
+      amount: (json['amount'] ?? 0).toDouble(),
+      clientName: json['clientName'] ?? '',
+      projectName: json['projectName'] ?? '',
+      status: json['status'] ?? 'ISSUED',
+      generatedAt: json['generatedAt'] != null ? DateTime.parse(json['generatedAt']) : DateTime.now(),
     );
   }
 }

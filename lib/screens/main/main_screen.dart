@@ -17,6 +17,7 @@ import 'package:admin/screens/team_members/team_members_screen.dart';
 import 'package:admin/screens/communication/communication_screen.dart';
 import 'package:admin/screens/documents/document_management_screen.dart';
 import 'package:admin/screens/payments/payments_dashboard_screen.dart';
+import 'package:admin/screens/payments/challan_management_screen.dart';
 import 'package:admin/screens/reports/reports_screen.dart';
 import 'package:admin/screens/tasks/task_list_screen.dart';
 import 'package:admin/screens/profile/profile_screen.dart';
@@ -56,6 +57,7 @@ class _MainScreenState extends State<MainScreen> {
     const PaymentsDashboardScreen(), // Index 15 - Payments Dashboard
     const ReportsScreen(),
     const ProfileScreen(), // Index 17 - Profile
+    const ChallanManagementScreen(), // Index 18 - Challans
   ];
 
   void _onMenuItemClick(int index) {
@@ -102,6 +104,8 @@ class _MainScreenState extends State<MainScreen> {
         return 'Reports';
       case 17:
         return 'Profile';
+      case 18:
+        return 'Challans';
       default:
         return 'Tasks';
     }

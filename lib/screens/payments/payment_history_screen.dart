@@ -1,8 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:admin/models/payment_models.dart';
 import 'package:admin/services/payment_service.dart';
+import 'package:admin/services/challan_service.dart';
 import 'package:admin/theme/app_theme.dart';
+import 'package:admin/utils/motion_toast.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class PaymentHistoryScreen extends StatefulWidget {
   const PaymentHistoryScreen({super.key});
@@ -336,5 +341,27 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _downloadChallan(PaymentTransactionItem transaction) async {
+    try {
+      final bytes = await ChallanService().downloadChallan(transaction.challanId!);
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/Challan_${transaction.challanNumber?.replaceAll("/", "_")}.pdf');
+      await file.writeAsBytes(bytes);
+      await Share.shareXFiles([XFile(file.path)]);
+    } catch (e) {
+      MotionToast.show(context, message: 'Failed to download challan', isError: true);
+    }
+  }
+
+  Future<void> _generateChallan(PaymentTransactionItem transaction) async {
+    try {
+      await ChallanService().generateChallan(transaction.id);
+      MotionToast.show(context, message: 'Challan generated successfully');
+      _loadHistory(refresh: true);
+    } catch (e) {
+      MotionToast.show(context, message: 'Failed to generate challan', isError: true);
+    }
   }
 }

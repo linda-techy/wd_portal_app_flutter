@@ -55,36 +55,41 @@ class ApiService {
 
   // Generic HTTP methods
   Future<Response> get(String endpoint,
-      {Map<String, dynamic>? queryParams}) async {
+      {Map<String, dynamic>? queryParams, Options? options}) async {
     try {
-      final response = await _dio.get(endpoint, queryParameters: queryParams);
+      final response = await _dio.get(endpoint,
+          queryParameters: queryParams, options: options);
       return response;
     } catch (e) {
       throw _handleError(e);
     }
   }
 
-  Future<Response> post(String endpoint, dynamic data) async {
+  Future<Response> post(String endpoint, dynamic data,
+      {Map<String, dynamic>? queryParams, Options? options}) async {
     try {
-      final response = await _dio.post(endpoint, data: data);
+      final response =
+          await _dio.post(endpoint, data: data, queryParameters: queryParams, options: options);
       return response;
     } catch (e) {
       throw _handleError(e);
     }
   }
 
-  Future<Response> put(String endpoint, dynamic data) async {
+  Future<Response> put(String endpoint, dynamic data,
+      {Map<String, dynamic>? queryParams, Options? options}) async {
     try {
-      final response = await _dio.put(endpoint, data: data);
+      final response =
+          await _dio.put(endpoint, data: data, queryParameters: queryParams, options: options);
       return response;
     } catch (e) {
       throw _handleError(e);
     }
   }
 
-  Future<Response> delete(String endpoint) async {
+  Future<Response> delete(String endpoint, {Options? options}) async {
     try {
-      final response = await _dio.delete(endpoint);
+      final response = await _dio.delete(endpoint, options: options);
       return response;
     } catch (e) {
       throw _handleError(e);

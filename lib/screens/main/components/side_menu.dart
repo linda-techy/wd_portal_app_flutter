@@ -262,6 +262,14 @@ class SideMenu extends StatelessWidget {
       index: 15, // Matches MainScreen index
     ));
 
+    // CHALLANS - New Module
+    menuItems.add(_buildMenuItem(
+      context,
+      title: 'Challans',
+      svgSrc: "assets/icons/menu_doc.svg",
+      index: 18,
+    ));
+
     // REPORTS - Only if can view reports
     if (permissions.canViewReports) {
       menuItems.add(_buildMenuItem(
