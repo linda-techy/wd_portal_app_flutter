@@ -29,51 +29,86 @@ class PortalAuthInterceptor extends Interceptor {
     handler.next(options);
   }
 
+  final List<Map<String, dynamic>> _requestQueue = [];
+
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    // Check if response is HTML instead of JSON (common when server is down)
     final responseData = err.response?.data;
     if (responseData is String && responseData.trim().startsWith('<!DOCTYPE')) {
-      // Don't try to refresh token if server is returning HTML
-      _isRefreshing = false;
       return handler.next(err);
     }
 
-    if (err.response?.statusCode == 401 && !_isRefreshing) {
-      _isRefreshing = true;
+    if (err.response?.statusCode == 401) {
+      // If we are already refreshing, queue this request
+      if (_isRefreshing) {
+        _requestQueue.add({
+          'options': err.requestOptions,
+          'handler': handler,
+        });
+        return;
+      }
 
-      try {
-        final refreshToken = await _storage.read(key: _refreshTokenKey);
-        if (refreshToken != null) {
-          // Attempt to refresh the token
+      _isRefreshing = true;
+      final refreshToken = await _storage.read(key: _refreshTokenKey);
+
+      if (refreshToken != null) {
+        try {
+          // Perform the refresh
           final response = await _dio.post('/auth/refresh-token', data: {
             'refreshToken': refreshToken,
           });
 
           if (response.statusCode == 200) {
             final newAccessToken = response.data['accessToken'];
-            await _storage.write(key: _accessTokenKey, value: newAccessToken);
+            final newRefreshToken = response.data['refreshToken'];
 
-            // Retry the original request with new token
+            // Store new tokens
+            await _storage.write(key: _accessTokenKey, value: newAccessToken);
+            await _storage.write(key: _refreshTokenKey, value: newRefreshToken);
+
+            _isRefreshing = false;
+
+            // 1. Resolve current failed request
             final originalRequest = err.requestOptions;
             originalRequest.headers['Authorization'] = 'Bearer $newAccessToken';
-
             final retryResponse = await _dio.fetch(originalRequest);
-            _isRefreshing = false;
-            return handler.resolve(retryResponse);
+            handler.resolve(retryResponse);
+
+            // 2. Resolve all queued requests
+            for (var queuedRequest in _requestQueue) {
+              final options = queuedRequest['options'] as RequestOptions;
+              final qHandler = queuedRequest['handler'] as ErrorInterceptorHandler;
+              
+              options.headers['Authorization'] = 'Bearer $newAccessToken';
+              try {
+                final response = await _dio.fetch(options);
+                qHandler.resolve(response);
+              } catch (e) {
+                qHandler.next(e as DioException);
+              }
+            }
+            _requestQueue.clear();
+            return;
           }
+        } catch (e) {
+          // Refresh failed (invalid/expired refresh token)
+          await _handleLogout();
         }
-      } catch (e) {
-        // Refresh failed, clear tokens and redirect to login
-        await _storage.delete(key: _accessTokenKey);
-        await _storage.delete(key: _refreshTokenKey);
-        await _storage.delete(key: 'portal_user_info');
-        await _storage.delete(key: 'portal_permissions');
+      } else {
+        await _handleLogout();
       }
 
       _isRefreshing = false;
+      _requestQueue.clear();
     }
 
     handler.next(err);
+  }
+
+  Future<void> _handleLogout() async {
+    await _storage.delete(key: _accessTokenKey);
+    await _storage.delete(key: _refreshTokenKey);
+    await _storage.delete(key: 'portal_user_info');
+    await _storage.delete(key: 'portal_permissions');
   }
 }

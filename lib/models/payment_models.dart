@@ -2,6 +2,8 @@
 class DesignPackagePayment {
   final int id;
   final int projectId;
+  final String? projectName;
+  final String? customerName;
   final String packageName;
   final double ratePerSqft;
   final double totalSqft;
@@ -21,6 +23,8 @@ class DesignPackagePayment {
   DesignPackagePayment({
     required this.id,
     required this.projectId,
+    this.projectName,
+    this.customerName,
     required this.packageName,
     required this.ratePerSqft,
     required this.totalSqft,
@@ -42,6 +46,8 @@ class DesignPackagePayment {
     return DesignPackagePayment(
       id: json['id'] ?? 0,
       projectId: json['projectId'] ?? 0,
+      projectName: json['projectName'],
+      customerName: json['customerName'],
       packageName: json['packageName'] ?? '',
       ratePerSqft: (json['ratePerSqft'] ?? 0).toDouble(),
       totalSqft: (json['totalSqft'] ?? 0).toDouble(),
@@ -112,6 +118,8 @@ class PaymentScheduleItem {
 
 class PaymentTransactionItem {
   final int id;
+  final String? projectName;
+  final String? customerName;
   final double amount;
   final String? paymentMethod;
   final String? referenceNumber;
@@ -129,6 +137,8 @@ class PaymentTransactionItem {
 
   PaymentTransactionItem({
     required this.id,
+    this.projectName,
+    this.customerName,
     required this.amount,
     this.paymentMethod,
     this.referenceNumber,
@@ -148,6 +158,8 @@ class PaymentTransactionItem {
   factory PaymentTransactionItem.fromJson(Map<String, dynamic> json) {
     return PaymentTransactionItem(
       id: json['id'] ?? 0,
+      projectName: json['projectName'],
+      customerName: json['customerName'],
       amount: (json['amount'] ?? 0).toDouble(),
       paymentMethod: json['paymentMethod'],
       referenceNumber: json['referenceNumber'],

@@ -182,32 +182,45 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.all(AppTheme.spacingMD),
-        title: Row(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              tx.receiptNumber ?? 'No Receipt',
-              style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                Text(
+                  tx.customerName ?? 'Direct Payment',
+                  style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                Text(
+                  '₹${NumberFormat('#,##,###').format(tx.amount)}',
+                  style: AppTheme.headlineSmall.copyWith(color: AppTheme.walldotGold),
+                ),
+              ],
             ),
-            const Spacer(),
             Text(
-              '₹${NumberFormat('#,##,###').format(tx.amount)}',
-              style: AppTheme.headlineSmall.copyWith(color: AppTheme.walldotGold),
+              tx.projectName ?? 'System Transaction',
+              style: AppTheme.bodyMedium.copyWith(color: Colors.grey.shade600),
             ),
           ],
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
             Row(
               children: [
+                Icon(Icons.receipt, size: 14, color: Colors.grey.shade600),
+                const SizedBox(width: 4),
+                Text(tx.receiptNumber ?? 'No Receipt', style: AppTheme.bodySmall),
+                const SizedBox(width: 12),
                 Icon(Icons.calendar_today, size: 14, color: Colors.grey.shade600),
                 const SizedBox(width: 4),
-                Text(DateFormat('dd MMM yyyy, hh:mm a').format(tx.paymentDate)),
+                Text(DateFormat('dd MMM yyyy').format(tx.paymentDate), style: AppTheme.bodySmall),
                 const SizedBox(width: 12),
                 Icon(Icons.payment, size: 14, color: Colors.grey.shade600),
                 const SizedBox(width: 4),
-                Text(tx.paymentMethod ?? 'N/A'),
+                Text(tx.paymentMethod ?? 'N/A', style: AppTheme.bodySmall),
               ],
             ),
             if (tx.referenceNumber != null) ...[
@@ -266,7 +279,59 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                 }
               },
             ),
-            // More filters (Method, Status) can be added here
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedMethod,
+                      decoration: const InputDecoration(labelText: 'Method'),
+                      items: ['CASH', 'UPI', 'BANK_TRANSFER', 'CHEQUE']
+                          .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                          .toList()
+                        ..insert(0, const DropdownMenuItem(value: null, child: Text('All Methods'))),
+                      onChanged: (val) {
+                        setState(() => _selectedMethod = val);
+                        _loadHistory(refresh: true);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedStatus,
+                      decoration: const InputDecoration(labelText: 'Status'),
+                      items: ['COMPLETED', 'PENDING', 'FAILED']
+                          .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                          .toList()
+                        ..insert(0, const DropdownMenuItem(value: null, child: Text('All Status'))),
+                      onChanged: (val) {
+                        setState(() => _selectedStatus = val);
+                        _loadHistory(refresh: true);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Center(
+              child: TextButton(
+                onPressed: () {
+                  setState(() {
+                    _selectedMethod = null;
+                    _selectedStatus = null;
+                    _dateRange = null;
+                    _searchQuery = '';
+                  });
+                  Navigator.pop(context);
+                  _loadHistory(refresh: true);
+                },
+                child: const Text('Reset All Filters'),
+              ),
+            ),
           ],
         ),
       ),

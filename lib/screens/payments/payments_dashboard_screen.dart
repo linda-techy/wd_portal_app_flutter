@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:admin/models/payment_models.dart';
 import 'package:admin/services/payment_service.dart';
 import 'package:admin/theme/app_theme.dart';
@@ -21,6 +22,7 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   bool _showPendingOnly = true;
+  int _pageSize = 10;
 
   int _currentPage = 0;
   int _totalPages = 0;
@@ -296,7 +298,7 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
         child: DataTable(
           headingRowColor: WidgetStateProperty.all(AppTheme.surfaceElevated),
           columns: const [
-            DataColumn(label: Text('Project')),
+            DataColumn(label: Text('Customer & Project')),
             DataColumn(label: Text('Package')),
             DataColumn(label: Text('Type')),
             DataColumn(label: Text('Total')),
@@ -314,7 +316,20 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
   DataRow _buildPaymentRow(DesignPackagePayment payment) {
     return DataRow(
       cells: [
-        DataCell(Text('Project #${payment.projectId}')),
+        DataCell(Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              payment.customerName ?? 'Unknown Customer',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text(
+              payment.projectName ?? 'Project #${payment.projectId}',
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+            ),
+          ],
+        )),
         DataCell(Text(payment.packageName)),
         DataCell(Text(payment.paymentType == 'FULL' ? 'Full' : 'Installment')),
         DataCell(Text(_currencyFormat.format(payment.totalAmount))),
@@ -330,13 +345,21 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
           ),
         )),
         DataCell(_buildStatusChip(payment.status)),
-        DataCell(
-          IconButton(
-            icon: const Icon(Icons.visibility, size: 20),
-            onPressed: () => _showPaymentDetails(payment),
-            tooltip: 'View Details',
-          ),
-        ),
+        DataCell(Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.add_card, size: 20, color: AppTheme.primaryBlue),
+              onPressed: () => _showRecordPaymentDialog(payment),
+              tooltip: 'Record Payment',
+            ),
+            IconButton(
+              icon: const Icon(Icons.visibility, size: 20),
+              onPressed: () => _showPaymentDetails(payment),
+              tooltip: 'View Details',
+            ),
+          ],
+        )),
       ],
     );
   }
@@ -396,6 +419,8 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
               ),
               const Divider(),
               const SizedBox(height: 8),
+              _buildDetailRow('Customer', payment.customerName ?? 'N/A'),
+              _buildDetailRow('Project', payment.projectName ?? 'N/A'),
               _buildDetailRow('Project ID', '#${payment.projectId}'),
               _buildDetailRow('Package', payment.packageName),
               _buildDetailRow('Payment Type', payment.paymentType),
@@ -434,6 +459,203 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
           Text(label, style: TextStyle(color: AppTheme.textSecondary)),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
+      ),
+    );
+  }
+
+  void _showRecordPaymentDialog(DesignPackagePayment payment) {
+    final amountController = TextEditingController();
+    final refController = TextEditingController();
+    final notesController = TextEditingController();
+    PaymentScheduleItem? selectedSchedule;
+    String selectedMethod = 'BANK_TRANSFER';
+
+    // Default to the first pending schedule
+    try {
+      selectedSchedule = payment.schedules.firstWhere((s) => s.status != 'PAID');
+      amountController.text = selectedSchedule.remainingAmount.toString();
+    } catch (e) {
+      // All paid
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            width: 500,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.add_card, color: AppTheme.primaryBlue),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Record Payment',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                Text(
+                  '${payment.customerName} - ${payment.projectName}',
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                ),
+                const Divider(),
+                const SizedBox(height: 16),
+                const Text('Select Installment', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<PaymentScheduleItem>(
+                  value: selectedSchedule,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  items: payment.schedules
+                      .map((s) => DropdownMenuItem(
+                            value: s,
+                            child: Text(
+                                '${s.description} (${_currencyFormat.format(s.amount)}) - ${s.status}'),
+                          ))
+                      .toList(),
+                  onChanged: (val) {
+                    setState(() {
+                      selectedSchedule = val;
+                      if (val != null) {
+                        amountController.text = val.remainingAmount.toString();
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Amount', style: TextStyle(fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: amountController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              prefixText: '₹ ',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Method', style: TextStyle(fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<String>(
+                            value: selectedMethod,
+                            decoration: InputDecoration(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            items: const [
+                              DropdownMenuItem(value: 'BANK_TRANSFER', child: Text('Bank Transfer')),
+                              DropdownMenuItem(value: 'UPI', child: Text('UPI')),
+                              DropdownMenuItem(value: 'CHEQUE', child: Text('Cheque')),
+                              DropdownMenuItem(value: 'CASH', child: Text('Cash')),
+                            ],
+                            onChanged: (val) => setState(() => selectedMethod = val!),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text('Reference Number', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: refController,
+                  decoration: InputDecoration(
+                    hintText: 'Transaction ID / Cheque No.',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text('Notes', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: notesController,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    hintText: 'Optional notes...',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (selectedSchedule == null) return;
+                      final amount = double.tryParse(amountController.text) ?? 0;
+                      if (amount <= 0) return;
+
+                      try {
+                        await _paymentService.recordTransaction(
+                          selectedSchedule!.id,
+                          RecordTransactionRequest(
+                            amount: amount,
+                            paymentMethod: selectedMethod,
+                            referenceNumber: refController.text,
+                            paymentDate: DateTime.now(),
+                            notes: notesController.text,
+                          ),
+                        );
+                        if (mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Payment recorded successfully')),
+                          );
+                          _loadPayments();
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error: ${e.toString()}')),
+                          );
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryBlue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text('Confirm Payment', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
