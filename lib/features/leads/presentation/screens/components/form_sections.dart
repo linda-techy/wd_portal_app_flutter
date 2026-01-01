@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/features/leads/data/models/lead.dart';
-import 'package:admin/models/team_member_simple.dart';
+import 'package:admin/models/portal_user.dart';
 import 'package:admin/constants/customer_type_constants.dart';
 import 'package:admin/constants/lead_status_constants.dart';
 import 'package:admin/constants/priority_constants.dart';
@@ -448,7 +448,7 @@ class FormSections {
     required Function(String, dynamic) onChanged,
     required Function(DateTime?) onNextFollowUpChanged,
     required Function(DateTime?) onLastContactDateChanged,
-    List<TeamMemberSimple>? teamMembers,
+    List<PortalUser>? teamMembers, // Use PortalUser
   }) {
     return Card(
       child: Padding(
@@ -532,41 +532,36 @@ class FormSections {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       teamMembers != null && teamMembers.isNotEmpty
-                          ? DropdownButtonFormField<String>(
+                          ? DropdownButtonFormField<int>(
                               decoration: const InputDecoration(
-                                labelText: 'Assigned Team Member',
+                                labelText: 'Assigned To',
                                 border: OutlineInputBorder(),
                               ),
-                              value: formData['assignedTeam']
-                                          ?.toString()
-                                          .isNotEmpty ==
-                                      true
-                                  ? formData['assignedTeam'].toString()
-                                  : '',
+                              value: formData['assignedToId'],
                               items: [
-                                const DropdownMenuItem<String>(
-                                  value: '',
+                                const DropdownMenuItem<int>(
+                                  value: null,
                                   child: Text('-- Not Assigned --'),
                                 ),
                                 ...teamMembers
-                                    .map((member) => DropdownMenuItem<String>(
-                                          value: member.id.toString(),
+                                    .where((m) => m.id != null)
+                                    .map((member) => DropdownMenuItem<int>(
+                                          value: member.id,
                                           child: Text(member.fullName),
                                         )),
                               ],
                               onChanged: (value) =>
-                                  onChanged('assignedTeam', value),
+                                  onChanged('assignedToId', value),
                               onSaved: (value) =>
-                                  onChanged('assignedTeam', value),
+                                  onChanged('assignedToId', value),
                             )
                           : TextFormField(
                               initialValue: formData['assignedTeam'],
                               decoration: const InputDecoration(
-                                labelText: 'Assigned Team',
+                                labelText: 'Assigned Team (Legacy)',
                                 border: OutlineInputBorder(),
                               ),
-                              onChanged: (value) =>
-                                  onChanged('assignedTeam', value),
+                              readOnly: true, // Legacy field is read-only if no users loaded
                             ),
                       const SizedBox(height: defaultPadding),
                       Wrap(
@@ -603,41 +598,37 @@ class FormSections {
                       SizedBox(
                         width: 380,
                         child: teamMembers != null && teamMembers.isNotEmpty
-                            ? DropdownButtonFormField<String>(
+                            ? DropdownButtonFormField<int>(
                                 decoration: const InputDecoration(
-                                  labelText: 'Assigned Team Member',
+                                  labelText: 'Assigned To',
                                   border: OutlineInputBorder(),
                                 ),
-                                value: formData['assignedTeam']
-                                            ?.toString()
-                                            .isNotEmpty ==
-                                        true
-                                    ? formData['assignedTeam'].toString()
-                                    : '',
+                                value: formData['assignedToId'],
                                 items: [
-                                  const DropdownMenuItem<String>(
-                                    value: '',
+                                  const DropdownMenuItem<int>(
+                                    value: null,
                                     child: Text('-- Not Assigned --'),
                                   ),
                                   ...teamMembers
-                                      .map((member) => DropdownMenuItem<String>(
-                                            value: member.id.toString(),
+                                      .where((m) => m.id != null)
+                                      .map((member) => DropdownMenuItem<int>(
+                                            value: member.id,
                                             child: Text(member.fullName),
                                           )),
                                 ],
                                 onChanged: (value) =>
-                                    onChanged('assignedTeam', value),
+                                    onChanged('assignedToId', value),
                                 onSaved: (value) =>
-                                    onChanged('assignedTeam', value),
+                                    onChanged('assignedToId', value),
                               )
                             : TextFormField(
                                 initialValue: formData['assignedTeam'],
                                 decoration: const InputDecoration(
-                                  labelText: 'Assigned Team',
+                                  labelText: 'Assigned Team (Legacy)',
                                   border: OutlineInputBorder(),
+                                  helperText: 'No users loaded or legacy data',
                                 ),
-                                onChanged: (value) =>
-                                    onChanged('assignedTeam', value),
+                                readOnly: true,
                               ),
                       ),
                       Wrap(

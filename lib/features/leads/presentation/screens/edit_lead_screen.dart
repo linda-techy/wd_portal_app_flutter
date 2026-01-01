@@ -4,6 +4,7 @@ import '../../data/models/lead.dart';
 import 'controllers/edit_lead_controller.dart';
 import 'components/form_sections.dart';
 import 'constants/edit_lead_constants.dart';
+import 'components/lead_activity_timeline.dart';
 
 class EditLeadScreen extends StatefulWidget {
   final Lead lead;
@@ -38,73 +39,90 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('${EditLeadConstants.appBarTitle}: ${widget.lead.name}'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _saveLead,
-            tooltip: EditLeadConstants.saveTooltip,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('${EditLeadConstants.appBarTitle}: ${widget.lead.name}'),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black87,
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Details'),
+              Tab(text: 'History'),
+            ],
+            labelColor: primaryColor,
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: primaryColor,
           ),
-        ],
-      ),
-      body: _controller.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(defaultPadding),
-              child: Form(
-                key: _controller.formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSectionHeader(EditLeadConstants.basicInfoHeader),
-                    FormSections.buildBasicInfoSection(
-                      formData: _controller.formData,
-                      onChanged: _controller.updateFormData,
-                      context: context,
-                    ),
-                    const SizedBox(height: defaultPadding),
-                    _buildSectionHeader(EditLeadConstants.locationHeader),
-                    FormSections.buildLocationSection(
-                      formData: _controller.formData,
-                      onChanged: _controller.updateFormData,
-                      context: context,
-                    ),
-                    const SizedBox(height: defaultPadding),
-                    _buildSectionHeader(EditLeadConstants.projectHeader),
-                    FormSections.buildProjectSection(
-                      context: context,
-                      formData: _controller.formData,
-                      onChanged: _controller.updateFormData,
-                      onDateOfEnquiryChanged: _controller.updateDateOfEnquiry,
-                    ),
-                    const SizedBox(height: defaultPadding),
-                    _buildSectionHeader(EditLeadConstants.salesHeader),
-                    FormSections.buildSalesSection(
-                      context: context,
-                      formData: _controller.formData,
-                      onChanged: _controller.updateFormData,
-                      onNextFollowUpChanged: _controller.updateNextFollowUp,
-                      onLastContactDateChanged:
-                          _controller.updateLastContactDate,
-                      teamMembers: _controller.teamMembers,
-                    ),
-                    const SizedBox(height: defaultPadding),
-                    _buildSectionHeader(EditLeadConstants.additionalHeader),
-                    FormSections.buildAdditionalSection(
-                      context: context,
-                      formData: _controller.formData,
-                      onChanged: _controller.updateFormData,
-                    ),
-                    const SizedBox(height: defaultPadding * 2),
-                    _buildActionButtons(),
-                  ],
-                ),
-              ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: _saveLead,
+              tooltip: EditLeadConstants.saveTooltip,
             ),
+          ],
+        ),
+        body: TabBarView(
+          children: [
+            _controller.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(defaultPadding),
+                    child: Form(
+                      key: _controller.formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionHeader(EditLeadConstants.basicInfoHeader),
+                          FormSections.buildBasicInfoSection(
+                            formData: _controller.formData,
+                            onChanged: _controller.updateFormData,
+                            context: context,
+                          ),
+                          const SizedBox(height: defaultPadding),
+                          _buildSectionHeader(EditLeadConstants.locationHeader),
+                          FormSections.buildLocationSection(
+                            formData: _controller.formData,
+                            onChanged: _controller.updateFormData,
+                            context: context,
+                          ),
+                          const SizedBox(height: defaultPadding),
+                          _buildSectionHeader(EditLeadConstants.projectHeader),
+                          FormSections.buildProjectSection(
+                            context: context,
+                            formData: _controller.formData,
+                            onChanged: _controller.updateFormData,
+                            onDateOfEnquiryChanged: _controller.updateDateOfEnquiry,
+                          ),
+                          const SizedBox(height: defaultPadding),
+                          _buildSectionHeader(EditLeadConstants.salesHeader),
+                          FormSections.buildSalesSection(
+                            context: context,
+                            formData: _controller.formData,
+                            onChanged: _controller.updateFormData,
+                            onNextFollowUpChanged: _controller.updateNextFollowUp,
+                            onLastContactDateChanged:
+                                _controller.updateLastContactDate,
+                            teamMembers: _controller.teamMembers,
+                          ),
+                          const SizedBox(height: defaultPadding),
+                          _buildSectionHeader(EditLeadConstants.additionalHeader),
+                          FormSections.buildAdditionalSection(
+                            context: context,
+                            formData: _controller.formData,
+                            onChanged: _controller.updateFormData,
+                          ),
+                          const SizedBox(height: defaultPadding * 2),
+                          _buildActionButtons(),
+                        ],
+                      ),
+                    ),
+                  ),
+             LeadActivityTimeline(leadId: widget.lead.leadId),
+          ],
+        ),
+      ),
     );
   }
 

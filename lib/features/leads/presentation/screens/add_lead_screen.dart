@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:admin/constants.dart';
 import '../../data/models/lead.dart';
-import 'package:admin/models/team_member_simple.dart';
+import 'package:admin/models/portal_user.dart';
+import 'package:admin/services/user_service.dart';
 import '../../data/services/lead_service.dart';
 import 'package:admin/utils/india_location_data.dart';
 import 'package:admin/constants/customer_type_constants.dart';
@@ -31,7 +32,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
   DateTime? lastContactDate;
 
   bool isLoading = false;
-  List<TeamMemberSimple> teamMembers = [];
+  List<PortalUser> teamMembers = [];
 
   @override
   void initState() {
@@ -52,6 +53,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
       'budget': null,
       'projectSqftArea': null,
       'assignedTeam': '',
+      'assignedToId': null, // Added assignedToId
       'state': IndiaLocationData.getDefaultState(),
       'district': IndiaLocationData.getDefaultDistrict(
           IndiaLocationData.getDefaultState()),
@@ -72,7 +74,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
 
   Future<void> _loadTeamMembers() async {
     try {
-      final members = await _leadService.getTeamMembersForAssignment();
+      final members = await UserService.getAllPortalUsers();
       setState(() {
         teamMembers = members;
       });
@@ -267,6 +269,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
         probabilityToWin: formData['probabilityToWin'] ?? 50,
         lastContactDate: lastContactDate,
         assignedTeam: formData['assignedTeam'] ?? '',
+        assignedToId: formData['assignedToId'], // Add assignedToId
         state: formData['state'] ?? IndiaLocationData.getDefaultState(),
         district: formData['district'] ?? '',
         location: formData['location'] ?? '',

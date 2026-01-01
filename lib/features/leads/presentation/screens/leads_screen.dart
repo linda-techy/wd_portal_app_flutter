@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/features/leads/data/models/lead.dart';
-import 'package:admin/models/team_member_simple.dart';
+import 'package:admin/models/portal_user.dart';
+import 'package:admin/services/user_service.dart';
 import 'package:admin/models/pagination_params.dart';
 import 'package:admin/responsive.dart';
 import 'package:admin/features/leads/data/services/lead_service.dart';
@@ -15,6 +16,8 @@ import 'package:admin/providers/permission_provider.dart';
 import 'package:provider/provider.dart';
 import 'add_lead_screen.dart';
 import 'edit_lead_screen.dart';
+import 'lead_table.dart';
+import 'components/leads_summary_card.dart';
 
 class LeadsScreen extends StatefulWidget {
   const LeadsScreen({super.key});
@@ -49,7 +52,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
   String? errorMessage;
   final LeadService _leadService = LeadService();
   final ScrollController _scrollController = ScrollController();
-  List<TeamMemberSimple> teamMembers = [];
+  List<PortalUser> teamMembers = [];
 
   PaginationParams get _paginationParams {
     return PaginationParams(
@@ -83,7 +86,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
 
   Future<void> _loadTeamMembers() async {
     try {
-      final members = await _leadService.getTeamMembersForAssignment();
+      final members = await UserService.getAllPortalUsers();
       if (mounted) {
         setState(() {
           teamMembers = members;

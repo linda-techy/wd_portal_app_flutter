@@ -32,7 +32,7 @@ class LeadTable extends StatelessWidget {
                     DataCell(Text(lead.projectType)),
                     DataCell(Text(lead.status)),
                     DataCell(Text(lead.priorityString)),
-                    DataCell(Text(lead.assignedTeam)),
+                    DataCell(Text(lead.assignedTo?.fullName ?? lead.assignedTeam)),
                     DataCell(Text(lead.budget?.toStringAsFixed(2) ?? '-')),
                     DataCell(Text('${lead.probabilityToWin}%')),
                     DataCell(Text('${lead.clientRating}/5')),

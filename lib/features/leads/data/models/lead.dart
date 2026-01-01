@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:admin/constants/lead_status_constants.dart';
 import 'package:admin/constants/customer_type_constants.dart';
+import 'package:admin/models/portal_user.dart';
 
 enum LeadSource {
   website,
@@ -45,6 +46,8 @@ class Lead {
   final String requirements;
   final DateTime? dateOfEnquiry;
   final String? lostReason;
+  final int? assignedToId;
+  final PortalUser? assignedTo; // Requires import of PortalUser
 
   Lead({
     required this.leadId,
@@ -74,6 +77,8 @@ class Lead {
     this.requirements = '',
     this.dateOfEnquiry,
     this.lostReason,
+    this.assignedToId,
+    this.assignedTo,
   });
 
   Color get sourceColor {
@@ -169,6 +174,31 @@ class Lead {
   }
 
   // Convert Lead to JSON for API calls
+      lastContactDate: json['last_contact_date'] != null
+          ? DateTime.tryParse(json['last_contact_date'])
+          : json['lastContactDate'] != null
+              ? DateTime.tryParse(json['lastContactDate'])
+              : null,
+      assignedTeam: json['assigned_team'] ?? json['assignedTeam'] ?? '',
+      state: json['state'] ?? '',
+      district: json['district'] ?? '',
+      location: json['location'] ?? '',
+      address: json['address'] ?? '',
+      projectDescription:
+          json['project_description'] ?? json['projectDescription'] ?? '',
+      requirements: json['requirements'] ?? '',
+      dateOfEnquiry: json['date_of_enquiry'] != null
+          ? DateTime.tryParse(json['date_of_enquiry'])
+          : json['dateOfEnquiry'] != null
+              ? DateTime.tryParse(json['dateOfEnquiry'])
+              : null,
+      lostReason: json['lost_reason'] ?? json['lostReason'],
+      assignedToId: json['assigned_to_id'],
+      assignedTo: json['assignedTo'] != null ? PortalUser.fromJson(json['assignedTo']) : null,
+    );
+  }
+
+  // Convert Lead to JSON for API calls
   Map<String, dynamic> toJson() {
     return {
       'lead_id': leadId,
@@ -202,6 +232,7 @@ class Lead {
           ?.toIso8601String()
           .substring(0, 10), // Send only date part (YYYY-MM-DD)
       'lost_reason': lostReason?.isNotEmpty == true ? lostReason : null,
+      'assigned_to_id': assignedToId,
     };
   }
 
@@ -237,6 +268,7 @@ class Lead {
           ?.toIso8601String()
           .substring(0, 10), // Send only date part (YYYY-MM-DD)
       'lost_reason': lostReason?.isNotEmpty == true ? lostReason : null,
+      'assigned_to_id': assignedToId,
     };
   }
 
@@ -272,58 +304,8 @@ class Lead {
           ?.toIso8601String()
           .substring(0, 10), // Send only date part (YYYY-MM-DD)
       'lost_reason': lostReason?.isNotEmpty == true ? lostReason : null,
+      'assigned_to_id': assignedToId,
     };
-  }
-
-  // Create Lead from JSON (API response)
-  factory Lead.fromJson(Map<String, dynamic> json) {
-    // Try multiple possible ID field names
-    String leadId = json['lead_id']?.toString() ?? json['leadId']?.toString() ?? '';
-    return Lead(
-      leadId: leadId,
-      name: json['name'] ?? '',
-      email: json['email'] ?? '',
-      phone: json['phone'] ?? '',
-      whatsappNumber: json['whatsapp_number'],
-      source: _parseSource(json['lead_source'] ?? json['source'] ?? ''),
-      createdAt:
-          DateTime.tryParse(json['created_at'] ?? json['createdAt'] ?? '') ??
-              DateTime.now(),
-      status: json['lead_status'] ?? json['status'] ?? 'New Inquiry',
-      notes: json['notes'],
-      priority: _parsePriority(json['priority'] ?? 'low'),
-      nextFollowUp: json['next_follow_up'] != null
-          ? DateTime.tryParse(json['next_follow_up'])
-          : json['nextFollowUp'] != null
-              ? DateTime.tryParse(json['nextFollowUp'])
-              : null,
-      customerType: json['customer_type'] ?? json['customerType'] ?? '',
-      projectType: json['project_type'] ?? json['projectType'] ?? '',
-      budget: json['budget']?.toDouble(),
-      projectSqftArea: json['project_sqft_area']?.toDouble(),
-      clientRating: json['client_rating'] ?? json['clientRating'] ?? 0,
-      probabilityToWin:
-          json['probability_to_win'] ?? json['probabilityToWin'] ?? 0,
-      lastContactDate: json['last_contact_date'] != null
-          ? DateTime.tryParse(json['last_contact_date'])
-          : json['lastContactDate'] != null
-              ? DateTime.tryParse(json['lastContactDate'])
-              : null,
-      assignedTeam: json['assigned_team'] ?? json['assignedTeam'] ?? '',
-      state: json['state'] ?? '',
-      district: json['district'] ?? '',
-      location: json['location'] ?? '',
-      address: json['address'] ?? '',
-      projectDescription:
-          json['project_description'] ?? json['projectDescription'] ?? '',
-      requirements: json['requirements'] ?? '',
-      dateOfEnquiry: json['date_of_enquiry'] != null
-          ? DateTime.tryParse(json['date_of_enquiry'])
-          : json['dateOfEnquiry'] != null
-              ? DateTime.tryParse(json['dateOfEnquiry'])
-              : null,
-      lostReason: json['lost_reason'] ?? json['lostReason'],
-    );
   }
 
   static LeadSource _parseSource(String source) {

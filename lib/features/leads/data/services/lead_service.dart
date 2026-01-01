@@ -5,6 +5,7 @@ import 'package:admin/models/paginated_response.dart';
 import 'package:admin/models/pagination_params.dart';
 import 'package:admin/models/team_member_simple.dart';
 import 'package:admin/services/api_service.dart';
+import 'package:admin/features/leads/data/models/activity_feed.dart';
 
 class LeadService {
   final ApiService _apiService = ApiService();
@@ -112,6 +113,15 @@ class LeadService {
       return data.map((json) => Lead.fromJson(json)).toList();
     } catch (e) {
       throw Exception('Failed to fetch overdue follow-ups: $e');
+    }
+  }
+  Future<List<ActivityFeed>> getLeadActivities(String leadId) async {
+    try {
+      final response = await _apiService.get('/leads/$leadId/activities');
+      final List<dynamic> data = response.data;
+      return data.map((json) => ActivityFeed.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Failed to fetch lead activities: $e');
     }
   }
 }

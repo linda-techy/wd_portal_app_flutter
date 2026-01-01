@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:admin/features/leads/data/models/lead.dart';
-import 'package:admin/models/team_member_simple.dart';
+import 'package:admin/models/portal_user.dart';
+import 'package:admin/services/user_service.dart';
 import 'package:admin/features/leads/data/services/lead_service.dart';
 import 'package:admin/constants/customer_type_constants.dart';
 import 'package:admin/constants/lead_status_constants.dart';
@@ -25,6 +26,7 @@ class EditLeadController extends ChangeNotifier {
   double? budget;
   double? projectSqftArea;
   late String assignedTeam;
+  int? assignedToId;
   late String state;
   late String district;
   late String location;
@@ -39,7 +41,7 @@ class EditLeadController extends ChangeNotifier {
 
   bool _isLoading = false;
   String? _errorMessage;
-  List<TeamMemberSimple> _teamMembers = [];
+  List<PortalUser> _teamMembers = [];
 
   EditLeadController(this._originalLead) {
     _initializeFields();
@@ -48,7 +50,7 @@ class EditLeadController extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  List<TeamMemberSimple> get teamMembers => _teamMembers;
+  List<PortalUser> get teamMembers => _teamMembers;
 
   Map<String, dynamic> get formData => {
         'name': name,
@@ -65,6 +67,7 @@ class EditLeadController extends ChangeNotifier {
         'budget': budget,
         'projectSqftArea': projectSqftArea,
         'assignedTeam': assignedTeam,
+        'assignedToId': assignedToId,
         'state': state,
         'district': district,
         'location': location,
@@ -101,6 +104,7 @@ class EditLeadController extends ChangeNotifier {
 
     // Assignment
     assignedTeam = lead.assignedTeam;
+    assignedToId = lead.assignedToId;
 
     // Location Information
     state = lead.state;
@@ -166,6 +170,9 @@ class EditLeadController extends ChangeNotifier {
       case 'assignedTeam':
         assignedTeam = value;
         break;
+      case 'assignedToId':
+        assignedToId = value;
+        break; 
       case 'state':
         state = value;
         break;
@@ -211,12 +218,12 @@ class EditLeadController extends ChangeNotifier {
 
   Future<void> _loadTeamMembers() async {
     try {
-      final members = await _leadService.getTeamMembersForAssignment();
+      final members = await UserService.getAllPortalUsers();
       _teamMembers = members;
       notifyListeners();
     } catch (e) {
       print('Error loading team members: $e');
-      // Continue without team members - form will show text field instead
+      // Continue without team members - form will show empty list
     }
   }
 
@@ -252,6 +259,7 @@ class EditLeadController extends ChangeNotifier {
         clientRating: clientRating,
         probabilityToWin: probabilityToWin,
         assignedTeam: assignedTeam,
+        assignedToId: assignedToId,
         projectDescription: projectDescription,
         requirements: requirements,
         state: state,
