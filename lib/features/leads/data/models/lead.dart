@@ -47,7 +47,7 @@ class Lead {
   final DateTime? dateOfEnquiry;
   final String? lostReason;
   final int? assignedToId;
-  final PortalUser? assignedTo; // Requires import of PortalUser
+  final PortalUser? assignedTo;
 
   Lead({
     required this.leadId,
@@ -81,99 +81,39 @@ class Lead {
     this.assignedTo,
   });
 
-  Color get sourceColor {
-    switch (source) {
-      case LeadSource.website:
-        return Colors.blue;
-      case LeadSource.googleBusinessProfile:
-        return Colors.red;
-      case LeadSource.referralClient:
-        return Colors.green;
-      case LeadSource.referralArchitect:
-        return Colors.purple;
-      case LeadSource.socialMedia:
-        return Colors.pink;
-      case LeadSource.whatsappBusiness:
-        return Colors.teal;
-      case LeadSource.onlineAds:
-        return Colors.orange;
-      case LeadSource.directWalkin:
-        return Colors.brown;
-      case LeadSource.eventTradeShow:
-        return Colors.indigo;
-      case LeadSource.printAdvertising:
-        return Colors.amber;
-    }
-  }
-
-  String get sourceString {
-    switch (source) {
-      case LeadSource.website:
-        return 'Website';
-      case LeadSource.googleBusinessProfile:
-        return 'Google Business Profile';
-      case LeadSource.referralClient:
-        return 'Referral (Client)';
-      case LeadSource.referralArchitect:
-        return 'Referral (Architect/Designer/Other)';
-      case LeadSource.socialMedia:
-        return 'Social Media (Facebook/Instagram)';
-      case LeadSource.whatsappBusiness:
-        return 'WhatsApp Business';
-      case LeadSource.onlineAds:
-        return 'Online Ads (PPC)';
-      case LeadSource.directWalkin:
-        return 'Direct Walk-in';
-      case LeadSource.eventTradeShow:
-        return 'Event/Trade Show';
-      case LeadSource.printAdvertising:
-        return 'Print Advertising';
-    }
-  }
-
-  // Map frontend enum to backend-accepted values (snake_case)
-  String get sourceForApi {
-    return Lead.getSourceApiValue(source);
-  }
-
-  // Static method to convert LeadSource enum to API value (snake_case)
-  static String getSourceApiValue(LeadSource source) {
-    switch (source) {
-      case LeadSource.website:
-        return 'website';
-      case LeadSource.googleBusinessProfile:
-        return 'google_business_profile';
-      case LeadSource.referralClient:
-        return 'referral_client';
-      case LeadSource.referralArchitect:
-        return 'referral_architect';
-      case LeadSource.socialMedia:
-        return 'social_media';
-      case LeadSource.whatsappBusiness:
-        return 'whatsapp_business';
-      case LeadSource.onlineAds:
-        return 'online_ads';
-      case LeadSource.directWalkin:
-        return 'direct_walkin';
-      case LeadSource.eventTradeShow:
-        return 'event_trade_show';
-      case LeadSource.printAdvertising:
-        return 'print_advertising';
-    }
-  }
-
-  String get priorityString {
-    switch (priority) {
-      case LeadPriority.low:
-        return 'Low';
-      case LeadPriority.medium:
-        return 'Medium';
-      case LeadPriority.high:
-        return 'High';
-    }
-  }
-
-  // Convert Lead to JSON for API calls
+  factory Lead.fromJson(Map<String, dynamic> json) {
+    return Lead(
+      leadId: json['lead_id']?.toString() ?? json['id']?.toString() ?? '',
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      phone: json['phone'] ?? '',
+      whatsappNumber: json['whatsapp_number'] ?? json['whatsappNumber'],
+      source: _parseSource(json['lead_source'] ?? json['source'] ?? 'website'),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : (json['createdAt'] != null
+              ? DateTime.parse(json['createdAt'])
+              : DateTime.now()),
+      status: json['lead_status'] ?? json['status'] ?? LeadStatusConstants.defaultValue,
+      notes: json['notes'],
+      priority: _parsePriority(json['priority'] ?? 'low'),
+      nextFollowUp: json['next_follow_up'] != null
+          ? DateTime.tryParse(json['next_follow_up'])
+          : json['nextFollowUp'] != null
+              ? DateTime.tryParse(json['nextFollowUp'])
+              : null,
+      customerType: json['customer_type'] ?? json['customerType'] ?? CustomerTypeConstants.defaultValue,
+      projectType: json['project_type'] ?? json['projectType'] ?? '',
+      budget: (json['budget'] is int)
+          ? (json['budget'] as int).toDouble()
+          : json['budget'],
+      projectSqftArea: (json['project_sqft_area'] ?? json['projectSqftArea']) is int
+          ? (json['project_sqft_area'] ?? json['projectSqftArea'] as int)
+              .toDouble()
+          : (json['project_sqft_area'] ?? json['projectSqftArea']),
+      clientRating: json['client_rating'] ?? json['clientRating'] ?? 0,
+      probabilityToWin:
+          json['probability_to_win'] ?? json['probabilityToWin'] ?? 0,
       lastContactDate: json['last_contact_date'] != null
           ? DateTime.tryParse(json['last_contact_date'])
           : json['lastContactDate'] != null
@@ -306,6 +246,98 @@ class Lead {
       'lost_reason': lostReason?.isNotEmpty == true ? lostReason : null,
       'assigned_to_id': assignedToId,
     };
+  }
+
+  Color get sourceColor {
+    switch (source) {
+      case LeadSource.website:
+        return Colors.blue;
+      case LeadSource.googleBusinessProfile:
+        return Colors.red;
+      case LeadSource.referralClient:
+        return Colors.green;
+      case LeadSource.referralArchitect:
+        return Colors.purple;
+      case LeadSource.socialMedia:
+        return Colors.pink;
+      case LeadSource.whatsappBusiness:
+        return Colors.teal;
+      case LeadSource.onlineAds:
+        return Colors.orange;
+      case LeadSource.directWalkin:
+        return Colors.brown;
+      case LeadSource.eventTradeShow:
+        return Colors.indigo;
+      case LeadSource.printAdvertising:
+        return Colors.amber;
+    }
+  }
+
+  String get sourceString {
+    switch (source) {
+      case LeadSource.website:
+        return 'Website';
+      case LeadSource.googleBusinessProfile:
+        return 'Google Business Profile';
+      case LeadSource.referralClient:
+        return 'Referral (Client)';
+      case LeadSource.referralArchitect:
+        return 'Referral (Architect/Designer/Other)';
+      case LeadSource.socialMedia:
+        return 'Social Media (Facebook/Instagram)';
+      case LeadSource.whatsappBusiness:
+        return 'WhatsApp Business';
+      case LeadSource.onlineAds:
+        return 'Online Ads (PPC)';
+      case LeadSource.directWalkin:
+        return 'Direct Walk-in';
+      case LeadSource.eventTradeShow:
+        return 'Event/Trade Show';
+      case LeadSource.printAdvertising:
+        return 'Print Advertising';
+    }
+  }
+
+  // Map frontend enum to backend-accepted values (snake_case)
+  String get sourceForApi {
+    return Lead.getSourceApiValue(source);
+  }
+
+  // Static method to convert LeadSource enum to API value (snake_case)
+  static String getSourceApiValue(LeadSource source) {
+    switch (source) {
+      case LeadSource.website:
+        return 'website';
+      case LeadSource.googleBusinessProfile:
+        return 'google_business_profile';
+      case LeadSource.referralClient:
+        return 'referral_client';
+      case LeadSource.referralArchitect:
+        return 'referral_architect';
+      case LeadSource.socialMedia:
+        return 'social_media';
+      case LeadSource.whatsappBusiness:
+        return 'whatsapp_business';
+      case LeadSource.onlineAds:
+        return 'online_ads';
+      case LeadSource.directWalkin:
+        return 'direct_walkin';
+      case LeadSource.eventTradeShow:
+        return 'event_trade_show';
+      case LeadSource.printAdvertising:
+        return 'print_advertising';
+    }
+  }
+
+  String get priorityString {
+    switch (priority) {
+      case LeadPriority.low:
+        return 'Low';
+      case LeadPriority.medium:
+        return 'Medium';
+      case LeadPriority.high:
+        return 'High';
+    }
   }
 
   static LeadSource _parseSource(String source) {

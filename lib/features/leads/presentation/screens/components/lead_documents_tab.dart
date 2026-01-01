@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../../constants.dart';
-import '../../data/models/lead_document.dart';
+import '../../../data/models/lead_document.dart';
 
 class LeadDocumentsTab extends StatefulWidget {
   final String leadId;

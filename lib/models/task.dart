@@ -10,6 +10,11 @@ class Task {
   final String? createdByName;
   final int? leadId;
   final String? leadName;
+  final int? projectId;
+  final String? projectName;
+  final DateTime? dueDate;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   Task({
     this.id,

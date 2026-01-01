@@ -5,6 +5,8 @@ import 'controllers/edit_lead_controller.dart';
 import 'components/form_sections.dart';
 import 'constants/edit_lead_constants.dart';
 import 'components/lead_activity_timeline.dart';
+import 'components/lead_tasks_tab.dart';
+import 'components/lead_documents_tab.dart';
 
 class EditLeadScreen extends StatefulWidget {
   final Lead lead;
@@ -36,9 +38,6 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
       setState(() {});
     }
   }
-
-import 'components/lead_tasks_tab.dart';
-import 'components/lead_documents_tab.dart';
 
 // ... class definition ...
 
@@ -128,7 +127,7 @@ import 'components/lead_documents_tab.dart';
                             context: context,
                             formData: _controller.formData,
                             onChanged: _controller.updateFormData,
-                            onDateOfEnquiryChanged: null, // Fixed: removed unnecessary param if not needed or pass null
+
                           ),
                           const SizedBox(height: defaultPadding * 2),
                           _buildActionButtons(),
