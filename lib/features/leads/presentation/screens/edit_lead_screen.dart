@@ -37,18 +37,26 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
     }
   }
 
+import 'components/lead_tasks_tab.dart';
+import 'components/lead_documents_tab.dart';
+
+// ... class definition ...
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 4, // Updated to 4
       child: Scaffold(
         appBar: AppBar(
           title: Text('${EditLeadConstants.appBarTitle}: ${widget.lead.name}'),
           backgroundColor: Colors.white,
           foregroundColor: Colors.black87,
           bottom: const TabBar(
+            isScrollable: true,
             tabs: [
               Tab(text: 'Details'),
+              Tab(text: 'Tasks'),
+              Tab(text: 'Documents'),
               Tab(text: 'History'),
             ],
             labelColor: primaryColor,
@@ -56,6 +64,13 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
             indicatorColor: primaryColor,
           ),
           actions: [
+            // Convert Button (Only for WON status check logic handled inside or visually disabled)
+            if (widget.lead.status.toLowerCase() != 'won')
+              TextButton.icon(
+                onPressed: _showConvertDialog,
+                icon: const Icon(Icons.check_circle_outline, color: primaryColor),
+                label: const Text("Convert to Project", style: TextStyle(color: primaryColor)),
+              ),
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: _saveLead,
@@ -65,6 +80,7 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
         ),
         body: TabBarView(
           children: [
+            // Tab 1: Details
             _controller.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : SingleChildScrollView(
@@ -112,6 +128,7 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
                             context: context,
                             formData: _controller.formData,
                             onChanged: _controller.updateFormData,
+                            onDateOfEnquiryChanged: null, // Fixed: removed unnecessary param if not needed or pass null
                           ),
                           const SizedBox(height: defaultPadding * 2),
                           _buildActionButtons(),
@@ -119,11 +136,46 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
                       ),
                     ),
                   ),
-             LeadActivityTimeline(leadId: widget.lead.leadId),
+            // Tab 2: Tasks
+            LeadTasksTab(leadId: widget.lead.leadId),
+            // Tab 3: Documents
+            LeadDocumentsTab(leadId: widget.lead.leadId),
+            // Tab 4: History
+            LeadActivityTimeline(leadId: widget.lead.leadId),
           ],
         ),
       ),
     );
+  }
+
+  void _showConvertDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Convert Lead to Project"),
+        content: const Text("This will create a new Customer Project from this lead. Continue?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+               Navigator.pop(context);
+               _performConversion();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+            child: const Text("Convert"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _performConversion() async {
+    // TODO: Implement Conversion Logic via Controller/Service
+     ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Conversion initiated... (Backend Ready, Frontend pending Service Call)")));
   }
 
   Widget _buildSectionHeader(String title) {

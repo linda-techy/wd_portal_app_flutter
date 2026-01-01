@@ -8,11 +8,8 @@ class Task {
   final String? assignedToName;
   final int? createdById;
   final String? createdByName;
-  final int? projectId;
-  final String? projectName;
-  final DateTime? dueDate;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
+  final int? leadId;
+  final String? leadName;
 
   Task({
     this.id,
@@ -26,6 +23,8 @@ class Task {
     this.createdByName,
     this.projectId,
     this.projectName,
+    this.leadId,
+    this.leadName,
     this.dueDate,
     this.createdAt,
     this.updatedAt,
@@ -60,6 +59,12 @@ class Task {
               ? json['project_id']
               : int.tryParse(json['project']?['id']?.toString() ?? json['project_id']?.toString() ?? ''),
       projectName: json['project']?['projectName'] ?? json['project_name'],
+      leadId: json['lead']?['id'] is int
+          ? json['lead']['id']
+          : json['lead_id'] is int
+              ? json['lead_id']
+              : int.tryParse(json['lead']?['id']?.toString() ?? json['lead_id']?.toString() ?? ''),
+      leadName: json['lead']?['name'] ?? json['lead_name'],
       dueDate: json['due_date'] != null || json['dueDate'] != null
           ? DateTime.tryParse(json['due_date'] ?? json['dueDate'] ?? '')
           : null,
@@ -81,6 +86,7 @@ class Task {
       'priority': priority,
       if (assignedToId != null) 'assignedTo': {'id': assignedToId},
       if (projectId != null) 'project': {'id': projectId},
+      if (leadId != null) 'lead': {'id': leadId},
       if (dueDate != null) 'dueDate': dueDate!.toIso8601String().split('T')[0],
     };
   }
@@ -97,6 +103,8 @@ class Task {
     String? createdByName,
     int? projectId,
     String? projectName,
+    int? leadId,
+    String? leadName,
     DateTime? dueDate,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -113,6 +121,8 @@ class Task {
       createdByName: createdByName ?? this.createdByName,
       projectId: projectId ?? this.projectId,
       projectName: projectName ?? this.projectName,
+      leadId: leadId ?? this.leadId,
+      leadName: leadName ?? this.leadName,
       dueDate: dueDate ?? this.dueDate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

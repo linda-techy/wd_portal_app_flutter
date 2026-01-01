@@ -6,6 +6,9 @@ import 'package:admin/models/pagination_params.dart';
 import 'package:admin/models/team_member_simple.dart';
 import 'package:admin/services/api_service.dart';
 import 'package:admin/features/leads/data/models/activity_feed.dart';
+import 'package:admin/features/leads/data/models/lead_document.dart';
+import 'dart:io';
+import 'package:dio/dio.dart'; // Import Dio for MultipartFile
 
 class LeadService {
   final ApiService _apiService = ApiService();
@@ -122,6 +125,44 @@ class LeadService {
       return data.map((json) => ActivityFeed.fromJson(json)).toList();
     } catch (e) {
       throw Exception('Failed to fetch lead activities: $e');
+    }
+  }
+
+  Future<void> convertLead(String leadId, Map<String, dynamic> requestData) async {
+    try {
+      await _apiService.post('/leads/$leadId/convert', requestData);
+    } catch (e) {
+      throw Exception('Failed to convert lead: $e');
+    }
+  }
+
+  Future<List<LeadDocument>> getLeadDocuments(String leadId) async {
+    try {
+      // Assuming LeadDocumentController exposes /lead-documents/lead/{leadId}
+      // I need to verify the endpoint path in LeadDocumentController.java
+      // It was: @RequestMapping("/lead-documents") ... @GetMapping("/lead/{leadId}")
+      final response = await _apiService.get('/lead-documents/lead/$leadId');
+      final List<dynamic> data = response.data;
+      return data.map((json) => LeadDocument.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Failed to fetch lead documents: $e');
+    }
+  }
+
+  Future<LeadDocument> uploadDocument(String leadId, File file, String category, String description) async {
+    try {
+      String fileName = file.path.split('/').last;
+      FormData formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(file.path, filename: fileName),
+        'leadId': leadId,
+        'category': category,
+        'description': description,
+      });
+      
+      final response = await _apiService.post('/lead-documents/upload', formData);
+      return LeadDocument.fromJson(response.data);
+    } catch (e) {
+      throw Exception('Failed to upload document: $e');
     }
   }
 }
