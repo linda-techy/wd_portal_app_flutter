@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'task_detail_screen.dart';
 import 'task_create_screen.dart';
 import '../../providers/permission_provider.dart';
+import 'task_alert_dashboard_screen.dart';
 
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
@@ -131,21 +132,39 @@ class _TaskListScreenState extends State<TaskListScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                     ),
-                    // Create Task button - Only show if user has CREATE permission
-                    if (permissions.canCreateTask)
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const TaskCreateScreen(),
-                            ),
-                          );
-                          if (result == true) _loadTasks();
-                        },
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Create Task'),
-                      ),
+                    Row(
+                      children: [
+                        // Dashboard Button
+                        IconButton(
+                          icon: const Icon(Icons.dashboard_outlined),
+                          tooltip: 'Task Dashboard',
+                          onPressed: () {
+                             Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TaskAlertDashboardScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        // Create Task button - Only show if user has CREATE permission
+                        if (permissions.canCreateTask)
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const TaskCreateScreen(),
+                                ),
+                              );
+                              if (result == true) _loadTasks();
+                            },
+                            icon: const Icon(Icons.add, size: 18),
+                            label: const Text('Create Task'),
+                          ),
+                      ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: AppTheme.spacingMD),

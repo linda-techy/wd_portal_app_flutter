@@ -185,59 +185,84 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: Colors.grey.shade200),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(AppTheme.spacingMD),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: Column(
+        children: [
+          ListTile(
+            contentPadding: const EdgeInsets.all(AppTheme.spacingMD),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  tx.customerName ?? 'Direct Payment',
-                  style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                Row(
+                  children: [
+                    Text(
+                      tx.customerName ?? 'Direct Payment',
+                      style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '₹${NumberFormat('#,##,###').format(tx.amount)}',
+                      style: AppTheme.headlineSmall.copyWith(color: AppTheme.walldotGold),
+                    ),
+                  ],
                 ),
-                const Spacer(),
                 Text(
-                  '₹${NumberFormat('#,##,###').format(tx.amount)}',
-                  style: AppTheme.headlineSmall.copyWith(color: AppTheme.walldotGold),
+                  tx.projectName ?? 'System Transaction',
+                  style: AppTheme.bodyMedium.copyWith(color: Colors.grey.shade600),
                 ),
               ],
             ),
-            Text(
-              tx.projectName ?? 'System Transaction',
-              style: AppTheme.bodyMedium.copyWith(color: Colors.grey.shade600),
-            ),
-          ],
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            Row(
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.receipt, size: 14, color: Colors.grey.shade600),
-                const SizedBox(width: 4),
-                Text(tx.receiptNumber ?? 'No Receipt', style: AppTheme.bodySmall),
-                const SizedBox(width: 12),
-                Icon(Icons.calendar_today, size: 14, color: Colors.grey.shade600),
-                const SizedBox(width: 4),
-                Text(DateFormat('dd MMM yyyy').format(tx.paymentDate), style: AppTheme.bodySmall),
-                const SizedBox(width: 12),
-                Icon(Icons.payment, size: 14, color: Colors.grey.shade600),
-                const SizedBox(width: 4),
-                Text(tx.paymentMethod ?? 'N/A', style: AppTheme.bodySmall),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.receipt, size: 14, color: Colors.grey.shade600),
+                    const SizedBox(width: 4),
+                    Text(tx.receiptNumber ?? 'No Receipt', style: AppTheme.bodySmall),
+                    const SizedBox(width: 12),
+                    Icon(Icons.calendar_today, size: 14, color: Colors.grey.shade600),
+                    const SizedBox(width: 4),
+                    Text(DateFormat('dd MMM yyyy').format(tx.paymentDate), style: AppTheme.bodySmall),
+                    const SizedBox(width: 12),
+                    Icon(Icons.payment, size: 14, color: Colors.grey.shade600),
+                    const SizedBox(width: 4),
+                    Text(tx.paymentMethod ?? 'N/A', style: AppTheme.bodySmall),
+                  ],
+                ),
+                if (tx.referenceNumber != null) ...[
+                  const SizedBox(height: 4),
+                  Text('Ref: ${tx.referenceNumber}', style: AppTheme.bodySmall),
+                ],
+                if (tx.notes != null && tx.notes!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(tx.notes!, style: AppTheme.bodySmall.copyWith(fontStyle: FontStyle.italic)),
+                ],
               ],
             ),
-            if (tx.referenceNumber != null) ...[
-              const SizedBox(height: 4),
-              Text('Ref: ${tx.referenceNumber}', style: AppTheme.bodySmall),
-            ],
-            if (tx.notes != null && tx.notes!.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(tx.notes!, style: AppTheme.bodySmall.copyWith(fontStyle: FontStyle.italic)),
-            ],
-          ],
-        ),
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (tx.challanId != null)
+                  TextButton.icon(
+                    icon: const Icon(Icons.download, size: 18),
+                    label: const Text('Download Receipt'),
+                    onPressed: () => _downloadChallan(tx),
+                  )
+                else
+                  TextButton.icon(
+                    icon: const Icon(Icons.receipt_long, size: 18),
+                    label: const Text('Generate Receipt'),
+                    onPressed: () => _generateChallan(tx),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

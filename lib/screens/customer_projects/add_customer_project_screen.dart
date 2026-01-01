@@ -40,6 +40,13 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   DateTime? _endDate;
   String? _projectPhase = 'Design'; // Default to Design
   String? _projectType; // Default to null to force selection
+  String? _contractType = 'TURNKEY'; // New Contract Type
+  final List<Map<String, String>> _contractTypeOptions = [
+    {'value': 'TURNKEY', 'label': 'Turnkey (Material + Labor)'},
+    {'value': 'LABOR_ONLY', 'label': 'Labor Only'},
+    {'value': 'ITEM_RATE', 'label': 'Item Rate'},
+    {'value': 'COST_PLUS', 'label': 'Cost Plus (Cost + Margin)'},
+  ];
   String? _state = 'Kerala'; // Default to Kerala
   String? _district = 'Thrissur'; // Default to Thrissur
   Lead? _selectedLead;
@@ -319,6 +326,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
         progress: null, // Initial progress is 0/null
         projectPhase: _projectPhase,
         projectType: _projectType,
+        contractType: _contractType,
         state: _state ?? 'Kerala',
         district: _district ?? 'Thrissur',
         startDate: _startDate,
@@ -471,6 +479,37 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please select a project type';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: AppTheme.spacingMD),
+
+                // Contract Type
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 175),
+                  child: DropdownButtonFormField<String>(
+                    value: _contractType,
+                    decoration: const InputDecoration(
+                      labelText: 'Contract Type *',
+                      hintText: 'Select contract type',
+                    ),
+                    items: _contractTypeOptions.map((type) {
+                      return DropdownMenuItem(
+                        value: type['value'],
+                        child: Text(type['label']!),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _contractType = value;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a contract type';
                       }
                       return null;
                     },

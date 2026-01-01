@@ -330,3 +330,39 @@ class TaskAssignmentHistoryModel {
     return '$from → $to';
   }
 }
+
+/// Task Alert Model
+class TaskAlertModel {
+  final int id;
+  final int taskId;
+  final String taskTitle;
+  final String alertType; // CRITICAL, HIGH, MEDIUM
+  final String severity; // CRITICAL, HIGH, MEDIUM
+  final String message;
+  final DateTime sentAt;
+  final String deliveryStatus;
+
+  TaskAlertModel({
+    required this.id,
+    required this.taskId,
+    required this.taskTitle,
+    required this.alertType,
+    required this.severity,
+    required this.message,
+    required this.sentAt,
+    required this.deliveryStatus,
+  });
+
+  factory TaskAlertModel.fromJson(Map<String, dynamic> json) {
+    return TaskAlertModel(
+      id: json['id'],
+      taskId: json['task']['id'],
+      taskTitle: json['task']['title'],
+      alertType: json['alertType'],
+      severity: json['severity'],
+      message: json['message'],
+      sentAt: DateTime.parse(json['sentAt']),
+      deliveryStatus: json['deliveryStatus'],
+    );
+  }
+}

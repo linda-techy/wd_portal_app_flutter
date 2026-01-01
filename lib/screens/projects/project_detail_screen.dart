@@ -5,6 +5,14 @@ import '../../widgets/components/data_card.dart';
 import '../../widgets/components/status_indicator.dart';
 import '../../widgets/components/enhanced_data_table.dart';
 import '../../widgets/charts/chart_card.dart';
+import 'package:provider/provider.dart';
+import '../../providers/document_provider.dart';
+import '../../models/document_models.dart';
+import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'project_tracking_screen.dart';
 
 /// Project Detail Screen - Single-Pane-of-Glass View
 /// Displays comprehensive project information in one unified view
@@ -27,7 +35,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
   
   @override
@@ -193,6 +201,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             tabs: const [
               Tab(text: 'Tasks & Timeline'),
               Tab(text: 'Financials'),
+              Tab(text: 'Documents'),
               Tab(text: 'Reports & Photos'),
             ],
           ),
@@ -205,6 +214,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             children: [
               _buildTasksTab(context),
               _buildFinancialsTab(context),
+              _buildDocumentsTab(context),
               _buildReportsTab(context),
             ],
           ),
@@ -701,11 +711,195 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                   label: const Text('Add Photo'),
                 ),
               ),
+              const SizedBox(height: AppTheme.spacingSM),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProjectTrackingScreen(
+                          projectId: widget.projectId,
+                          projectName: 'Project #${widget.projectId}',
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.analytics, size: 18),
+                  label: const Text('Budget & Tracking'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildDocumentsTab(BuildContext context) {
+    return Column(
+      children: [
+        _buildDocumentActionRow(context),
+        Expanded(child: _buildDocumentList(context)),
+      ],
+    );
+  }
+
+  Widget _buildDocumentActionRow(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacingLG),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Project Documents',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          ElevatedButton.icon(
+            onPressed: () => _uploadDocument(context),
+            icon: const Icon(Icons.upload, size: 18),
+            label: const Text('Upload Document'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDocumentList(BuildContext context) {
+    return Consumer<DocumentProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) return const Center(child: CircularProgressIndicator());
+        
+        // Initial fetch if empty
+        if (provider.documents.isEmpty && !provider.isLoading) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            provider.fetchDocuments(widget.projectId);
+            provider.fetchCategories(widget.projectId);
+          });
+        }
+
+        if (provider.documents.isEmpty) {
+          return const Center(child: Text("No documents found for this project"));
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.all(AppTheme.spacingLG),
+          itemCount: provider.documents.length,
+          separatorBuilder: (context, index) => const SizedBox(height: AppTheme.spacingMD),
+          itemBuilder: (context, index) {
+            final doc = provider.documents[index];
+            return Card(
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(AppTheme.spacingSM),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryBlue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                  ),
+                  child: Icon(
+                    _getFileIcon(doc.fileType),
+                    color: AppTheme.primaryBlue,
+                  ),
+                ),
+                title: Text(doc.filename),
+                subtitle: Text(
+                  "${doc.categoryName} • ${DateFormat('yyyy-MM-dd').format(DateTime.parse(doc.uploadDate))}",
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.download),
+                  onPressed: () => _downloadFile(doc.downloadUrl),
+                ),
+                onTap: () {
+                  // Show details or preview
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  IconData _getFileIcon(String type) {
+    if (type.contains('pdf')) return Icons.picture_as_pdf;
+    if (type.contains('image')) return Icons.image;
+    if (type.contains('sheet') || type.contains('excel')) return Icons.table_view;
+    if (type.contains('word') || type.contains('document')) return Icons.description;
+    return Icons.insert_drive_file;
+  }
+
+  Future<void> _downloadFile(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Could not launch download URL")),
+      );
+    }
+  }
+
+  Future<void> _uploadDocument(BuildContext context) async {
+    final result = await FilePicker.platform.pickFiles();
+    if (result == null || result.files.single.path == null) return;
+
+    final file = File(result.files.single.path!);
+    final provider = context.read<DocumentProvider>();
+
+    if (provider.categories.isEmpty) {
+      await provider.fetchCategories(widget.projectId);
+    }
+
+    if (!context.mounted) return;
+
+    // Show simple category selection dialog
+    final categoryId = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Select Category"),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: provider.categories.length,
+            itemBuilder: (context, index) {
+              final cat = provider.categories[index];
+              return ListTile(
+                title: Text(cat.name),
+                onTap: () => Navigator.pop(context, cat.id),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    if (categoryId != null && context.mounted) {
+      try {
+        await provider.uploadDocument(
+          projectId: widget.projectId,
+          file: file,
+          categoryId: categoryId,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Document uploaded successfully")),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Upload failed: $e")),
+        );
+      }
+    }
   }
 }
 

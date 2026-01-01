@@ -22,6 +22,7 @@ class CustomerProject {
   final List<int>? teamMemberIds;
   final String? designPackage;
   final bool isDesignAgreementSigned;
+  final String? contractType;
 
   CustomerProject({
     this.id,
@@ -45,6 +46,7 @@ class CustomerProject {
     this.teamMemberIds,
     this.designPackage,
     this.isDesignAgreementSigned = false,
+    this.contractType,
   });
 
   factory CustomerProject.fromJson(Map<String, dynamic> json) {
@@ -112,6 +114,7 @@ class CustomerProject {
           : null,
       designPackage: json['design_package'] ?? json['designPackage'],
       isDesignAgreementSigned: json['is_design_agreement_signed'] ?? json['isDesignAgreementSigned'] ?? false,
+      contractType: json['contract_type'] ?? json['contractType'],
     );
   }
 
@@ -153,6 +156,7 @@ class CustomerProject {
             .toList(),
       if (designPackage != null) 'design_package': designPackage,
       'is_design_agreement_signed': isDesignAgreementSigned,
+      if (contractType != null) 'contract_type': contractType,
     };
   }
 
@@ -186,6 +190,7 @@ class CustomerProject {
     List<int>? teamMemberIds,
     String? designPackage,
     bool? isDesignAgreementSigned,
+    String? contractType,
   }) {
     return CustomerProject(
       id: id ?? this.id,
@@ -209,6 +214,7 @@ class CustomerProject {
       teamMemberIds: teamMemberIds ?? this.teamMemberIds,
       designPackage: designPackage ?? this.designPackage,
       isDesignAgreementSigned: isDesignAgreementSigned ?? this.isDesignAgreementSigned,
+      contractType: contractType ?? this.contractType,
     );
   }
 }

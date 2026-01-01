@@ -21,6 +21,10 @@ import 'package:admin/screens/payments/challan_management_screen.dart';
 import 'package:admin/screens/reports/reports_screen.dart';
 import 'package:admin/screens/tasks/task_list_screen.dart';
 import 'package:admin/screens/profile/profile_screen.dart';
+import 'package:admin/screens/procurement/procurement_dashboard_screen.dart';
+import 'package:admin/screens/labour/labour_dashboard_screen.dart';
+import 'package:admin/screens/inventory/inventory_dashboard_screen.dart';
+import 'package:admin/screens/finance/finance_dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/theme/responsive_utils.dart';
@@ -58,6 +62,10 @@ class _MainScreenState extends State<MainScreen> {
     const ReportsScreen(),
     const ProfileScreen(), // Index 17 - Profile
     const ChallanManagementScreen(), // Index 18 - Challans
+    const ProcurementDashboardScreen(), // Index 19 - Procurement
+    const LabourDashboardScreen(), // Index 20 - Labour
+    const InventoryDashboardScreen(), // Index 21 - Inventory
+    const FinanceDashboardScreen(), // Index 22 - Finance
   ];
 
   void _onMenuItemClick(int index) {
@@ -106,6 +114,14 @@ class _MainScreenState extends State<MainScreen> {
         return 'Profile';
       case 18:
         return 'Challans';
+      case 19:
+        return 'Procurement';
+      case 20:
+        return 'Labour Management';
+      case 21:
+        return 'Inventory Tracking';
+      case 22:
+        return 'Finance & Billing';
       default:
         return 'Tasks';
     }

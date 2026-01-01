@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/responsive_utils.dart';
 import 'design_agreement_screen.dart';
+import 'approval_center_screen.dart';
+import 'package:provider/provider.dart';
+import '../../providers/approval_provider.dart';
 
 class DocumentManagementScreen extends StatefulWidget {
   const DocumentManagementScreen({super.key});
@@ -12,8 +15,14 @@ class DocumentManagementScreen extends StatefulWidget {
 }
 
 class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
-  // TODO: Fetch real approval pending count from API
-  int approvalPendingCount = 0;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // In a real app, you'd get the actual user ID
+      // For now, we'll rely on the provider having the data or fetching it
+    });
+  }
 
   final List<Map<String, dynamic>> _documentTypes = [
     {
@@ -74,57 +83,70 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
   }
 
   Widget _buildApprovalPendingTile() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusMD),
-        side: BorderSide(color: AppTheme.borderLight),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacingLG),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(AppTheme.spacingMD),
-              decoration: BoxDecoration(
-                color: AppTheme.statusWarningBg,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.pending_actions_outlined,
-                color: AppTheme.statusWarning,
-                size: 32,
-              ),
-            ),
-            const SizedBox(width: AppTheme.spacingMD),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return Consumer<ApprovalProvider>(
+      builder: (context, provider, child) {
+        return Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+            side: BorderSide(color: AppTheme.borderLight),
+          ),
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ApprovalCenterScreen()),
+              );
+            },
+            borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+            child: Padding(
+              padding: const EdgeInsets.all(AppTheme.spacingLG),
+              child: Row(
                 children: [
-                  Text(
-                    'Approval Pending',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                  Container(
+                    padding: const EdgeInsets.all(AppTheme.spacingMD),
+                    decoration: BoxDecoration(
+                      color: AppTheme.statusWarningBg,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.pending_actions_outlined,
+                      color: AppTheme.statusWarning,
+                      size: 32,
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '$approvalPendingCount documents waiting for approval',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.textSecondary,
+                  const SizedBox(width: AppTheme.spacingMD),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Approval Pending',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${provider.pendingRequests.length} documents waiting for approval',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: AppTheme.textSecondary,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    color: AppTheme.textTertiary,
+                    size: 16,
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.arrow_forward_ios,
-              color: AppTheme.textTertiary,
-              size: 16,
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

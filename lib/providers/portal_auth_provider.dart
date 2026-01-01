@@ -14,6 +14,7 @@ class PortalAuthProvider extends ChangeNotifier {
 
   // Getters
   UserInfo? get currentUser => _currentUser;
+  UserInfo? get user => _currentUser;
   List<String> get permissions => _permissions;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _isAuthenticated;

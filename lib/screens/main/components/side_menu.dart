@@ -270,6 +270,38 @@ class SideMenu extends StatelessWidget {
       index: 18,
     ));
 
+    // PROCUREMENT - New Module
+    menuItems.add(_buildMenuItem(
+      context,
+      title: 'Procurement',
+      svgSrc: "assets/icons/menu_task.svg",
+      index: 19,
+    ));
+
+    // LABOUR - New Module
+    menuItems.add(_buildMenuItem(
+      context,
+      title: 'Labour Management',
+      svgSrc: "assets/icons/menu_profile.svg",
+      index: 20,
+    ));
+
+    // INVENTORY - New Module
+    menuItems.add(_buildMenuItem(
+      context,
+      title: 'Inventory',
+      svgSrc: "assets/icons/menu_store.svg",
+      index: 21,
+    ));
+
+    // FINANCE - New Module
+    menuItems.add(_buildMenuItem(
+      context,
+      title: 'Finance & Billing',
+      svgSrc: "assets/icons/menu_tran.svg",
+      index: 22,
+    ));
+
     // REPORTS - Only if can view reports
     if (permissions.canViewReports) {
       menuItems.add(_buildMenuItem(

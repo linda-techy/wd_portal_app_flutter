@@ -85,7 +85,7 @@ class _ChallanManagementScreenState extends State<ChallanManagementScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Challan Management'),
+        title: const Text('Receipt Management'),
         actions: [
           if (_selectedIds.isNotEmpty)
             Padding(
@@ -195,7 +195,7 @@ class _ChallanManagementScreenState extends State<ChallanManagementScreen> {
         child: DataTable(
           headingTextStyle: AppTheme.labelLarge.copyWith(fontWeight: FontWeight.bold),
           columns: const [
-            DataColumn(label: Text('Challan No.')),
+            DataColumn(label: Text('Receipt No.')),
             DataColumn(label: Text('Date')),
             DataColumn(label: Text('Client/Project')),
             DataColumn(label: Text('Amount')),

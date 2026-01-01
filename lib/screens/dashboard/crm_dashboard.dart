@@ -68,7 +68,6 @@ class _CRMDashboardState extends State<CRMDashboard> {
       print('Using partial API data, calculating metrics from available data');
       _calculateRealMetrics();
     }
-    }
   }
 
   void _calculateRealMetrics() {

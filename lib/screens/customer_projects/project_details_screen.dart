@@ -80,6 +80,22 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     return AppTheme.statusError;
   }
 
+  String _getContractTypeLabel(String? type) {
+    if (type == null) return 'N/A';
+    switch (type) {
+      case 'TURNKEY':
+        return 'Turnkey (Material + Labor)';
+      case 'LABOR_ONLY':
+        return 'Labor Only';
+      case 'ITEM_RATE':
+        return 'Item Rate';
+      case 'COST_PLUS':
+        return 'Cost Plus';
+      default:
+        return type;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -284,6 +300,26 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 ],
               ),
             if (widget.project.code != null && widget.project.code!.isNotEmpty)
+              const SizedBox(height: AppTheme.spacingMD),
+
+            // Contract Type
+            if (widget.project.contractType != null)
+              Row(
+                children: [
+                  Icon(Icons.handshake_outlined,
+                    size: 20,
+                    color: AppTheme.textSecondary,
+                  ),
+                  const SizedBox(width: AppTheme.spacingSM),
+                  Text(
+                    'Contract: ${_getContractTypeLabel(widget.project.contractType)}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppTheme.textSecondary,
+                        ),
+                  ),
+                ],
+              ),
+            if (widget.project.contractType != null)
               const SizedBox(height: AppTheme.spacingMD),
             
             // Dates - Responsive layout

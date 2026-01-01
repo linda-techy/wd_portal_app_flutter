@@ -232,4 +232,64 @@ class TaskService {
       throw Exception('Error deleting task: $e');
     }
   }
+
+  /// Get alert statistics
+  Future<Map<String, dynamic>> getAlertStats({int days = 7}) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/alerts/stats?days=$days'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Failed to load alert stats');
+      }
+    } catch (e) {
+      throw Exception('Error fetching alert stats: $e');
+    }
+  }
+
+  /// Get recent alerts
+  Future<List<TaskAlertModel>> getRecentAlerts() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/alerts/recent'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => TaskAlertModel.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load recent alerts');
+      }
+    } catch (e) {
+      throw Exception('Error fetching recent alerts: $e');
+    }
+  }
+
+  /// Trigger manual alerts (Admin only)
+  Future<void> triggerManualAlerts() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/alerts/trigger'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        return;
+      } else if (response.statusCode == 403) {
+        throw Exception('Permission denied');
+      } else {
+        throw Exception('Failed to trigger alerts');
+      }
+    } catch (e) {
+      throw Exception('Error triggering alerts: $e');
+    }
+  }
 }
