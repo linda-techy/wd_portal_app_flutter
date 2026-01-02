@@ -16,7 +16,11 @@ import 'package:admin/providers/permission_provider.dart';
 import 'package:provider/provider.dart';
 import 'add_lead_screen.dart';
 import 'edit_lead_screen.dart';
-import 'lead_table.dart';
+import 'lead_quotations_screen.dart';
+import 'lead_tasks_screen.dart';
+import 'lead_activity_screen.dart';
+import 'lead_documents_screen.dart';
+// import 'lead_table.dart'; // Removed to avoid conflict with local LeadsTable class
 import 'components/leads_summary_card.dart';
 
 class LeadsScreen extends StatefulWidget {
@@ -448,11 +452,12 @@ class _LeadsScreenState extends State<LeadsScreen> {
                           onRefresh: _refreshLeads,
                           child: Column(
                             children: [
-                              LeadsTable(
-                                leads: leads,
-                                onEdit: _editLead,
-                                onDelete: _deleteLead,
-                              ),
+                                LeadsTable(
+                                  leads: leads,
+                                  onEdit: _editLead,
+                                  onDelete: _deleteLead,
+                                  onConvert: _convertLead,
+                                ),
                               if (isLoadingMore)
                                 const Padding(
                                   padding: EdgeInsets.all(defaultPadding),
@@ -485,6 +490,11 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                   leads: leads,
                                   onEdit: _editLead,
                                   onDelete: _deleteLead,
+                                  onConvert: _convertLead,
+                                  onViewQuotations: _viewQuotations,
+                                  onViewTasks: _viewTasks,
+                                  onViewActivity: _viewActivity,
+                                  onLogActivity: _logActivity,
                                 ),
                                 if (isLoadingMore)
                                   const Padding(
@@ -519,6 +529,11 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                   leads: leads,
                                   onEdit: _editLead,
                                   onDelete: _deleteLead,
+                                  onConvert: _convertLead,
+                                  onViewQuotations: _viewQuotations,
+                                  onViewTasks: _viewTasks,
+                                  onViewActivity: _viewActivity,
+                                  onLogActivity: _logActivity,
                                 ),
                                 if (isLoadingMore)
                                   const Padding(
@@ -537,6 +552,19 @@ class _LeadsScreenState extends State<LeadsScreen> {
               ),
           ],
         ),
+      ),
+    );
+  void _logActivity(Lead lead) {
+    showDialog(
+      context: context,
+      builder: (context) => AddInteractionDialog(
+        leadId: int.parse(lead.id),
+        onSave: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Activity logged successfully')),
+          );
+          // Optional: Refresh leads or timeline
+        },
       ),
     );
   }
@@ -849,6 +877,148 @@ class _LeadsScreenState extends State<LeadsScreen> {
     }
   }
 
+  Future<void> _convertLead(Lead lead) async {
+    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+    final TextEditingController projectNameController = TextEditingController(text: '${lead.name} Project');
+    final TextEditingController startDateController = TextEditingController(text: DateTime.now().toString().substring(0, 10));
+    final TextEditingController locationController = TextEditingController(text: lead.location ?? lead.district ?? lead.state ?? '');
+
+    // Default values
+    String projectType = lead.projectType.isNotEmpty ? lead.projectType : 'RESIDENTIAL';
+    DateTime selectedDate = DateTime.now();
+
+    // Show Dialog
+    final shouldConvert = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Convert Lead to App Customer'),
+          content: SizedBox(
+            width: 500,
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Convert "${lead.name}" to a Customer Project? This will create a Customer account and a Project.', style: TextStyle(color: Colors.grey[700])),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: projectNameController,
+                    decoration: const InputDecoration(labelText: 'Project Name *', border: OutlineInputBorder()),
+                    validator: (v) => v?.isNotEmpty == true ? null : 'Required',
+                  ),
+                  const SizedBox(height: 10),
+                   DropdownButtonFormField<String>(
+                    value: projectType,
+                    decoration: const InputDecoration(labelText: 'Project Type', border: OutlineInputBorder()),
+                    items: ['RESIDENTIAL', 'COMMERCIAL', 'INDUSTRIAL', 'INFRASTRUCTURE', 'INTERIOR', 'RENOVATION']
+                        .map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                    onChanged: (v) => projectType = v!,
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: locationController,
+                    decoration: const InputDecoration(labelText: 'Location / Site Address', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: startDateController,
+                    decoration: const InputDecoration(
+                      labelText: 'Start Date', 
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    readOnly: true,
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context, 
+                        initialDate: selectedDate, 
+                        firstDate: DateTime(2000), 
+                        lastDate: DateTime(2100)
+                      );
+                      if(date != null) {
+                        selectedDate = date;
+                        startDateController.text = date.toString().substring(0, 10);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Convert'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldConvert == true) {
+      if (mounted) setState(() => isLoading = true);
+      try {
+        final requestData = {
+          "projectName": projectNameController.text,
+          "projectType": projectType,
+          "startDate": startDateController.text,
+          "location": locationController.text,
+          // "projectManagerId": ... (Optional, can be assigned later)
+        };
+
+        // Call Service
+        await _leadService.convertLead(lead.leadId, requestData);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lead converted successfully!')));
+          _loadLeads(resetPage: false); // Refresh list to show updated status
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error converting lead: $e'), backgroundColor: Colors.red));
+        }
+      } finally {
+        if (mounted) setState(() => isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _viewTasks(Lead lead) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => LeadTasksScreen(lead: lead),
+      ),
+    );
+  }
+
+  void _viewActivity(Lead lead) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => LeadActivityScreen(lead: lead),
+      ),
+    );
+  }
+
+  void _viewDocuments(Lead lead) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => LeadDocumentsScreen(lead: lead),
+      ),
+    );
+  }
+
+  Future<void> _viewQuotations(Lead lead) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LeadQuotationsScreen(lead: lead),
+      ),
+    );
+  }
+
   Map<String, int> _getLeadsBySource() {
     final sourceCounts = <String, int>{};
     for (final lead in leads) {
@@ -899,12 +1069,24 @@ class LeadsTable extends StatefulWidget {
   final List<Lead> leads;
   final Function(Lead) onEdit;
   final Function(Lead) onDelete;
+  final Function(Lead) onConvert;
+  final Function(Lead) onViewQuotations;
+  final Function(Lead) onViewTasks;
+  final Function(Lead) onViewActivity;
+  final Function(Lead) onViewDocuments;
+  final Function(Lead) onLogActivity;
 
   const LeadsTable({
     super.key,
     required this.leads,
     required this.onEdit,
     required this.onDelete,
+    required this.onConvert,
+    required this.onViewQuotations,
+    required this.onViewTasks,
+    required this.onViewActivity,
+    required this.onViewDocuments,
+    required this.onLogActivity,
   });
 
   @override
@@ -1031,6 +1213,27 @@ class _LeadsTableState extends State<LeadsTable> {
                             ),
                           ),
 
+                          // Score Column
+                          DataCell(
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _getScoreColor(lead.score).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: _getScoreColor(lead.score), width: 1),
+                              ),
+                              child: Text(
+                                '${lead.score}',
+                                style: TextStyle(
+                                  color: _getScoreColor(lead.score),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ),
                           // Priority Column
                           DataCell(
                             Container(
@@ -1202,6 +1405,113 @@ class _LeadsTableState extends State<LeadsTable> {
                                       },
                                     ),
                                   ),
+                                // Convert button - Only show if not already converted and user has CREATE permission
+                                if (permissions.canCreateLead && lead.status.toLowerCase() != 'converted')
+                                  SizedBox(
+                                    width: 36,
+                                    height: 36,
+                                    child: IconButton(
+                                      icon: const Icon(Icons.transform,
+                                          color: Colors.green, size: 18),
+                                      tooltip: 'Convert to Customer',
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      onPressed: () {
+                                        debugPrint('Convert button pressed for lead: ${lead.name}');
+                                        widget.onConvert(lead);
+                                      },
+                                    ),
+                                  ),
+                                // Log Activity button
+                                SizedBox(
+                                  width: 36,
+                                  height: 36,
+                                  child: IconButton(
+                                    icon: const Icon(Icons.note_add,
+                                        color: Colors.teal, size: 18),
+                                    tooltip: 'Log Activity',
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () {
+                                      widget.onLogActivity(lead);
+                                    },
+                                  ),
+                                ),
+                                // Quotations button
+                                SizedBox(
+                                  width: 36,
+                                  height: 36,
+                                  child: IconButton(
+                                    icon: const Icon(Icons.request_quote,
+                                        color: Colors.amber, size: 18),
+                                    tooltip: 'View Quotations',
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () {
+                                      widget.onViewQuotations(lead);
+                                    },
+                                  ),
+                                ),
+                                // Tasks button
+                                SizedBox(
+                                  width: 36,
+                                  height: 36,
+                                  child: IconButton(
+                                    icon: const Icon(Icons.assignment,
+                                        color: Colors.blue, size: 18),
+                                    tooltip: 'View Tasks',
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () {
+                                      widget.onViewTasks(lead);
+                                    },
+                                  ),
+                                ),
+                                // Activity button
+                                SizedBox(
+                                  width: 36,
+                                  height: 36,
+                                  child: IconButton(
+                                    icon: const Icon(Icons.history,
+                                        color: Colors.purple, size: 18),
+                                    tooltip: 'View Activity',
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () {
+                                      widget.onViewActivity(lead);
+                                    },
+                                  ),
+                                ),
+                                // Log Activity button
+                                SizedBox(
+                                  width: 36,
+                                  height: 36,
+                                  child: IconButton(
+                                    icon: const Icon(Icons.note_add,
+                                        color: Colors.teal, size: 18),
+                                    tooltip: 'Log Activity',
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () {
+                                      widget.onLogActivity(lead);
+                                    },
+                                  ),
+                                ),
+                                // Documents button
+                                SizedBox(
+                                  width: 36,
+                                  height: 36,
+                                  child: IconButton(
+                                    icon: const Icon(Icons.folder,
+                                        color: Colors.brown, size: 18),
+                                    tooltip: 'View Documents',
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () {
+                                      widget.onViewDocuments(lead);
+                                    },
+                                  ),
+                                ),
                                 // Delete button - Only show if user has DELETE permission
                                 if (permissions.canDeleteLead)
                                   SizedBox(
@@ -1282,6 +1592,12 @@ class _LeadsTableState extends State<LeadsTable> {
     } else {
       return '${date.day}/${date.month}';
     }
+  }
+
+  Color _getScoreColor(int score) {
+    if (score > 60) return Colors.red;
+    if (score >= 30) return Colors.orange;
+    return Colors.grey;
   }
 
   void _showDeleteConfirmation(BuildContext context, Lead lead) {

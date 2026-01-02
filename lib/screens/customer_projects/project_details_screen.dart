@@ -7,7 +7,79 @@ import 'package:admin/services/crm_service.dart';
 import 'project_documents_screen.dart';
 import 'project_payments_screen.dart';
 import 'design_package_selection_screen.dart';
-import 'package:intl/intl.dart';
+import 'package:admin/features/warranties/presentation/screens/warranties_screen.dart';
+
+// ...
+
+// Inside _navigateToModule:
+    } else if (moduleName == 'Warranties') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+             appBar: AppBar(title: Text('Warranties')),
+             body: WarrantiesScreen(projectId: widget.project.id),
+          ),
+        ),
+      );
+
+// Inside buildModulesGrid:
+      _ModuleTile(
+        title: 'Warranties',
+        icon: Icons.verified_user_outlined,
+        color: AppTheme.primaryBlue,
+        onTap: () {
+          _navigateToModule('Warranties', widget.project);
+        },
+      ),
+
+// ...
+
+// Inside _navigateToModule:
+    } else if (moduleName == 'Delay Logs') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+             appBar: AppBar(title: Text('Delay Logs')),
+             body: DelayLogsScreen(projectId: widget.project.id),
+          ),
+        ),
+      );
+
+// Inside buildModulesGrid:
+      _ModuleTile(
+        title: 'Delay Logs',
+        icon: Icons.timer_off_outlined,
+        color: AppTheme.safetyOrange,
+        onTap: () {
+          _navigateToModule('Delay Logs', widget.project);
+        },
+      ),
+
+// ... (existing imports)
+
+// Inside _navigateToModule:
+    } else if (moduleName == 'Change Orders') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+             appBar: AppBar(title: Text('Change Orders')),
+             body: ChangeOrdersScreen(projectId: widget.project.id),
+          ),
+        ),
+      );
+
+// Inside buildModulesGrid:
+      _ModuleTile(
+        title: 'Change Orders',
+        icon: Icons.edit_note_outlined,
+        color: AppTheme.coralRed,
+        onTap: () {
+          _navigateToModule('Change Orders', widget.project);
+        },
+      ),
 import '../../widgets/animations/entrance_animation.dart';
 import '../../widgets/animations/motion_button.dart';
 
@@ -321,6 +393,115 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               ),
             if (widget.project.contractType != null)
               const SizedBox(height: AppTheme.spacingMD),
+
+            // Construction Details
+            if (widget.project.plotArea != null || widget.project.floors != null)
+              Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Icon(Icons.square_foot,
+                          size: 20,
+                          color: AppTheme.textSecondary,
+                        ),
+                        const SizedBox(width: AppTheme.spacingSM),
+                        Text(
+                          'Plot: ${widget.project.plotArea ?? '-'} sq ft',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: AppTheme.textSecondary,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (widget.project.floors != null)
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Icon(Icons.layers,
+                            size: 20,
+                            color: AppTheme.textSecondary,
+                          ),
+                          const SizedBox(width: AppTheme.spacingSM),
+                          Text(
+                            'Floors: ${widget.project.floors}',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: AppTheme.textSecondary,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            if (widget.project.plotArea != null || widget.project.floors != null)
+              const SizedBox(height: AppTheme.spacingMD),
+
+            if (widget.project.facing != null || widget.project.permitStatus != null)
+              Row(
+                children: [
+                  if (widget.project.facing != null)
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Icon(Icons.compass_calibration,
+                            size: 20,
+                            color: AppTheme.textSecondary,
+                          ),
+                          const SizedBox(width: AppTheme.spacingSM),
+                          Text(
+                            'Facing: ${widget.project.facing}',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: AppTheme.textSecondary,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (widget.project.permitStatus != null)
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Icon(Icons.approval,
+                            size: 20,
+                            color: AppTheme.textSecondary,
+                          ),
+                          const SizedBox(width: AppTheme.spacingSM),
+                          Text(
+                            'Permit: ${widget.project.permitStatus}',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: AppTheme.textSecondary,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            if (widget.project.facing != null || widget.project.permitStatus != null)
+              const SizedBox(height: AppTheme.spacingMD),
+
+            if (widget.project.projectDescription != null &&
+                widget.project.projectDescription!.isNotEmpty)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Description',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppTheme.textSecondary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingXS),
+                  Text(
+                    widget.project.projectDescription!,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: AppTheme.spacingMD),
+                ],
+              ),
             
             // Dates - Responsive layout
             ResponsiveLayout(

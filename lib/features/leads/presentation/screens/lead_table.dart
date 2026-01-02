@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
 import '../../data/models/lead.dart';
 
-class LeadTable extends StatelessWidget {
+class LeadsTable extends StatelessWidget {
   final List<Lead> leads;
   final void Function(Lead) onEdit;
-  const LeadTable({super.key, required this.leads, required this.onEdit});
+  final void Function(Lead) onDelete;
+  final void Function(Lead) onConvert;
+
+  const LeadsTable({
+    super.key,
+    required this.leads,
+    required this.onEdit,
+    required this.onDelete,
+    required this.onConvert,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -36,12 +45,57 @@ class LeadTable extends StatelessWidget {
                     DataCell(Text(lead.budget?.toStringAsFixed(2) ?? '-')),
                     DataCell(Text('${lead.probabilityToWin}%')),
                     DataCell(Text('${lead.clientRating}/5')),
-                    DataCell(Row(children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () => onEdit(lead),
+                    DataCell(
+                      PopupMenuButton<String>(
+                        onSelected: (value) {
+                          switch (value) {
+                            case 'edit':
+                              onEdit(lead);
+                              break;
+                            case 'convert':
+                              onConvert(lead);
+                              break;
+                            case 'delete':
+                              onDelete(lead);
+                              break;
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit, size: 20),
+                                SizedBox(width: 8),
+                                Text('Edit'),
+                              ],
+                            ),
+                          ),
+                          if (lead.status.toLowerCase() != 'converted')
+                            const PopupMenuItem(
+                              value: 'convert',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.transform, size: 20, color: Colors.green),
+                                  SizedBox(width: 8),
+                                  Text('Convert to Customer'),
+                                ],
+                              ),
+                            ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete, size: 20, color: Colors.red),
+                                SizedBox(width: 8),
+                                Text('Delete'),
+                              ],
+                            ),
+                          ),
+                        ],
+                        icon: const Icon(Icons.more_vert),
                       ),
-                    ])),
+                    ),
                   ],
                 ))
             .toList(),

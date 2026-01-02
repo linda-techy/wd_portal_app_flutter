@@ -23,6 +23,11 @@ class CustomerProject {
   final String? designPackage;
   final bool isDesignAgreementSigned;
   final String? contractType;
+  final double? plotArea;
+  final int? floors;
+  final String? facing;
+  final String? permitStatus;
+  final String? projectDescription;
 
   CustomerProject({
     this.id,
@@ -47,6 +52,11 @@ class CustomerProject {
     this.designPackage,
     this.isDesignAgreementSigned = false,
     this.contractType,
+    this.plotArea,
+    this.floors,
+    this.facing,
+    this.permitStatus,
+    this.projectDescription,
   });
 
   factory CustomerProject.fromJson(Map<String, dynamic> json) {
@@ -115,6 +125,15 @@ class CustomerProject {
       designPackage: json['design_package'] ?? json['designPackage'],
       isDesignAgreementSigned: json['is_design_agreement_signed'] ?? json['isDesignAgreementSigned'] ?? false,
       contractType: json['contract_type'] ?? json['contractType'],
+      plotArea: json['plot_area'] != null
+          ? (json['plot_area'] is double
+              ? json['plot_area']
+              : double.tryParse(json['plot_area'].toString()))
+          : null,
+      floors: json['floors'],
+      facing: json['facing'],
+      permitStatus: json['permit_status'] ?? json['permitStatus'],
+      projectDescription: json['project_description'] ?? json['projectDescription'],
     );
   }
 
@@ -157,6 +176,11 @@ class CustomerProject {
       if (designPackage != null) 'design_package': designPackage,
       'is_design_agreement_signed': isDesignAgreementSigned,
       if (contractType != null) 'contract_type': contractType,
+      if (plotArea != null) 'plot_area': plotArea,
+      if (floors != null) 'floors': floors,
+      if (facing != null) 'facing': facing,
+      if (permitStatus != null) 'permit_status': permitStatus,
+      if (projectDescription != null) 'project_description': projectDescription,
     };
   }
 
@@ -191,6 +215,11 @@ class CustomerProject {
     String? designPackage,
     bool? isDesignAgreementSigned,
     String? contractType,
+    double? plotArea,
+    int? floors,
+    String? facing,
+    String? permitStatus,
+    String? projectDescription,
   }) {
     return CustomerProject(
       id: id ?? this.id,
@@ -215,6 +244,11 @@ class CustomerProject {
       designPackage: designPackage ?? this.designPackage,
       isDesignAgreementSigned: isDesignAgreementSigned ?? this.isDesignAgreementSigned,
       contractType: contractType ?? this.contractType,
+      plotArea: plotArea ?? this.plotArea,
+      floors: floors ?? this.floors,
+      facing: facing ?? this.facing,
+      permitStatus: permitStatus ?? this.permitStatus,
+      projectDescription: projectDescription ?? this.projectDescription,
     );
   }
 }

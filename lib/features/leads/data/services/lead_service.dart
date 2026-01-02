@@ -10,6 +10,8 @@ import 'package:admin/features/leads/data/models/lead_document.dart';
 import 'dart:io';
 import 'package:dio/dio.dart'; // Import Dio for MultipartFile
 
+import 'package:admin/features/leads/data/models/lead_interaction.dart';
+
 class LeadService {
   final ApiService _apiService = ApiService();
 
@@ -141,7 +143,7 @@ class LeadService {
       // Assuming LeadDocumentController exposes /lead-documents/lead/{leadId}
       // I need to verify the endpoint path in LeadDocumentController.java
       // It was: @RequestMapping("/lead-documents") ... @GetMapping("/lead/{leadId}")
-      final response = await _apiService.get('/lead-documents/lead/$leadId');
+      final response = await _apiService.get('/api/leads/$leadId/documents');
       final List<dynamic> data = response.data;
       return data.map((json) => LeadDocument.fromJson(json)).toList();
     } catch (e) {
@@ -151,7 +153,7 @@ class LeadService {
 
   Future<LeadDocument> uploadDocument(String leadId, File file, String category, String description) async {
     try {
-      String fileName = file.path.split('/').last;
+      String fileName = file.path.split(RegExp(r'[/\\]')).last;
       FormData formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(file.path, filename: fileName),
         'leadId': leadId,
@@ -159,10 +161,20 @@ class LeadService {
         'description': description,
       });
       
-      final response = await _apiService.post('/lead-documents/upload', formData);
+      final response = await _apiService.post('/api/leads/$leadId/documents', formData);
+      return LeadDocument.fromJson(response.data);
       return LeadDocument.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to upload document: $e');
+    }
+  }
+
+  Future<LeadInteraction> createInteraction(LeadInteraction interaction) async {
+    try {
+      final response = await _apiService.post('/leads/interactions', interaction.toJson());
+      return LeadInteraction.fromJson(response.data);
+    } catch (e) {
+      throw Exception('Failed to create interaction: $e');
     }
   }
 }

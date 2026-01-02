@@ -9,6 +9,15 @@ class Customer {
   final DateTime? updatedAt;
   final int? roleId;
   final int projectCount;
+  
+  // New Business Fields
+  final String? phone;
+  final String? whatsappNumber;
+  final String? address;
+  final String? companyName;
+  final String? gstNumber;
+  final String? leadSource;
+  final String? notes;
 
   Customer({
     this.id,
@@ -21,6 +30,13 @@ class Customer {
     this.updatedAt,
     this.roleId,
     this.projectCount = 0,
+    this.phone,
+    this.whatsappNumber,
+    this.address,
+    this.companyName,
+    this.gstNumber,
+    this.leadSource,
+    this.notes,
   });
 
   String get fullName => '$firstName $lastName'.trim();
@@ -50,6 +66,15 @@ class Customer {
       projectCount: json['project_count'] is int
           ? json['project_count']
           : int.tryParse(json['project_count']?.toString() ?? '0') ?? 0,
+          
+      // New Fields Mapping
+      phone: json['phone'],
+      whatsappNumber: json['whatsapp_number'] ?? json['whatsappNumber'],
+      address: json['address'],
+      companyName: json['company_name'] ?? json['companyName'],
+      gstNumber: json['gst_number'] ?? json['gstNumber'],
+      leadSource: json['lead_source'] ?? json['leadSource'],
+      notes: json['notes'],
     );
   }
 
@@ -61,6 +86,13 @@ class Customer {
       'last_name': lastName,
       if (password != null && password!.isNotEmpty) 'password': password,
       if (roleId != null) 'role_id': roleId,
+      if (phone != null) 'phone': phone,
+      if (whatsappNumber != null) 'whatsapp_number': whatsappNumber,
+      if (address != null) 'address': address,
+      if (companyName != null) 'company_name': companyName,
+      if (gstNumber != null) 'gst_number': gstNumber,
+      if (leadSource != null) 'lead_source': leadSource,
+      if (notes != null) 'notes': notes,
     };
   }
 
@@ -72,6 +104,13 @@ class Customer {
       'last_name': lastName,
       if (password != null && password!.isNotEmpty) 'password': password,
       if (roleId != null) 'role_id': roleId,
+      if (phone != null) 'phone': phone,
+      if (whatsappNumber != null) 'whatsapp_number': whatsappNumber,
+      if (address != null) 'address': address,
+      if (companyName != null) 'company_name': companyName,
+      if (gstNumber != null) 'gst_number': gstNumber,
+      if (leadSource != null) 'lead_source': leadSource,
+      if (notes != null) 'notes': notes,
     };
   }
 
@@ -83,6 +122,13 @@ class Customer {
       'last_name': lastName,
       if (password != null && password!.isNotEmpty) 'password': password,
       if (roleId != null) 'role_id': roleId is int ? roleId : int.tryParse(roleId.toString()),
+      if (phone != null) 'phone': phone,
+      if (whatsappNumber != null) 'whatsapp_number': whatsappNumber,
+      if (address != null) 'address': address,
+      if (companyName != null) 'company_name': companyName,
+      if (gstNumber != null) 'gst_number': gstNumber,
+      if (leadSource != null) 'lead_source': leadSource,
+      if (notes != null) 'notes': notes,
     };
   }
 
@@ -96,6 +142,13 @@ class Customer {
     DateTime? createdAt,
     DateTime? updatedAt,
     int? roleId,
+    String? phone,
+    String? whatsappNumber,
+    String? address,
+    String? companyName,
+    String? gstNumber,
+    String? leadSource,
+    String? notes,
   }) {
     return Customer(
       id: id ?? this.id,
@@ -107,6 +160,13 @@ class Customer {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       roleId: roleId ?? this.roleId,
+      phone: phone ?? this.phone,
+      whatsappNumber: whatsappNumber ?? this.whatsappNumber,
+      address: address ?? this.address,
+      companyName: companyName ?? this.companyName,
+      gstNumber: gstNumber ?? this.gstNumber,
+      leadSource: leadSource ?? this.leadSource,
+      notes: notes ?? this.notes,
     );
   }
 }

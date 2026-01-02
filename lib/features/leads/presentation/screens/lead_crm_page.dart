@@ -56,7 +56,7 @@ class _LeadCRMPageState extends State<LeadCRMPage> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: LeadTable(
+              child: LeadsTable(
                 leads: leads,
                 onEdit: (lead) {
                   setState(() => editingLead = lead);
@@ -75,6 +75,12 @@ class _LeadCRMPageState extends State<LeadCRMPage> {
                       ),
                     ),
                   );
+                },
+                onDelete: (lead) {
+                   setState(() => leads.removeWhere((l) => l.leadId == lead.leadId));
+                },
+                onConvert: (lead) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Conversion not implemented in this view')));
                 },
               ),
             ),

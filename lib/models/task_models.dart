@@ -221,6 +221,7 @@ class CreateTaskRequest {
   final String? dueDate;
   final int? assignedToId;
   final int? projectId;
+  final int? leadId;
 
   CreateTaskRequest({
     required this.title,
@@ -230,6 +231,7 @@ class CreateTaskRequest {
     this.dueDate,
     this.assignedToId,
     this.projectId,
+    this.leadId,
   });
 
   Map<String, dynamic> toJson() {
@@ -241,6 +243,7 @@ class CreateTaskRequest {
       if (dueDate != null) 'dueDate': dueDate,
       if (assignedToId != null) 'assignedTo': {'id': assignedToId},
       if (projectId != null) 'project': {'id': projectId},
+      if (leadId != null) 'lead': {'leadId': leadId},
     };
   }
 }
@@ -254,6 +257,7 @@ class UpdateTaskRequest {
   final String? dueDate;
   final int? assignedToId;
   final int? projectId;
+  final int? leadId;
 
   UpdateTaskRequest({
     this.title,
@@ -263,6 +267,7 @@ class UpdateTaskRequest {
     this.dueDate,
     this.assignedToId,
     this.projectId,
+    this.leadId,
   });
 
   Map<String, dynamic> toJson() {
@@ -274,6 +279,7 @@ class UpdateTaskRequest {
     if (dueDate != null) data['dueDate'] = dueDate;
     if (assignedToId != null) data['assignedTo'] = {'id': assignedToId};
     if (projectId != null) data['project'] = {'id': projectId};
+    if (leadId != null) data['lead'] = {'leadId': leadId};
     return data;
   }
 }

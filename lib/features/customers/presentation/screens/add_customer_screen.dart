@@ -20,6 +20,16 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  
+  // New Business Fields Controllers
+  final _phoneController = TextEditingController();
+  final _whatsappController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _companyNameController = TextEditingController();
+  final _gstNumberController = TextEditingController();
+  final _leadSourceController = TextEditingController();
+  final _notesController = TextEditingController();
+
   bool _enabled = true;
   int? _roleId;
   List<CustomerRole> _customerRoles = [];
@@ -63,6 +73,15 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    
+    _phoneController.dispose();
+    _whatsappController.dispose();
+    _addressController.dispose();
+    _companyNameController.dispose();
+    _gstNumberController.dispose();
+    _leadSourceController.dispose();
+    _notesController.dispose();
+    
     super.dispose();
   }
 
@@ -91,6 +110,13 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
         lastName: _lastNameController.text.trim(),
         password: _passwordController.text.trim(),
         roleId: _roleId,
+        phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+        whatsappNumber: _whatsappController.text.trim().isEmpty ? null : _whatsappController.text.trim(),
+        address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
+        companyName: _companyNameController.text.trim().isEmpty ? null : _companyNameController.text.trim(),
+        gstNumber: _gstNumberController.text.trim().isEmpty ? null : _gstNumberController.text.trim(),
+        leadSource: _leadSourceController.text.trim().isEmpty ? null : _leadSourceController.text.trim(),
+        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       );
 
       await _customerService.createCustomer(customer);
@@ -286,6 +312,116 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                                   ),
                                 ),
                               ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: defaultPadding),
+                    
+                    _buildSectionHeader('Contact Details'),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(defaultPadding),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _phoneController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Phone Number',
+                                      border: OutlineInputBorder(),
+                                      prefixIcon: Icon(Icons.phone),
+                                    ),
+                                    keyboardType: TextInputType.phone,
+                                  ),
+                                ),
+                                const SizedBox(width: defaultPadding),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _whatsappController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'WhatsApp Number',
+                                      border: OutlineInputBorder(),
+                                      prefixIcon: Icon(Icons.message),
+                                    ),
+                                    keyboardType: TextInputType.phone,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: defaultPadding),
+                            TextFormField(
+                              controller: _addressController,
+                              decoration: const InputDecoration(
+                                labelText: 'Address',
+                                border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.location_on),
+                              ),
+                              maxLines: 3,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: defaultPadding),
+
+                    _buildSectionHeader('Business Information'),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(defaultPadding),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _companyNameController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Company Name',
+                                      border: OutlineInputBorder(),
+                                      prefixIcon: Icon(Icons.business),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: defaultPadding),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _gstNumberController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'GST Number',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: defaultPadding),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _leadSourceController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Lead Source',
+                                      border: OutlineInputBorder(),
+                                      prefixIcon: Icon(Icons.source),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: defaultPadding),
+                            TextFormField(
+                              controller: _notesController,
+                              decoration: const InputDecoration(
+                                labelText: 'Notes',
+                                border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.note),
+                              ),
+                              maxLines: 3,
                             ),
                           ],
                         ),
