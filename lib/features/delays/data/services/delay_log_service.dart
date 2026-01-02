@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:admin/services/api_service.dart';
 import 'package:admin/features/delays/data/models/delay_log.dart';
 
@@ -10,7 +8,7 @@ class DelayLogService {
     final response = await _apiService.get('/api/projects/$projectId/delays');
 
     if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
+      final List<dynamic> data = response.data;
       return data.map((json) => DelayLog.fromJson(json)).toList();
     } else {
       throw Exception('Failed to load delays');
@@ -24,7 +22,7 @@ class DelayLogService {
     );
 
     if (response.statusCode == 200) {
-      return DelayLog.fromJson(json.decode(response.body));
+      return DelayLog.fromJson(response.data);
     } else {
       throw Exception('Failed to log delay');
     }
@@ -37,7 +35,7 @@ class DelayLogService {
     );
 
     if (response.statusCode == 200) {
-      return DelayLog.fromJson(json.decode(response.body));
+      return DelayLog.fromJson(response.data);
     } else {
       throw Exception('Failed to close delay');
     }

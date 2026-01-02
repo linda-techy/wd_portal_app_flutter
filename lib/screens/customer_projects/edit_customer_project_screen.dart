@@ -43,7 +43,16 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
   DateTime? _endDate;
   String? _projectPhase;
   String? _projectType;
+  String? _contractType;
+  final List<Map<String, String>> _contractTypeOptions = [
+    {'value': 'TURNKEY', 'label': 'Turnkey (Material + Labor)'},
+    {'value': 'LABOR_ONLY', 'label': 'Labor Only'},
+    {'value': 'ITEM_RATE', 'label': 'Item Rate'},
+    {'value': 'COST_PLUS', 'label': 'Cost Plus (Cost + Margin)'},
+  ];
+
   String? _state;
+
   String? _district;
   int? _selectedLeadId;
   Lead? _selectedLead;
@@ -54,6 +63,11 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
   bool _showLeadDropdown = false;
   bool _shouldShake = false;
   final FocusNode _leadSearchFocusNode = FocusNode();
+
+  // Project Manager
+  TeamMember? _selectedProjectManager;
+  List<TeamMember> _potentialProjectManagers = [];
+
 
   // Customer Selection
   Customer? _selectedCustomer;
@@ -113,7 +127,11 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
       _projectPhase = null;
     }
 
+
+
     _projectType = widget.project.projectType;
+    _contractType = widget.project.contractType ?? 'TURNKEY';
+
 
     // Validate state - ensure it exists in the list (try case-insensitive match)
     final state = widget.project.state;
@@ -206,6 +224,19 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
       final Map<int, String> customerRoleMap = {
         for (var role in customerRoles) if (role.id != null) role.id!: role.name
       };
+
+
+
+      // Filter for Project Managers (Portal Users)
+       final allPortalUsersMember = portalUsers.map((user) => TeamMember(
+        id: user.id.toString(),
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        type: 'PORTAL',
+        designation: portalRoleMap[user.roleId] ?? '',
+      )).toList();
+
 
       // Find admin role ID for Portal Users
       int? adminRoleId;
@@ -305,6 +336,17 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
           _leads = leads;
           _filteredLeads = leads;
           _customers = customers;
+          
+          // Pre-select Project Manager
+          _potentialProjectManagers = allPortalUsersMember;
+          if (widget.project.projectManagerId != null) {
+            try {
+              _selectedProjectManager = allPortalUsersMember.firstWhere((m) => m.id == widget.project.projectManagerId.toString() && m.type == 'PORTAL');
+            } catch (_) {
+              // PM not found in list
+            }
+          }
+
           
           // Pre-select customer
           if (widget.project.customerId != null) {
@@ -477,7 +519,9 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
         // createdBy remains as original - not updated
         projectPhase: _projectPhase ?? 'Planning', // Default to Planning if null
         projectType: _projectType,
+        contractType: _contractType,
         state: _state ?? 'Kerala', // Default to Kerala if null
+
         district: _district ?? 'Thrissur', // Default to Thrissur if null
         sqfeet: _sqfeetController.text.trim().isNotEmpty
             ? double.tryParse(_sqfeetController.text.trim())
@@ -485,7 +529,9 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
         leadId: leadIdInt,
         customerId: _selectedCustomer?.id,
         teamMembers: _selectedTeamMembers,
+        projectManagerId: _selectedProjectManager?.id != null ? int.tryParse(_selectedProjectManager!.id!) : null,
       );
+
 
       await _crmService.updateCustomerProject(widget.project.id!, project);
 
@@ -632,6 +678,37 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                     ),
                   ),
                   const SizedBox(height: AppTheme.spacingMD),
+                  
+                  // Contract Type
+                  EntranceAnimation(
+                    delay: const Duration(milliseconds: 175),
+                    child: DropdownButtonFormField<String>(
+                      value: _contractType,
+                      decoration: const InputDecoration(
+                        labelText: 'Contract Type *',
+                        hintText: 'Select contract type',
+                      ),
+                      items: _contractTypeOptions.map((type) {
+                        return DropdownMenuItem(
+                          value: type['value'],
+                          child: Text(type['label']!),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _contractType = value;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please select a contract type';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingMD),
+
 
                   EntranceAnimation(
                     delay: const Duration(milliseconds: 200),

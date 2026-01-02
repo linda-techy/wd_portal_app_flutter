@@ -367,7 +367,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                         ),
                       ),
                     ),
-                    ),
+
                     const SizedBox(height: defaultPadding),
                     
                     _buildSectionHeader('Contact Details'),

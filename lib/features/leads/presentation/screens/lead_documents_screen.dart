@@ -33,7 +33,7 @@ class _LeadDocumentsScreenState extends State<LeadDocumentsScreen> {
         _isLoading = true;
         _error = null;
       });
-      final docs = await _leadService.getLeadDocuments(widget.lead.id!);
+      final docs = await _leadService.getLeadDocuments(widget.lead.leadId);
       setState(() {
         _documents = docs;
         _isLoading = false;
@@ -66,7 +66,7 @@ class _LeadDocumentsScreenState extends State<LeadDocumentsScreen> {
 
         // Using "General" as default category and simple description
         await _leadService.uploadDocument(
-            widget.lead.id!, 
+            widget.lead.leadId, 
             file, 
             "General", 
             "Uploaded via Mobile App"
@@ -92,7 +92,7 @@ class _LeadDocumentsScreenState extends State<LeadDocumentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Documents - ${widget.lead.firstName} ${widget.lead.lastName}'),
+        title: Text('Documents - ${widget.lead.name}'),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

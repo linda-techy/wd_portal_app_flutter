@@ -1,0 +1,213 @@
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+SubcontractWorkOrder _$SubcontractWorkOrderFromJson(
+        Map<String, dynamic> json) =>
+    SubcontractWorkOrder(
+      id: (json['id'] as num?)?.toInt(),
+      workOrderNumber: json['workOrderNumber'] as String,
+      projectId: (json['projectId'] as num).toInt(),
+      projectName: json['projectName'] as String?,
+      vendorId: (json['vendorId'] as num).toInt(),
+      vendorName: json['vendorName'] as String?,
+      boqItemId: (json['boqItemId'] as num?)?.toInt(),
+      scopeDescription: json['scopeDescription'] as String,
+      measurementBasis: json['measurementBasis'] as String,
+      negotiatedAmount: (json['negotiatedAmount'] as num).toDouble(),
+      unit: json['unit'] as String?,
+      rate: (json['rate'] as num?)?.toDouble(),
+      startDate: json['startDate'] == null
+          ? null
+          : DateTime.parse(json['startDate'] as String),
+      targetCompletionDate: json['targetCompletionDate'] == null
+          ? null
+          : DateTime.parse(json['targetCompletionDate'] as String),
+      actualCompletionDate: json['actualCompletionDate'] == null
+          ? null
+          : DateTime.parse(json['actualCompletionDate'] as String),
+      paymentTerms: json['paymentTerms'] as String?,
+      advancePercentage: (json['advancePercentage'] as num?)?.toDouble(),
+      advancePaid: (json['advancePaid'] as num?)?.toDouble(),
+      status: json['status'] as String,
+      notes: json['notes'] as String?,
+      terminationReason: json['terminationReason'] as String?,
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
+      updatedAt: json['updatedAt'] == null
+          ? null
+          : DateTime.parse(json['updatedAt'] as String),
+    );
+
+Map<String, dynamic> _$SubcontractWorkOrderToJson(
+        SubcontractWorkOrder instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'workOrderNumber': instance.workOrderNumber,
+      'projectId': instance.projectId,
+      'projectName': instance.projectName,
+      'vendorId': instance.vendorId,
+      'vendorName': instance.vendorName,
+      'boqItemId': instance.boqItemId,
+      'scopeDescription': instance.scopeDescription,
+      'measurementBasis': instance.measurementBasis,
+      'negotiatedAmount': instance.negotiatedAmount,
+      'unit': instance.unit,
+      'rate': instance.rate,
+      'startDate': instance.startDate?.toIso8601String(),
+      'targetCompletionDate': instance.targetCompletionDate?.toIso8601String(),
+      'actualCompletionDate': instance.actualCompletionDate?.toIso8601String(),
+      'paymentTerms': instance.paymentTerms,
+      'advancePercentage': instance.advancePercentage,
+      'advancePaid': instance.advancePaid,
+      'status': instance.status,
+      'notes': instance.notes,
+      'terminationReason': instance.terminationReason,
+      'createdAt': instance.createdAt?.toIso8601String(),
+      'updatedAt': instance.updatedAt?.toIso8601String(),
+    };
+
+SubcontractMeasurement _$SubcontractMeasurementFromJson(
+        Map<String, dynamic> json) =>
+    SubcontractMeasurement(
+      id: (json['id'] as num?)?.toInt(),
+      workOrderId: (json['workOrderId'] as num).toInt(),
+      measurementDate: DateTime.parse(json['measurementDate'] as String),
+      description: json['description'] as String,
+      quantity: (json['quantity'] as num).toDouble(),
+      unit: json['unit'] as String,
+      rate: (json['rate'] as num).toDouble(),
+      amount: (json['amount'] as num).toDouble(),
+      billNumber: json['billNumber'] as String?,
+      status: json['status'] as String,
+      approvedById: (json['approvedById'] as num?)?.toInt(),
+      approvedByName: json['approvedByName'] as String?,
+      approvedAt: json['approvedAt'] == null
+          ? null
+          : DateTime.parse(json['approvedAt'] as String),
+      rejectionReason: json['rejectionReason'] as String?,
+      measuredById: (json['measuredById'] as num?)?.toInt(),
+      measuredByName: json['measuredByName'] as String?,
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
+    );
+
+Map<String, dynamic> _$SubcontractMeasurementToJson(
+        SubcontractMeasurement instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'workOrderId': instance.workOrderId,
+      'measurementDate': instance.measurementDate.toIso8601String(),
+      'description': instance.description,
+      'quantity': instance.quantity,
+      'unit': instance.unit,
+      'rate': instance.rate,
+      'amount': instance.amount,
+      'billNumber': instance.billNumber,
+      'status': instance.status,
+      'approvedById': instance.approvedById,
+      'approvedByName': instance.approvedByName,
+      'approvedAt': instance.approvedAt?.toIso8601String(),
+      'rejectionReason': instance.rejectionReason,
+      'measuredById': instance.measuredById,
+      'measuredByName': instance.measuredByName,
+      'createdAt': instance.createdAt?.toIso8601String(),
+    };
+
+SubcontractPayment _$SubcontractPaymentFromJson(Map<String, dynamic> json) =>
+    SubcontractPayment(
+      id: (json['id'] as num?)?.toInt(),
+      workOrderId: (json['workOrderId'] as num).toInt(),
+      paymentDate: DateTime.parse(json['paymentDate'] as String),
+      grossAmount: (json['grossAmount'] as num).toDouble(),
+      tdsPercentage: (json['tdsPercentage'] as num).toDouble(),
+      tdsAmount: (json['tdsAmount'] as num).toDouble(),
+      otherDeductions: (json['otherDeductions'] as num?)?.toDouble(),
+      netAmount: (json['netAmount'] as num).toDouble(),
+      paymentMode: json['paymentMode'] as String,
+      transactionReference: json['transactionReference'] as String?,
+      chequeNumber: json['chequeNumber'] as String?,
+      bankName: json['bankName'] as String?,
+      milestoneDescription: json['milestoneDescription'] as String?,
+      milestonePercentage: (json['milestonePercentage'] as num?)?.toDouble(),
+      isAdvancePayment: json['isAdvancePayment'] as bool?,
+      measurementIds: (json['measurementIds'] as List<dynamic>?)
+          ?.map((e) => (e as num).toInt())
+          .toList(),
+      notes: json['notes'] as String?,
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
+    );
+
+Map<String, dynamic> _$SubcontractPaymentToJson(SubcontractPayment instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'workOrderId': instance.workOrderId,
+      'paymentDate': instance.paymentDate.toIso8601String(),
+      'grossAmount': instance.grossAmount,
+      'tdsPercentage': instance.tdsPercentage,
+      'tdsAmount': instance.tdsAmount,
+      'otherDeductions': instance.otherDeductions,
+      'netAmount': instance.netAmount,
+      'paymentMode': instance.paymentMode,
+      'transactionReference': instance.transactionReference,
+      'chequeNumber': instance.chequeNumber,
+      'bankName': instance.bankName,
+      'milestoneDescription': instance.milestoneDescription,
+      'milestonePercentage': instance.milestonePercentage,
+      'isAdvancePayment': instance.isAdvancePayment,
+      'measurementIds': instance.measurementIds,
+      'notes': instance.notes,
+      'createdAt': instance.createdAt?.toIso8601String(),
+    };
+
+SubcontractSummary _$SubcontractSummaryFromJson(Map<String, dynamic> json) =>
+    SubcontractSummary(
+      workOrderId: (json['workOrderId'] as num).toInt(),
+      workOrderNumber: json['workOrderNumber'] as String,
+      projectId: (json['projectId'] as num).toInt(),
+      projectName: json['projectName'] as String?,
+      vendorId: (json['vendorId'] as num).toInt(),
+      vendorName: json['vendorName'] as String?,
+      scopeDescription: json['scopeDescription'] as String,
+      measurementBasis: json['measurementBasis'] as String,
+      status: json['status'] as String,
+      totalContractAmount: (json['totalContractAmount'] as num).toDouble(),
+      totalMeasuredAmount: (json['totalMeasuredAmount'] as num?)?.toDouble(),
+      totalPaid: (json['totalPaid'] as num).toDouble(),
+      totalTds: (json['totalTds'] as num).toDouble(),
+      balanceDue: (json['balanceDue'] as num).toDouble(),
+      totalMeasurements: (json['totalMeasurements'] as num?)?.toInt(),
+      approvedMeasurements: (json['approvedMeasurements'] as num?)?.toInt(),
+      pendingMeasurements: (json['pendingMeasurements'] as num?)?.toInt(),
+      totalPayments: (json['totalPayments'] as num?)?.toInt(),
+      percentageCompleted: (json['percentageCompleted'] as num?)?.toDouble(),
+      percentagePaid: (json['percentagePaid'] as num?)?.toDouble(),
+    );
+
+Map<String, dynamic> _$SubcontractSummaryToJson(SubcontractSummary instance) =>
+    <String, dynamic>{
+      'workOrderId': instance.workOrderId,
+      'workOrderNumber': instance.workOrderNumber,
+      'projectId': instance.projectId,
+      'projectName': instance.projectName,
+      'vendorId': instance.vendorId,
+      'vendorName': instance.vendorName,
+      'scopeDescription': instance.scopeDescription,
+      'measurementBasis': instance.measurementBasis,
+      'status': instance.status,
+      'totalContractAmount': instance.totalContractAmount,
+      'totalMeasuredAmount': instance.totalMeasuredAmount,
+      'totalPaid': instance.totalPaid,
+      'totalTds': instance.totalTds,
+      'balanceDue': instance.balanceDue,
+      'totalMeasurements': instance.totalMeasurements,
+      'approvedMeasurements': instance.approvedMeasurements,
+      'pendingMeasurements': instance.pendingMeasurements,
+      'totalPayments': instance.totalPayments,
+      'percentageCompleted': instance.percentageCompleted,
+      'percentagePaid': instance.percentagePaid,
+    };

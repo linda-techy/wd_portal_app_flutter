@@ -28,6 +28,8 @@ class CustomerProject {
   final String? facing;
   final String? permitStatus;
   final String? projectDescription;
+  final int? projectManagerId;
+
 
   CustomerProject({
     this.id,
@@ -57,7 +59,9 @@ class CustomerProject {
     this.facing,
     this.permitStatus,
     this.projectDescription,
+    this.projectManagerId,
   });
+
 
   factory CustomerProject.fromJson(Map<String, dynamic> json) {
     return CustomerProject(
@@ -134,7 +138,15 @@ class CustomerProject {
       facing: json['facing'],
       permitStatus: json['permit_status'] ?? json['permitStatus'],
       projectDescription: json['project_description'] ?? json['projectDescription'],
+      projectManagerId: json['project_manager_id'] is int
+          ? json['project_manager_id']
+          : json['projectManagerId'] is int
+              ? json['projectManagerId']
+              : int.tryParse(json['project_manager_id']?.toString() ??
+                  json['projectManagerId']?.toString() ??
+                  ''),
     );
+
   }
 
   Map<String, dynamic> toJson() {
@@ -181,7 +193,9 @@ class CustomerProject {
       if (facing != null) 'facing': facing,
       if (permitStatus != null) 'permit_status': permitStatus,
       if (projectDescription != null) 'project_description': projectDescription,
+      if (projectManagerId != null) 'project_manager_id': projectManagerId,
     };
+
   }
 
   Map<String, dynamic> toCreateJson() {
@@ -249,6 +263,8 @@ class CustomerProject {
       facing: facing ?? this.facing,
       permitStatus: permitStatus ?? this.permitStatus,
       projectDescription: projectDescription ?? this.projectDescription,
+      projectManagerId: projectManagerId ?? this.projectManagerId,
     );
+
   }
 }

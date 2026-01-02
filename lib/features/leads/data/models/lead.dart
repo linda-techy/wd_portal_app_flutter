@@ -50,8 +50,6 @@ class Lead {
   final PortalUser? assignedTo;
   final int score;
   final String scoreCategory;
-  final int score;
-  final String scoreCategory;
   final String? scoreFactors;
   final double? plotArea;
   final int? floors;
@@ -85,10 +83,8 @@ class Lead {
     this.dateOfEnquiry,
     this.lostReason,
     this.assignedToId,
-    this.assignedToId,
     this.assignedTo,
     this.score = 0,
-    this.scoreCategory = 'COLD',
     this.scoreCategory = 'COLD',
     this.scoreFactors,
     this.plotArea,
@@ -150,7 +146,6 @@ class Lead {
       assignedToId: json['assigned_to_id'],
       assignedTo: json['assignedTo'] != null ? PortalUser.fromJson(json['assignedTo']) : null,
       score: json['score'] ?? 0,
-      scoreCategory: json['score_category'] ?? 'COLD',
       scoreCategory: json['score_category'] ?? 'COLD',
       scoreFactors: json['score_factors'],
       plotArea: (json['plot_area'] is int)
@@ -233,7 +228,6 @@ class Lead {
           ?.toIso8601String()
           .substring(0, 10), // Send only date part (YYYY-MM-DD)
       'lost_reason': lostReason?.isNotEmpty == true ? lostReason : null,
-      'lost_reason': lostReason?.isNotEmpty == true ? lostReason : null,
       'assigned_to_id': assignedToId,
       'plot_area': plotArea,
       'floors': floors,
@@ -271,7 +265,6 @@ class Lead {
       'date_of_enquiry': dateOfEnquiry
           ?.toIso8601String()
           .substring(0, 10), // Send only date part (YYYY-MM-DD)
-      'lost_reason': lostReason?.isNotEmpty == true ? lostReason : null,
       'lost_reason': lostReason?.isNotEmpty == true ? lostReason : null,
       'assigned_to_id': assignedToId,
       'plot_area': plotArea,

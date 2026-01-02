@@ -56,8 +56,11 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   bool _isLoading = false;
   bool _showLeadDropdown = false;
   final FocusNode _leadSearchFocusNode = FocusNode();
+  
+  // Project Manager
+  TeamMember? _selectedProjectManager;
+  List<TeamMember> _potentialProjectManagers = [];
 
-  // Customer Selection
   Customer? _selectedCustomer;
   List<Customer> _customers = [];
 
@@ -142,8 +145,18 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
       final Map<int, String> customerRoleMap = {
         for (var role in customerRoles) if (role.id != null) role.id!: role.name
       };
-      
-      // Find admin role ID for Portal Users
+
+      // Filter for Project Managers (Portal Users) - Assuming Role "Project Manager" or similar exists, or just all Portal Users for now
+      // This logic can be refined to filter by role name or code
+      final allPortalUsersMember = portalUsers.map((user) => TeamMember(
+        id: user.id.toString(),
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        type: 'PORTAL',
+        designation: portalRoleMap[user.roleId] ?? '',
+      )).toList();
+
       int? adminRoleId;
       try {
         final adminRole = roles.firstWhere(
@@ -244,6 +257,8 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
         });
       }
     } catch (e) {
+
+
       if (mounted) {
         setState(() => _isLoading = false);
         MotionToast.show(
@@ -336,9 +351,11 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
         customerId: _selectedCustomer?.id,
         sqfeet: double.tryParse(_sqfeetController.text) ?? 0.0,
         teamMembers: _selectedTeamMembers,
+        projectManagerId: _selectedProjectManager?.id != null ? int.tryParse(_selectedProjectManager!.id!) : null,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
+
 
       await _crmService.createCustomerProject(project);
 
@@ -929,6 +946,37 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                   ),
                 ),
                 const SizedBox(height: AppTheme.spacingMD),
+
+                // Project Manager Selection
+                EntranceAnimation(
+                  delay: const Duration(milliseconds: 475),
+                  child: DropdownButtonFormField<TeamMember>(
+                    value: _selectedProjectManager,
+                    decoration: const InputDecoration(
+                      labelText: 'Project Manager',
+                      hintText: 'Select Project Manager',
+                    ),
+                    items: _potentialProjectManagers.map((member) {
+                      return DropdownMenuItem(
+                        value: member,
+                        child: Text(member.fullName),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                         _selectedProjectManager = value;
+                         // Auto-add to team members if not present
+                         if (value != null && !_selectedTeamMembers.any((m) => m.id == value.id && m.type == value.type)) {
+                           _selectedTeamMembers.add(value);
+                         }
+                      });
+                    },
+                    validator: (value) => null, // Optional
+                  ),
+                ),
+                
+        const SizedBox(height: AppTheme.spacingMD),
+
 
                 // Sq Feet
                 EntranceAnimation(

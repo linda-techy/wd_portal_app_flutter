@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
-import '../../data/models/lead_interaction.dart';
-import '../../data/services/lead_service.dart';
+import '../../../data/models/lead_interaction.dart';
+import '../../../data/services/lead_service.dart';
 import 'package:intl/intl.dart';
 
 class AddInteractionDialog extends StatefulWidget {

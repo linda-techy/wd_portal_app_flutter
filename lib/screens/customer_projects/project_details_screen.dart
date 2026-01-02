@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/theme/responsive_utils.dart';
+import 'package:intl/intl.dart';
 import 'package:admin/models/customer_project.dart';
 import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/services/crm_service.dart';
@@ -9,87 +10,17 @@ import 'project_payments_screen.dart';
 import 'design_package_selection_screen.dart';
 import 'package:admin/features/warranties/presentation/screens/warranties_screen.dart';
 
-// ...
-
-// Inside _navigateToModule:
-    } else if (moduleName == 'Warranties') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => Scaffold(
-             appBar: AppBar(title: Text('Warranties')),
-             body: WarrantiesScreen(projectId: widget.project.id),
-          ),
-        ),
-      );
-
-// Inside buildModulesGrid:
-      _ModuleTile(
-        title: 'Warranties',
-        icon: Icons.verified_user_outlined,
-        color: AppTheme.primaryBlue,
-        onTap: () {
-          _navigateToModule('Warranties', widget.project);
-        },
-      ),
-
-// ...
-
-// Inside _navigateToModule:
-    } else if (moduleName == 'Delay Logs') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => Scaffold(
-             appBar: AppBar(title: Text('Delay Logs')),
-             body: DelayLogsScreen(projectId: widget.project.id),
-          ),
-        ),
-      );
-
-// Inside buildModulesGrid:
-      _ModuleTile(
-        title: 'Delay Logs',
-        icon: Icons.timer_off_outlined,
-        color: AppTheme.safetyOrange,
-        onTap: () {
-          _navigateToModule('Delay Logs', widget.project);
-        },
-      ),
-
-// ... (existing imports)
-
-// Inside _navigateToModule:
-    } else if (moduleName == 'Change Orders') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => Scaffold(
-             appBar: AppBar(title: Text('Change Orders')),
-             body: ChangeOrdersScreen(projectId: widget.project.id),
-          ),
-        ),
-      );
-
-// Inside buildModulesGrid:
-      _ModuleTile(
-        title: 'Change Orders',
-        icon: Icons.edit_note_outlined,
-        color: AppTheme.coralRed,
-        onTap: () {
-          _navigateToModule('Change Orders', widget.project);
-        },
-      ),
-import '../../widgets/animations/entrance_animation.dart';
-import '../../widgets/animations/motion_button.dart';
+import 'package:admin/screens/projects/subcontract_work_orders_screen.dart';
+import 'package:admin/models/project_summary.dart';
+import 'package:admin/features/change_orders/presentation/screens/change_orders_screen.dart';
+import 'package:admin/features/delays/presentation/screens/delay_logs_screen.dart';
+import 'package:admin/models/team_member.dart';
+import 'package:admin/widgets/animations/entrance_animation.dart';
+import 'package:admin/widgets/animations/motion_button.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
   final CustomerProject project;
-
-  const ProjectDetailsScreen({
-    super.key,
-    required this.project,
-  });
+  const ProjectDetailsScreen({super.key, required this.project});
 
   @override
   State<ProjectDetailsScreen> createState() => _ProjectDetailsScreenState();
@@ -97,13 +28,35 @@ class ProjectDetailsScreen extends StatefulWidget {
 
 class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   Lead? customerLead;
+  ProjectSummary? _projectSummary;
   bool isLoadingLead = true;
+  bool isLoadingSummary = true;
   final CRMService _crmService = CRMService();
 
   @override
   void initState() {
     super.initState();
     _loadCustomerLead();
+    _loadProjectSummary();
+  }
+
+  Future<void> _loadProjectSummary() async {
+    try {
+      final summary = await _crmService.getProject360(widget.project.id!);
+      if (mounted) {
+        setState(() {
+          _projectSummary = summary;
+          isLoadingSummary = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoadingSummary = false;
+        });
+        // Optionally show error snackbar
+      }
+    }
   }
 
   Future<void> _loadCustomerLead() async {
@@ -197,6 +150,14 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 360 Dashboard
+              if (_projectSummary != null) ...[
+                _build360Dashboard(),
+                const SizedBox(height: 24),
+              ],
+              if (isLoadingSummary)
+                 const Center(child: CircularProgressIndicator()),
+                 
               SizedBox(height: ResponsiveUtils.responsiveValue(
                 context: context,
                 mobile: AppTheme.spacingMD,
@@ -333,6 +294,44 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 ],
               ),
             const SizedBox(height: AppTheme.spacingMD),
+
+            // Project Manager
+            if (widget.project.projectManagerId != null && widget.project.teamMembers != null) ...[
+              Builder(
+                builder: (context) {
+                  TeamMember? projectManager;
+                   try {
+                    projectManager = widget.project.teamMembers!.firstWhere(
+                      (m) => m.id == widget.project.projectManagerId.toString() && m.type == 'PORTAL',
+                    );
+                  } catch (_) {}
+                  
+                  if (projectManager == null) return const SizedBox.shrink();
+
+                  return Column(
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.manage_accounts_outlined, 
+                            size: 20, 
+                            color: AppTheme.primaryBlue,
+                          ),
+                          const SizedBox(width: AppTheme.spacingSM),
+                          Text(
+                            'Manager: ${projectManager.firstName} ${projectManager.lastName}',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: AppTheme.textSecondary,
+                                ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppTheme.spacingMD),
+                    ],
+                  );
+                }
+              ),
+            ],
+
             
             // Location
             Row(
@@ -719,12 +718,40 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         },
       ),
       _ModuleTile(
+        title: 'Change Orders',
+         icon: Icons.edit_note_outlined,
+         color: AppTheme.coralRed,
+         onTap: () {
+           _navigateToModule('Change Orders', widget.project);
+         },
+        projectSummary: _projectSummary,
+      ),
+      _ModuleTile(
+        title: 'Warranties',
+        icon: Icons.verified_user_outlined,
+        color: AppTheme.primaryBlue,
+        onTap: () {
+          _navigateToModule('Warranties', widget.project);
+        },
+        projectSummary: _projectSummary,
+      ),
+      _ModuleTile(
+        title: 'Delay Logs',
+        icon: Icons.timer_off_outlined,
+        color: AppTheme.safetyOrange,
+        onTap: () {
+          _navigateToModule('Delay Logs', widget.project);
+        },
+        projectSummary: _projectSummary,
+      ),
+      _ModuleTile(
         title: 'Quality Check',
         icon: Icons.verified_outlined,
         color: AppTheme.safetyYellow,
         onTap: () {
           _navigateToModule('Quality Check', widget.project);
         },
+        projectSummary: _projectSummary,
       ),
       _ModuleTile(
         title: 'Site Reports',
@@ -733,6 +760,16 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         onTap: () {
           _navigateToModule('Site Reports', widget.project);
         },
+        projectSummary: _projectSummary,
+      ),
+      _ModuleTile(
+        title: 'Subcontracts',
+        icon: Icons.handshake_outlined,
+        color: AppTheme.skyBlue,
+        onTap: () {
+          _navigateToModule('Subcontracts', widget.project);
+        },
+        projectSummary: _projectSummary,
       ),
     ];
 
@@ -855,6 +892,46 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           builder: (context) => ProjectPaymentsScreen(project: project),
         ),
       );
+    } else if (moduleName == 'Warranties') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+             appBar: AppBar(title: Text('Warranties')),
+             body: WarrantiesScreen(projectId: widget.project.id!),
+          ),
+        ),
+      );
+    } else if (moduleName == 'Delay Logs') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+             appBar: AppBar(title: Text('Delay Logs')),
+             body: DelayLogsScreen(projectId: widget.project.id!),
+          ),
+        ),
+      );
+    } else if (moduleName == 'Change Orders') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+             appBar: AppBar(title: Text('Change Orders')),
+             body: ChangeOrdersScreen(projectId: widget.project.id!),
+          ),
+        ),
+      );
+    } else if (moduleName == 'Subcontracts') {
+       Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SubcontractWorkOrdersScreen(
+             projectId: widget.project.id!,
+             projectName: widget.project.name,
+          ),
+        ),
+      );
     } else {
       // Show a placeholder dialog for other modules
       showDialog(
@@ -872,6 +949,66 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       );
     }
   }
+
+  Widget _build360Dashboard() {
+    final stats = _projectSummary!.executionStats;
+    final finance = _projectSummary!.financialSnapshot;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Project 360° View',
+            style: AppTheme.headlineMedium.copyWith(color: AppTheme.primaryBlue),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(child: _buildStatCard('Tasks', '${stats.completedTasks}/${stats.totalTasks}', Icons.check_circle_outline, Colors.green)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildStatCard('Delays', '${stats.activeDelays}', Icons.warning_amber_rounded, Colors.red)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildStatCard('Budget', '\$${companyFormat(finance.totalBudget)}', Icons.attach_money, Colors.blue)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String companyFormat(double value) {
+    return value.toStringAsFixed(2);
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24),
+          Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color)),
+          Text(title, style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+        ],
+      ),
+    );
+  }
 }
 
 class _ModuleTile extends StatelessWidget {
@@ -879,12 +1016,14 @@ class _ModuleTile extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
+  final ProjectSummary? projectSummary;
 
   const _ModuleTile({
     required this.title,
     required this.icon,
     required this.color,
     required this.onTap,
+    this.projectSummary,
   });
 
   @override

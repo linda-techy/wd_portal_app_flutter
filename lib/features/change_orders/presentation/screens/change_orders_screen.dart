@@ -71,7 +71,7 @@ class _ChangeOrdersScreenState extends State<ChangeOrdersScreen> {
                 icon: const Icon(Icons.add),
                 label: const Text('New Change Order'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
+                  backgroundColor: AppTheme.deepSlate,
                   foregroundColor: Colors.white,
                 ),
               ),

@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:admin/services/api_service.dart';
 import 'package:admin/features/warranties/data/models/project_warranty.dart';
 
@@ -10,7 +8,7 @@ class WarrantyService {
     final response = await _apiService.get('/api/projects/$projectId/warranties');
 
     if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
+      final List<dynamic> data = response.data;
       return data.map((json) => ProjectWarranty.fromJson(json)).toList();
     } else {
       throw Exception('Failed to load warranties');
@@ -24,7 +22,7 @@ class WarrantyService {
     );
 
     if (response.statusCode == 200) {
-      return ProjectWarranty.fromJson(json.decode(response.body));
+      return ProjectWarranty.fromJson(response.data);
     } else {
       throw Exception('Failed to create warranty');
     }

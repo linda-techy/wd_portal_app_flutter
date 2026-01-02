@@ -1,4 +1,3 @@
-import 'package:http/http.dart' as http;
 import 'package:admin/services/api_service.dart';
 import 'package:admin/features/change_orders/data/models/change_order.dart';
 
@@ -9,7 +8,7 @@ class ChangeOrderService {
     final response = await _apiService.get('/api/projects/$projectId/variations');
 
     if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
+      final List<dynamic> data = response.data;
       return data.map((json) => ChangeOrder.fromJson(json)).toList();
     } else {
       throw Exception('Failed to load change orders');
@@ -23,7 +22,7 @@ class ChangeOrderService {
     );
 
     if (response.statusCode == 200) {
-      return ChangeOrder.fromJson(json.decode(response.body));
+      return ChangeOrder.fromJson(response.data);
     } else {
       throw Exception('Failed to create change order');
     }
@@ -36,7 +35,7 @@ class ChangeOrderService {
     );
 
     if (response.statusCode == 200) {
-      return ChangeOrder.fromJson(json.decode(response.body));
+      return ChangeOrder.fromJson(response.data);
     } else {
       throw Exception('Failed to update change order');
     }
@@ -57,7 +56,7 @@ class ChangeOrderService {
     );
 
     if (response.statusCode == 200) {
-      return ChangeOrder.fromJson(json.decode(response.body));
+      return ChangeOrder.fromJson(response.data);
     } else {
       throw Exception('Failed to submit change order');
     }
@@ -70,7 +69,7 @@ class ChangeOrderService {
     );
 
     if (response.statusCode == 200) {
-      return ChangeOrder.fromJson(json.decode(response.body));
+      return ChangeOrder.fromJson(response.data);
     } else {
       throw Exception('Failed to approve change order');
     }
@@ -83,7 +82,7 @@ class ChangeOrderService {
     );
 
     if (response.statusCode == 200) {
-      return ChangeOrder.fromJson(json.decode(response.body));
+      return ChangeOrder.fromJson(response.data);
     } else {
       throw Exception('Failed to reject change order');
     }

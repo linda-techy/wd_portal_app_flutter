@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:admin/screens/customer_projects/project_details_screen.dart';
 import 'dart:async';
 import '../../theme/app_theme.dart';
 import '../../theme/responsive_utils.dart';

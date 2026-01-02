@@ -11,6 +11,7 @@ import 'package:admin/models/role.dart';
 import 'package:admin/models/paginated_response.dart';
 import 'package:admin/models/pagination_params.dart';
 import 'package:admin/services/api_service.dart';
+import 'package:admin/models/project_summary.dart';
 
 class CRMService {
   static final CRMService _instance = CRMService._internal();
@@ -257,6 +258,15 @@ class CRMService {
   // =====================================================
   // CUSTOMER PROJECTS
   // =====================================================
+
+  Future<ProjectSummary> getProject360(int id) async {
+    try {
+      final response = await _apiService.get('/projects/360/$id');
+      return ProjectSummary.fromJson(response.data);
+    } catch (e) {
+      throw Exception('Failed to fetch project 360 view: $e');
+    }
+  }
 
   Future<List<CustomerProject>> getAllCustomerProjects() async {
     try {

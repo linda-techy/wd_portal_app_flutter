@@ -21,6 +21,7 @@ import 'lead_tasks_screen.dart';
 import 'lead_activity_screen.dart';
 import 'lead_documents_screen.dart';
 // import 'lead_table.dart'; // Removed to avoid conflict with local LeadsTable class
+import 'components/add_interaction_dialog.dart';
 import 'components/leads_summary_card.dart';
 
 class LeadsScreen extends StatefulWidget {
@@ -457,6 +458,11 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                   onEdit: _editLead,
                                   onDelete: _deleteLead,
                                   onConvert: _convertLead,
+                                  onViewQuotations: _viewQuotations,
+                                  onViewTasks: _viewTasks,
+                                  onViewActivity: _viewActivity,
+                                  onLogActivity: _logActivity,
+                                  onViewDocuments: _viewDocuments,
                                 ),
                               if (isLoadingMore)
                                 const Padding(
@@ -495,6 +501,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                   onViewTasks: _viewTasks,
                                   onViewActivity: _viewActivity,
                                   onLogActivity: _logActivity,
+                                  onViewDocuments: _viewDocuments,
                                 ),
                                 if (isLoadingMore)
                                   const Padding(
@@ -534,6 +541,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                   onViewTasks: _viewTasks,
                                   onViewActivity: _viewActivity,
                                   onLogActivity: _logActivity,
+                                  onViewDocuments: _viewDocuments,
                                 ),
                                 if (isLoadingMore)
                                   const Padding(
@@ -554,11 +562,13 @@ class _LeadsScreenState extends State<LeadsScreen> {
         ),
       ),
     );
+  }
+
   void _logActivity(Lead lead) {
     showDialog(
       context: context,
       builder: (context) => AddInteractionDialog(
-        leadId: int.parse(lead.id),
+        leadId: int.tryParse(lead.leadId) ?? 0,
         onSave: () {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Activity logged successfully')),

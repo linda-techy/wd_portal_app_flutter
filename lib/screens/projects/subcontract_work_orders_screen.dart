@@ -149,10 +149,10 @@ class _SubcontractWorkOrdersScreenState extends State<SubcontractWorkOrdersScree
             child: _buildSummaryItem('Total Contract', _currencyFormat.format(totalContract), AppTheme.deepSlate),
           ),
           Expanded(
-            child: _buildSummaryItem('Paid', _currencyFormat.format(totalPaid), AppTheme.tealAccent),
+            child: _buildSummaryItem('Paid', _currencyFormat.format(totalPaid), AppTheme.successGreen),
           ),
           Expanded(
-            child: _buildSummaryItem('Balance', _currencyFormat.format(totalBalance), AppTheme.amber),
+            child: _buildSummaryItem('Balance', _currencyFormat.format(totalBalance), AppTheme.warningAmber),
           ),
         ],
       ),
@@ -261,13 +261,13 @@ class _SubcontractWorkOrdersScreenState extends State<SubcontractWorkOrdersScree
                   _buildInfoChip(
                     Icons.payment,
                     _currencyFormat.format(summary.totalPaid),
-                    AppTheme.tealAccent,
+                    AppTheme.successGreen,
                   ),
                   const SizedBox(width: 12),
                   _buildInfoChip(
                     Icons.pending,
                     _currencyFormat.format(summary.balanceDue),
-                    summary.balanceDue > 0 ? AppTheme.amber : Colors.grey,
+                    summary.balanceDue > 0 ? AppTheme.warningAmber : Colors.grey,
                   ),
                 ],
               ),
@@ -282,7 +282,7 @@ class _SubcontractWorkOrdersScreenState extends State<SubcontractWorkOrdersScree
                       child: LinearProgressIndicator(
                         value: progress / 100,
                         backgroundColor: Colors.grey[200],
-                        color: AppTheme.tealAccent,
+                        color: AppTheme.successGreen,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -316,12 +316,12 @@ class _SubcontractWorkOrdersScreenState extends State<SubcontractWorkOrdersScree
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppTheme.amber.withOpacity(0.2),
+                        color: AppTheme.warningAmber.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         '${summary.pendingMeasurements} pending approval',
-                        style: TextStyle(fontSize: 11, color: AppTheme.amber),
+                        style: TextStyle(fontSize: 11, color: AppTheme.warningAmber),
                       ),
                     ),
                   ],
@@ -353,13 +353,13 @@ class _SubcontractWorkOrdersScreenState extends State<SubcontractWorkOrdersScree
       case 'DRAFT':
         return Colors.grey;
       case 'ISSUED':
-        return AppTheme.azure;
+        return AppTheme.skyBlue;
       case 'IN_PROGRESS':
-        return AppTheme.tealAccent;
+        return AppTheme.successGreen;
       case 'COMPLETED':
         return Colors.green;
       case 'TERMINATED':
-        return AppTheme.coralRed;
+        return AppTheme.errorRed;
       default:
         return Colors.grey;
     }
