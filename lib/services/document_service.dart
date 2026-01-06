@@ -40,4 +40,8 @@ class DocumentService {
     );
     return ProjectDocument.fromJson(response.data['data']);
   }
+
+  Future<void> deleteDocument(int projectId, int documentId) async {
+    await _apiService.delete('/customer-projects/$projectId/documents/$documentId');
+  }
 }

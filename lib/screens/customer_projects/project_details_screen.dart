@@ -352,6 +352,26 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               ],
             ),
             const SizedBox(height: AppTheme.spacingMD),
+
+            // GPS Coordinates
+            if (widget.project.latitude != null && widget.project.longitude != null)
+              Row(
+                children: [
+                  Icon(Icons.gps_fixed_outlined,
+                    size: 20,
+                    color: AppTheme.textSecondary,
+                  ),
+                  const SizedBox(width: AppTheme.spacingSM),
+                  Text(
+                    'GPS: ${widget.project.latitude!.toStringAsFixed(6)}, ${widget.project.longitude!.toStringAsFixed(6)}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppTheme.textSecondary,
+                        ),
+                  ),
+                ],
+              ),
+            if (widget.project.latitude != null && widget.project.longitude != null)
+              const SizedBox(height: AppTheme.spacingMD),
             
             // Project Code
             if (widget.project.code != null && widget.project.code!.isNotEmpty)

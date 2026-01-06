@@ -13,6 +13,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'project_tracking_screen.dart';
+import 'view_360_list_screen.dart';
+import '../../models/customer_project.dart';
 
 /// Project Detail Screen - Single-Pane-of-Glass View
 /// Displays comprehensive project information in one unified view
@@ -576,6 +578,56 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
               ],
             ),
           ),
+
+          const SizedBox(height: AppTheme.spacingLG),
+
+          // 360° Virtual Tours
+          Container(
+            padding: const EdgeInsets.all(AppTheme.spacingLG),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(AppTheme.radiusLG),
+              border: Border.all(color: AppTheme.borderLight),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '360° Virtual Tours',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => View360ListScreen(
+                              projectId: widget.projectId,
+                              projectName: 'Commercial Complex - Phase 2', // Use dynamic name if available
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.vibration, size: 18),
+                      label: const Text('View Tours'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.coralRed,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppTheme.spacingMD),
+                const Text(
+                  'Explore the site through immersive 360° panoramic views captured from the field.',
+                  style: TextStyle(color: AppTheme.textSecondary),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -709,6 +761,25 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                   onPressed: () {},
                   icon: const Icon(Icons.camera_alt, size: 18),
                   label: const Text('Add Photo'),
+                ),
+              ),
+              const SizedBox(height: AppTheme.spacingSM),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => View360ListScreen(
+                          projectId: widget.projectId,
+                          projectName: 'Commercial Complex - Phase 2',
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.vibration, size: 18),
+                  label: const Text('360° Tours'),
                 ),
               ),
               const SizedBox(height: AppTheme.spacingSM),

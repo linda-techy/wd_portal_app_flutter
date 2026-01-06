@@ -13,6 +13,7 @@ import '../../widgets/animations/entrance_animation.dart';
 import '../../widgets/animations/motion_button.dart';
 import '../../widgets/animations/shake_widget.dart';
 import '../../utils/motion_toast.dart';
+import 'package:geolocator/geolocator.dart';
 
 class EditCustomerProjectScreen extends StatefulWidget {
   final CustomerProject project;
@@ -38,6 +39,8 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
   late final TextEditingController _sqfeetController;
 
   late final TextEditingController _leadSearchController;
+  late final TextEditingController _latitudeController;
+  late final TextEditingController _longitudeController;
 
   DateTime? _startDate;
   DateTime? _endDate;
@@ -100,6 +103,8 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
           ? widget.project.sqfeet!.toStringAsFixed(2)
           : '',
     );
+    _latitudeController = TextEditingController(text: widget.project.latitude?.toString() ?? '');
+    _longitudeController = TextEditingController(text: widget.project.longitude?.toString() ?? '');
 
     _leadSearchController = TextEditingController();
 
@@ -446,7 +451,46 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
 
     _leadSearchController.dispose();
     _leadSearchFocusNode.dispose();
+    _latitudeController.dispose();
+    _longitudeController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchCurrentLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            MotionToast.show(context, message: 'Location permission denied', isError: true);
+          }
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          MotionToast.show(context, message: 'Location permissions are permanently denied', isError: true);
+        }
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+
+      setState(() {
+        _latitudeController.text = position.latitude.toStringAsFixed(6);
+        _longitudeController.text = position.longitude.toStringAsFixed(6);
+      });
+
+      if (mounted) {
+        MotionToast.show(context, message: 'Location captured successfully!', isError: false);
+      }
+    } catch (e) {
+      if (mounted) {
+        MotionToast.show(context, message: 'Failed to get location: ${e.toString()}', isError: true);
+      }
+    }
   }
 
   Future<void> _selectDate(BuildContext context, bool isStartDate) async {
@@ -530,6 +574,8 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
         customerId: _selectedCustomer?.id,
         teamMembers: _selectedTeamMembers,
         projectManagerId: _selectedProjectManager?.id != null ? int.tryParse(_selectedProjectManager!.id!) : null,
+        latitude: _latitudeController.text.isNotEmpty ? double.tryParse(_latitudeController.text) : null,
+        longitude: _longitudeController.text.isNotEmpty ? double.tryParse(_longitudeController.text) : null,
       );
 
 
@@ -650,6 +696,98 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                         }
                         return null;
                       },
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingMD),
+
+                  // GPS Coordinates Section
+                  EntranceAnimation(
+                    delay: const Duration(milliseconds: 125),
+                    child: Container(
+                      padding: const EdgeInsets.all(AppTheme.spacingMD),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                        border: Border.all(color: AppTheme.borderLight),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.location_on, size: 20, color: AppTheme.coralRed),
+                              const SizedBox(width: AppTheme.spacingSM),
+                              Text(
+                                'GPS Coordinates',
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                              const Spacer(),
+                              MotionButton(
+                                onPressed: _fetchCurrentLocation,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppTheme.spacingSM,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.coralRed.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.my_location, size: 14, color: AppTheme.coralRed),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Capture',
+                                        style: TextStyle(
+                                          color: AppTheme.coralRed,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppTheme.spacingMD),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _latitudeController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Latitude',
+                                    hintText: '0.000000',
+                                  ),
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                ),
+                              ),
+                              const SizedBox(width: AppTheme.spacingMD),
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _longitudeController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Longitude',
+                                    hintText: '0.000000',
+                                  ),
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppTheme.spacingSM),
+                          Text(
+                            'Capture automatically when at site',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppTheme.textSecondary,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: AppTheme.spacingMD),

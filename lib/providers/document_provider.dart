@@ -60,4 +60,15 @@ class DocumentProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> deleteDocument(int projectId, int documentId) async {
+    try {
+      await _documentService.deleteDocument(projectId, documentId);
+      _documents.removeWhere((doc) => doc.id == documentId);
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error deleting document: $e");
+      rethrow;
+    }
+  }
 }

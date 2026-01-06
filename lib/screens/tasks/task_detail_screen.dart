@@ -3,6 +3,7 @@ import 'package:admin/models/task_models.dart';
 import 'package:admin/services/task_service.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/theme/responsive_utils.dart';
+import 'package:intl/intl.dart';
 
 class TaskDetailScreen extends StatefulWidget {
   final int taskId;
@@ -25,42 +26,69 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   }
 
   Future<void> _loadTask() async {
-    setState(() => _isLoading = true);
+    if (mounted) setState(() => _isLoading = true);
     try {
       final task = await _taskService.getTaskById(widget.taskId);
-      setState(() {
-        _task = task;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _task = task;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading task: $e')),
+          SnackBar(content: Text('Error loading task: $e'), backgroundColor: Colors.red),
         );
       }
     }
   }
 
-  Future<void> _updateStatus(String newStatus) async {
-    if (_task == null) return;
+  Future<void> _onStatusChange(String newStatus) async {
+    if (_task == null || _task!.status.toApiString() == newStatus) return;
 
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Update Status?'),
+        content: Text('Are you sure you want to change the status to ${_formatStatus(newStatus)}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.coralRed, foregroundColor: Colors.white),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _updateStatus(newStatus);
+    }
+  }
+
+  Future<void> _updateStatus(String newStatus) async {
     try {
       final updateRequest = UpdateTaskRequest(
         title: _task!.title,
-        status: newStatus, // Pass as string, not TaskStatus enum
+        status: newStatus,
       );
       await _taskService.updateTask(widget.taskId, updateRequest);
-      await _loadTask(); // Reload to get updated task
+      await _loadTask();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Task status updated')),
+          const SnackBar(content: Text('Task status updated'), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating task: $e')),
+          SnackBar(content: Text('Error updating task: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -105,17 +133,19 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
         title: const Text('Task Details'),
         backgroundColor: Colors.white,
         foregroundColor: AppTheme.textPrimary,
         elevation: 0,
+        actions: [
+           IconButton(
+             icon: const Icon(Icons.refresh),
+             onPressed: _loadTask,
+           ),
+        ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.coralRed))
           : _task == null
               ? const Center(child: Text('Task not found'))
               : SingleChildScrollView(
@@ -123,168 +153,188 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Title and Priority
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(AppTheme.spacingMD),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      _task!.title,
-                                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: AppTheme.spacingSM,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: _getPriorityColor(_task!.priority.toApiString()).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(AppTheme.radiusSM),
-                                      border: Border.all(
-                                        color: _getPriorityColor(_task!.priority.toApiString()),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      _task!.priority.toApiString(),
-                                      style: TextStyle(
-                                        color: _getPriorityColor(_task!.priority.toApiString()),
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              if (_task!.description != null && _task!.description!.isNotEmpty) ...[
-                                const SizedBox(height: AppTheme.spacingMD),
-                                Text(
-                                  _task!.description!,
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        color: AppTheme.textSecondary,
-                                      ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ),
+                      _buildHeaderCard(),
                       const SizedBox(height: AppTheme.spacingMD),
-
-                      // Status Update
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(AppTheme.spacingMD),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Status',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
-                              const SizedBox(height: AppTheme.spacingSM),
-                              Wrap(
-                                spacing: AppTheme.spacingSM,
-                                children: [
-                                  ChoiceChip(
-                                    label: Text(_formatStatus('PENDING')),
-                                    selected: _task!.status.toApiString() == 'PENDING',
-                                    onSelected: (selected) => _updateStatus('PENDING'),
-                                    selectedColor: _getStatusColor('PENDING'),
-                                    backgroundColor: AppTheme.surfaceElevated,
-                                  ),
-                                  ChoiceChip(
-                                    label: Text(_formatStatus('IN_PROGRESS')),
-                                    selected: _task!.status.toApiString() == 'IN_PROGRESS',
-                                    onSelected: (selected) => _updateStatus('IN_PROGRESS'),
-                                    selectedColor: _getStatusColor('IN_PROGRESS'),
-                                    backgroundColor: AppTheme.surfaceElevated,
-                                  ),
-                                  ChoiceChip(
-                                    label: Text(_formatStatus('COMPLETED')),
-                                    selected: _task!.status.toApiString() == 'COMPLETED',
-                                    onSelected: (selected) => _updateStatus('COMPLETED'),
-                                    selectedColor: _getStatusColor('COMPLETED'),
-                                    backgroundColor: AppTheme.surfaceElevated,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      _buildStatusUpdateCard(),
                       const SizedBox(height: AppTheme.spacingMD),
-
-                      // Task Information
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(AppTheme.spacingMD),
-                          child: Column(
-                            children: [
-                              if (_task!.projectName != null)
-                                _buildInfoRow(Icons.folder, 'Project', _task!.projectName!),
-                              if (_task!.assignedToName != null)
-                                _buildInfoRow(Icons.person, 'Assigned To', _task!.assignedToName!),
-                              if (_task!.createdByName != null)
-                                _buildInfoRow(Icons.person_outline, 'Created By', _task!.createdByName!),
-                              if (_task!.dueDate != null)
-                                _buildInfoRow(
-                                  Icons.calendar_today,
-                                  'Due Date',
-                                  '${_task!.dueDate!.day}/${_task!.dueDate!.month}/${_task!.dueDate!.year}',
-                                ),
-                              if (_task!.createdAt != null)
-                                _buildInfoRow(
-                                  Icons.access_time,
-                                  'Created',
-                                  '${_task!.createdAt!.day}/${_task!.createdAt!.month}/${_task!.createdAt!.year}',
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      _buildInfoGrid(),
                     ],
                   ),
                 ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value) {
+  Widget _buildHeaderCard() {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spacingMD),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    _task!.title,
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _getPriorityColor(_task!.priority.toApiString()).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: _getPriorityColor(_task!.priority.toApiString())),
+                  ),
+                  child: Text(
+                    _task!.priority.toApiString(),
+                    style: TextStyle(
+                      color: _getPriorityColor(_task!.priority.toApiString()),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (_task!.description != null && _task!.description!.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text("Description", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textSecondary)),
+              const SizedBox(height: 4),
+              Text(
+                _task!.description!,
+                style: const TextStyle(fontSize: 15, color: AppTheme.textPrimary, height: 1.5),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusUpdateCard() {
+    final currentStatus = _task!.status.toApiString();
+    
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spacingMD),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.change_circle_outlined, size: 20, color: AppTheme.textSecondary),
+                const SizedBox(width: 8),
+                Text(
+                  'Task Status',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'].map((status) {
+                final isSelected = currentStatus == status;
+                return ChoiceChip(
+                  label: Text(_formatStatus(status)),
+                  selected: isSelected,
+                  onSelected: (selected) => _onStatusChange(status),
+                  selectedColor: _getStatusColor(status).withOpacity(0.2),
+                  labelStyle: TextStyle(
+                    color: isSelected ? _getStatusColor(status) : AppTheme.textSecondary,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 13,
+                  ),
+                  backgroundColor: Colors.grey.shade50,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoGrid() {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spacingMD),
+        child: Column(
+          children: [
+            if (_task!.projectName != null)
+              _buildInfoRow(Icons.business_center_outlined, 'Project', _task!.projectName!),
+            _buildInfoRow(Icons.person_outline, 'Assigned To', _task!.assignedToName ?? 'Unassigned'),
+            _buildInfoRow(Icons.edit_note_outlined, 'Created By', _task!.createdByName ?? 'System'),
+            if (_task!.dueDate != null)
+              _buildInfoRow(
+                Icons.calendar_month_outlined,
+                'Due Date',
+                DateFormat('dd MMM, yyyy').format(_task!.dueDate!),
+                valueColor: _task!.dueDate!.isBefore(DateTime.now()) && _task!.status.toApiString() != 'COMPLETED'
+                    ? Colors.red
+                    : AppTheme.textPrimary,
+              ),
+            _buildInfoRow(
+              Icons.schedule_outlined,
+              'Created At',
+              DateFormat('dd MMM, yyyy').format(_task!.createdAt),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value, {Color? valueColor}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingSM),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: AppTheme.textTertiary),
-          const SizedBox(width: AppTheme.spacingSM),
-          Text(
-            '$label:',
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(8)),
+            child: Icon(icon, size: 20, color: AppTheme.textTertiary),
           ),
-          const SizedBox(width: AppTheme.spacingSM),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontWeight: FontWeight.w600,
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: TextStyle(
+                  color: valueColor ?? AppTheme.textPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),
     );
   }
 }
+营销

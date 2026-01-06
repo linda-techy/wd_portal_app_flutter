@@ -29,6 +29,8 @@ class CustomerProject {
   final String? permitStatus;
   final String? projectDescription;
   final int? projectManagerId;
+  final double? latitude;
+  final double? longitude;
 
 
   CustomerProject({
@@ -60,6 +62,8 @@ class CustomerProject {
     this.permitStatus,
     this.projectDescription,
     this.projectManagerId,
+    this.latitude,
+    this.longitude,
   });
 
 
@@ -145,6 +149,16 @@ class CustomerProject {
               : int.tryParse(json['project_manager_id']?.toString() ??
                   json['projectManagerId']?.toString() ??
                   ''),
+      latitude: json['latitude'] != null
+          ? (json['latitude'] is double
+              ? json['latitude']
+              : double.tryParse(json['latitude'].toString()))
+          : null,
+      longitude: json['longitude'] != null
+          ? (json['longitude'] is double
+              ? json['longitude']
+              : double.tryParse(json['longitude'].toString()))
+          : null,
     );
 
   }
@@ -194,6 +208,8 @@ class CustomerProject {
       if (permitStatus != null) 'permit_status': permitStatus,
       if (projectDescription != null) 'project_description': projectDescription,
       if (projectManagerId != null) 'project_manager_id': projectManagerId,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
     };
 
   }
@@ -234,6 +250,8 @@ class CustomerProject {
     String? facing,
     String? permitStatus,
     String? projectDescription,
+    double? latitude,
+    double? longitude,
   }) {
     return CustomerProject(
       id: id ?? this.id,
@@ -264,6 +282,8 @@ class CustomerProject {
       permitStatus: permitStatus ?? this.permitStatus,
       projectDescription: projectDescription ?? this.projectDescription,
       projectManagerId: projectManagerId ?? this.projectManagerId,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
     );
 
   }
