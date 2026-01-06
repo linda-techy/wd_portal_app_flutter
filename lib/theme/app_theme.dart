@@ -42,6 +42,13 @@ class AppTheme {
   static const Color textTertiary = Color(0xFF94A3B8); // Tertiary text
   static const Color textInverse = Color(0xFFFFFFFF); // White text on dark
   
+
+  // Missing colors required by legacy code
+  static const Color tealAccent = Color(0xFF1DE9B6);
+  static const Color amber = warningAmber;
+  static const Color azure = skyBlue;
+  static const Color primaryColor = deepSlate;
+
   // Backward compatibility aliases (maintains existing code)
   static const Color primaryBlue = deepSlate;
   static const Color primaryBlueLight = deepSlateLight;

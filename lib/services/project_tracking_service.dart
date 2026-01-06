@@ -23,7 +23,7 @@ class ProjectTrackingService {
   Future<ProjectPhase> createPhase(int projectId, ProjectPhase phase) async {
     final response = await _apiService.post(
       '/projects/$projectId/tracking/phases',
-      phase.toJson(),
+      data: phase.toJson(),
     );
     return ProjectPhase.fromJson(response.data);
   }
@@ -45,7 +45,7 @@ class ProjectTrackingService {
     }
     final response = await _apiService.put(
       '/projects/$projectId/tracking/phases/$phaseId',
-      data,
+      data: data,
     );
     return ProjectPhase.fromJson(response.data);
   }
@@ -63,7 +63,7 @@ class ProjectTrackingService {
   Future<DelayLog> logDelay(int projectId, DelayLog delay) async {
     final response = await _apiService.post(
       '/projects/$projectId/tracking/delays',
-      delay.toJson(),
+      data: delay.toJson(),
     );
     return DelayLog.fromJson(response.data);
   }
@@ -84,7 +84,7 @@ class ProjectTrackingService {
   ) async {
     final response = await _apiService.post(
       '/projects/$projectId/tracking/variations',
-      variation.toJson(),
+      data: variation.toJson(),
     );
     return ProjectVariation.fromJson(response.data);
   }
@@ -92,7 +92,7 @@ class ProjectTrackingService {
   Future<ProjectVariation> submitVariation(int projectId, int variationId) async {
     final response = await _apiService.put(
       '/projects/$projectId/tracking/variations/$variationId/submit',
-      {},
+      data: {},
     );
     return ProjectVariation.fromJson(response.data);
   }
@@ -105,7 +105,7 @@ class ProjectTrackingService {
   ) async {
     final response = await _apiService.put(
       '/projects/$projectId/tracking/variations/$variationId/approve',
-      {
+      data: {
         'approvedById': approvedById,
         'approve': approve,
       },

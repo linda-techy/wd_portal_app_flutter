@@ -11,7 +11,7 @@ class PaymentService {
 
   /// Create a new design package payment
   Future<DesignPackagePayment> createDesignPayment(CreateDesignPaymentRequest request) async {
-    final response = await _apiService.post('/payments/design', request.toJson());
+    final response = await _apiService.post('/payments/design', data: request.toJson());
     
     if (response.data != null && response.data['data'] != null) {
       return DesignPackagePayment.fromJson(response.data['data']);
@@ -108,7 +108,7 @@ class PaymentService {
   ) async {
     final response = await _apiService.post(
       '/payments/schedule/$scheduleId/transactions', 
-      request.toJson()
+      data: request.toJson()
     );
     
     if (response.data != null && response.data['data'] != null) {

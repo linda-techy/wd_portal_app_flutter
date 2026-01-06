@@ -18,7 +18,7 @@ class ChangeOrderService {
   Future<ChangeOrder> createChangeOrder(ChangeOrder order) async {
     final response = await _apiService.post(
       '/api/projects/${order.projectId}/variations',
-      order.toJson(),
+      data: order.toJson(),
     );
 
     if (response.statusCode == 200) {
@@ -31,7 +31,7 @@ class ChangeOrderService {
   Future<ChangeOrder> updateChangeOrder(int projectId, int id, ChangeOrder order) async {
     final response = await _apiService.put(
       '/api/projects/$projectId/variations/$id',
-      order.toJson(),
+      data: order.toJson(),
     );
 
     if (response.statusCode == 200) {
@@ -52,7 +52,7 @@ class ChangeOrderService {
   Future<ChangeOrder> submitForApproval(int projectId, int id) async {
     final response = await _apiService.post(
       '/api/projects/$projectId/variations/$id/submit',
-      {},
+      data: {},
     );
 
     if (response.statusCode == 200) {
@@ -65,7 +65,7 @@ class ChangeOrderService {
   Future<ChangeOrder> approveChangeOrder(int projectId, int id) async {
     final response = await _apiService.post(
       '/api/projects/$projectId/variations/$id/approve',
-      {},
+      data: {},
     );
 
     if (response.statusCode == 200) {
@@ -78,7 +78,7 @@ class ChangeOrderService {
   Future<ChangeOrder> rejectChangeOrder(int projectId, int id, String reason) async {
     final response = await _apiService.post(
       '/api/projects/$projectId/variations/$id/reject',
-      {'reason': reason},
+      data: {'reason': reason},
     );
 
     if (response.statusCode == 200) {

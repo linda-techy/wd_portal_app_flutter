@@ -171,3 +171,93 @@ class PurchaseOrderItem {
     };
   }
 }
+
+class GoodsReceivedNote {
+  final int? id;
+  final String? grnNumber;
+  final int purchaseOrderId;
+  final String? poNumber;
+  final DateTime receivedDate;
+  final String? deliveryNoteNumber;
+  final String? comments;
+  final int? receivedById;
+  final List<GoodsReceivedNoteItem> items;
+
+  GoodsReceivedNote({
+    this.id,
+    this.grnNumber,
+    required this.purchaseOrderId,
+    this.poNumber,
+    required this.receivedDate,
+    this.deliveryNoteNumber,
+    this.comments,
+    this.receivedById,
+    this.items = const [],
+  });
+
+  factory GoodsReceivedNote.fromJson(Map<String, dynamic> json) {
+    return GoodsReceivedNote(
+      id: json['id'],
+      grnNumber: json['grnNumber'],
+      purchaseOrderId: json['purchaseOrderId'],
+      poNumber: json['poNumber'],
+      receivedDate: DateTime.parse(json['receivedDate']),
+      deliveryNoteNumber: json['deliveryNoteNumber'],
+      comments: json['comments'],
+      receivedById: json['receivedById'],
+      items: (json['items'] as List?)
+          ?.map((i) => GoodsReceivedNoteItem.fromJson(i))
+          .toList() ?? [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (id != null) 'id': id,
+      'grnNumber': grnNumber,
+      'purchaseOrderId': purchaseOrderId,
+      'poNumber': poNumber,
+      'receivedDate': receivedDate.toIso8601String(),
+      'deliveryNoteNumber': deliveryNoteNumber,
+      'comments': comments,
+      'receivedById': receivedById,
+      'items': items.map((i) => i.toJson()).toList(),
+    };
+  }
+}
+
+class GoodsReceivedNoteItem {
+  final int? purchaseOrderItemId;
+  final String description;
+  final double receivedQuantity;
+  final double rejectedQuantity;
+  final String? rejectionReason;
+  
+  GoodsReceivedNoteItem({
+    this.purchaseOrderItemId,
+    required this.description,
+    required this.receivedQuantity,
+    this.rejectedQuantity = 0,
+    this.rejectionReason,
+  });
+
+  factory GoodsReceivedNoteItem.fromJson(Map<String, dynamic> json) {
+    return GoodsReceivedNoteItem(
+      purchaseOrderItemId: json['purchaseOrderItemId'],
+      description: json['description'] ?? '',
+      receivedQuantity: (json['receivedQuantity'] as num).toDouble(),
+      rejectedQuantity: (json['rejectedQuantity'] as num?)?.toDouble() ?? 0,
+      rejectionReason: json['rejectionReason'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'purchaseOrderItemId': purchaseOrderItemId,
+      'description': description,
+      'receivedQuantity': receivedQuantity,
+      'rejectedQuantity': rejectedQuantity,
+      'rejectionReason': rejectionReason,
+    };
+  }
+}

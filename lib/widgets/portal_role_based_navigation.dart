@@ -273,7 +273,7 @@ class PortalRoleBasedNavigation extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () async {
-                    await authProvider.logout();
+                    await authProvider.logout(context);
                   },
                   icon: const Icon(Icons.logout, size: 18),
                   label: const Text('Logout'),

@@ -16,7 +16,7 @@ class SubcontractService {
     try {
       final response = await _apiService.post(
         '/subcontracts/work-orders',
-        workOrder.toJson(),
+        data: workOrder.toJson(),
       );
       return SubcontractWorkOrder.fromJson(response.data);
     } catch (e) {
@@ -51,7 +51,7 @@ class SubcontractService {
   /// Issue a work order
   Future<SubcontractWorkOrder> issueWorkOrder(int workOrderId) async {
     try {
-      final response = await _apiService.post('/subcontracts/work-orders/$workOrderId/issue', {});
+      final response = await _apiService.post('/subcontracts/work-orders/$workOrderId/issue', data: {});
       return SubcontractWorkOrder.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
@@ -63,7 +63,7 @@ class SubcontractService {
     try {
       final response = await _apiService.post(
         '/subcontracts/work-orders/$workOrderId/complete',
-        {},
+        data: {},
         queryParams: {'completionDate': completionDate.toIso8601String()},
       );
       return SubcontractWorkOrder.fromJson(response.data);
@@ -77,7 +77,7 @@ class SubcontractService {
     try {
       final response = await _apiService.post(
         '/subcontracts/work-orders/$workOrderId/terminate',
-        reason,
+        data: reason,
       );
       return SubcontractWorkOrder.fromJson(response.data);
     } catch (e) {
@@ -95,7 +95,7 @@ class SubcontractService {
     try {
       final response = await _apiService.post(
         '/subcontracts/work-orders/$workOrderId/measurements',
-        measurement.toJson(),
+        data: measurement.toJson(),
       );
       return SubcontractMeasurement.fromJson(response.data);
     } catch (e) {
@@ -120,7 +120,7 @@ class SubcontractService {
     try {
       final response = await _apiService.post(
         '/subcontracts/measurements/$measurementId/approve',
-        {},
+        data: {},
         queryParams: {'approvedById': approvedById},
       );
       return SubcontractMeasurement.fromJson(response.data);
@@ -138,7 +138,7 @@ class SubcontractService {
     try {
       final response = await _apiService.post(
         '/subcontracts/measurements/$measurementId/reject',
-        reason,
+        data: reason,
         queryParams: {'rejectedById': rejectedById},
       );
       return SubcontractMeasurement.fromJson(response.data);
@@ -166,7 +166,7 @@ class SubcontractService {
     try {
       final response = await _apiService.post(
         '/subcontracts/work-orders/${payment.workOrderId}/payments',
-        payment.toJson(),
+        data: payment.toJson(),
       );
       return SubcontractPayment.fromJson(response.data);
     } catch (e) {

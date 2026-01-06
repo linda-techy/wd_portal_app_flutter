@@ -17,8 +17,8 @@ class DelayLogService {
 
   Future<DelayLog> logDelay(DelayLog delay) async {
     final response = await _apiService.post(
-      '/api/projects/${delay.projectId}/delays',
-      delay.toJson(),
+      '/delay-logs',
+      data: delay.toJson(),
     );
 
     if (response.statusCode == 200) {
@@ -31,7 +31,7 @@ class DelayLogService {
   Future<DelayLog> closeDelay(int projectId, int delayId, DateTime endDate) async {
     final response = await _apiService.put(
       '/api/projects/$projectId/delays/$delayId/close?endDate=${endDate.toIso8601String().substring(0, 10)}',
-      {},
+      data: {},
     );
 
     if (response.statusCode == 200) {

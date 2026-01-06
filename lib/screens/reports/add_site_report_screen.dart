@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -6,7 +5,7 @@ import 'package:motion_toast/motion_toast.dart';
 import '../../models/site_report_models.dart';
 import '../../models/customer_project.dart';
 import '../../services/site_report_service.dart';
-import '../../providers/project_tracking_provider.dart';
+import '../../services/crm_service.dart';
 import '../../theme/app_theme.dart';
 import '../../constants.dart';
 
@@ -32,14 +31,31 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
   final _imagePicker = ImagePicker();
 
   CustomerProject? _selectedProject;
+  List<CustomerProject> _projects = [];
   ReportType _selectedType = ReportType.DAILY_PROGRESS;
-  List<File> _photos = [];
+  List<XFile> _photos = [];
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
     _selectedProject = widget.initialProject;
+    _loadProjects();
+  }
+
+  Future<void> _loadProjects() async {
+    try {
+      final projects = await CRMService().getAllCustomerProjects();
+      if (mounted) {
+        setState(() {
+          _projects = projects;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        MotionToast.error(description: Text('Error loading projects: $e')).show(context);
+      }
+    }
   }
 
   @override
@@ -59,7 +75,7 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
         setState(() {
           for (final pickedFile in pickedFiles) {
             if (pickedFile != null) {
-              _photos.add(File(pickedFile.path));
+              _photos.add(pickedFile);
             }
           }
         });
@@ -80,6 +96,11 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
       MotionToast.warning(description: const Text('Please select a project')).show(context);
       return;
     }
+    
+    if (_selectedProject!.id == null) {
+       MotionToast.error(description: const Text('Invalid project selected')).show(context);
+       return;
+    }
 
     if (!_formKey.currentState!.validate()) return;
 
@@ -87,7 +108,7 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
 
     try {
       await _siteReportService.createReport(
-        projectId: _selectedProject!.id,
+        projectId: _selectedProject!.id!,
         title: _titleController.text,
         description: _descriptionController.text,
         reportType: _selectedType,
@@ -152,28 +173,23 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
   }
 
   Widget _buildProjectSelector() {
-    return Consumer<ProjectTrackingProvider>(
-      builder: (context, provider, _) {
-        final projects = provider.projects;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Project', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<CustomerProject>(
-              value: _selectedProject,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              items: projects.map((p) => DropdownMenuItem(value: p, child: Text(p.projectName))).toList(),
-              onChanged: widget.initialProject != null ? null : (val) => setState(() => _selectedProject = val),
-              validator: (val) => val == null ? 'Project is required' : null,
-            ),
-          ],
-        );
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Project', style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<CustomerProject>(
+          value: _selectedProject,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+          items: _projects.map((p) => DropdownMenuItem(value: p, child: Text(p.projectName))).toList(),
+          onChanged: widget.initialProject != null ? null : (val) => setState(() => _selectedProject = val),
+          validator: (val) => val == null ? 'Project is required' : null,
+        ),
+      ],
     );
   }
 
@@ -274,7 +290,7 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.file(_photos[index], width: double.infinity, height: double.infinity, fit: BoxFit.cover),
+                    child: Image.network(_photos[index].path, width: double.infinity, height: double.infinity, fit: BoxFit.cover),
                   ),
                   Positioned(
                     top: 2,

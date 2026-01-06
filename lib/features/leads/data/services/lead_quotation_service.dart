@@ -16,7 +16,7 @@ class LeadQuotationService {
 
   Future<LeadQuotation> createQuotation(LeadQuotation quotation) async {
     try {
-      final response = await _apiService.post('/leads/quotations', quotation.toCreateJson());
+      final response = await _apiService.post('/leads/quotations', data: quotation.toCreateJson());
       return LeadQuotation.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to create quotation: $e');
@@ -25,7 +25,7 @@ class LeadQuotationService {
 
   Future<LeadQuotation> updateQuotation(int id, LeadQuotation quotation) async {
     try {
-      final response = await _apiService.put('/leads/quotations/$id', quotation.toCreateJson());
+      final response = await _apiService.put('/leads/quotations/$id', data: quotation.toCreateJson());
       return LeadQuotation.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to update quotation: $e');
@@ -34,7 +34,7 @@ class LeadQuotationService {
 
   Future<LeadQuotation> sendQuotation(int id) async {
     try {
-      final response = await _apiService.post('/leads/quotations/$id/send', {});
+      final response = await _apiService.post('/leads/quotations/$id/send', data: {});
       return LeadQuotation.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to send quotation: $e');

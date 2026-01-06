@@ -4,7 +4,7 @@ import '../../constants.dart';
 import '../../models/site_report_models.dart';
 import '../../models/customer_project.dart';
 import '../../services/site_report_service.dart';
-import '../../providers/project_tracking_provider.dart';
+import '../../services/crm_service.dart';
 import '../../theme/app_theme.dart';
 import '../../config/app_config.dart';
 import './add_site_report_screen.dart';
@@ -18,35 +18,12 @@ class ReportsScreen extends StatefulWidget {
 
 class _ReportsScreenState extends State<ReportsScreen> {
   final _siteReportService = SiteReportService();
+  List<CustomerProject> _projects = [];
   List<SiteReport> _reports = [];
   bool _isLoading = true;
   CustomerProject? _selectedProject;
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchReports();
-  }
 
-  Future<void> _fetchReports() async {
-    setState(() => _isLoading = true);
-    try {
-      final reports = _selectedProject == null
-          ? await _siteReportService.getMyReports()
-          : await _siteReportService.getReportsByProject(_selectedProject!.id);
-      setState(() {
-        _reports = reports;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error fetching reports: $e"), backgroundColor: Colors.red),
-        );
-      }
-    }
-  }
 
   void _showPhotoPreview(String photoUrl, String title) {
     showDialog(
@@ -174,52 +151,106 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  Widget _buildFilterBar() {
-    return Consumer<ProjectTrackingProvider>(
-      builder: (context, provider, _) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: defaultPadding, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.filter_list, size: 20, color: AppTheme.textSecondary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: DropdownButton<CustomerProject>(
-                  hint: const Text("All Projects"),
-                  value: _selectedProject,
-                  isExpanded: true,
-                  underline: const SizedBox(),
-                  style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
-                  items: [
-                    const DropdownMenuItem<CustomerProject>(
-                      value: null,
-                      child: Text("All Projects"),
-                    ),
-                    ...provider.projects.map((p) => DropdownMenuItem(
-                          value: p,
-                          child: Text(p.projectName),
-                        )),
-                  ],
-                  onChanged: (val) {
-                    setState(() => _selectedProject = val);
-                    _fetchReports();
-                  },
-                ),
-              ),
-            ],
-          ),
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final projects = await CRMService().getAllCustomerProjects();
+      
+      List<SiteReport> reports;
+      if (_selectedProject == null) {
+        reports = await _siteReportService.getMyReports();
+      } else {
+        reports = await _siteReportService.getReportsByProject(_selectedProject!.id!);
+      }
+
+      setState(() {
+        _projects = projects;
+        _reports = reports;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error loading data: $e"), backgroundColor: Colors.red),
         );
-      },
+      }
+    }
+  }
+
+  Future<void> _fetchReports() async {
+     setState(() => _isLoading = true);
+    try {
+      final reports = _selectedProject == null
+          ? await _siteReportService.getMyReports()
+          : await _siteReportService.getReportsByProject(_selectedProject!.id!);
+      setState(() {
+        _reports = reports;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error fetching reports: $e"), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  // ... (keep _showPhotoPreview and _getPhotoUrl)
+
+  // ... (keep build method)
+  
+  Widget _buildFilterBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: defaultPadding, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.filter_list, size: 20, color: AppTheme.textSecondary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: DropdownButton<CustomerProject>(
+              hint: const Text("All Projects"),
+              value: _selectedProject,
+              isExpanded: true,
+              underline: const SizedBox(),
+              style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
+              items: [
+                const DropdownMenuItem<CustomerProject>(
+                  value: null,
+                  child: Text("All Projects"),
+                ),
+                ..._projects.map((p) => DropdownMenuItem(
+                      value: p,
+                      child: Text(p.projectName),
+                    )),
+              ],
+              onChanged: (val) {
+                setState(() => _selectedProject = val);
+                _fetchReports();
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -410,4 +441,4 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 }
-营销
+

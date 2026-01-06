@@ -39,7 +39,7 @@ class CustomerService {
 
   Future<Customer> createCustomer(Customer customer) async {
     try {
-      final response = await _apiService.post('/customers', customer.toCreateJson());
+      final response = await _apiService.post('/customers', data: customer.toCreateJson());
       return Customer.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to create customer: $e');
@@ -48,7 +48,7 @@ class CustomerService {
 
   Future<Customer> updateCustomer(int id, Customer customer) async {
     try {
-      final response = await _apiService.put('/customers/$id', customer.toUpdateJson());
+      final response = await _apiService.put('/customers/$id', data: customer.toUpdateJson());
       return Customer.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to update customer: $e');

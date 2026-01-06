@@ -9,17 +9,17 @@ class LabourService {
   }
 
   Future<dynamic> createLabour(Map<String, dynamic> labourData) async {
-    final response = await _apiService.post('/api/labour', labourData);
+    final response = await _apiService.post('/api/labour', data: labourData);
     return response.data;
   }
 
   Future<List<dynamic>> recordAttendance(List<Map<String, dynamic>> attendanceList) async {
-    final response = await _apiService.post('/api/labour/attendance', attendanceList);
+    final response = await _apiService.post('/api/labour/attendance', data: attendanceList);
     return response.data;
   }
 
   Future<dynamic> createMBEntry(Map<String, dynamic> mbData) async {
-    final response = await _apiService.post('/api/labour/mb', mbData);
+    final response = await _apiService.post('/api/labour/mb', data: mbData);
     return response.data;
   }
 

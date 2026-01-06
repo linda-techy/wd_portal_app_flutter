@@ -12,7 +12,7 @@ class InventoryService {
   }
 
   Future<MaterialModel> createMaterial(MaterialModel material) async {
-    final response = await _apiService.post('/api/inventory/materials', material.toJson());
+    final response = await _apiService.post('/api/inventory/materials', data: material.toJson());
     return MaterialModel.fromJson(response.data);
   }
 
@@ -22,7 +22,7 @@ class InventoryService {
   }
 
   Future<StockAdjustment> createStockAdjustment(StockAdjustment adjustment) async {
-    final response = await _apiService.post('/api/inventory/adjustments', adjustment.toJson());
+    final response = await _apiService.post('/api/inventory/adjustments', data: adjustment.toJson());
     return StockAdjustment.fromJson(response.data);
   }
   Future<List<MaterialConsumptionReport>> getConsumptionReport(int projectId) async {

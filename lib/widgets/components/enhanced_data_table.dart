@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:admin/widgets/animations/entrance_animation.dart';
 import 'package:admin/widgets/animations/shimmer_loading.dart';
 import '../../theme/app_theme.dart';

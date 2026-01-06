@@ -6,65 +6,42 @@ class SiteVisitService {
 
   /// Check in to a project site with GPS coordinates
   Future<SiteVisit> checkIn(CheckInRequest request) async {
-    try {
-      final response = await _apiService.post('/site-visits/check-in', request.toJson());
-      return SiteVisit.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to check in: ${e.toString()}');
-    }
+    final response = await _apiService.post('/site-visits/check-in', data: request.toJson());
+    return _apiService.unwrap<SiteVisit>(response, (json) => SiteVisit.fromJson(json as Map<String, dynamic>));
   }
 
   /// Check out from a site visit
   Future<SiteVisit> checkOut(int visitId, CheckOutRequest request) async {
-    try {
-      final response = await _apiService.post('/site-visits/$visitId/check-out', request.toJson());
-      return SiteVisit.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to check out: ${e.toString()}');
-    }
+    final response = await _apiService.post('/site-visits/$visitId/check-out', data: request.toJson());
+    return _apiService.unwrap<SiteVisit>(response, (json) => SiteVisit.fromJson(json as Map<String, dynamic>));
   }
 
   /// Get current active visit for logged-in user
   Future<SiteVisit?> getMyActiveVisit() async {
-    try {
-      final response = await _apiService.get('/site-visits/active');
-      if (response.statusCode == 204) {
-        return null; // No active visit
-      }
-      return SiteVisit.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to get active visit: ${e.toString()}');
-    }
+    final response = await _apiService.get('/site-visits/active');
+    // For nullable return, we can check if response.data['data'] is null
+    return _apiService.unwrap<SiteVisit?>(response, (json) {
+      if (json == null) return null;
+      return SiteVisit.fromJson(json as Map<String, dynamic>);
+    });
   }
 
   /// Get all currently active visits (admin only)
   Future<List<SiteVisit>> getAllActiveVisits() async {
-    try {
-      final response = await _apiService.get('/site-visits/all-active');
-      return (response.data as List).map((json) => SiteVisit.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to get all active visits: ${e.toString()}');
-    }
+    final response = await _apiService.get('/site-visits/all-active');
+    return _apiService.unwrapList<SiteVisit>(response, (json) => SiteVisit.fromJson(json));
   }
 
   /// Get visits for a specific project
   Future<List<SiteVisit>> getVisitsByProject(int projectId) async {
-    try {
-      final response = await _apiService.get('/site-visits/project/$projectId');
-      return (response.data as List).map((json) => SiteVisit.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to get project visits: ${e.toString()}');
-    }
+    final response = await _apiService.get('/site-visits/project/$projectId');
+    return _apiService.unwrapList<SiteVisit>(response, (json) => SiteVisit.fromJson(json));
   }
 
   /// Get today's visits for a project
   Future<List<SiteVisit>> getTodaysVisits(int projectId) async {
-    try {
-      final response = await _apiService.get('/site-visits/project/$projectId/today');
-      return (response.data as List).map((json) => SiteVisit.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to get today\'s visits: ${e.toString()}');
-    }
+    final response = await _apiService.get('/site-visits/project/$projectId/today');
+    return _apiService.unwrapList<SiteVisit>(response, (json) => SiteVisit.fromJson(json));
   }
 
   /// Get visits by project and date range
@@ -73,62 +50,43 @@ class SiteVisitService {
     DateTime startDate,
     DateTime endDate,
   ) async {
-    try {
-      final response = await _apiService.get(
-        '/site-visits/project/$projectId/range',
-        queryParams: {
-          'startDate': startDate.toIso8601String().split('T')[0],
-          'endDate': endDate.toIso8601String().split('T')[0],
-        },
-      );
-      return (response.data as List).map((json) => SiteVisit.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to get visits by date range: ${e.toString()}');
-    }
+    final response = await _apiService.get(
+      '/site-visits/project/$projectId/range',
+      queryParams: {
+        'startDate': startDate.toIso8601String().split('T')[0],
+        'endDate': endDate.toIso8601String().split('T')[0],
+      },
+    );
+    return _apiService.unwrapList<SiteVisit>(response, (json) => SiteVisit.fromJson(json));
   }
 
   /// Get my visit history
   Future<List<SiteVisit>> getMyVisitHistory(DateTime startDate, DateTime endDate) async {
-    try {
-      final response = await _apiService.get(
-        '/site-visits/my-history',
-        queryParams: {
-          'startDate': startDate.toIso8601String().split('T')[0],
-          'endDate': endDate.toIso8601String().split('T')[0],
-        },
-      );
-      return (response.data as List).map((json) => SiteVisit.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to get visit history: ${e.toString()}');
-    }
+    final response = await _apiService.get(
+      '/site-visits/my-history',
+      queryParams: {
+        'startDate': startDate.toIso8601String().split('T')[0],
+        'endDate': endDate.toIso8601String().split('T')[0],
+      },
+    );
+    return _apiService.unwrapList<SiteVisit>(response, (json) => SiteVisit.fromJson(json));
   }
 
   /// Get a specific visit by ID
   Future<SiteVisit> getVisitById(int id) async {
-    try {
-      final response = await _apiService.get('/site-visits/$id');
-      return SiteVisit.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to get visit: ${e.toString()}');
-    }
+    final response = await _apiService.get('/site-visits/$id');
+    return _apiService.unwrap<SiteVisit>(response, (json) => SiteVisit.fromJson(json as Map<String, dynamic>));
   }
 
   /// Cancel a pending visit
   Future<void> cancelVisit(int visitId) async {
-    try {
-      await _apiService.delete('/site-visits/$visitId');
-    } catch (e) {
-      throw Exception('Failed to cancel visit: ${e.toString()}');
-    }
+    final response = await _apiService.delete('/site-visits/$visitId');
+    _apiService.unwrap<void>(response, (_) {});
   }
 
   /// Get available visit types
   Future<List<VisitTypeOption>> getVisitTypes() async {
-    try {
-      final response = await _apiService.get('/site-visits/types');
-      return (response.data as List).map((json) => VisitTypeOption.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to get visit types: ${e.toString()}');
-    }
+    final response = await _apiService.get('/site-visits/types');
+    return _apiService.unwrapList<VisitTypeOption>(response, (json) => VisitTypeOption.fromJson(json));
   }
 }

@@ -18,7 +18,7 @@ class WarrantyService {
   Future<ProjectWarranty> createWarranty(ProjectWarranty warranty) async {
     final response = await _apiService.post(
       '/api/projects/${warranty.projectId}/warranties',
-      warranty.toJson(),
+      data: warranty.toJson(),
     );
 
     if (response.statusCode == 200) {

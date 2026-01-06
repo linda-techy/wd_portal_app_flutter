@@ -60,9 +60,11 @@ dependencies:
   # Authentication and Security
   flutter_secure_storage: ^9.0.0
   crypto: ^3.0.3
+  geolocator: ^13.0.0
+  motion_toast: 2.8.0
 
   # Immersive 360 Viewer
-  panorama: ^0.0.2+1
+  panorama: ^0.4.1
 
 dev_dependencies:
   flutter_test:

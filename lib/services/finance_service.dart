@@ -6,17 +6,17 @@ class FinanceService {
   final ApiService _apiService = ApiService();
 
   Future<ProjectInvoice> createProjectInvoice(ProjectInvoice invoice) async {
-    final response = await _apiService.post('/finance/invoice/create', invoice.toJson());
+    final response = await _apiService.post('/finance/invoice/create', data: invoice.toJson());
     return ProjectInvoice.fromJson(response.data);
   }
 
   Future<PurchaseInvoice> recordPurchaseInvoice(PurchaseInvoice invoice) async {
-    final response = await _apiService.post('/finance/purchase-invoice/record', invoice.toJson());
+    final response = await _apiService.post('/finance/purchase-invoice/record', data: invoice.toJson());
     return PurchaseInvoice.fromJson(response.data);
   }
 
   Future<LabourPayment> recordLabourPayment(LabourPayment payment) async {
-    final response = await _apiService.post('/finance/labour-payment/record', payment.toJson());
+    final response = await _apiService.post('/finance/labour-payment/record', data: payment.toJson());
     return LabourPayment.fromJson(response.data);
   }
 

@@ -53,7 +53,7 @@ class _TaskAlertDashboardScreenState extends State<TaskAlertDashboardScreen> {
 
   Future<void> _triggerManualAlerts() async {
     try {
-      await _taskService.triggerManualAlerts();
+      await _taskService.triggerAlerts();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Alert check triggered successfully')),

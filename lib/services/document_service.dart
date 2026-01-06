@@ -9,16 +9,14 @@ class DocumentService {
   Future<List<ProjectDocument>> getProjectDocuments(int projectId, {int? categoryId}) async {
     final response = await _apiService.get(
       '/customer-projects/$projectId/documents',
-      queryParams: categoryId != null ? {'categoryId': categoryId} : null,
+      queryParams: categoryId != null ? {'categoryId': categoryId.toString()} : null,
     );
-    final List data = response.data['data'];
-    return data.map((json) => ProjectDocument.fromJson(json)).toList();
+    return _apiService.unwrapList(response, (json) => ProjectDocument.fromJson(json));
   }
 
   Future<List<DocumentCategory>> getCategories(int projectId) async {
     final response = await _apiService.get('/customer-projects/$projectId/documents/categories');
-    final List data = response.data['data'];
-    return data.map((json) => DocumentCategory.fromJson(json)).toList();
+    return _apiService.unwrapList(response, (json) => DocumentCategory.fromJson(json));
   }
 
   Future<ProjectDocument> uploadDocument({
@@ -35,13 +33,14 @@ class DocumentService {
 
     final response = await _apiService.post(
       '/customer-projects/$projectId/documents',
-      formData,
+      data: formData,
       options: Options(contentType: 'multipart/form-data'),
     );
-    return ProjectDocument.fromJson(response.data['data']);
+    return _apiService.unwrap(response, (json) => ProjectDocument.fromJson(json as Map<String, dynamic>));
   }
 
   Future<void> deleteDocument(int projectId, int documentId) async {
-    await _apiService.delete('/customer-projects/$projectId/documents/$documentId');
+    final response = await _apiService.delete('/customer-projects/$projectId/documents/$documentId');
+    _apiService.unwrap(response, (_) {});
   }
 }

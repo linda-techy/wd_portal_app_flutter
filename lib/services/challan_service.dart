@@ -22,7 +22,7 @@ class ChallanService {
     if (startDate != null) body['startDate'] = startDate.toIso8601String();
     if (endDate != null) body['endDate'] = endDate.toIso8601String();
 
-    final response = await _apiService.post('/challans/search', body);
+    final response = await _apiService.post('/challans/search', data: body);
     
     if (response.data != null) {
       // Direct list response based on controller
@@ -35,7 +35,7 @@ class ChallanService {
 
   /// Generate a challan for a transaction
   Future<ChallanItem> generateChallan(int transactionId) async {
-    final response = await _apiService.post('/challans/generate/$transactionId', {});
+    final response = await _apiService.post('/challans/generate/$transactionId', data: {});
     
     if (response.data != null) {
       return ChallanItem.fromJson(response.data);
@@ -56,7 +56,7 @@ class ChallanService {
   Future<Uint8List> downloadBulk(List<int> ids) async {
     final response = await _apiService.post(
       '/challans/bulk-download',
-      ids,
+      data: ids,
       options: Options(responseType: ResponseType.bytes),
     );
     return Uint8List.fromList(response.data);

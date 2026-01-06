@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:admin/services/http_interceptor.dart';
 import 'package:flutter/foundation.dart';
 import 'package:admin/constants.dart';
+import 'package:admin/models/api_response.dart';
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
@@ -65,8 +66,8 @@ class ApiService {
     }
   }
 
-  Future<Response> post(String endpoint, dynamic data,
-      {Map<String, dynamic>? queryParams, Options? options}) async {
+  Future<Response> post(String endpoint,
+      {dynamic data, Map<String, dynamic>? queryParams, Options? options}) async {
     try {
       final response =
           await _dio.post(endpoint, data: data, queryParameters: queryParams, options: options);
@@ -76,8 +77,8 @@ class ApiService {
     }
   }
 
-  Future<Response> put(String endpoint, dynamic data,
-      {Map<String, dynamic>? queryParams, Options? options}) async {
+  Future<Response> put(String endpoint,
+      {dynamic data, Map<String, dynamic>? queryParams, Options? options}) async {
     try {
       final response =
           await _dio.put(endpoint, data: data, queryParameters: queryParams, options: options);
@@ -94,6 +95,47 @@ class ApiService {
     } catch (e) {
       throw _handleError(e);
     }
+  }
+
+  /// Extracts data from a standardized ApiResponse or throws if success is false.
+  /// This handles both wrapped and unwrapped data for backward compatibility.
+  T unwrap<T>(Response response, T Function(Object? json) fromJsonT) {
+    if (response.data == null) {
+      throw Exception('Server returned empty response');
+    }
+
+    // Check if it's the new ApiResponse format
+    if (response.data is Map<String, dynamic> &&
+        (response.data as Map).containsKey('success')) {
+      final apiResponse = ApiResponse<T>.fromJson(
+        response.data as Map<String, dynamic>,
+        fromJsonT,
+      );
+
+      if (apiResponse.success) {
+        if (apiResponse.data == null && T != dynamic && T.toString() != 'void') {
+          // Some GET active visits might return success:true but data:null
+          // We let the caller handle null if T is nullable, but here we provide a hint.
+          return null as T;
+        }
+        return apiResponse.data as T;
+      } else {
+        throw Exception(apiResponse.message);
+      }
+    }
+
+    // Fallback for old endpoints (unwrapped data)
+    return fromJsonT(response.data);
+  }
+
+  /// Version of unwrap for lists of items
+  List<T> unwrapList<T>(Response response, T Function(Map<String, dynamic> json) fromJsonT) {
+    return unwrap<List<T>>(response, (json) {
+      if (json is List) {
+        return json.map((item) => fromJsonT(item as Map<String, dynamic>)).toList();
+      }
+      return [];
+    });
   }
 
   Exception _handleError(dynamic error) {
@@ -115,11 +157,11 @@ class ApiService {
                 'Server returned HTML instead of JSON. Please check if the API server is running on ${ApiConfig.fullApiUrl}');
           }
 
-          // Extract error message from response if available
+          // Extract error message from ApiResponse if available
           String errorMessage = 'An error occurred';
           if (responseData is Map) {
-            errorMessage = responseData['error']?.toString() ??
-                responseData['message']?.toString() ??
+            errorMessage = responseData['message']?.toString() ?? 
+                responseData['error']?.toString() ??
                 errorMessage;
           } else if (responseData is String) {
             errorMessage = responseData;
@@ -128,14 +170,14 @@ class ApiService {
           // Handle specific status codes with user-friendly messages
           switch (statusCode) {
             case 400:
-              return Exception('Invalid request: $errorMessage');
+              return Exception(errorMessage);
             case 401:
               return Exception('Authentication required. Please log in again.');
             case 403:
               return Exception(
                   'You do not have permission to perform this action.');
             case 404:
-              return Exception('The requested resource was not found.');
+              return Exception(errorMessage.contains('error') ? 'Resource not found' : errorMessage);
             case 409:
               return Exception(
                   'This resource already exists. Please check and try again.');

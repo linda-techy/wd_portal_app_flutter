@@ -110,7 +110,7 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
           ),
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.horizontal(AppTheme.spacingMD),
+            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMD),
             itemCount: provider.categories.length + 1,
             itemBuilder: (context, index) {
               if (index == 0) {

@@ -16,7 +16,7 @@ class VendorPaymentService {
     try {
       final response = await _apiService.post(
         '/accounts-payable/payments',
-        payment.toJson(),
+        data: payment.toJson(),
       );
       return VendorPayment.fromJson(response.data);
     } catch (e) {

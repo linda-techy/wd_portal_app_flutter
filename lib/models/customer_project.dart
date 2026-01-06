@@ -66,6 +66,8 @@ class CustomerProject {
     this.longitude,
   });
 
+  String get projectName => name;
+
 
   factory CustomerProject.fromJson(Map<String, dynamic> json) {
     return CustomerProject(

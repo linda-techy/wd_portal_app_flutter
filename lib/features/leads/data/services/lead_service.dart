@@ -56,7 +56,7 @@ class LeadService {
 
   Future<Lead> createLead(Lead lead) async {
     try {
-      final response = await _apiService.post('/leads', lead.toCreateJson());
+      final response = await _apiService.post('/leads', data: lead.toCreateJson());
       return Lead.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to create lead: $e');
@@ -65,7 +65,7 @@ class LeadService {
 
   Future<Lead> updateLead(String id, Lead lead) async {
     try {
-      final response = await _apiService.put('/leads/$id', lead.toUpdateJson());
+      final response = await _apiService.put('/leads/$id', data: lead.toUpdateJson());
       return Lead.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to update lead: $e');
@@ -132,7 +132,7 @@ class LeadService {
 
   Future<void> convertLead(String leadId, Map<String, dynamic> requestData) async {
     try {
-      await _apiService.post('/leads/$leadId/convert', requestData);
+      await _apiService.post('/leads/$leadId/convert', data: requestData);
     } catch (e) {
       throw Exception('Failed to convert lead: $e');
     }
@@ -161,7 +161,7 @@ class LeadService {
         'description': description,
       });
       
-      final response = await _apiService.post('/api/leads/$leadId/documents', formData);
+      final response = await _apiService.post('/api/leads/$leadId/documents', data: formData);
       return LeadDocument.fromJson(response.data);
       return LeadDocument.fromJson(response.data);
     } catch (e) {
@@ -171,7 +171,7 @@ class LeadService {
 
   Future<LeadInteraction> createInteraction(LeadInteraction interaction) async {
     try {
-      final response = await _apiService.post('/leads/interactions', interaction.toJson());
+      final response = await _apiService.post('/leads/interactions', data: interaction.toJson());
       return LeadInteraction.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to create interaction: $e');

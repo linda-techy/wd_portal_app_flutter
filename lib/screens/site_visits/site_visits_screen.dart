@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/services/site_visit_service.dart';
 import 'package:admin/services/crm_service.dart';
@@ -441,11 +442,9 @@ class _SiteVisitsScreenState extends State<SiteVisitsScreen> {
                       (p) => p.id == _activeVisit!.projectId,
                       orElse: () => CustomerProject(
                         id: _activeVisit!.projectId,
-                        projectName: _activeVisit!.projectName,
-                        customerName: '',
+                        name: _activeVisit!.projectName,
                         location: '',
                         sqfeet: 0,
-                        projectStatus: '',
                         projectPhase: '',
                         startDate: DateTime.now(),
                       ),
