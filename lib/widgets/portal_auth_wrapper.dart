@@ -5,8 +5,24 @@ import '../screens/auth/portal_login_screen.dart';
 import '../screens/main/main_screen.dart';
 import '../widgets/splash_screen.dart';
 
-class PortalAuthWrapper extends StatelessWidget {
+class PortalAuthWrapper extends StatefulWidget {
   const PortalAuthWrapper({super.key});
+
+  @override
+  State<PortalAuthWrapper> createState() => _PortalAuthWrapperState();
+}
+
+class _PortalAuthWrapperState extends State<PortalAuthWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    // Schedule initialization for after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<PortalAuthProvider>().initializeAuth(context);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,5 +41,5 @@ class PortalAuthWrapper extends StatelessWidget {
       },
     );
   }
-  }
+}
 

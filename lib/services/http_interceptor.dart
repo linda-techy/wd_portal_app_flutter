@@ -65,7 +65,12 @@ class AuthInterceptor extends Interceptor {
             print('DEBUG Flutter: Refresh successful. New access token received.');
 
             final newAccessToken = response.data['accessToken'];
+            final newRefreshToken = response.data['refreshToken'];
+
             await _storage.write(key: 'access_token', value: newAccessToken);
+            if (newRefreshToken != null) {
+              await _storage.write(key: 'refresh_token', value: newRefreshToken);
+            }
 
             // Retry the original request with new token
             final originalRequest = err.requestOptions;

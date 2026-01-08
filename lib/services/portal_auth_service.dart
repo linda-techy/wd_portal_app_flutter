@@ -59,9 +59,13 @@ class PortalAuthService {
           await _dio.post('/auth/refresh-token', data: request.toJson());
       final refreshResponse = RefreshTokenResponse.fromJson(response.data);
 
-      // Update stored access token
+      // Update stored tokens
       await _storage.write(
           key: 'access_token', value: refreshResponse.accessToken);
+      if (refreshResponse.refreshToken.isNotEmpty) {
+        await _storage.write(
+            key: 'refresh_token', value: refreshResponse.refreshToken);
+      }
 
       return refreshResponse;
     } on DioException catch (_) {
@@ -192,7 +196,12 @@ class PortalAuthInterceptor extends Interceptor {
           );
 
           final newAccessToken = response.data['accessToken'];
+          final newRefreshToken = response.data['refreshToken'];
+          
           await _storage.write(key: 'access_token', value: newAccessToken);
+          if (newRefreshToken != null) {
+            await _storage.write(key: 'refresh_token', value: newRefreshToken);
+          }
 
           // Retry the original request with new token
           final originalRequest = err.requestOptions;

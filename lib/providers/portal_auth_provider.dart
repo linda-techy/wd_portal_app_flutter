@@ -9,7 +9,7 @@ import 'permission_provider.dart';
 class PortalAuthProvider extends ChangeNotifier {
   UserInfo? _currentUser;
   List<String> _permissions = [];
-  bool _isLoading = false;
+  bool _isLoading = true;
   bool _isAuthenticated = false;
 
   // Getters
