@@ -1140,6 +1140,7 @@ class _LeadsTableState extends State<LeadsTable> {
                       DataColumn(label: Text("Name")),
                       DataColumn(label: Text("Contact")),
                       DataColumn(label: Text("Status")),
+                      DataColumn(label: Text("Score")),
                       DataColumn(label: Text("Priority")),
                       DataColumn(label: Text("Project")),
                       DataColumn(label: Text("Budget")),
@@ -1362,7 +1363,7 @@ class _LeadsTableState extends State<LeadsTable> {
               
               // Fixed Actions Column
               Container(
-                width: 92,
+                width: 120,
                 decoration: BoxDecoration(
                   border: Border(
                     left: BorderSide(
@@ -1392,153 +1393,127 @@ class _LeadsTableState extends State<LeadsTable> {
                           return Container(
                             height: 52,
                             alignment: Alignment.center,
-                            child: Wrap(
-                              alignment: WrapAlignment.center,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              spacing: 2,
-                              runSpacing: 2,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // Edit button - Only show if user has EDIT permission
+                                // Edit button - Primary action
                                 if (permissions.canEditLead)
                                   SizedBox(
-                                    width: 36,
-                                    height: 36,
+                                    width: 32,
+                                    height: 32,
                                     child: IconButton(
                                       icon: const Icon(Icons.edit,
                                           color: Colors.blue, size: 18),
                                       tooltip: 'Edit Lead',
                                       padding: EdgeInsets.zero,
                                       constraints: const BoxConstraints(),
-                                      onPressed: () {
-                                        debugPrint('Edit button pressed for lead: ${lead.name}');
-                                        widget.onEdit(lead);
-                                      },
+                                      onPressed: () => widget.onEdit(lead),
                                     ),
                                   ),
-                                // Convert button - Only show if not already converted and user has CREATE permission
-                                if (permissions.canCreateLead && lead.status.toLowerCase() != 'converted')
-                                  SizedBox(
-                                    width: 36,
-                                    height: 36,
-                                    child: IconButton(
-                                      icon: const Icon(Icons.transform,
-                                          color: Colors.green, size: 18),
-                                      tooltip: 'Convert to Customer',
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                      onPressed: () {
-                                        debugPrint('Convert button pressed for lead: ${lead.name}');
-                                        widget.onConvert(lead);
-                                      },
-                                    ),
-                                  ),
-                                // Log Activity button
+                                
+                                // More Actions Menu
                                 SizedBox(
-                                  width: 36,
-                                  height: 36,
-                                  child: IconButton(
-                                    icon: const Icon(Icons.note_add,
-                                        color: Colors.teal, size: 18),
-                                    tooltip: 'Log Activity',
+                                  width: 32,
+                                  height: 32,
+                                  child: PopupMenuButton<String>(
+                                    icon: const Icon(Icons.more_vert, size: 20),
                                     padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    onPressed: () {
-                                      widget.onLogActivity(lead);
+                                    tooltip: 'More Actions',
+                                    onSelected: (value) {
+                                      switch (value) {
+                                        case 'convert':
+                                          widget.onConvert(lead);
+                                          break;
+                                        case 'log':
+                                          widget.onLogActivity(lead);
+                                          break;
+                                        case 'quotes':
+                                          widget.onViewQuotations(lead);
+                                          break;
+                                        case 'tasks':
+                                          widget.onViewTasks(lead);
+                                          break;
+                                        case 'activity':
+                                          widget.onViewActivity(lead);
+                                          break;
+                                        case 'docs':
+                                          widget.onViewDocuments(lead);
+                                          break;
+                                        case 'delete':
+                                          _showDeleteConfirmation(context, lead);
+                                          break;
+                                      }
                                     },
+                                    itemBuilder: (context) => [
+                                      if (permissions.canCreateLead && 
+                                          lead.status.toLowerCase() != 'converted')
+                                        const PopupMenuItem(
+                                          value: 'convert',
+                                          child: ListTile(
+                                            leading: Icon(Icons.transform, color: Colors.green, size: 20),
+                                            title: Text('Convert to Customer'),
+                                            contentPadding: EdgeInsets.zero,
+                                            dense: true,
+                                          ),
+                                        ),
+                                      const PopupMenuItem(
+                                        value: 'log',
+                                        child: ListTile(
+                                          leading: Icon(Icons.note_add, color: Colors.teal, size: 20),
+                                          title: Text('Log Activity'),
+                                          contentPadding: EdgeInsets.zero,
+                                          dense: true,
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'quotes',
+                                        child: ListTile(
+                                          leading: Icon(Icons.request_quote, color: Colors.amber, size: 20),
+                                          title: Text('View Quotations'),
+                                          contentPadding: EdgeInsets.zero,
+                                          dense: true,
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'tasks',
+                                        child: ListTile(
+                                          leading: Icon(Icons.assignment, color: Colors.blue, size: 20),
+                                          title: Text('View Tasks'),
+                                          contentPadding: EdgeInsets.zero,
+                                          dense: true,
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'activity',
+                                        child: ListTile(
+                                          leading: Icon(Icons.history, color: Colors.purple, size: 20),
+                                          title: Text('View Activity'),
+                                          contentPadding: EdgeInsets.zero,
+                                          dense: true,
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'docs',
+                                        child: ListTile(
+                                          leading: Icon(Icons.folder, color: Colors.brown, size: 20),
+                                          title: Text('View Documents'),
+                                          contentPadding: EdgeInsets.zero,
+                                          dense: true,
+                                        ),
+                                      ),
+                                      if (permissions.canDeleteLead)
+                                        const PopupMenuItem(
+                                          value: 'delete',
+                                          child: ListTile(
+                                            leading: Icon(Icons.delete, color: Colors.red, size: 20),
+                                            title: Text('Delete'),
+                                            contentPadding: EdgeInsets.zero,
+                                            dense: true,
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 ),
-                                // Quotations button
-                                SizedBox(
-                                  width: 36,
-                                  height: 36,
-                                  child: IconButton(
-                                    icon: const Icon(Icons.request_quote,
-                                        color: Colors.amber, size: 18),
-                                    tooltip: 'View Quotations',
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    onPressed: () {
-                                      widget.onViewQuotations(lead);
-                                    },
-                                  ),
-                                ),
-                                // Tasks button
-                                SizedBox(
-                                  width: 36,
-                                  height: 36,
-                                  child: IconButton(
-                                    icon: const Icon(Icons.assignment,
-                                        color: Colors.blue, size: 18),
-                                    tooltip: 'View Tasks',
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    onPressed: () {
-                                      widget.onViewTasks(lead);
-                                    },
-                                  ),
-                                ),
-                                // Activity button
-                                SizedBox(
-                                  width: 36,
-                                  height: 36,
-                                  child: IconButton(
-                                    icon: const Icon(Icons.history,
-                                        color: Colors.purple, size: 18),
-                                    tooltip: 'View Activity',
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    onPressed: () {
-                                      widget.onViewActivity(lead);
-                                    },
-                                  ),
-                                ),
-                                // Log Activity button
-                                SizedBox(
-                                  width: 36,
-                                  height: 36,
-                                  child: IconButton(
-                                    icon: const Icon(Icons.note_add,
-                                        color: Colors.teal, size: 18),
-                                    tooltip: 'Log Activity',
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    onPressed: () {
-                                      widget.onLogActivity(lead);
-                                    },
-                                  ),
-                                ),
-                                // Documents button
-                                SizedBox(
-                                  width: 36,
-                                  height: 36,
-                                  child: IconButton(
-                                    icon: const Icon(Icons.folder,
-                                        color: Colors.brown, size: 18),
-                                    tooltip: 'View Documents',
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    onPressed: () {
-                                      widget.onViewDocuments(lead);
-                                    },
-                                  ),
-                                ),
-                                // Delete button - Only show if user has DELETE permission
-                                if (permissions.canDeleteLead)
-                                  SizedBox(
-                                    width: 36,
-                                    height: 36,
-                                    child: IconButton(
-                                      icon: const Icon(Icons.delete,
-                                          color: Colors.red, size: 18),
-                                      tooltip: 'Delete Lead',
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                      onPressed: () {
-                                        debugPrint('Delete button pressed for lead: ${lead.name}');
-                                        _showDeleteConfirmation(context, lead);
-                                      },
-                                    ),
-                                  ),
                               ],
                             ),
                           );
