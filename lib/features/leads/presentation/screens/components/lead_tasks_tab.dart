@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:admin/constants.dart';
 import '../../../../../../models/task.dart'; // Wait, let's use absolute package import to be safe
 // import 'package:admin/models/task.dart';
-import 'package:admin/screens/tasks/tasks_screen.dart'; // Reuse logic if possible, or build custom list
-// Actually, re-using TasksScreen might be heavy if it assumes full screen. 
-// I'll create a simple list view fetching tasks by lead.
 
 class LeadTasksTab extends StatefulWidget {
   final String leadId;

@@ -39,7 +39,8 @@ class LeadService {
     try {
       final queryParams = params.toQueryParams();
       final response = await _apiService.get('/leads/paginated', queryParams: queryParams);
-      return PaginatedResponse.fromJson(response.data, Lead.fromJson);
+      final pageData = _apiService.unwrap<Map<String, dynamic>>(response, (json) => json as Map<String, dynamic>);
+      return PaginatedResponse.fromJson(pageData, Lead.fromJson);
     } catch (e) {
       throw Exception('Failed to fetch paginated leads: $e');
     }
@@ -162,7 +163,6 @@ class LeadService {
       });
       
       final response = await _apiService.post('/api/leads/$leadId/documents', data: formData);
-      return LeadDocument.fromJson(response.data);
       return LeadDocument.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to upload document: $e');

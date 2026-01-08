@@ -22,7 +22,8 @@ class CustomerService {
     try {
       final queryParams = params.toQueryParams();
       final response = await _apiService.get('/customers/paginated', queryParams: queryParams);
-      return PaginatedResponse.fromJson(response.data, Customer.fromJson);
+      final pageData = _apiService.unwrap<Map<String, dynamic>>(response, (json) => json as Map<String, dynamic>);
+      return PaginatedResponse.fromJson(pageData, Customer.fromJson);
     } catch (e) {
       throw Exception('Failed to fetch paginated customers: $e');
     }

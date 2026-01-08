@@ -189,7 +189,6 @@ class Lead {
           ?.toIso8601String()
           .substring(0, 10), // Send only date part (YYYY-MM-DD)
       'lost_reason': lostReason?.isNotEmpty == true ? lostReason : null,
-      'lost_reason': lostReason?.isNotEmpty == true ? lostReason : null,
       'assigned_to_id': assignedToId,
       'plot_area': plotArea,
       'floors': floors,

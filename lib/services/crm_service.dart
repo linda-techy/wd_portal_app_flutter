@@ -458,7 +458,8 @@ class CRMService {
         queryParams: queryParams,
       );
       
-      return PaginatedResponse.fromJson(response.data, PortalUser.fromJson);
+      final pageData = _apiService.unwrap<Map<String, dynamic>>(response, (json) => json as Map<String, dynamic>);
+      return PaginatedResponse.fromJson(pageData, PortalUser.fromJson);
     } catch (e) {
       throw Exception('Failed to fetch paginated portal users: $e');
     }

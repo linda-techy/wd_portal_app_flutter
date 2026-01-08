@@ -39,7 +39,8 @@ class LeadsTable extends StatelessWidget {
                     DataCell(Text(lead.name)),
                     DataCell(Text(lead.phone)),
                     DataCell(Text(lead.projectType)),
-                    DataCell(Text(lead.status)),
+                    DataCell(Text(lead.status)), // This is the Stage column - using status for now
+                    DataCell(Text(lead.status)), // This is the Status column
                     DataCell(Text(lead.priorityString)),
                     DataCell(Text(lead.assignedTo?.fullName ?? lead.assignedTeam)),
                     DataCell(Text(lead.budget?.toStringAsFixed(2) ?? '-')),

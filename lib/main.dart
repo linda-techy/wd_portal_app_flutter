@@ -13,6 +13,7 @@ import 'package:admin/providers/project_tracking_provider.dart';
 import 'package:admin/providers/subcontract_provider.dart';
 import 'package:admin/providers/vendor_payment_provider.dart';
 import 'package:admin/services/portal_auth_service.dart';
+import 'package:admin/services/user_service.dart';
 import 'package:admin/services/storage_service.dart';
 import 'package:admin/services/api_service.dart';
 import 'package:admin/services/project_tracking_service.dart';
@@ -42,6 +43,7 @@ void main() async {
 
   // Initialize API auth interceptor
   PortalAuthService.initialize();
+  UserService.initialize();
 
   // Set up global error handling for web
   _setupGlobalErrorHandling();
