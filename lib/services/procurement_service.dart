@@ -14,13 +14,38 @@ class ProcurementService {
     return _apiService.unwrap(response, (json) => Vendor.fromJson(json as Map<String, dynamic>));
   }
 
+  Future<Vendor> updateVendor(int id, Vendor vendor) async {
+    final response = await _apiService.put('/api/procurement/vendors/$id', data: vendor.toJson());
+    return _apiService.unwrap(response, (json) => Vendor.fromJson(json as Map<String, dynamic>));
+  }
+
+  Future<void> deactivateVendor(int id) async {
+    await _apiService.delete('/api/procurement/vendors/$id');
+  }
+
   Future<List<PurchaseOrder>> getPurchaseOrders() async {
     final response = await _apiService.get('/api/procurement/purchase-orders');
-    return _apiService.unwrapList(response, (json) => PurchaseOrder.fromJson(json));
+    // Use unwrapPagedList for Spring Data Page format (data.content)
+    return _apiService.unwrapPagedList(response, (json) => PurchaseOrder.fromJson(json));
   }
 
   Future<PurchaseOrder> createPurchaseOrder(PurchaseOrder po) async {
     final response = await _apiService.post('/api/procurement/purchase-orders', data: po.toJson());
+    return _apiService.unwrap(response, (json) => PurchaseOrder.fromJson(json as Map<String, dynamic>));
+  }
+
+  Future<PurchaseOrder> updatePurchaseOrder(int id, PurchaseOrder po) async {
+    final response = await _apiService.put('/api/procurement/purchase-orders/$id', data: po.toJson());
+    return _apiService.unwrap(response, (json) => PurchaseOrder.fromJson(json as Map<String, dynamic>));
+  }
+
+  Future<void> deletePurchaseOrder(int id) async {
+    await _apiService.delete('/api/procurement/purchase-orders/$id');
+  }
+
+  /// Close Purchase Order (for RECEIVED status - construction workflow)
+  Future<PurchaseOrder> closePurchaseOrder(int id) async {
+    final response = await _apiService.post('/api/procurement/purchase-orders/$id/close');
     return _apiService.unwrap(response, (json) => PurchaseOrder.fromJson(json as Map<String, dynamic>));
   }
 

@@ -138,6 +138,25 @@ class ApiService {
     });
   }
 
+  /// Version of unwrap for **paginated** lists (Spring Data Page format)
+  /// Extracts list from data.content when API returns Page<T>
+  List<T> unwrapPagedList<T>(Response response, T Function(Map<String, dynamic> json) fromJsonT) {
+    return unwrap<List<T>>(response, (json) {
+      // Handle Spring Data Page format: { content: [...], totalElements: n, ... }
+      if (json is Map<String, dynamic> && json.containsKey('content')) {
+        final content = json['content'];
+        if (content is List) {
+          return content.map((item) => fromJsonT(item as Map<String, dynamic>)).toList();
+        }
+      }
+      // Fallback: try treating as direct list
+      if (json is List) {
+        return json.map((item) => fromJsonT(item as Map<String, dynamic>)).toList();
+      }
+      return [];
+    });
+  }
+
   Exception _handleError(dynamic error) {
     if (error is DioException) {
       switch (error.type) {

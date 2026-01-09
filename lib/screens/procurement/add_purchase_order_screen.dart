@@ -12,7 +12,8 @@ import 'package:admin/models/inventory_models.dart';
 import 'package:intl/intl.dart';
 
 class AddPurchaseOrderScreen extends StatefulWidget {
-  const AddPurchaseOrderScreen({super.key});
+  final PurchaseOrder? existingPO;
+  const AddPurchaseOrderScreen({super.key, this.existingPO});
 
   @override
   State<AddPurchaseOrderScreen> createState() => _AddPurchaseOrderScreenState();
@@ -45,6 +46,35 @@ class _AddPurchaseOrderScreenState extends State<AddPurchaseOrderScreen> {
       });
       await context.read<ProcurementProvider>().fetchVendors();
       await context.read<InventoryProvider>().fetchMaterials();
+
+      // Populate if editing
+      if (widget.existingPO != null) {
+        final po = widget.existingPO!;
+        setState(() {
+          _selectedProject = _projects.firstWhere((p) => p.id == po.projectId, orElse: () => _projects.first); // Fallback safe
+          try {
+             final vendors = context.read<ProcurementProvider>().vendors;
+             _selectedVendor = vendors.firstWhere((v) => v.id == po.vendorId);
+          } catch (e) {
+            // Vendor might not be in loaded list if paginated or inactive
+          }
+           _poDate = po.poDate ?? DateTime.now();
+           _expectedDeliveryDate = po.expectedDeliveryDate;
+           _notesController.text = po.notes ?? '';
+           
+           if (po.items != null && po.items!.isNotEmpty) {
+             _items = po.items!.map((item) {
+               final row = PORow();
+               row.description = item.description ?? '';
+               row.quantity = item.quantity ?? 0;
+               row.rate = item.rate ?? 0;
+               row.gstPercentage = item.gstPercentage ?? 18;
+               // Material linking is tricky without full object, we skip pre-selecting material dropdown for now
+               return row;
+             }).toList();
+           }
+        });
+      }
     } catch (e) {
       debugPrint("Error loading data: $e");
     }
@@ -60,7 +90,7 @@ class _AddPurchaseOrderScreenState extends State<AddPurchaseOrderScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Create Purchase Order"),
+        title: Text(widget.existingPO == null ? "Create Purchase Order" : "Edit Purchase Order"),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: AppTheme.deepSlate,
@@ -150,7 +180,7 @@ class _AddPurchaseOrderScreenState extends State<AddPurchaseOrderScreen> {
                 child: ElevatedButton(
                   onPressed: _savePO,
                   style: ElevatedButton.styleFrom(backgroundColor: AppTheme.coralRed),
-                  child: const Text("Create PO", style: TextStyle(color: Colors.white, fontSize: 16)),
+                  child: Text(widget.existingPO == null ? "Create PO" : "Update PO", style: const TextStyle(color: Colors.white, fontSize: 16)),
                 ),
               ),
             ],
@@ -256,17 +286,18 @@ class _AddPurchaseOrderScreenState extends State<AddPurchaseOrderScreen> {
 
       final userId = context.read<PortalAuthProvider>().currentUser?.id;
       final po = PurchaseOrder(
+        id: widget.existingPO?.id, // ID required for update
         createdById: userId != null ? (userId is int ? userId : int.parse(userId.toString())) : null,
         projectId: _selectedProject!.id ?? 0,
         projectName: _selectedProject!.name,
         vendorId: _selectedVendor!.id,
         vendorName: _selectedVendor!.name,
-        poDate: DateTime.now(),
+        poDate: _poDate,
         expectedDeliveryDate: _expectedDeliveryDate,
         totalAmount: _totalAmount,
         gstAmount: _gstAmount,
         netAmount: _netAmount,
-        status: 'DRAFT',
+        status: widget.existingPO?.status ?? 'DRAFT', // Keep status if editing
         notes: _notesController.text,
         items: _items.map((item) => PurchaseOrderItem(
           description: item.description,
@@ -279,10 +310,16 @@ class _AddPurchaseOrderScreenState extends State<AddPurchaseOrderScreen> {
         )).toList(),
       );
       
-      final success = await context.read<ProcurementProvider>().createPurchaseOrder(po);
+      bool success;
+      if (widget.existingPO != null) {
+         success = await context.read<ProcurementProvider>().updatePurchaseOrder(widget.existingPO!.id!, po);
+      } else {
+         success = await context.read<ProcurementProvider>().createPurchaseOrder(po);
+      }
+
       if (success) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("PO Created Successfully!")));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(widget.existingPO != null ? "PO Updated Successfully!" : "PO Created Successfully!")));
           Navigator.pop(context);
         }
       } else {

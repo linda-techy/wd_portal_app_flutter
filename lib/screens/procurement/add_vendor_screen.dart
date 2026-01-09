@@ -6,7 +6,8 @@ import 'package:admin/providers/procurement_provider.dart';
 import 'package:admin/models/procurement_models.dart';
 
 class AddVendorScreen extends StatefulWidget {
-  const AddVendorScreen({super.key});
+  final Vendor? existingVendor;
+  const AddVendorScreen({super.key, this.existingVendor});
 
   @override
   State<AddVendorScreen> createState() => _AddVendorScreenState();
@@ -23,10 +24,26 @@ class _AddVendorScreenState extends State<AddVendorScreen> {
   String _vendorType = 'MATERIAL';
 
   @override
+  void initState() {
+    super.initState();
+    // Pre-fill form if editing existing vendor
+    if (widget.existingVendor != null) {
+      final v = widget.existingVendor!;
+      _nameController.text = v.name;
+      _contactPersonController.text = v.contactName ?? '';
+      _phoneController.text = v.phone ?? '';
+      _emailController.text = v.email ?? '';
+      _gstinController.text = v.gstNumber ?? '';
+      _addressController.text = v.address ?? '';
+      _vendorType = v.vendorType ?? 'MATERIAL';
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Add New Vendor"),
+        title: Text(widget.existingVendor == null ? "Add New Vendor" : "Edit Vendor"),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: AppTheme.deepSlate,
@@ -72,7 +89,7 @@ class _AddVendorScreenState extends State<AddVendorScreen> {
                     backgroundColor: AppTheme.primaryBlue,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text("Save Vendor", style: TextStyle(color: Colors.white, fontSize: 16)),
+                  child: Text(widget.existingVendor == null ? "Save Vendor" : "Update Vendor", style: const TextStyle(color: Colors.white, fontSize: 16)),
                 ),
               ),
             ],
@@ -103,7 +120,7 @@ class _AddVendorScreenState extends State<AddVendorScreen> {
   void _saveVendor() async {
     if (_formKey.currentState!.validate()) {
       final vendor = Vendor(
-        id: 0,
+        id: widget.existingVendor?.id ?? 0,
         name: _nameController.text,
         contactName: _contactPersonController.text,
         phone: _phoneController.text,
@@ -114,7 +131,12 @@ class _AddVendorScreenState extends State<AddVendorScreen> {
         status: 'ACTIVE',
       );
 
-      final success = await context.read<ProcurementProvider>().createVendor(vendor);
+      bool success;
+      if (widget.existingVendor != null) {
+        success = await context.read<ProcurementProvider>().updateVendor(widget.existingVendor!.id!, vendor);
+      } else {
+        success = await context.read<ProcurementProvider>().createVendor(vendor);
+      }
       if (success) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

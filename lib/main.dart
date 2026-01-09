@@ -116,54 +116,50 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      navigatorKey: NavigationService.navigatorKey,
-      scaffoldMessengerKey: NavigationService.scaffoldMessengerKey,
-      title: AppConfig.appName,
-      // Use new construction-appropriate theme
-      theme: AppTheme.lightTheme,
-      home: Builder(
-        builder: (context) {
-        // Initialize services first
-        final apiService = ApiService();
-        final subcontractService = SubcontractService(apiService);
-        final vendorPaymentService = VendorPaymentService(apiService);
-        final projectTrackingService = ProjectTrackingService(apiService);
+    // Initialize services first
+    final apiService = ApiService();
+    final subcontractService = SubcontractService(apiService);
+    final vendorPaymentService = VendorPaymentService(apiService);
+    final projectTrackingService = ProjectTrackingService(apiService);
 
-        return MultiProvider(
-          providers: [
-            // Services
-            Provider<ApiService>.value(value: apiService),
-            Provider<StorageService>(create: (_) => StorageService()),
-            
-            // Menu controller
-            ChangeNotifierProvider(create: (_) => MenuAppController()),
-            
-            // Auth provider
-            ChangeNotifierProvider(
-              create: (_) => PortalAuthProvider(),
-            ),
-            
-            // Permission provider
-            ChangeNotifierProvider(create: (_) => PermissionProvider()),
-            
-            // Domain providers
-            ChangeNotifierProvider(create: (_) => ProcurementProvider()),
-            ChangeNotifierProvider(create: (_) => LabourProvider()),
-            ChangeNotifierProvider(create: (_) => InventoryProvider()),
-            ChangeNotifierProvider(create: (_) => FinanceProvider()),
-            ChangeNotifierProvider(create: (_) => ApprovalProvider()),
-            ChangeNotifierProvider(create: (_) => DocumentProvider()),
-            ChangeNotifierProvider(create: (_) => ProjectTrackingProvider(projectTrackingService)),
-            
-            // Phase 1: Subcontractor & Vendor Payment
-            ChangeNotifierProvider(create: (_) => SubcontractProvider(subcontractService)),
-            ChangeNotifierProvider(create: (_) => VendorPaymentProvider(vendorPaymentService)),
-          ],
-          child: const PortalAuthWrapper(),
-        );
-        }
+    return MultiProvider(
+      providers: [
+        // Services
+        Provider<ApiService>.value(value: apiService),
+        Provider<StorageService>(create: (_) => StorageService()),
+
+        // Menu controller
+        ChangeNotifierProvider(create: (_) => MenuAppController()),
+
+        // Auth provider
+        ChangeNotifierProvider(
+          create: (_) => PortalAuthProvider(),
+        ),
+
+        // Permission provider
+        ChangeNotifierProvider(create: (_) => PermissionProvider()),
+
+        // Domain providers
+        ChangeNotifierProvider(create: (_) => ProcurementProvider()),
+        ChangeNotifierProvider(create: (_) => LabourProvider()),
+        ChangeNotifierProvider(create: (_) => InventoryProvider()),
+        ChangeNotifierProvider(create: (_) => FinanceProvider()),
+        ChangeNotifierProvider(create: (_) => ApprovalProvider()),
+        ChangeNotifierProvider(create: (_) => DocumentProvider()),
+        ChangeNotifierProvider(create: (_) => ProjectTrackingProvider(projectTrackingService)),
+
+        // Phase 1: Subcontractor & Vendor Payment
+        ChangeNotifierProvider(create: (_) => SubcontractProvider(subcontractService)),
+        ChangeNotifierProvider(create: (_) => VendorPaymentProvider(vendorPaymentService)),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        navigatorKey: NavigationService.navigatorKey,
+        scaffoldMessengerKey: NavigationService.scaffoldMessengerKey,
+        title: AppConfig.appName,
+        // Use new construction-appropriate theme
+        theme: AppTheme.lightTheme,
+        home: const PortalAuthWrapper(),
       ),
     );
   }

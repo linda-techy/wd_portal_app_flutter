@@ -89,9 +89,55 @@ class _VendorListScreenState extends State<VendorListScreen> {
                         child: ListTile(
                           title: Text(vendor.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text("${vendor.vendorType} | ${vendor.phone}"),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.orange),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => AddVendorScreen(existingVendor: vendor)),
+                                  );
+                                },
+                                tooltip: "Edit Vendor",
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.block, color: Colors.red),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text("Deactivate Vendor"),
+                                      content: Text("Are you sure you want to deactivate '${vendor.name}'? "
+                                          "This vendor will no longer appear in selection lists."),
+                                      actions: [
+                                        TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+                                        TextButton(
+                                          onPressed: () async {
+                                            Navigator.pop(context);
+                                            final success = await provider.deactivateVendor(vendor.id!);
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                                content: Text(success ? "Vendor deactivated" : "Error: ${provider.error}"),
+                                              ));
+                                            }
+                                          },
+                                          child: const Text("Deactivate", style: TextStyle(color: Colors.red)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                                tooltip: "Deactivate Vendor",
+                              ),
+                            ],
+                          ),
                           onTap: () {
-                            // View Vendor Details
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => AddVendorScreen(existingVendor: vendor)),
+                            );
                           },
                         ),
                       );
