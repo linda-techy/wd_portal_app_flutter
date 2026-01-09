@@ -43,4 +43,5 @@ class _PortalAuthWrapperState extends State<PortalAuthWrapper> {
       },
     );
   }
+}
 
