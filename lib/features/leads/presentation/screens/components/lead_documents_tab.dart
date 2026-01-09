@@ -4,10 +4,10 @@ import '../../../data/models/lead_document.dart';
 
 class LeadDocumentsTab extends StatefulWidget {
   final String leadId;
-  const LeadDocumentsTab({Key? key, required this.leadId}) : super(key: key);
+  const LeadDocumentsTab({super.key, required this.leadId});
 
   @override
-  _LeadDocumentsTabState createState() => _LeadDocumentsTabState();
+  State<LeadDocumentsTab> createState() => _LeadDocumentsTabState();
 }
 
 class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
@@ -94,9 +94,13 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
 class _ResultUtils {
   static String formatBytes(int bytes, [int decimals = 2]) {
     if (bytes <= 0) return "0 B";
-    const suffixes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
-    var i = (bytes.toString().length - 1) ~/ 3; // Approximate log1000
-    // Simplified logic for quick implementation
-    return "$bytes B"; // TODO: Implement proper formatting
+    const suffixes = ["B", "KB", "MB", "GB", "TB"];
+    double size = bytes.toDouble();
+    int i = 0;
+    while (size >= 1024 && i < suffixes.length - 1) {
+      size /= 1024;
+      i++;
+    }
+    return "${size.toStringAsFixed(decimals)} ${suffixes[i]}";
   }
 }

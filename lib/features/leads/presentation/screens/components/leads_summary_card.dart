@@ -30,7 +30,7 @@ class LeadsSummaryCard extends StatelessWidget {
                 "Leads Summary",
                 style: Theme.of(context).textTheme.titleMedium,
               ),
-              Icon(Icons.bar_chart, color: Colors.white54),
+              const Icon(Icons.bar_chart, color: Colors.white54),
             ],
           ),
           const SizedBox(height: defaultPadding),
@@ -56,8 +56,8 @@ class LeadsSummaryCard extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(e.key, style: TextStyle(color: Colors.white70)),
-                    Text("${e.value}", style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(e.key, style: const TextStyle(color: Colors.white70)),
+                    Text("${e.value}", style: const TextStyle(fontWeight: FontWeight.bold)),
                   ],
                 ),
               )),
@@ -80,7 +80,6 @@ class LeadsSummaryCard extends StatelessWidget {
     
     int index = 0;
     return leadsBySource.entries.map((entry) {
-      final isLarge = false; // Add interaction logic if needed
       final color = colors[index % colors.length];
       index++;
       
@@ -88,7 +87,7 @@ class LeadsSummaryCard extends StatelessWidget {
         color: color,
         value: entry.value.toDouble(),
         title: '${entry.value}',
-        radius: isLarge ? 25 : 20,
+        radius: 20,
         titleStyle: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.bold,

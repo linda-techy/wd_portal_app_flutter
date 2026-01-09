@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/portal_auth_provider.dart';
+import '../controllers/menu_app_controller.dart';
 import '../screens/auth/portal_login_screen.dart';
 import '../screens/main/main_screen.dart';
 import '../widgets/splash_screen.dart';
@@ -20,6 +21,7 @@ class _PortalAuthWrapperState extends State<PortalAuthWrapper> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<PortalAuthProvider>().initializeAuth(context);
+        context.read<MenuAppController>().initialize();
       }
     });
   }
@@ -41,5 +43,4 @@ class _PortalAuthWrapperState extends State<PortalAuthWrapper> {
       },
     );
   }
-}
 

@@ -40,7 +40,6 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 11; // Start with Tasks
 
   final List<Widget> _screens = [
     const DashboardScreen(),
@@ -69,9 +68,7 @@ class _MainScreenState extends State<MainScreen> {
   ];
 
   void _onMenuItemClick(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    context.read<MenuAppController>().setSelectedIndex(index);
   }
 
   String _getScreenTitle(int index) {
@@ -129,12 +126,15 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final menuController = context.watch<MenuAppController>();
+    final selectedIndex = menuController.selectedIndex;
+
     return Scaffold(
-      key: context.read<MenuAppController>().scaffoldKey,
+      key: menuController.scaffoldKey,
       appBar: Responsive.isDesktop(context)
           ? null
           : AppBar(
-              title: Text(_getScreenTitle(_selectedIndex)),
+              title: Text(_getScreenTitle(selectedIndex)),
               backgroundColor: secondaryColor,
               foregroundColor: Colors.black87,
               automaticallyImplyLeading: false,
@@ -143,7 +143,7 @@ class _MainScreenState extends State<MainScreen> {
       drawer: Drawer(
         child: SideMenu(
           onMenuItemClick: _onMenuItemClick,
-          selectedIndex: _selectedIndex,
+          selectedIndex: selectedIndex,
           isDrawer: true,
         ),
       ),
@@ -156,7 +156,7 @@ class _MainScreenState extends State<MainScreen> {
                     flex: 1,
                     child: SideMenu(
                       onMenuItemClick: _onMenuItemClick,
-                      selectedIndex: _selectedIndex,
+                      selectedIndex: selectedIndex,
                       isDrawer: false,
                     ),
                   ),
@@ -166,19 +166,19 @@ class _MainScreenState extends State<MainScreen> {
                       constraints: BoxConstraints(
                         maxWidth: MediaQuery.of(context).size.width,
                       ),
-                      child: _screens[_selectedIndex],
+                      child: _screens[selectedIndex],
                     ),
                   ),
                 ],
                )
-             : _screens[_selectedIndex],
+             : _screens[selectedIndex],
       ),
       bottomNavigationBar: ResponsiveUtils.isMobile(context) || ResponsiveUtils.isTablet(context)
           ? BottomNavigationBar(
               backgroundColor: Colors.white,
               selectedItemColor:AppTheme.primaryBlue,
               unselectedItemColor: AppTheme.textTertiary,
-              currentIndex: _selectedIndex == 3 ? 1 : _selectedIndex == 17 ? 2 : 0,
+              currentIndex: selectedIndex == 3 ? 1 : selectedIndex == 17 ? 2 : 0,
               onTap: (index) {
                 // Map bottom nav indices
                 // 0 -> Open Menu, 1 -> Projects (3), 2 -> Profile (17)

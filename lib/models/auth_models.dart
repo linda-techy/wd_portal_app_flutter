@@ -102,20 +102,23 @@ class RefreshTokenRequest {
 
 class RefreshTokenResponse {
   final String accessToken;
+  final String refreshToken;
   final String tokenType;
   final int expiresIn;
 
   RefreshTokenResponse({
     required this.accessToken,
+    required this.refreshToken,
     required this.tokenType,
     required this.expiresIn,
   });
 
   factory RefreshTokenResponse.fromJson(Map<String, dynamic> json) {
     return RefreshTokenResponse(
-      accessToken: json['accessToken'],
-      tokenType: json['tokenType'],
-      expiresIn: json['expiresIn'],
+      accessToken: json['accessToken'] ?? '',
+      refreshToken: json['refreshToken'] ?? '',
+      tokenType: json['tokenType'] ?? 'Bearer',
+      expiresIn: json['expiresIn'] ?? 0,
     );
   }
 }
