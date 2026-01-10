@@ -181,6 +181,10 @@ class GoodsReceivedNote {
   final String? deliveryNoteNumber;
   final String? comments;
   final int? receivedById;
+  final String? vendorName;
+  final String? projectName;
+  final String? invoiceNumber;
+  final String? challanNumber;
   final List<GoodsReceivedNoteItem> items;
 
   GoodsReceivedNote({
@@ -192,6 +196,10 @@ class GoodsReceivedNote {
     this.deliveryNoteNumber,
     this.comments,
     this.receivedById,
+    this.vendorName,
+    this.projectName,
+    this.invoiceNumber,
+    this.challanNumber,
     this.items = const [],
   });
 
@@ -199,12 +207,16 @@ class GoodsReceivedNote {
     return GoodsReceivedNote(
       id: json['id'],
       grnNumber: json['grnNumber'],
-      purchaseOrderId: json['purchaseOrderId'],
+      purchaseOrderId: json['poId'] ?? json['purchaseOrderId'] ?? 0,
       poNumber: json['poNumber'],
-      receivedDate: DateTime.parse(json['receivedDate']),
+      receivedDate: json['receivedDate'] != null ? DateTime.parse(json['receivedDate']) : DateTime.now(),
       deliveryNoteNumber: json['deliveryNoteNumber'],
-      comments: json['comments'],
+      comments: json['notes'] ?? json['comments'],
       receivedById: json['receivedById'],
+      vendorName: json['vendorName'],
+      projectName: json['projectName'],
+      invoiceNumber: json['invoiceNumber'],
+      challanNumber: json['challanNumber'],
       items: (json['items'] as List?)
           ?.map((i) => GoodsReceivedNoteItem.fromJson(i))
           .toList() ?? [],

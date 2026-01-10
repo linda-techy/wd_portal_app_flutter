@@ -38,4 +38,15 @@ class InventoryService {
       throw Exception('Failed to fetch consumption report: $e');
     }
   }
+
+  /// Update material (enterprise feature)
+  Future<MaterialModel> updateMaterial(int id, MaterialModel material) async {
+    final response = await _apiService.put('/api/inventory/materials/$id', data: material.toJson());
+    return MaterialModel.fromJson(response.data);
+  }
+
+  /// Deactivate material (soft delete - enterprise pattern)
+  Future<void> deactivateMaterial(int id) async {
+    await _apiService.delete('/api/inventory/materials/$id');
+  }
 }

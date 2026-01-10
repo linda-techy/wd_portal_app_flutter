@@ -6,7 +6,8 @@ import 'package:admin/providers/inventory_provider.dart';
 import 'package:admin/models/inventory_models.dart';
 
 class AddMaterialScreen extends StatefulWidget {
-  const AddMaterialScreen({super.key});
+  final MaterialModel? existingMaterial;
+  const AddMaterialScreen({super.key, this.existingMaterial});
 
   @override
   State<AddMaterialScreen> createState() => _AddMaterialScreenState();
@@ -22,9 +23,20 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
   final List<String> _units = ['BAGS', 'KG', 'TONS', 'CUM', 'SQM', 'NOS', 'RMT'];
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.existingMaterial != null) {
+      final m = widget.existingMaterial!;
+      _nameController.text = m.name;
+      _category = m.category ?? 'CEMENT';
+      _unit = m.unit ?? 'BAGS';
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Add New Material to Catalog")),
+      appBar: AppBar(title: Text(widget.existingMaterial == null ? "Add New Material" : "Edit Material")),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(defaultPadding),
         child: Form(
@@ -57,7 +69,7 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
                 child: ElevatedButton(
                   onPressed: _saveMaterial,
                   style: ElevatedButton.styleFrom(backgroundColor: AppTheme.coralRed),
-                  child: const Text("Save Material", style: TextStyle(color: Colors.white, fontSize: 16)),
+                  child: Text(widget.existingMaterial == null ? "Save Material" : "Update Material", style: const TextStyle(color: Colors.white, fontSize: 16)),
                 ),
               ),
             ],
@@ -70,12 +82,18 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
   void _saveMaterial() async {
     if (_formKey.currentState!.validate()) {
       final material = MaterialModel(
+        id: widget.existingMaterial?.id,
         name: _nameController.text,
         category: _category,
         unit: _unit,
       );
 
-      final success = await context.read<InventoryProvider>().createMaterial(material);
+      bool success;
+      if (widget.existingMaterial != null) {
+        success = await context.read<InventoryProvider>().updateMaterial(widget.existingMaterial!.id!, material);
+      } else {
+        success = await context.read<InventoryProvider>().createMaterial(material);
+      }
       if (success) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Material added successfully!")));

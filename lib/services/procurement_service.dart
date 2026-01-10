@@ -53,4 +53,10 @@ class ProcurementService {
     final response = await _apiService.post('/api/procurement/grn', data: grnData);
     return _apiService.unwrap(response, (json) => GoodsReceivedNote.fromJson(json as Map<String, dynamic>));
   }
+
+  /// Fetch all GRNs (Goods Received Notes) - Enterprise centralized list view
+  Future<List<GoodsReceivedNote>> fetchAllGRNs() async {
+    final response = await _apiService.get('/api/procurement/grns');
+    return _apiService.unwrapList(response, (json) => GoodsReceivedNote.fromJson(json as Map<String, dynamic>));
+  }
 }

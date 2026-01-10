@@ -94,4 +94,38 @@ class InventoryProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Update material (enterprise feature)
+  Future<bool> updateMaterial(int id, MaterialModel material) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _service.updateMaterial(id, material);
+      await fetchMaterials(); // Refresh list
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Deactivate material (soft delete)
+  Future<bool> deactivateMaterial(int id) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _service.deactivateMaterial(id);
+      await fetchMaterials(); // Refresh list
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

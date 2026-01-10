@@ -55,11 +55,55 @@ class _MaterialListScreenState extends State<MaterialListScreen> {
                     itemBuilder: (context, index) {
                       final m = provider.materials[index];
                       return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
                         child: ListTile(
                           leading: const CircleAvatar(child: Icon(Icons.category)),
                           title: Text(m.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text("${m.category} | Unit: ${m.unit}"),
-                          trailing: Icon(Icons.check_circle, color: m.active ? Colors.green : Colors.grey),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.orange),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => AddMaterialScreen(existingMaterial: m)),
+                                  );
+                                },
+                                tooltip: "Edit Material",
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.block, color: Colors.red),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text("Deactivate Material"),
+                                      content: Text("Are you sure you want to deactivate '${m.name}'? "
+                                          "It will no longer appear in selection lists."),
+                                      actions: [
+                                        TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+                                        TextButton(
+                                          onPressed: () async {
+                                            Navigator.pop(context);
+                                            final success = await provider.deactivateMaterial(m.id!);
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                                content: Text(success ? "Material deactivated" : "Error: ${provider.error}"),
+                                              ));
+                                            }
+                                          },
+                                          child: const Text("Deactivate", style: TextStyle(color: Colors.red)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                                tooltip: "Deactivate Material",
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     },
