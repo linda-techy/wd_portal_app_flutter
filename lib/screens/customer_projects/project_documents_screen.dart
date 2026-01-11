@@ -5,6 +5,7 @@ import 'package:admin/models/project_document.dart';
 import 'package:admin/models/document_category.dart';
 import 'package:admin/services/project_module_service.dart';
 import 'package:admin/theme/app_theme.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'dart:io';
 
 class ProjectDocumentsScreen extends StatefulWidget {
@@ -52,9 +53,7 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
         _isLoading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading documents: $e')),
-        );
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error loading documents');
       }
     }
   }
@@ -108,9 +107,7 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error uploading document: $e')),
-        );
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error uploading document');
       }
     } finally {
       if (mounted) {

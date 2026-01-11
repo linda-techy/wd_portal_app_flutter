@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/theme/app_theme.dart';
+import 'package:admin/features/labour/presentation/screens/wage_sheet_screen.dart';
 import 'labour_list_screen.dart';
 import 'attendance_screen.dart';
 import 'mb_list_screen.dart';
@@ -18,7 +19,7 @@ class _LabourDashboardScreenState extends State<LabourDashboardScreen> with Sing
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -38,6 +39,7 @@ class _LabourDashboardScreenState extends State<LabourDashboardScreen> with Sing
             Tab(text: "Labourers", icon: Icon(Icons.people)),
             Tab(text: "Attendance", icon: Icon(Icons.calendar_today)),
             Tab(text: "Measurement Book", icon: Icon(Icons.straighten)),
+            Tab(text: "Wage Sheets", icon: Icon(Icons.money)),
           ],
         ),
       ),
@@ -47,6 +49,7 @@ class _LabourDashboardScreenState extends State<LabourDashboardScreen> with Sing
           LabourListScreen(),
           AttendanceScreen(),
           MBListScreen(),
+          WageSheetScreen(projectId: null),
         ],
       ),
     );

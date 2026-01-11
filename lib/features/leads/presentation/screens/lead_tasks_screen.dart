@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../../../models/task_models.dart';
 import '../../../../services/task_service.dart';
 import '../../data/models/lead.dart';
+import '../../../../providers/portal_auth_provider.dart';
+import '../../../../utils/error_handler.dart';
 
 class LeadTasksScreen extends StatefulWidget {
   final Lead lead;
@@ -22,7 +25,22 @@ class _LeadTasksScreenState extends State<LeadTasksScreen> {
   @override
   void initState() {
     super.initState();
-    _loadTasks();
+    _verifyAuthAndLoadData();
+  }
+
+  Future<void> _verifyAuthAndLoadData() async {
+    final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
+    if (!authProvider.isAuthenticated) {
+      if (mounted) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+             Navigator.of(context).pushReplacementNamed('/login');
+          }
+        });
+      }
+      return;
+    }
+    await _loadTasks();
   }
 
   Future<void> _loadTasks() async {
@@ -48,10 +66,10 @@ class _LeadTasksScreenState extends State<LeadTasksScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() => _isLoading = false);
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load tasks');
+      }
     }
   }
 
@@ -70,7 +88,9 @@ class _LeadTasksScreenState extends State<LeadTasksScreen> {
           await _taskService.updateTask(task.id, UpdateTaskRequest(status: newStatus));
           _loadTasks();
       } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+          if (mounted) {
+            await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to update task status');
+          }
       }
   }
 
@@ -302,7 +322,9 @@ class _AddTaskDialogState extends State<_AddTaskDialog> {
             if (mounted) Navigator.pop(context);
         } catch (e) {
             setState(() => _isSaving = false);
-            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+            if (mounted) {
+              await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to create task');
+            }
         }
     }
 }

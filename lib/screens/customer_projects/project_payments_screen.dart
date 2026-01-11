@@ -5,6 +5,7 @@ import 'package:admin/models/payment_models.dart';
 import 'package:admin/services/payment_service.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/utils/motion_toast.dart';
+import 'package:admin/utils/error_handler.dart';
 
 class ProjectPaymentsScreen extends StatefulWidget {
   final CustomerProject project;
@@ -46,9 +47,12 @@ class _ProjectPaymentsScreenState extends State<ProjectPaymentsScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
         _isLoading = false;
       });
+      if (mounted) {
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load payment data', showToast: false);
+        _errorMessage = ErrorHandler.getErrorMessage(e);
+      }
     }
   }
 
@@ -509,7 +513,7 @@ class _ProjectPaymentsScreenState extends State<ProjectPaymentsScreen> {
                 _loadPaymentData();
               } catch (e) {
                 if (!mounted) return;
-                MotionToast.show(context, message: 'Failed to record payment: $e', isError: true);
+                await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to record payment');
               }
             },
             child: const Text('Record'),

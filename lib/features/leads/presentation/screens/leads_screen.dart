@@ -87,9 +87,24 @@ class _LeadsScreenState extends State<LeadsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadLeads();
+    _verifyAuthAndLoadData();
     _loadTeamMembers();
     _scrollController.addListener(_onScroll);
+  }
+
+  Future<void> _verifyAuthAndLoadData() async {
+    final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
+    if (!authProvider.isAuthenticated) {
+      if (mounted) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+             Navigator.of(context).pushReplacementNamed('/login');
+          }
+        });
+      }
+      return;
+    }
+    await _loadLeads();
   }
 
   Future<void> _loadTeamMembers() async {
@@ -101,8 +116,8 @@ class _LeadsScreenState extends State<LeadsScreen> {
         });
       }
     } catch (e) {
-      print('Error loading team members for filter: $e');
-      // Continue without team members - dropdown will still work with existing logic
+      // Silent failure for filters is acceptable, or log it
+      print('Error loading team members: $e');
     }
   }
 
@@ -158,32 +173,15 @@ class _LeadsScreenState extends State<LeadsScreen> {
         setState(() {
           isLoading = false;
           isLoadingMore = false;
-          errorMessage = _getErrorMessage(e);
-          // Revert page increment on error
-          if (!resetPage) {
-            currentPage--;
-          }
+          // Revert page increment on error if needed, but for load it's fine
         });
+         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load leads');
+         setState(() => errorMessage = ErrorHandler.getErrorMessage(e));
       }
     }
   }
 
-  String _getErrorMessage(dynamic error) {
-    if (error.toString().contains('SocketException') ||
-        error.toString().contains('HandshakeException')) {
-      return 'Network error. Please check your internet connection.';
-    } else if (error.toString().contains('TimeoutException')) {
-      return 'Request timed out. Please try again.';
-    } else if (error.toString().contains('FormatException')) {
-      return 'Invalid data received from server.';
-    } else if (error.toString().contains('500')) {
-      return 'Server error. Please try again later.';
-    } else if (error.toString().contains('404')) {
-      return 'Service not found. Please contact support.';
-    } else {
-      return 'Failed to load leads. Please try again.';
-    }
-  }
+
 
   Future<void> _loadMoreLeads() async {
     if (hasNextPage && !isLoadingMore) {
@@ -214,10 +212,10 @@ class _LeadsScreenState extends State<LeadsScreen> {
         if (mounted) {
           setState(() {
             isLoadingMore = false;
-            errorMessage = _getErrorMessage(e);
             // Revert page increment on error
             currentPage--;
           });
+          await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load more leads', showToast: true);
         }
       }
     }

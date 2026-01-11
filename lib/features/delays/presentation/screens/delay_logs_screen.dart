@@ -3,6 +3,9 @@ import 'package:admin/theme/app_theme.dart';
 import 'package:admin/features/delays/data/models/delay_log.dart';
 import 'package:admin/features/delays/data/services/delay_log_service.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:admin/utils/error_handler.dart';
+import 'package:admin/providers/portal_auth_provider.dart';
 
 class DelayLogsScreen extends StatefulWidget {
   final int projectId;
@@ -21,7 +24,19 @@ class _DelayLogsScreenState extends State<DelayLogsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _verifyAuthAndLoadData();
+  }
+
+  Future<void> _verifyAuthAndLoadData() async {
+    final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
+    if (!authProvider.isAuthenticated) {
+      if (mounted) {
+         await ErrorHandler.handleAuthError(context);
+         Navigator.of(context).pushReplacementNamed('/login');
+      }
+      return;
+    }
+    await _loadData();
   }
 
   Future<void> _loadData() async {
@@ -33,11 +48,10 @@ class _DelayLogsScreenState extends State<DelayLogsScreen> {
         _isLoading = false;
       });
     } catch (e) {
+    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
         setState(() => _isLoading = false);
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load delays');
       }
     }
   }
@@ -66,9 +80,7 @@ class _DelayLogsScreenState extends State<DelayLogsScreen> {
         _loadData();
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${e.toString()}')),
-          );
+            await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to close delay');
         }
       }
     }
@@ -211,10 +223,8 @@ class _AddDelayDialogState extends State<AddDelayDialog> {
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
-        setState(() => _isSaving = false);
+         setState(() => _isSaving = false);
+         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to log delay');
       }
     }
   }

@@ -3,6 +3,9 @@ import 'package:admin/theme/app_theme.dart';
 import 'package:admin/features/change_orders/data/models/change_order.dart';
 import 'package:admin/features/change_orders/data/services/change_order_service.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:admin/utils/error_handler.dart';
+import 'package:admin/providers/portal_auth_provider.dart';
 
 class ChangeOrdersScreen extends StatefulWidget {
   final int projectId;
@@ -21,7 +24,21 @@ class _ChangeOrdersScreenState extends State<ChangeOrdersScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _verifyAuthAndLoadData();
+  }
+
+  Future<void> _verifyAuthAndLoadData() async {
+    final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
+    if (!authProvider.isAuthenticated) {
+      if (mounted) {
+         // Since this is likely a tab view, redirect might be handled by parent or just show error
+         await ErrorHandler.handleAuthError(context);
+         // Or consistent redirect
+         Navigator.of(context).pushReplacementNamed('/login');
+      }
+      return;
+    }
+    await _loadData();
   }
 
   Future<void> _loadData() async {
@@ -34,10 +51,8 @@ class _ChangeOrdersScreenState extends State<ChangeOrdersScreen> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
         setState(() => _isLoading = false);
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load change orders');
       }
     }
   }
@@ -198,10 +213,8 @@ class _AddChangeOrderDialogState extends State<AddChangeOrderDialog> {
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
         setState(() => _isSaving = false);
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to create change order');
       }
     }
   }

@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/subcontract_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/error_handler.dart';
+import '../../providers/portal_auth_provider.dart';
 
 /// Subcontract Work Orders Screen
 /// Lists all work orders for a project
@@ -27,9 +29,33 @@ class _SubcontractWorkOrdersScreenState extends State<SubcontractWorkOrdersScree
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SubcontractProvider>().loadProjectWorkOrders(widget.projectId);
-      context.read<SubcontractProvider>().loadProjectSummaries(widget.projectId);
+      _verifyAuthAndLoadData();
     });
+  }
+
+  Future<void> _verifyAuthAndLoadData() async {
+    final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
+    if (!authProvider.isAuthenticated) {
+      if (mounted) {
+         Navigator.of(context).pushReplacementNamed('/login');
+      }
+      return;
+    }
+    await _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      await context.read<SubcontractProvider>().loadProjectWorkOrders(widget.projectId);
+      if (mounted) {
+        await context.read<SubcontractProvider>().loadProjectSummaries(widget.projectId);
+      }
+    } catch (e) {
+      if (mounted) {
+         // Provider catches errors, but if any slip through:
+         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load work orders', showToast: false);
+      }
+    }
   }
 
   @override
@@ -50,10 +76,7 @@ class _SubcontractWorkOrdersScreenState extends State<SubcontractWorkOrdersScree
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: () {
-              context.read<SubcontractProvider>().loadProjectWorkOrders(widget.projectId);
-              context.read<SubcontractProvider>().loadProjectSummaries(widget.projectId);
-            },
+            onPressed: _loadData,
           ),
         ],
       ),
@@ -72,7 +95,7 @@ class _SubcontractWorkOrdersScreenState extends State<SubcontractWorkOrdersScree
                   const SizedBox(height: 16),
                   Text('Error: ${provider.error}'),
                   ElevatedButton(
-                    onPressed: () => provider.loadProjectWorkOrders(widget.projectId),
+                    onPressed: _loadData,
                     child: const Text('Retry'),
                   ),
                 ],
@@ -92,10 +115,7 @@ class _SubcontractWorkOrdersScreenState extends State<SubcontractWorkOrdersScree
                 child: provider.workOrders.isEmpty
                     ? const Center(child: Text('No work orders found'))
                     : RefreshIndicator(
-                        onRefresh: () async {
-                          await provider.loadProjectWorkOrders(widget.projectId);
-                          await provider.loadProjectSummaries(widget.projectId);
-                        },
+                        onRefresh: _loadData,
                         child: ListView.builder(
                           padding: const EdgeInsets.all(16),
                           itemCount: provider.workOrders.length,

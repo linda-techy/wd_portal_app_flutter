@@ -3,6 +3,9 @@ import 'package:admin/theme/app_theme.dart';
 import 'package:admin/features/warranties/data/models/project_warranty.dart';
 import 'package:admin/features/warranties/data/services/warranty_service.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:admin/utils/error_handler.dart';
+import 'package:admin/providers/portal_auth_provider.dart';
 
 class WarrantiesScreen extends StatefulWidget {
   final int projectId;
@@ -21,7 +24,19 @@ class _WarrantiesScreenState extends State<WarrantiesScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _verifyAuthAndLoadData();
+  }
+
+  Future<void> _verifyAuthAndLoadData() async {
+    final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
+    if (!authProvider.isAuthenticated) {
+      if (mounted) {
+         await ErrorHandler.handleAuthError(context);
+         Navigator.of(context).pushReplacementNamed('/login');
+      }
+      return;
+    }
+    await _loadData();
   }
 
   Future<void> _loadData() async {
@@ -33,11 +48,10 @@ class _WarrantiesScreenState extends State<WarrantiesScreen> {
         _isLoading = false;
       });
     } catch (e) {
+    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
         setState(() => _isLoading = false);
+         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load warranties');
       }
     }
   }
@@ -199,11 +213,10 @@ class _AddWarrantyDialogState extends State<AddWarrantyDialog> {
       widget.onSave();
       if (mounted) Navigator.pop(context);
     } catch (e) {
+    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
         setState(() => _isSaving = false);
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to create warranty');
       }
     }
   }

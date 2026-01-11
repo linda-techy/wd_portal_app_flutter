@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../data/models/activity_feed.dart';
 import '../../../data/services/lead_service.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:admin/utils/error_handler.dart';
+import 'package:admin/providers/portal_auth_provider.dart';
 
 class LeadActivityTimeline extends StatefulWidget {
   final String leadId;
@@ -22,7 +24,18 @@ class _LeadActivityTimelineState extends State<LeadActivityTimeline> {
   @override
   void initState() {
     super.initState();
-    _loadActivities();
+    _verifyAuthAndLoadData();
+  }
+
+  Future<void> _verifyAuthAndLoadData() async {
+    // Note: Since this is a component often used inside a screen that already checks auth,
+    // we might skip strict redirect here, but for safety we check.
+    final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
+    if (!authProvider.isAuthenticated) {
+       // Parent screen handles redirect usually, but valid to check
+       return;
+    }
+    await _loadActivities();
   }
 
   Future<void> _loadActivities() async {
@@ -38,11 +51,8 @@ class _LeadActivityTimelineState extends State<LeadActivityTimeline> {
       });
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = ErrorHandler.getErrorMessage(e);
-        });
-        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load activities', showToast: false);
+        setState(() => _isLoading = false);
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load activities');
       }
     }
   }

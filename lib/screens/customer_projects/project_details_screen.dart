@@ -9,14 +9,19 @@ import 'project_documents_screen.dart';
 import 'project_payments_screen.dart';
 import 'design_package_selection_screen.dart';
 import 'package:admin/features/warranties/presentation/screens/warranties_screen.dart';
+import '../../features/boq/presentation/screens/boq_screen.dart';
+import '../../features/quality/presentation/screens/quality_checks_screen.dart';
+import '../../features/site_reports/presentation/screens/site_reports_screen.dart';
 
 import 'package:admin/screens/projects/subcontract_work_orders_screen.dart';
+import 'package:admin/features/finance/presentation/screens/billing_dashboard_screen.dart';
 import 'package:admin/models/project_summary.dart';
 import 'package:admin/features/change_orders/presentation/screens/change_orders_screen.dart';
 import 'package:admin/features/delays/presentation/screens/delay_logs_screen.dart';
 import 'package:admin/models/team_member.dart';
 import 'package:admin/widgets/animations/entrance_animation.dart';
 import 'package:admin/widgets/animations/motion_button.dart';
+import 'package:admin/utils/error_handler.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
   final CustomerProject project;
@@ -54,7 +59,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         setState(() {
           isLoadingSummary = false;
         });
-        // Optionally show error snackbar
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load project summary', showToast: false);
       }
     }
   }
@@ -84,6 +89,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         setState(() {
           isLoadingLead = false;
         });
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load lead details', showToast: false);
       }
     }
   }
@@ -738,6 +744,14 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         },
       ),
       _ModuleTile(
+        title: 'Billing',
+        icon: Icons.attach_money,
+        color: AppTheme.primaryBlue,
+        onTap: () {
+          _navigateToModule('Billing', widget.project);
+        },
+      ),
+      _ModuleTile(
         title: 'Change Orders',
          icon: Icons.edit_note_outlined,
          color: AppTheme.coralRed,
@@ -912,6 +926,16 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           builder: (context) => ProjectPaymentsScreen(project: project),
         ),
       );
+    } else if (moduleName == 'Billing') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+            appBar: AppBar(title: Text('Billing Dashboard')),
+            body: BillingDashboardScreen(projectId: widget.project.id!),
+          ),
+        ),
+      );
     } else if (moduleName == 'Warranties') {
       Navigator.push(
         context,
@@ -950,6 +974,27 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
              projectId: widget.project.id!,
              projectName: widget.project.name,
           ),
+        ),
+      );
+    } else if (moduleName == 'BoQ') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BoqScreen(projectId: widget.project.id!),
+        ),
+      );
+    } else if (moduleName == 'Site Reports') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SiteReportsScreen(projectId: widget.project.id!),
+        ),
+      );
+    } else if (moduleName == 'Quality Check') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => QualityChecksScreen(projectId: widget.project.id!),
         ),
       );
     } else {
