@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../../../utils/error_handler.dart'; // Ensure correct path
 import '../models/material_indent.dart';
+import '../models/vendor_quotation.dart';
 import 'package:admin/services/auth_service.dart'; // Adjust if using PortalAuthProvider directly or Dio interceptor
 
 class MaterialIndentService {
@@ -56,6 +57,57 @@ class MaterialIndentService {
       }
     } catch (e) {
        throw e;
+    }
+  }
+  // Quotation Management
+
+  Future<VendorQuotation> createQuotation(int indentId, int vendorId, VendorQuotation quotation) async {
+    try {
+      final response = await _dio.post(
+        'http://localhost:8080/api/procurement/quotations/indent/$indentId/vendor/$vendorId', // Use distinct endpoint base if needed
+        data: quotation.toJson(),
+        options: await _getOptions(),
+      );
+      if (response.data['success']) {
+        return VendorQuotation.fromJson(response.data['data']);
+      } else {
+         throw Exception(response.data['message']);
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<List<VendorQuotation>> getQuotations(int indentId) async {
+    try {
+      final response = await _dio.get(
+        'http://localhost:8080/api/procurement/quotations/indent/$indentId',
+        options: await _getOptions(),
+      );
+      if (response.data['success']) {
+        final List<dynamic> list = response.data['data'];
+        return list.map((json) => VendorQuotation.fromJson(json)).toList();
+      } else {
+        throw Exception(response.data['message']);
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  Future<VendorQuotation> selectQuotation(int quotationId) async {
+      try {
+      final response = await _dio.post(
+        'http://localhost:8080/api/procurement/quotations/$quotationId/select',
+        options: await _getOptions(),
+      );
+       if (response.data['success']) {
+        return VendorQuotation.fromJson(response.data['data']);
+      } else {
+         throw Exception(response.data['message']);
+      }
+    } catch (e) {
+      rethrow;
     }
   }
 }

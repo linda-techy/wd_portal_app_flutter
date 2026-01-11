@@ -3,6 +3,7 @@ import '../../../../utils/error_handler.dart';
 import '../../data/models/material_indent.dart';
 import '../../data/services/material_indent_service.dart';
 import 'indent_creation_screen.dart';
+import 'quotation_management_screen.dart';
 
 class IndentListScreen extends StatefulWidget {
   final int projectId;
@@ -93,7 +94,12 @@ class _IndentListScreenState extends State<IndentListScreen> {
                             backgroundColor: _getStatusColor(indent.status).withOpacity(0.1),
                           ),
                           onTap: () {
-                            // TODO: View Detail Screen
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => QuotationManagementScreen(indent: indent),
+                              ),
+                            );
                           },
                         ),
                       );
