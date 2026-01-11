@@ -112,7 +112,7 @@ class AuthInterceptor extends Interceptor {
           // Clear auth state in provider
           try {
             final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
-            await authProvider.logout();
+            await authProvider.logout(context);
           } catch (providerError) {
             print('DEBUG Flutter: Error clearing auth provider: $providerError');
           }
