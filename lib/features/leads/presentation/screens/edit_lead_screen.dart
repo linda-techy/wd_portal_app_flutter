@@ -68,7 +68,7 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
               TextButton.icon(
                 onPressed: _showConvertDialog,
                 icon: const Icon(Icons.check_circle_outline, color: primaryColor),
-                label: const Text("Convert to Project", style: TextStyle(color: primaryColor)),
+                label: const Text("Convert into Customer", style: TextStyle(color: primaryColor)),
               ),
             IconButton(
               icon: const Icon(Icons.save),
@@ -151,8 +151,8 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Convert Lead to Project"),
-        content: const Text("This will create a new Customer Project from this lead. Continue?"),
+        title: const Text("Convert Lead to Customer"),
+        content: const Text("This will create a new Customer account and Project from this lead. Continue?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

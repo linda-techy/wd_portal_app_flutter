@@ -233,7 +233,9 @@ class FormSections {
                       }
                     },
                     validator: (value) {
-                      // State is optional during edit; allow empty to avoid blocking save
+                      if (value == null || value.isEmpty) {
+                        return 'State is required';
+                      }
                       return null;
                     },
                   ),
@@ -267,7 +269,9 @@ class FormSections {
                       }
                     },
                     validator: (value) {
-                      // District is optional during edit; allow empty to avoid blocking save
+                      if (value == null || value.isEmpty) {
+                        return 'District is required';
+                      }
                       return null;
                     },
                   ),
