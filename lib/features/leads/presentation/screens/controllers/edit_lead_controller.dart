@@ -282,4 +282,21 @@ class EditLeadController extends ChangeNotifier {
     }
   }
 
+  Future<void> convertLead(Map<String, dynamic> requestData) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _leadService.convertLead(_originalLead.leadId, requestData);
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Error converting lead: ${e.toString()}';
+      notifyListeners();
+      rethrow;
+    }
+  }
+
 }

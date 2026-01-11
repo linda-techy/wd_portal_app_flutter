@@ -4,6 +4,7 @@ import '../../data/models/lead.dart';
 import 'controllers/edit_lead_controller.dart';
 import 'components/form_sections.dart';
 import 'constants/edit_lead_constants.dart';
+import 'package:admin/constants/project_type_constants.dart';
 import 'components/lead_activity_timeline.dart';
 import 'components/lead_tasks_tab.dart';
 import 'components/lead_documents_tab.dart';
@@ -147,34 +148,111 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
     );
   }
 
-  void _showConvertDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Convert Lead to Customer"),
-        content: const Text("This will create a new Customer account and Project from this lead. Continue?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-               Navigator.pop(context);
-               _performConversion();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
-            child: const Text("Convert"),
-          ),
-        ],
-      ),
-    );
-  }
+  Future<void> _showConvertDialog() async {
+    final GlobalKey<FormState> conversionFormKey = GlobalKey<FormState>();
+    final TextEditingController projectNameController = TextEditingController(text: '${widget.lead.name} Project');
+    final TextEditingController startDateController = TextEditingController(text: DateTime.now().toString().substring(0, 10));
+    final TextEditingController locationController = TextEditingController(text: widget.lead.location.isNotEmpty ? widget.lead.location : (widget.lead.district.isNotEmpty ? widget.lead.district : widget.lead.state));
 
-  Future<void> _performConversion() async {
-    // TODO: Implement Conversion Logic via Controller/Service
-     ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Conversion initiated... (Backend Ready, Frontend pending Service Call)")));
+    String projectType = widget.lead.projectType.isNotEmpty ? widget.lead.projectType : ProjectTypeConstants.defaultValue;
+    DateTime selectedDate = DateTime.now();
+
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Convert into Customer"),
+          content: SizedBox(
+            width: 500,
+            child: Form(
+              key: conversionFormKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                   Text('Convert "${widget.lead.name}" into a Customer? This will create a Customer account and a Project.', style: TextStyle(color: Colors.grey[700])),
+                   const SizedBox(height: 20),
+                   TextFormField(
+                    controller: projectNameController,
+                    decoration: const InputDecoration(labelText: 'Project Name *', border: OutlineInputBorder()),
+                    validator: (v) => v?.isNotEmpty == true ? null : 'Required',
+                  ),
+                   const SizedBox(height: 10),
+                   DropdownButtonFormField<String>(
+                    value: projectType,
+                    decoration: const InputDecoration(labelText: 'Project Type', border: OutlineInputBorder()),
+                    items: ProjectTypeConstants.formDropdownItems,
+                    onChanged: (v) => projectType = v!,
+                  ),
+                   const SizedBox(height: 10),
+                   TextFormField(
+                    controller: locationController,
+                    decoration: const InputDecoration(labelText: 'Location / Site Address', border: OutlineInputBorder()),
+                  ),
+                   const SizedBox(height: 10),
+                   TextFormField(
+                    controller: startDateController,
+                    decoration: const InputDecoration(
+                      labelText: 'Start Date', 
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    readOnly: true,
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context, 
+                        initialDate: selectedDate, 
+                        firstDate: DateTime(2000), 
+                        lastDate: DateTime(2100)
+                      );
+                      if(date != null) {
+                        selectedDate = date;
+                        startDateController.text = date.toString().substring(0, 10);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if(conversionFormKey.currentState!.validate()){
+                   Navigator.pop(context, {
+                    "projectName": projectNameController.text,
+                    "projectType": projectType,
+                    "startDate": startDateController.text,
+                    "location": locationController.text,
+                  });
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+              child: const Text("Convert"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != null) {
+      try {
+        await _controller.convertLead(result);
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Lead converted into Customer successfully!"), backgroundColor: Colors.green));
+           Navigator.pop(context, true); // Go back to list
+        }
+      } catch (e) {
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
+        }
+      }
+    }
   }
 
   Widget _buildSectionHeader(String title) {

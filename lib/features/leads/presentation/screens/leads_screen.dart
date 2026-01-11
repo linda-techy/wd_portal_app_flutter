@@ -888,13 +888,12 @@ class _LeadsScreenState extends State<LeadsScreen> {
   }
 
   Future<void> _convertLead(Lead lead) async {
-    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+    final GlobalKey<FormState> conversionFormKey = GlobalKey<FormState>();
     final TextEditingController projectNameController = TextEditingController(text: '${lead.name} Project');
     final TextEditingController startDateController = TextEditingController(text: DateTime.now().toString().substring(0, 10));
-    final TextEditingController locationController = TextEditingController(text: lead.location ?? lead.district ?? lead.state ?? '');
+    final TextEditingController locationController = TextEditingController(text: lead.location.isNotEmpty ? lead.location : (lead.district.isNotEmpty ? lead.district : lead.state));
 
-    // Default values
-    String projectType = lead.projectType.isNotEmpty ? lead.projectType : 'RESIDENTIAL';
+    String projectType = lead.projectType.isNotEmpty ? lead.projectType : ProjectTypeConstants.defaultValue;
     DateTime selectedDate = DateTime.now();
 
     // Show Dialog
@@ -902,30 +901,29 @@ class _LeadsScreenState extends State<LeadsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Convert Lead to App Customer'),
+          title: const Text('Convert into Customer'),
           content: SizedBox(
             width: 500,
             child: Form(
-              key: formKey,
+              key: conversionFormKey,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Convert "${lead.name}" to a Customer Project? This will create a Customer account and a Project.', style: TextStyle(color: Colors.grey[700])),
-                  const SizedBox(height: 20),
-                  TextFormField(
+                   Text('Convert "${lead.name}" into a Customer? This will create a Customer account and a Project.', style: TextStyle(color: Colors.grey[700])),
+                   const SizedBox(height: 20),
+                   TextFormField(
                     controller: projectNameController,
                     decoration: const InputDecoration(labelText: 'Project Name *', border: OutlineInputBorder()),
                     validator: (v) => v?.isNotEmpty == true ? null : 'Required',
                   ),
-                  const SizedBox(height: 10),
+                   const SizedBox(height: 10),
                    DropdownButtonFormField<String>(
                     value: projectType,
                     decoration: const InputDecoration(labelText: 'Project Type', border: OutlineInputBorder()),
-                    items: ['RESIDENTIAL', 'COMMERCIAL', 'INDUSTRIAL', 'INFRASTRUCTURE', 'INTERIOR', 'RENOVATION']
-                        .map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                    items: ProjectTypeConstants.formDropdownItems,
                     onChanged: (v) => projectType = v!,
                   ),
-                  const SizedBox(height: 10),
+                   const SizedBox(height: 10),
                   TextFormField(
                     controller: locationController,
                     decoration: const InputDecoration(labelText: 'Location / Site Address', border: OutlineInputBorder()),
@@ -1451,7 +1449,7 @@ class _LeadsTableState extends State<LeadsTable> {
                                           value: 'convert',
                                           child: ListTile(
                                             leading: Icon(Icons.transform, color: Colors.green, size: 20),
-                                            title: Text('Convert to Customer'),
+                                            title: Text('Convert into Customer'),
                                             contentPadding: EdgeInsets.zero,
                                             dense: true,
                                           ),
