@@ -95,7 +95,34 @@ class AuthInterceptor extends Interceptor {
         print('DEBUG Flutter: Token refresh flow failed completely: $e');
         await _storage.deleteAll();
         _isRefreshing = false;
-        // You might want to emit an event here to notify the app to redirect to login
+        
+        // Show user-friendly message
+        NavigationService.scaffoldMessengerKey.currentState?.showSnackBar(
+          const SnackBar(
+            content: Text('Session expired. Please login again.'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        
+        // Navigate to login screen
+        final context = NavigationService.navigatorKey.currentContext;
+        if (context != null) {
+          // Clear auth state in provider
+          try {
+            final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
+            await authProvider.logout();
+          } catch (providerError) {
+            print('DEBUG Flutter: Error clearing auth provider: $providerError');
+          }
+          
+          // Navigate to login and clear navigation stack
+          NavigationService.navigatorKey.currentState?.pushNamedAndRemoveUntil(
+            '/login',
+            (route) => false,
+          );
+        }
       }
     }
 

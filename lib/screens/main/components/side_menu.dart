@@ -80,12 +80,19 @@ class SideMenu extends StatelessWidget {
           Expanded(
             child: Consumer<PermissionProvider>(
               builder: (context, permissions, child) {
-                return ListView(
-                  children: _buildDynamicMenuItems(context, permissions),
+                return Scrollbar(
+                  thumbVisibility: true,
+                  child: ListView(
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
+                    children: _buildDynamicMenuItems(context, permissions),
+                  ),
                 );
               },
             ),
           ),
+
           // User Profile Section (Desktop Footer Replacement)
           Consumer<PortalAuthProvider>(
             builder: (context, auth, child) {
