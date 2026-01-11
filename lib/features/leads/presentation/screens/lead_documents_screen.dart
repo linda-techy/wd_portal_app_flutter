@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../data/models/lead.dart';
 import '../../data/models/lead_document.dart';
 import '../../data/services/lead_service.dart';
+import 'package:admin/utils/error_handler.dart';
 
 class LeadDocumentsScreen extends StatefulWidget {
   final Lead lead;
@@ -41,9 +42,10 @@ class _LeadDocumentsScreenState extends State<LeadDocumentsScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Failed to load documents: $e';
+          _error = ErrorHandler.getErrorMessage(e);
           _isLoading = false;
         });
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load documents', showToast: false);
       }
     }
   }
@@ -81,9 +83,7 @@ class _LeadDocumentsScreenState extends State<LeadDocumentsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload failed: $e')),
-        );
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Upload failed');
       }
     }
   }

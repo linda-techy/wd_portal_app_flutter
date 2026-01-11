@@ -11,6 +11,10 @@ import 'package:admin/models/role.dart';
 import 'package:admin/services/crm_service.dart';
 import 'package:admin/utils/india_location_data.dart';
 import 'package:admin/constants/project_type_constants.dart';
+import 'package:provider/provider.dart';
+import 'package:dio/dio.dart';
+import 'package:admin/providers/portal_auth_provider.dart';
+import 'package:admin/utils/error_handler.dart';
 import '../../widgets/animations/entrance_animation.dart';
 import '../../widgets/animations/motion_button.dart';
 import '../../widgets/animations/shake_widget.dart';
@@ -83,7 +87,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _verifyAuthAndLoadData();
     _leadSearchFocusNode.addListener(() {
       if (!_leadSearchFocusNode.hasFocus) {
         // Only close dropdown when losing focus if no lead is selected
@@ -186,6 +190,30 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
         );
       }
     }
+  }
+
+  Future<void> _verifyAuthAndLoadData() async {
+    // Check if user is authenticated before loading
+    final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
+    
+    if (!authProvider.isAuthenticated) {
+      if (mounted) {
+        MotionToast.show(
+          context,
+          message: 'Please login to continue',
+          isError: true,
+        );
+        // Navigate to login after a delay
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed('/login');
+          }
+        });
+      }
+      return;
+    }
+    
+    await _loadData();
   }
 
   Future<void> _loadData() async {
@@ -319,14 +347,12 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
         });
       }
     } catch (e) {
-
-
       if (mounted) {
         setState(() => _isLoading = false);
-        MotionToast.show(
+        await ErrorHandler.handleApiError(
           context,
-          message: 'Error loading data: $e',
-          isError: true,
+          e,
+          defaultMessage: 'Error loading data',
         );
       }
     }

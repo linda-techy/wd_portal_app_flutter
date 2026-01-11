@@ -14,6 +14,10 @@ import '../../widgets/animations/motion_button.dart';
 import '../../widgets/animations/shake_widget.dart';
 import '../../utils/motion_toast.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
+import 'package:dio/dio.dart';
+import 'package:admin/providers/portal_auth_provider.dart';
+import 'package:admin/utils/error_handler.dart';
 
 class EditCustomerProjectScreen extends StatefulWidget {
   final CustomerProject project;
@@ -172,7 +176,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
 
     _selectedLeadId = widget.project.leadId;
 
-    _loadData();
+    _verifyAuthAndLoadData();
 
     _leadSearchFocusNode.addListener(() {
       if (!_leadSearchFocusNode.hasFocus) {
@@ -205,6 +209,24 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
       final location = _locationController.text.trim();
       _nameController.text = location.isNotEmpty ? '$customerName - $location' : customerName;
     }
+  }
+
+  Future<void> _verifyAuthAndLoadData() async {
+    final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
+    
+    if (!authProvider.isAuthenticated) {
+      if (mounted) {
+        MotionToast.show(context, message: 'Please login to continue', isError: true);
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed('/login');
+          }
+        });
+      }
+      return;
+    }
+    
+    await _loadData();
   }
 
   Future<void> _loadData() async {
@@ -419,11 +441,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
           _isLoadingLeads = false;
           _isLoadingTeamMembers = false;
         });
-        MotionToast.show(
-          context,
-          message: 'Error loading data: $e',
-          isError: true,
-        );
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error loading data');
       }
     }
   }
@@ -591,11 +609,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MotionToast.show(
-          context,
-          message: 'Failed to update project: ${e.toString()}',
-          isError: true,
-        );
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to update project');
       }
     } finally {
       if (mounted) {

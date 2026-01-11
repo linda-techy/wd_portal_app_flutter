@@ -8,6 +8,9 @@ import 'package:admin/utils/container_styles.dart';
 import 'package:admin/models/pagination_params.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/providers/permission_provider.dart';
+import 'package:dio/dio.dart';
+import 'package:admin/providers/portal_auth_provider.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'add_customer_screen.dart';
 import 'edit_customer_screen.dart';
 
@@ -34,8 +37,29 @@ class _CustomersScreenState extends State<CustomersScreen> {
   @override
   void initState() {
     super.initState();
-    _loadCustomers();
+    _verifyAuthAndLoadData();
     _loadCustomerRoles();
+  }
+
+  Future<void> _verifyAuthAndLoadData() async {
+    final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
+    
+    if (!authProvider.isAuthenticated) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+          errorMessage = 'Please login to continue';
+        });
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed('/login');
+          }
+        });
+      }
+      return;
+    }
+    
+    await _loadCustomers();
   }
 
   Future<void> _loadCustomerRoles() async {
@@ -47,7 +71,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
         });
       }
     } catch (e) {
-      print('Error loading customer roles: $e');
+      if (mounted) {
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error loading customer roles', showToast: false);
+      }
     }
   }
 
@@ -79,8 +105,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
       if (mounted) {
         setState(() {
           isLoading = false;
-          errorMessage = _getErrorMessage(e);
+          errorMessage = ErrorHandler.getErrorMessage(e);
         });
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load customers', showToast: false);
       }
     }
   }
@@ -160,9 +187,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error deleting customer: $e')),
-          );
+          await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error deleting customer');
         }
       }
     }

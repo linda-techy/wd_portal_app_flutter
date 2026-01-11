@@ -3,6 +3,10 @@ import 'package:admin/constants.dart';
 import '../../data/models/customer.dart';
 import 'package:admin/models/customer_role.dart';
 import '../../data/services/customer_service.dart';
+import 'package:provider/provider.dart';
+import 'package:dio/dio.dart';
+import 'package:admin/providers/portal_auth_provider.dart';
+import 'package:admin/utils/error_handler.dart';
 
 class AddCustomerScreen extends StatefulWidget {
   const AddCustomerScreen({super.key});
@@ -41,7 +45,24 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   @override
   void initState() {
     super.initState();
-    _loadCustomerRoles();
+    _verifyAuthAndLoadRoles();
+  }
+
+  Future<void> _verifyAuthAndLoadRoles() async {
+    final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
+    
+    if (!authProvider.isAuthenticated) {
+      if (mounted) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed('/login');
+          }
+        });
+      }
+      return;
+    }
+    
+    await _loadCustomerRoles();
   }
 
   Future<void> _loadCustomerRoles() async {
@@ -57,12 +78,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoadingRoles = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading roles: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error loading roles');
       }
     }
   }
@@ -132,12 +148,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error creating customer: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error creating customer');
       }
     } finally {
       if (mounted) {

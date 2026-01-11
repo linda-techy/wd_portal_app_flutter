@@ -3,6 +3,7 @@ import 'package:admin/constants.dart';
 import '../../data/models/customer.dart';
 import 'package:admin/models/customer_role.dart';
 import '../../data/services/customer_service.dart';
+import 'package:admin/utils/error_handler.dart';
 
 class EditCustomerScreen extends StatefulWidget {
   final Customer customer;
@@ -75,12 +76,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoadingRoles = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading roles: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error loading roles');
       }
     }
   }
@@ -162,12 +158,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error updating customer: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error updating customer');
       }
     } finally {
       if (mounted) {

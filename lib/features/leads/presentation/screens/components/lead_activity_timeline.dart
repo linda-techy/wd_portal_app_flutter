@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/models/activity_feed.dart';
 import '../../../data/services/lead_service.dart';
 import 'package:intl/intl.dart';
+import 'package:admin/utils/error_handler.dart';
 
 class LeadActivityTimeline extends StatefulWidget {
   final String leadId;
@@ -39,8 +40,9 @@ class _LeadActivityTimelineState extends State<LeadActivityTimeline> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = e.toString();
+          _errorMessage = ErrorHandler.getErrorMessage(e);
         });
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load activities', showToast: false);
       }
     }
   }

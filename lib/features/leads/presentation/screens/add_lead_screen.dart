@@ -11,6 +11,10 @@ import 'package:admin/constants/priority_constants.dart';
 import 'package:admin/constants/project_type_constants.dart';
 import 'constants/add_lead_constants.dart';
 import 'components/form_sections.dart';
+import 'package:provider/provider.dart';
+import 'package:dio/dio.dart';
+import 'package:admin/providers/portal_auth_provider.dart';
+import 'package:admin/utils/error_handler.dart';
 
 class AddLeadScreen extends StatefulWidget {
   const AddLeadScreen({super.key});
@@ -71,7 +75,24 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
     dateOfEnquiry = DateTime.now();
 
     // Load team members
-    _loadTeamMembers();
+    _verifyAuthAndLoadData();
+  }
+
+  Future<void> _verifyAuthAndLoadData() async {
+    final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
+    
+    if (!authProvider.isAuthenticated) {
+      if (mounted) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed('/login');
+          }
+        });
+      }
+      return;
+    }
+    
+    await _loadTeamMembers();
   }
 
   Future<void> _loadTeamMembers() async {
@@ -81,8 +102,9 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
         teamMembers = members;
       });
     } catch (e) {
-      print('Error loading team members: $e');
-      // Continue without team members - form will show text field instead
+      if (mounted) {
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error loading team members', showToast: false);
+      }
     }
   }
 
@@ -299,9 +321,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error creating lead: $e')),
-        );
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error creating lead');
       }
     } finally {
       if (mounted) {
