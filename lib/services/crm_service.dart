@@ -92,43 +92,23 @@ class CRMService {
   }
 
   Future<List<Lead>> getLeadsByStatus(String status) async {
-    try {
-      final response = await _apiService.get('/leads/status/$status');
-      final List<dynamic> data = response.data;
-      return data.map((json) => Lead.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch leads by status: $e');
-    }
+    final response = await _apiService.get('/leads/status/$status');
+    return _apiService.unwrapList<Lead>(response, (json) => Lead.fromJson(json));
   }
 
   Future<List<Lead>> getLeadsByAssignedTo(String teamMemberId) async {
-    try {
-      final response = await _apiService.get('/leads/assigned/$teamMemberId');
-      final List<dynamic> data = response.data;
-      return data.map((json) => Lead.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch leads by assigned to: $e');
-    }
+    final response = await _apiService.get('/leads/assigned/$teamMemberId');
+    return _apiService.unwrapList<Lead>(response, (json) => Lead.fromJson(json));
   }
 
   Future<List<Lead>> searchLeads(String query) async {
-    try {
-      final response = await _apiService.get('/leads/search?query=$query');
-      final List<dynamic> data = response.data;
-      return data.map((json) => Lead.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to search leads: $e');
-    }
+    final response = await _apiService.get('/leads/search?query=$query');
+    return _apiService.unwrapList<Lead>(response, (json) => Lead.fromJson(json));
   }
 
   Future<List<Lead>> getOverdueFollowUps() async {
-    try {
-      final response = await _apiService.get('/leads/overdue-followups');
-      final List<dynamic> data = response.data;
-      return data.map((json) => Lead.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch overdue follow-ups: $e');
-    }
+    final response = await _apiService.get('/leads/overdue-followups');
+    return _apiService.unwrapList<Lead>(response, (json) => Lead.fromJson(json));
   }
 
   // =====================================================
@@ -171,13 +151,8 @@ class CRMService {
   }
 
   Future<List<CustomerRole>> getCustomerRoles() async {
-    try {
-      final response = await _apiService.get('/customers/roles');
-      final List<dynamic> data = response.data;
-      return data.map((json) => CustomerRole.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch customer roles: $e');
-    }
+    final response = await _apiService.get('/customers/roles');
+    return _apiService.unwrapList<CustomerRole>(response, (json) => CustomerRole.fromJson(json));
   }
 
   // =====================================================
@@ -247,58 +222,33 @@ class CRMService {
   // =====================================================
 
   Future<List<Client>> getAllClients() async {
-    try {
-      final response = await _apiService.get('/clients');
-      final List<dynamic> data = response.data;
-      return data.map((json) => Client.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch clients: $e');
-    }
+    final response = await _apiService.get('/clients');
+    return _apiService.unwrapList<Client>(response, (json) => Client.fromJson(json));
   }
 
   Future<Client> getClientById(String id) async {
-    try {
-      final response = await _apiService.get('/clients/$id');
-      return Client.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to fetch client: $e');
-    }
+    final response = await _apiService.get('/clients/$id');
+    return _apiService.unwrap<Client>(response, (json) => Client.fromJson(json as Map<String, dynamic>));
   }
 
   Future<Client> saveClient(Client client) async {
-    try {
-      final response = await _apiService.post('/clients', data: client.toJson());
-      return Client.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to save client: $e');
-    }
+    final response = await _apiService.post('/clients', data: client.toJson());
+    return _apiService.unwrap<Client>(response, (json) => Client.fromJson(json as Map<String, dynamic>));
   }
 
   Future<Client> updateClient(String id, Client client) async {
-    try {
-      final response = await _apiService.put('/clients/$id', data: client.toJson());
-      return Client.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to update client: $e');
-    }
+    final response = await _apiService.put('/clients/$id', data: client.toJson());
+    return _apiService.unwrap<Client>(response, (json) => Client.fromJson(json as Map<String, dynamic>));
   }
 
   Future<void> deleteClient(String id) async {
-    try {
-      await _apiService.delete('/clients/$id');
-    } catch (e) {
-      throw Exception('Failed to delete client: $e');
-    }
+    final response = await _apiService.delete('/clients/$id');
+    _apiService.unwrap<void>(response, (_) {});
   }
 
   Future<List<Client>> getClientsByAssignedTo(String assignedTo) async {
-    try {
-      final response = await _apiService.get('/clients/assigned/$assignedTo');
-      final List<dynamic> data = response.data;
-      return data.map((json) => Client.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch clients by assigned to: $e');
-    }
+    final response = await _apiService.get('/clients/assigned/$assignedTo');
+    return _apiService.unwrapList<Client>(response, (json) => Client.fromJson(json));
   }
 
   // =====================================================
@@ -306,78 +256,45 @@ class CRMService {
   // =====================================================
 
   Future<List<Project>> getAllProjects() async {
-    try {
-      final response = await _apiService.get('/projects');
-      final List<dynamic> data = response.data;
-      return data.map((json) => Project.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch projects: $e');
-    }
+    final response = await _apiService.get('/projects');
+    return _apiService.unwrapList<Project>(response, (json) => Project.fromJson(json));
   }
 
   Future<Project> getProjectById(String id) async {
-    try {
-      final response = await _apiService.get('/projects/$id');
-      return Project.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to fetch project: $e');
-    }
+    final response = await _apiService.get('/projects/$id');
+    return _apiService.unwrap<Project>(response, (json) => Project.fromJson(json as Map<String, dynamic>));
   }
 
   Future<Project> saveProject(Project project) async {
-    try {
-      final response = await _apiService.post('/projects', data: project.toJson());
-      return Project.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to save project: $e');
-    }
+    final response = await _apiService.post('/projects', data: project.toJson());
+    return _apiService.unwrap<Project>(response, (json) => Project.fromJson(json as Map<String, dynamic>));
   }
 
   Future<Project> updateProject(String id, Project project) async {
-    try {
-      final response = await _apiService.put('/projects/$id', data: project.toJson());
-      return Project.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to update project: $e');
-    }
+    final response = await _apiService.put('/projects/$id', data: project.toJson());
+    return _apiService.unwrap<Project>(response, (json) => Project.fromJson(json as Map<String, dynamic>));
   }
 
   Future<void> deleteProject(String id) async {
-    try {
-      await _apiService.delete('/projects/$id');
-    } catch (e) {
-      throw Exception('Failed to delete project: $e');
-    }
+    final response = await _apiService.delete('/projects/$id');
+    _apiService.unwrap<void>(response, (_) {});
   }
 
   Future<List<Project>> getProjectsByClient(String clientId) async {
-    try {
-      final response = await _apiService.get('/projects/client/$clientId');
-      final List<dynamic> data = response.data;
-      return data.map((json) => Project.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch projects by client: $e');
-    }
+    final response = await _apiService.get('/projects/client/$clientId');
+    return _apiService.unwrapList<Project>(response, (json) => Project.fromJson(json));
   }
 
   Future<List<Project>> getProjectsByAssignedTo(String assignedTo) async {
-    try {
-      final response = await _apiService.get('/projects/assigned/$assignedTo');
-      final List<dynamic> data = response.data;
-      return data.map((json) => Project.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch projects by assigned to: $e');
-    }
+    final response = await _apiService.get('/projects/assigned/$assignedTo');
+    return _apiService.unwrapList<Project>(response, (json) => Project.fromJson(json));
   }
 
   Future<void> updateProjectProgress(
       String id, double progressPercentage) async {
-    try {
-      await _apiService.put(
-          '/projects/$id/progress', data: {'progressPercentage': progressPercentage});
-    } catch (e) {
-      throw Exception('Failed to update project progress: $e');
-    }
+    final response = await _apiService.put(
+        '/projects/$id/progress', data: {'progressPercentage': progressPercentage});
+    _apiService.unwrap<void>(response, (_) {});
   }
 
   // =====================================================
@@ -385,39 +302,23 @@ class CRMService {
   // =====================================================
 
   Future<Map<String, dynamic>> getDashboardMetrics() async {
-    try {
-      final response = await _apiService.get('/dashboard/metrics');
-      return response.data;
-    } catch (e) {
-      throw Exception('Failed to fetch dashboard metrics: $e');
-    }
+    final response = await _apiService.get('/dashboard/metrics');
+    return _apiService.unwrap<Map<String, dynamic>>(response, (json) => json as Map<String, dynamic>);
   }
 
   Future<Map<String, dynamic>> getSalesPipeline() async {
-    try {
-      final response = await _apiService.get('/dashboard/sales-pipeline');
-      return response.data;
-    } catch (e) {
-      throw Exception('Failed to fetch sales pipeline: $e');
-    }
+    final response = await _apiService.get('/dashboard/sales-pipeline');
+    return _apiService.unwrap<Map<String, dynamic>>(response, (json) => json as Map<String, dynamic>);
   }
 
   Future<Map<String, dynamic>> getTeamPerformance() async {
-    try {
-      final response = await _apiService.get('/dashboard/team-performance');
-      return response.data;
-    } catch (e) {
-      throw Exception('Failed to fetch team performance: $e');
-    }
+    final response = await _apiService.get('/dashboard/team-performance');
+    return _apiService.unwrap<Map<String, dynamic>>(response, (json) => json as Map<String, dynamic>);
   }
 
   Future<Map<String, dynamic>> getProjectProgressSummary() async {
-    try {
-      final response = await _apiService.get('/dashboard/project-progress');
-      return response.data;
-    } catch (e) {
-      throw Exception('Failed to fetch project progress summary: $e');
-    }
+    final response = await _apiService.get('/dashboard/project-progress');
+    return _apiService.unwrap<Map<String, dynamic>>(response, (json) => json as Map<String, dynamic>);
   }
 
   // =====================================================
@@ -425,13 +326,8 @@ class CRMService {
   // =====================================================
 
   Future<List<PortalUser>> getAllPortalUsers() async {
-    try {
-      final response = await _apiService.get('/portal-users');
-      final List<dynamic> data = response.data;
-      return data.map((json) => PortalUser.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch portal users: $e');
-    }
+    final response = await _apiService.get('/portal-users');
+    return _apiService.unwrapList<PortalUser>(response, (json) => PortalUser.fromJson(json));
   }
 
   Future<PaginatedResponse<PortalUser>> getPortalUsersPaginated({
@@ -441,74 +337,49 @@ class CRMService {
     String direction = 'asc',
     String? search,
   }) async {
-    try {
-      final queryParams = {
-        'page': page.toString(),
-        'size': size.toString(),
-        'sort': sort,
-        'direction': direction,
-      };
-      
-      if (search != null && search.isNotEmpty) {
-        queryParams['search'] = search;
-      }
-      
-      final response = await _apiService.get(
-        '/portal-users/paginated',
-        queryParams: queryParams,
-      );
-      
-      final pageData = _apiService.unwrap<Map<String, dynamic>>(response, (json) => json as Map<String, dynamic>);
-      return PaginatedResponse.fromJson(pageData, PortalUser.fromJson);
-    } catch (e) {
-      throw Exception('Failed to fetch paginated portal users: $e');
+    final queryParams = {
+      'page': page.toString(),
+      'size': size.toString(),
+      'sort': sort,
+      'direction': direction,
+    };
+    
+    if (search != null && search.isNotEmpty) {
+      queryParams['search'] = search;
     }
+    
+    final response = await _apiService.get(
+      '/portal-users/paginated',
+      queryParams: queryParams,
+    );
+    
+    return _apiService.unwrap<PaginatedResponse<PortalUser>>(response, (json) => PaginatedResponse.fromJson(json as Map<String, dynamic>, PortalUser.fromJson));
   }
 
   Future<PortalUser> getPortalUserById(int id) async {
-    try {
-      final response = await _apiService.get('/portal-users/$id');
-      return PortalUser.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to fetch portal user: $e');
-    }
+    final response = await _apiService.get('/portal-users/$id');
+    return _apiService.unwrap<PortalUser>(response, (json) => PortalUser.fromJson(json as Map<String, dynamic>));
   }
 
   Future<PortalUser> createPortalUser(PortalUser user) async {
-    try {
-      final response =
-          await _apiService.post('/portal-users', data: user.toCreateJson());
-      return PortalUser.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to create portal user: $e');
-    }
+    final response =
+        await _apiService.post('/portal-users', data: user.toCreateJson());
+    return _apiService.unwrap<PortalUser>(response, (json) => PortalUser.fromJson(json as Map<String, dynamic>));
   }
 
   Future<PortalUser> updatePortalUser(int id, PortalUser user) async {
-    try {
-      final response =
-          await _apiService.put('/portal-users/$id', data: user.toUpdateJson());
-      return PortalUser.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to update portal user: $e');
-    }
+    final response =
+        await _apiService.put('/portal-users/$id', data: user.toUpdateJson());
+    return _apiService.unwrap<PortalUser>(response, (json) => PortalUser.fromJson(json as Map<String, dynamic>));
   }
 
   Future<void> deletePortalUser(int id) async {
-    try {
-      await _apiService.delete('/portal-users/$id');
-    } catch (e) {
-      throw Exception('Failed to delete portal user: $e');
-    }
+    final response = await _apiService.delete('/portal-users/$id');
+    _apiService.unwrap<void>(response, (_) {});
   }
 
   Future<List<PortalRole>> getPortalRoles() async {
-    try {
-      final response = await _apiService.get('/portal-users/roles');
-      final List<dynamic> data = response.data;
-      return data.map((json) => PortalRole.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch portal roles: $e');
-    }
+    final response = await _apiService.get('/portal-users/roles');
+    return _apiService.unwrapList<PortalRole>(response, (json) => PortalRole.fromJson(json));
   }
 }

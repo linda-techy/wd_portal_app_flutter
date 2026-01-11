@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:admin/config/app_config.dart';
 import 'package:admin/models/portal_user.dart';
 import 'package:admin/services/portal_auth_service.dart';
+import 'package:admin/services/api_service.dart';
+import 'package:admin/services/http_interceptor.dart';
 
 class UserService {
   static final String baseUrl = AppConfig.fullApiUrl;
@@ -12,21 +14,14 @@ class UserService {
     receiveTimeout: const Duration(seconds: 10),
   ));
 
+  static final ApiService _apiService = ApiService();
+
   static void initialize() {
-    _dio.interceptors.add(PortalAuthInterceptor(_dio));
+    _dio.interceptors.add(AuthInterceptor(_dio));
   }
 
   static Future<List<PortalUser>> getAllPortalUsers() async {
-    try {
-      final response = await _dio.get('/portal-users');
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        return data.map((json) => PortalUser.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load users');
-      }
-    } catch (e) {
-      throw Exception('Error fetching users: $e');
-    }
+    final response = await _apiService.get('/portal-users');
+    return _apiService.unwrapList<PortalUser>(response, (json) => PortalUser.fromJson(json));
   }
 }

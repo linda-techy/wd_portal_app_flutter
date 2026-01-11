@@ -1,4 +1,3 @@
-
 import 'package:admin/features/customers/data/models/customer.dart';
 import 'package:admin/models/customer_role.dart';
 import 'package:admin/models/paginated_response.dart';
@@ -9,68 +8,38 @@ class CustomerService {
   final ApiService _apiService = ApiService();
 
   Future<List<Customer>> getAllCustomers() async {
-    try {
-      final response = await _apiService.get('/customers');
-      final List<dynamic> data = response.data;
-      return data.map((json) => Customer.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch customers: $e');
-    }
+    final response = await _apiService.get('/customers');
+    return _apiService.unwrapList<Customer>(response, (json) => Customer.fromJson(json));
   }
 
   Future<PaginatedResponse<Customer>> getCustomersPaginated(PaginationParams params) async {
-    try {
-      final queryParams = params.toQueryParams();
-      final response = await _apiService.get('/customers/paginated', queryParams: queryParams);
-      final pageData = _apiService.unwrap<Map<String, dynamic>>(response, (json) => json as Map<String, dynamic>);
-      return PaginatedResponse.fromJson(pageData, Customer.fromJson);
-    } catch (e) {
-      throw Exception('Failed to fetch paginated customers: $e');
-    }
+    final queryParams = params.toQueryParams();
+    final response = await _apiService.get('/customers/paginated', queryParams: queryParams);
+    return _apiService.unwrap<PaginatedResponse<Customer>>(response, (json) => PaginatedResponse.fromJson(json as Map<String, dynamic>, Customer.fromJson));
   }
 
   Future<Customer> getCustomerById(int id) async {
-    try {
-      final response = await _apiService.get('/customers/$id');
-      return Customer.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to fetch customer: $e');
-    }
+    final response = await _apiService.get('/customers/$id');
+    return _apiService.unwrap<Customer>(response, (json) => Customer.fromJson(json as Map<String, dynamic>));
   }
 
   Future<Customer> createCustomer(Customer customer) async {
-    try {
-      final response = await _apiService.post('/customers', data: customer.toCreateJson());
-      return Customer.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to create customer: $e');
-    }
+    final response = await _apiService.post('/customers', data: customer.toCreateJson());
+    return _apiService.unwrap<Customer>(response, (json) => Customer.fromJson(json as Map<String, dynamic>));
   }
 
   Future<Customer> updateCustomer(int id, Customer customer) async {
-    try {
-      final response = await _apiService.put('/customers/$id', data: customer.toUpdateJson());
-      return Customer.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to update customer: $e');
-    }
+    final response = await _apiService.put('/customers/$id', data: customer.toUpdateJson());
+    return _apiService.unwrap<Customer>(response, (json) => Customer.fromJson(json as Map<String, dynamic>));
   }
 
   Future<void> deleteCustomer(int id) async {
-    try {
-      await _apiService.delete('/customers/$id');
-    } catch (e) {
-      throw Exception('Failed to delete customer: $e');
-    }
+    final response = await _apiService.delete('/customers/$id');
+    _apiService.unwrap<void>(response, (_) {});
   }
 
   Future<List<CustomerRole>> getCustomerRoles() async {
-    try {
-      final response = await _apiService.get('/customers/roles');
-      final List<dynamic> data = response.data;
-      return data.map((json) => CustomerRole.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch customer roles: $e');
-    }
+    final response = await _apiService.get('/customers/roles');
+    return _apiService.unwrapList<CustomerRole>(response, (json) => CustomerRole.fromJson(json));
   }
 }

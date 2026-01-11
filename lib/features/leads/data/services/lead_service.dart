@@ -1,4 +1,3 @@
-
 // Extract Lead Service
 import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/models/paginated_response.dart';
@@ -16,165 +15,92 @@ class LeadService {
   final ApiService _apiService = ApiService();
 
   Future<List<TeamMemberSimple>> getTeamMembersForAssignment() async {
-    try {
-      final response = await _apiService.get('/users/team-members');
-      final List<dynamic> data = response.data;
-      return data.map((json) => TeamMemberSimple.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch team members for assignment: $e');
-    }
+    final response = await _apiService.get('/users/team-members');
+    return _apiService.unwrapList<TeamMemberSimple>(response, (json) => TeamMemberSimple.fromJson(json));
   }
 
   Future<List<Lead>> getAllLeads() async {
-    try {
-      final response = await _apiService.get('/leads');
-      final List<dynamic> data = response.data;
-      return data.map((json) => Lead.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch leads: $e');
-    }
+    final response = await _apiService.get('/leads');
+    return _apiService.unwrapList<Lead>(response, (json) => Lead.fromJson(json));
   }
 
   Future<PaginatedResponse<Lead>> getLeadsPaginated(PaginationParams params) async {
-    try {
-      final queryParams = params.toQueryParams();
-      final response = await _apiService.get('/leads/paginated', queryParams: queryParams);
-      final pageData = _apiService.unwrap<Map<String, dynamic>>(response, (json) => json as Map<String, dynamic>);
-      return PaginatedResponse.fromJson(pageData, Lead.fromJson);
-    } catch (e) {
-      throw Exception('Failed to fetch paginated leads: $e');
-    }
+    final queryParams = params.toQueryParams();
+    final response = await _apiService.get('/leads/paginated', queryParams: queryParams);
+    return _apiService.unwrap<PaginatedResponse<Lead>>(response, (json) => PaginatedResponse.fromJson(json as Map<String, dynamic>, Lead.fromJson));
   }
 
   Future<Lead> getLeadById(String id) async {
-    try {
-      final response = await _apiService.get('/leads/$id');
-      return Lead.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to fetch lead: $e');
-    }
+    final response = await _apiService.get('/leads/$id');
+    return _apiService.unwrap<Lead>(response, (json) => Lead.fromJson(json as Map<String, dynamic>));
   }
 
   Future<Lead> createLead(Lead lead) async {
-    try {
-      final response = await _apiService.post('/leads', data: lead.toCreateJson());
-      return Lead.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to create lead: $e');
-    }
+    final response = await _apiService.post('/leads', data: lead.toCreateJson());
+    return _apiService.unwrap<Lead>(response, (json) => Lead.fromJson(json as Map<String, dynamic>));
   }
 
   Future<Lead> updateLead(String id, Lead lead) async {
-    try {
-      final response = await _apiService.put('/leads/$id', data: lead.toUpdateJson());
-      return Lead.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to update lead: $e');
-    }
+    final response = await _apiService.put('/leads/$id', data: lead.toUpdateJson());
+    return _apiService.unwrap<Lead>(response, (json) => Lead.fromJson(json as Map<String, dynamic>));
   }
 
   Future<void> deleteLead(String id) async {
-    try {
-      await _apiService.delete('/leads/$id');
-    } catch (e) {
-      throw Exception('Failed to delete lead: $e');
-    }
+    final response = await _apiService.delete('/leads/$id');
+    _apiService.unwrap<void>(response, (_) {});
   }
   
   // Filtering & Stats methods...
   Future<List<Lead>> getLeadsByStatus(String status) async {
-    try {
-      final response = await _apiService.get('/leads/status/$status');
-      final List<dynamic> data = response.data;
-      return data.map((json) => Lead.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch leads by status: $e');
-    }
+    final response = await _apiService.get('/leads/status/$status');
+    return _apiService.unwrapList<Lead>(response, (json) => Lead.fromJson(json));
   }
 
   Future<List<Lead>> getLeadsByAssignedTo(String teamMemberId) async {
-    try {
-      final response = await _apiService.get('/leads/assigned/$teamMemberId');
-      final List<dynamic> data = response.data;
-      return data.map((json) => Lead.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch leads by assigned to: $e');
-    }
+    final response = await _apiService.get('/leads/assigned/$teamMemberId');
+    return _apiService.unwrapList<Lead>(response, (json) => Lead.fromJson(json));
   }
 
   Future<List<Lead>> searchLeads(String query) async {
-    try {
-      final response = await _apiService.get('/leads/search', queryParams: {'query': query});
-      final List<dynamic> data = response.data;
-      return data.map((json) => Lead.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to search leads: $e');
-    }
+    final response = await _apiService.get('/leads/search', queryParams: {'query': query});
+    return _apiService.unwrapList<Lead>(response, (json) => Lead.fromJson(json));
   }
 
   Future<List<Lead>> getOverdueFollowUps() async {
-    try {
-      final response = await _apiService.get('/leads/overdue-followups');
-      final List<dynamic> data = response.data;
-      return data.map((json) => Lead.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch overdue follow-ups: $e');
-    }
+    final response = await _apiService.get('/leads/overdue-followups');
+    return _apiService.unwrapList<Lead>(response, (json) => Lead.fromJson(json));
   }
+
   Future<List<ActivityFeed>> getLeadActivities(String leadId) async {
-    try {
-      final response = await _apiService.get('/leads/$leadId/activities');
-      final List<dynamic> data = response.data;
-      return data.map((json) => ActivityFeed.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch lead activities: $e');
-    }
+    final response = await _apiService.get('/leads/$leadId/activities');
+    return _apiService.unwrapList<ActivityFeed>(response, (json) => ActivityFeed.fromJson(json));
   }
 
   Future<void> convertLead(String leadId, Map<String, dynamic> requestData) async {
-    try {
-      await _apiService.post('/leads/$leadId/convert', data: requestData);
-    } catch (e) {
-      throw Exception('Failed to convert lead: $e');
-    }
+    final response = await _apiService.post('/leads/$leadId/convert', data: requestData);
+    _apiService.unwrap<void>(response, (_) {});
   }
 
   Future<List<LeadDocument>> getLeadDocuments(String leadId) async {
-    try {
-      // Assuming LeadDocumentController exposes /lead-documents/lead/{leadId}
-      // I need to verify the endpoint path in LeadDocumentController.java
-      // It was: @RequestMapping("/lead-documents") ... @GetMapping("/lead/{leadId}")
-      final response = await _apiService.get('/api/leads/$leadId/documents');
-      final List<dynamic> data = response.data;
-      return data.map((json) => LeadDocument.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch lead documents: $e');
-    }
+    final response = await _apiService.get('/api/leads/$leadId/documents');
+    return _apiService.unwrapList<LeadDocument>(response, (json) => LeadDocument.fromJson(json));
   }
 
   Future<LeadDocument> uploadDocument(String leadId, File file, String category, String description) async {
-    try {
-      String fileName = file.path.split(RegExp(r'[/\\]')).last;
-      FormData formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(file.path, filename: fileName),
-        'leadId': leadId,
-        'category': category,
-        'description': description,
-      });
-      
-      final response = await _apiService.post('/api/leads/$leadId/documents', data: formData);
-      return LeadDocument.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to upload document: $e');
-    }
+    String fileName = file.path.split(RegExp(r'[/\\]')).last;
+    FormData formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(file.path, filename: fileName),
+      'leadId': leadId,
+      'category': category,
+      'description': description,
+    });
+    
+    final response = await _apiService.post('/api/leads/$leadId/documents', data: formData);
+    return _apiService.unwrap<LeadDocument>(response, (json) => LeadDocument.fromJson(json as Map<String, dynamic>));
   }
 
   Future<LeadInteraction> createInteraction(LeadInteraction interaction) async {
-    try {
-      final response = await _apiService.post('/leads/interactions', data: interaction.toJson());
-      return LeadInteraction.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to create interaction: $e');
-    }
+    final response = await _apiService.post('/leads/interactions', data: interaction.toJson());
+    return _apiService.unwrap<LeadInteraction>(response, (json) => LeadInteraction.fromJson(json as Map<String, dynamic>));
   }
 }
