@@ -2,11 +2,12 @@ import 'package:dio/dio.dart';
 import '../../../../utils/error_handler.dart'; // Ensure correct path
 import '../models/material_indent.dart';
 import '../models/vendor_quotation.dart';
+import 'package:admin/config/app_config.dart';
 import 'package:admin/services/auth_service.dart'; // Adjust if using PortalAuthProvider directly or Dio interceptor
 
 class MaterialIndentService {
   final Dio _dio = Dio();
-  final String _baseUrl = 'http://localhost:8080/api/indents'; // Adjust for env
+  final String _baseUrl = '${AppConfig.apiBaseUrl}/api/indents';
 
   MaterialIndentService() {
     // Basic setup if not using a centralized Dio client
@@ -64,7 +65,7 @@ class MaterialIndentService {
   Future<VendorQuotation> createQuotation(int indentId, int vendorId, VendorQuotation quotation) async {
     try {
       final response = await _dio.post(
-        'http://localhost:8080/api/procurement/quotations/indent/$indentId/vendor/$vendorId', // Use distinct endpoint base if needed
+        '${AppConfig.apiBaseUrl}/api/procurement/quotations/indent/$indentId/vendor/$vendorId', // Use distinct endpoint base if needed
         data: quotation.toJson(),
         options: await _getOptions(),
       );
@@ -81,7 +82,7 @@ class MaterialIndentService {
   Future<List<VendorQuotation>> getQuotations(int indentId) async {
     try {
       final response = await _dio.get(
-        'http://localhost:8080/api/procurement/quotations/indent/$indentId',
+        '${AppConfig.apiBaseUrl}/api/procurement/quotations/indent/$indentId',
         options: await _getOptions(),
       );
       if (response.data['success']) {
@@ -98,7 +99,7 @@ class MaterialIndentService {
   Future<VendorQuotation> selectQuotation(int quotationId) async {
       try {
       final response = await _dio.post(
-        'http://localhost:8080/api/procurement/quotations/$quotationId/select',
+        '${AppConfig.apiBaseUrl}/api/procurement/quotations/$quotationId/select',
         options: await _getOptions(),
       );
        if (response.data['success']) {

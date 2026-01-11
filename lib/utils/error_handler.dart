@@ -70,6 +70,20 @@ class ErrorHandler {
     return shouldRedirectToLogin;
   }
 
+  static Future<void> handleAuthError(BuildContext context) async {
+    if (context.mounted) {
+      MotionToast.show(
+        context,
+        message: 'Session expired. Please login again.',
+        isError: true,
+      );
+      await Future.delayed(const Duration(seconds: 2));
+      if (context.mounted) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      }
+    }
+  }
+
   // Legacy methods for backward compatibility
   static void showErrorSnackBar(BuildContext context, dynamic error) {
     String message = getErrorMessage(error);

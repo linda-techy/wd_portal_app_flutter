@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../../services/boq_service.dart';
-import '../../theme/app_theme.dart';
-import '../../utils/error_handler.dart';
-import '../../providers/portal_auth_provider.dart';
+import 'package:admin/services/boq_service.dart';
+import 'package:admin/theme/app_theme.dart';
+import 'package:admin/utils/error_handler.dart';
+import 'package:admin/providers/portal_auth_provider.dart';
 
 class BoqScreen extends StatefulWidget {
   final int projectId;
@@ -108,9 +108,9 @@ class _BoqScreenState extends State<BoqScreen> {
                               columns: const [
                                 DataColumn(label: Text('Description')),
                                 DataColumn(label: Text('Unit')),
-                                DataColumn(label: Text('Qty', numeric: true)),
-                                DataColumn(label: Text('Rate', numeric: true)),
-                                DataColumn(label: Text('Amount', numeric: true)),
+                                DataColumn(label: Text('Qty'), numeric: true),
+                                DataColumn(label: Text('Rate'), numeric: true),
+                                DataColumn(label: Text('Amount'), numeric: true),
                               ],
                               rows: _items.map((item) {
                                 return DataRow(cells: [

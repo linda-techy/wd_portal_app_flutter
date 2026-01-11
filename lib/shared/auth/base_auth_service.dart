@@ -1,10 +1,8 @@
-import 'dart:convert';
-import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:admin/config/app_config.dart';
 
 /// Base authentication service that can be extended by portal and customer applications
 abstract class BaseAuthService {
-  static const String _baseUrl = 'http://localhost:8080/api';
+  static String get _baseUrl => '${AppConfig.apiBaseUrl}/api';
 
   late final Dio _dio;
   late final FlutterSecureStorage _storage;

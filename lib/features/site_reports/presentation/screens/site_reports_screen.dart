@@ -121,10 +121,9 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
                               children: [
                                 Text('Description: ${report.description}'),
                                 const SizedBox(height: 8),
-                                if (report.weather != null) Text('Weather: ${report.weather}'),
                                 const SizedBox(height: 8),
-                                if (report.submittedBy != null) 
-                                   Text('Submitted By: ${report.submittedBy!.firstName} ${report.submittedBy!.lastName}'),
+                                if (report.submittedByName != null) 
+                                   Text('Submitted By: ${report.submittedByName ?? 'Unknown'}'),
                               ],
                             ),
                           )

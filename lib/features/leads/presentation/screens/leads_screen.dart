@@ -16,6 +16,7 @@ import 'package:admin/providers/permission_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
+import 'package:admin/config/app_config.dart';
 import 'package:admin/utils/error_handler.dart';
 import 'add_lead_screen.dart';
 import 'edit_lead_screen.dart';
@@ -850,7 +851,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
       if (mounted) {
         setState(() {
           isLoading = false;
-          errorMessage = _getErrorMessage(e);
+          errorMessage = ErrorHandler.getErrorMessage(e);
         });
       }
     }

@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
 import '../models/subcontract_models.dart';
+import 'package:admin/config/app_config.dart';
 import 'package:admin/services/auth_service.dart';
 
 class SubcontractService {
   final Dio _dio = Dio();
-  final String _baseUrl = 'http://localhost:8080/api/subcontracts'; // Adjust base URL
+  final String _baseUrl = '${AppConfig.apiBaseUrl}/api/subcontracts'; // Adjust base URL
 
   SubcontractService() {
      _dio.options.headers['Content-Type'] = 'application/json';
