@@ -26,27 +26,34 @@ class CRMService {
 
   Future<List<TeamMemberSimple>> getTeamMembersForAssignment() async {
     final response = await _apiService.get('/users/team-members');
-    return _apiService.unwrapList<TeamMemberSimple>(response, (json) => TeamMemberSimple.fromJson(json));
+    return _apiService.unwrapList<TeamMemberSimple>(
+        response, (json) => TeamMemberSimple.fromJson(json));
   }
 
   Future<List<TeamMember>> getAllTeamMembers() async {
     final response = await _apiService.get('/users/team-members');
-    return _apiService.unwrapList<TeamMember>(response, (json) => TeamMember.fromJson(json));
+    return _apiService.unwrapList<TeamMember>(
+        response, (json) => TeamMember.fromJson(json));
   }
 
   Future<TeamMember> getTeamMemberById(String id) async {
     final response = await _apiService.get('/team-members/$id');
-    return _apiService.unwrap<TeamMember>(response, (json) => TeamMember.fromJson(json as Map<String, dynamic>));
+    return _apiService.unwrap<TeamMember>(
+        response, (json) => TeamMember.fromJson(json as Map<String, dynamic>));
   }
 
   Future<TeamMember> saveTeamMember(TeamMember teamMember) async {
-    final response = await _apiService.post('/team-members', data: teamMember.toJson());
-    return _apiService.unwrap<TeamMember>(response, (json) => TeamMember.fromJson(json as Map<String, dynamic>));
+    final response =
+        await _apiService.post('/team-members', data: teamMember.toJson());
+    return _apiService.unwrap<TeamMember>(
+        response, (json) => TeamMember.fromJson(json as Map<String, dynamic>));
   }
 
   Future<TeamMember> updateTeamMember(String id, TeamMember teamMember) async {
-    final response = await _apiService.put('/team-members/$id', data: teamMember.toJson());
-    return _apiService.unwrap<TeamMember>(response, (json) => TeamMember.fromJson(json as Map<String, dynamic>));
+    final response =
+        await _apiService.put('/team-members/$id', data: teamMember.toJson());
+    return _apiService.unwrap<TeamMember>(
+        response, (json) => TeamMember.fromJson(json as Map<String, dynamic>));
   }
 
   Future<void> deleteTeamMember(String id) async {
@@ -60,7 +67,8 @@ class CRMService {
 
   Future<List<Lead>> getAllLeads() async {
     final response = await _apiService.get('/leads');
-    return _apiService.unwrapList<Lead>(response, (json) => Lead.fromJson(json));
+    return _apiService.unwrapList<Lead>(
+        response, (json) => Lead.fromJson(json));
   }
 
   Future<PaginatedResponse<Lead>> getLeadsPaginated(
@@ -68,22 +76,30 @@ class CRMService {
     final queryParams = params.toQueryParams();
     final response =
         await _apiService.get('/leads/paginated', queryParams: queryParams);
-    return _apiService.unwrap<PaginatedResponse<Lead>>(response, (json) => PaginatedResponse.fromJson(json as Map<String, dynamic>, Lead.fromJson));
+    return _apiService.unwrap<PaginatedResponse<Lead>>(
+        response,
+        (json) => PaginatedResponse.fromJson(
+            json as Map<String, dynamic>, Lead.fromJson));
   }
 
   Future<Lead> getLeadById(String id) async {
     final response = await _apiService.get('/leads/$id');
-    return _apiService.unwrap<Lead>(response, (json) => Lead.fromJson(json as Map<String, dynamic>));
+    return _apiService.unwrap<Lead>(
+        response, (json) => Lead.fromJson(json as Map<String, dynamic>));
   }
 
   Future<Lead> createLead(Lead lead) async {
-    final response = await _apiService.post('/leads', data: lead.toCreateJson());
-    return _apiService.unwrap<Lead>(response, (json) => Lead.fromJson(json as Map<String, dynamic>));
+    final response =
+        await _apiService.post('/leads', data: lead.toCreateJson());
+    return _apiService.unwrap<Lead>(
+        response, (json) => Lead.fromJson(json as Map<String, dynamic>));
   }
 
   Future<Lead> updateLead(String id, Lead lead) async {
-    final response = await _apiService.put('/leads/$id', data: lead.toUpdateJson());
-    return _apiService.unwrap<Lead>(response, (json) => Lead.fromJson(json as Map<String, dynamic>));
+    final response =
+        await _apiService.put('/leads/$id', data: lead.toUpdateJson());
+    return _apiService.unwrap<Lead>(
+        response, (json) => Lead.fromJson(json as Map<String, dynamic>));
   }
 
   Future<void> deleteLead(String id) async {
@@ -93,22 +109,26 @@ class CRMService {
 
   Future<List<Lead>> getLeadsByStatus(String status) async {
     final response = await _apiService.get('/leads/status/$status');
-    return _apiService.unwrapList<Lead>(response, (json) => Lead.fromJson(json));
+    return _apiService.unwrapList<Lead>(
+        response, (json) => Lead.fromJson(json));
   }
 
   Future<List<Lead>> getLeadsByAssignedTo(String teamMemberId) async {
     final response = await _apiService.get('/leads/assigned/$teamMemberId');
-    return _apiService.unwrapList<Lead>(response, (json) => Lead.fromJson(json));
+    return _apiService.unwrapList<Lead>(
+        response, (json) => Lead.fromJson(json));
   }
 
   Future<List<Lead>> searchLeads(String query) async {
     final response = await _apiService.get('/leads/search?query=$query');
-    return _apiService.unwrapList<Lead>(response, (json) => Lead.fromJson(json));
+    return _apiService.unwrapList<Lead>(
+        response, (json) => Lead.fromJson(json));
   }
 
   Future<List<Lead>> getOverdueFollowUps() async {
     final response = await _apiService.get('/leads/overdue-followups');
-    return _apiService.unwrapList<Lead>(response, (json) => Lead.fromJson(json));
+    return _apiService.unwrapList<Lead>(
+        response, (json) => Lead.fromJson(json));
   }
 
   // =====================================================
@@ -117,32 +137,80 @@ class CRMService {
 
   Future<List<Customer>> getAllCustomers() async {
     final response = await _apiService.get('/customers');
-    return _apiService.unwrapList<Customer>(response, (json) => Customer.fromJson(json));
+    return _apiService.unwrapList<Customer>(
+        response, (json) => Customer.fromJson(json));
   }
 
   Future<PaginatedResponse<Customer>> getCustomersPaginated(
       PaginationParams params) async {
     final queryParams = params.toQueryParams();
-    final response = await _apiService.get('/customers/paginated',
-        queryParams: queryParams);
-    return _apiService.unwrap<PaginatedResponse<Customer>>(response, (json) => PaginatedResponse.fromJson(json as Map<String, dynamic>, Customer.fromJson));
+    final response =
+        await _apiService.get('/customers/paginated', queryParams: queryParams);
+    return _apiService.unwrap<PaginatedResponse<Customer>>(
+        response,
+        (json) => PaginatedResponse.fromJson(
+            json as Map<String, dynamic>, Customer.fromJson));
+  }
+
+  /// NEW: Standardized search endpoint for customers
+  Future<PaginatedResponse<Customer>> searchCustomers({
+    required int page,
+    required int size,
+    required String sortBy,
+    required String sortDirection,
+    String? search,
+    Map<String, dynamic>? filters,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'size': size,
+      'sortBy': sortBy,
+      'sortDirection': sortDirection,
+    };
+
+    if (search != null && search.isNotEmpty) {
+      queryParams['search'] = search;
+    }
+
+    if (filters != null) {
+      filters.forEach((key, value) {
+        if (value != null) {
+          if (value is DateTime) {
+            queryParams[key] = value.toIso8601String().split('T')[0];
+          } else {
+            queryParams[key] = value.toString();
+          }
+        }
+      });
+    }
+
+    final response =
+        await _apiService.get('/customers/search', queryParams: queryParams);
+    return _apiService.unwrap<PaginatedResponse<Customer>>(
+      response,
+      (json) => PaginatedResponse.fromJson(
+          json as Map<String, dynamic>, Customer.fromJson),
+    );
   }
 
   Future<Customer> getCustomerById(int id) async {
     final response = await _apiService.get('/customers/$id');
-    return _apiService.unwrap<Customer>(response, (json) => Customer.fromJson(json as Map<String, dynamic>));
+    return _apiService.unwrap<Customer>(
+        response, (json) => Customer.fromJson(json as Map<String, dynamic>));
   }
 
   Future<Customer> createCustomer(Customer customer) async {
     final response =
         await _apiService.post('/customers', data: customer.toCreateJson());
-    return _apiService.unwrap<Customer>(response, (json) => Customer.fromJson(json as Map<String, dynamic>));
+    return _apiService.unwrap<Customer>(
+        response, (json) => Customer.fromJson(json as Map<String, dynamic>));
   }
 
   Future<Customer> updateCustomer(int id, Customer customer) async {
     final response =
         await _apiService.put('/customers/$id', data: customer.toUpdateJson());
-    return _apiService.unwrap<Customer>(response, (json) => Customer.fromJson(json as Map<String, dynamic>));
+    return _apiService.unwrap<Customer>(
+        response, (json) => Customer.fromJson(json as Map<String, dynamic>));
   }
 
   Future<void> deleteCustomer(int id) async {
@@ -152,7 +220,8 @@ class CRMService {
 
   Future<List<CustomerRole>> getCustomerRoles() async {
     final response = await _apiService.get('/customers/roles');
-    return _apiService.unwrapList<CustomerRole>(response, (json) => CustomerRole.fromJson(json));
+    return _apiService.unwrapList<CustomerRole>(
+        response, (json) => CustomerRole.fromJson(json));
   }
 
   // =====================================================
@@ -161,12 +230,14 @@ class CRMService {
 
   Future<ProjectSummary> getProject360(int id) async {
     final response = await _apiService.get('/projects/360/$id');
-    return _apiService.unwrap<ProjectSummary>(response, (json) => ProjectSummary.fromJson(json as Map<String, dynamic>));
+    return _apiService.unwrap<ProjectSummary>(response,
+        (json) => ProjectSummary.fromJson(json as Map<String, dynamic>));
   }
 
   Future<List<CustomerProject>> getAllCustomerProjects() async {
     final response = await _apiService.get('/customer-projects');
-    return _apiService.unwrapList<CustomerProject>(response, (json) => CustomerProject.fromJson(json));
+    return _apiService.unwrapList<CustomerProject>(
+        response, (json) => CustomerProject.fromJson(json));
   }
 
   Future<PaginatedResponse<CustomerProject>> getCustomerProjectsPaginated({
@@ -191,25 +262,31 @@ class CRMService {
       queryParams: queryParams,
     );
 
-    return _apiService.unwrap<PaginatedResponse<CustomerProject>>(response, (json) => PaginatedResponse.fromJson(json as Map<String, dynamic>, CustomerProject.fromJson));
+    return _apiService.unwrap<PaginatedResponse<CustomerProject>>(
+        response,
+        (json) => PaginatedResponse.fromJson(
+            json as Map<String, dynamic>, CustomerProject.fromJson));
   }
 
   Future<CustomerProject> getCustomerProjectById(int id) async {
     final response = await _apiService.get('/customer-projects/$id');
-    return _apiService.unwrap<CustomerProject>(response, (json) => CustomerProject.fromJson(json as Map<String, dynamic>));
+    return _apiService.unwrap<CustomerProject>(response,
+        (json) => CustomerProject.fromJson(json as Map<String, dynamic>));
   }
 
   Future<CustomerProject> createCustomerProject(CustomerProject project) async {
-    final response =
-        await _apiService.post('/customer-projects', data: project.toCreateJson());
-    return _apiService.unwrap<CustomerProject>(response, (json) => CustomerProject.fromJson(json as Map<String, dynamic>));
+    final response = await _apiService.post('/customer-projects',
+        data: project.toCreateJson());
+    return _apiService.unwrap<CustomerProject>(response,
+        (json) => CustomerProject.fromJson(json as Map<String, dynamic>));
   }
 
   Future<CustomerProject> updateCustomerProject(
       int id, CustomerProject project) async {
-    final response = await _apiService.put(
-        '/customer-projects/$id', data: project.toUpdateJson());
-    return _apiService.unwrap<CustomerProject>(response, (json) => CustomerProject.fromJson(json as Map<String, dynamic>));
+    final response = await _apiService.put('/customer-projects/$id',
+        data: project.toUpdateJson());
+    return _apiService.unwrap<CustomerProject>(response,
+        (json) => CustomerProject.fromJson(json as Map<String, dynamic>));
   }
 
   Future<void> deleteCustomerProject(int id) async {
@@ -223,22 +300,27 @@ class CRMService {
 
   Future<List<Client>> getAllClients() async {
     final response = await _apiService.get('/clients');
-    return _apiService.unwrapList<Client>(response, (json) => Client.fromJson(json));
+    return _apiService.unwrapList<Client>(
+        response, (json) => Client.fromJson(json));
   }
 
   Future<Client> getClientById(String id) async {
     final response = await _apiService.get('/clients/$id');
-    return _apiService.unwrap<Client>(response, (json) => Client.fromJson(json as Map<String, dynamic>));
+    return _apiService.unwrap<Client>(
+        response, (json) => Client.fromJson(json as Map<String, dynamic>));
   }
 
   Future<Client> saveClient(Client client) async {
     final response = await _apiService.post('/clients', data: client.toJson());
-    return _apiService.unwrap<Client>(response, (json) => Client.fromJson(json as Map<String, dynamic>));
+    return _apiService.unwrap<Client>(
+        response, (json) => Client.fromJson(json as Map<String, dynamic>));
   }
 
   Future<Client> updateClient(String id, Client client) async {
-    final response = await _apiService.put('/clients/$id', data: client.toJson());
-    return _apiService.unwrap<Client>(response, (json) => Client.fromJson(json as Map<String, dynamic>));
+    final response =
+        await _apiService.put('/clients/$id', data: client.toJson());
+    return _apiService.unwrap<Client>(
+        response, (json) => Client.fromJson(json as Map<String, dynamic>));
   }
 
   Future<void> deleteClient(String id) async {
@@ -248,7 +330,8 @@ class CRMService {
 
   Future<List<Client>> getClientsByAssignedTo(String assignedTo) async {
     final response = await _apiService.get('/clients/assigned/$assignedTo');
-    return _apiService.unwrapList<Client>(response, (json) => Client.fromJson(json));
+    return _apiService.unwrapList<Client>(
+        response, (json) => Client.fromJson(json));
   }
 
   // =====================================================
@@ -257,22 +340,28 @@ class CRMService {
 
   Future<List<Project>> getAllProjects() async {
     final response = await _apiService.get('/projects');
-    return _apiService.unwrapList<Project>(response, (json) => Project.fromJson(json));
+    return _apiService.unwrapList<Project>(
+        response, (json) => Project.fromJson(json));
   }
 
   Future<Project> getProjectById(String id) async {
     final response = await _apiService.get('/projects/$id');
-    return _apiService.unwrap<Project>(response, (json) => Project.fromJson(json as Map<String, dynamic>));
+    return _apiService.unwrap<Project>(
+        response, (json) => Project.fromJson(json as Map<String, dynamic>));
   }
 
   Future<Project> saveProject(Project project) async {
-    final response = await _apiService.post('/projects', data: project.toJson());
-    return _apiService.unwrap<Project>(response, (json) => Project.fromJson(json as Map<String, dynamic>));
+    final response =
+        await _apiService.post('/projects', data: project.toJson());
+    return _apiService.unwrap<Project>(
+        response, (json) => Project.fromJson(json as Map<String, dynamic>));
   }
 
   Future<Project> updateProject(String id, Project project) async {
-    final response = await _apiService.put('/projects/$id', data: project.toJson());
-    return _apiService.unwrap<Project>(response, (json) => Project.fromJson(json as Map<String, dynamic>));
+    final response =
+        await _apiService.put('/projects/$id', data: project.toJson());
+    return _apiService.unwrap<Project>(
+        response, (json) => Project.fromJson(json as Map<String, dynamic>));
   }
 
   Future<void> deleteProject(String id) async {
@@ -282,18 +371,20 @@ class CRMService {
 
   Future<List<Project>> getProjectsByClient(String clientId) async {
     final response = await _apiService.get('/projects/client/$clientId');
-    return _apiService.unwrapList<Project>(response, (json) => Project.fromJson(json));
+    return _apiService.unwrapList<Project>(
+        response, (json) => Project.fromJson(json));
   }
 
   Future<List<Project>> getProjectsByAssignedTo(String assignedTo) async {
     final response = await _apiService.get('/projects/assigned/$assignedTo');
-    return _apiService.unwrapList<Project>(response, (json) => Project.fromJson(json));
+    return _apiService.unwrapList<Project>(
+        response, (json) => Project.fromJson(json));
   }
 
   Future<void> updateProjectProgress(
       String id, double progressPercentage) async {
-    final response = await _apiService.put(
-        '/projects/$id/progress', data: {'progressPercentage': progressPercentage});
+    final response = await _apiService.put('/projects/$id/progress',
+        data: {'progressPercentage': progressPercentage});
     _apiService.unwrap<void>(response, (_) {});
   }
 
@@ -303,22 +394,26 @@ class CRMService {
 
   Future<Map<String, dynamic>> getDashboardMetrics() async {
     final response = await _apiService.get('/dashboard/metrics');
-    return _apiService.unwrap<Map<String, dynamic>>(response, (json) => json as Map<String, dynamic>);
+    return _apiService.unwrap<Map<String, dynamic>>(
+        response, (json) => json as Map<String, dynamic>);
   }
 
   Future<Map<String, dynamic>> getSalesPipeline() async {
     final response = await _apiService.get('/dashboard/sales-pipeline');
-    return _apiService.unwrap<Map<String, dynamic>>(response, (json) => json as Map<String, dynamic>);
+    return _apiService.unwrap<Map<String, dynamic>>(
+        response, (json) => json as Map<String, dynamic>);
   }
 
   Future<Map<String, dynamic>> getTeamPerformance() async {
     final response = await _apiService.get('/dashboard/team-performance');
-    return _apiService.unwrap<Map<String, dynamic>>(response, (json) => json as Map<String, dynamic>);
+    return _apiService.unwrap<Map<String, dynamic>>(
+        response, (json) => json as Map<String, dynamic>);
   }
 
   Future<Map<String, dynamic>> getProjectProgressSummary() async {
     final response = await _apiService.get('/dashboard/project-progress');
-    return _apiService.unwrap<Map<String, dynamic>>(response, (json) => json as Map<String, dynamic>);
+    return _apiService.unwrap<Map<String, dynamic>>(
+        response, (json) => json as Map<String, dynamic>);
   }
 
   // =====================================================
@@ -327,7 +422,8 @@ class CRMService {
 
   Future<List<PortalUser>> getAllPortalUsers() async {
     final response = await _apiService.get('/portal-users');
-    return _apiService.unwrapList<PortalUser>(response, (json) => PortalUser.fromJson(json));
+    return _apiService.unwrapList<PortalUser>(
+        response, (json) => PortalUser.fromJson(json));
   }
 
   Future<PaginatedResponse<PortalUser>> getPortalUsersPaginated({
@@ -343,34 +439,40 @@ class CRMService {
       'sort': sort,
       'direction': direction,
     };
-    
+
     if (search != null && search.isNotEmpty) {
       queryParams['search'] = search;
     }
-    
+
     final response = await _apiService.get(
       '/portal-users/paginated',
       queryParams: queryParams,
     );
-    
-    return _apiService.unwrap<PaginatedResponse<PortalUser>>(response, (json) => PaginatedResponse.fromJson(json as Map<String, dynamic>, PortalUser.fromJson));
+
+    return _apiService.unwrap<PaginatedResponse<PortalUser>>(
+        response,
+        (json) => PaginatedResponse.fromJson(
+            json as Map<String, dynamic>, PortalUser.fromJson));
   }
 
   Future<PortalUser> getPortalUserById(int id) async {
     final response = await _apiService.get('/portal-users/$id');
-    return _apiService.unwrap<PortalUser>(response, (json) => PortalUser.fromJson(json as Map<String, dynamic>));
+    return _apiService.unwrap<PortalUser>(
+        response, (json) => PortalUser.fromJson(json as Map<String, dynamic>));
   }
 
   Future<PortalUser> createPortalUser(PortalUser user) async {
     final response =
         await _apiService.post('/portal-users', data: user.toCreateJson());
-    return _apiService.unwrap<PortalUser>(response, (json) => PortalUser.fromJson(json as Map<String, dynamic>));
+    return _apiService.unwrap<PortalUser>(
+        response, (json) => PortalUser.fromJson(json as Map<String, dynamic>));
   }
 
   Future<PortalUser> updatePortalUser(int id, PortalUser user) async {
     final response =
         await _apiService.put('/portal-users/$id', data: user.toUpdateJson());
-    return _apiService.unwrap<PortalUser>(response, (json) => PortalUser.fromJson(json as Map<String, dynamic>));
+    return _apiService.unwrap<PortalUser>(
+        response, (json) => PortalUser.fromJson(json as Map<String, dynamic>));
   }
 
   Future<void> deletePortalUser(int id) async {
@@ -380,6 +482,7 @@ class CRMService {
 
   Future<List<PortalRole>> getPortalRoles() async {
     final response = await _apiService.get('/portal-users/roles');
-    return _apiService.unwrapList<PortalRole>(response, (json) => PortalRole.fromJson(json));
+    return _apiService.unwrapList<PortalRole>(
+        response, (json) => PortalRole.fromJson(json));
   }
 }

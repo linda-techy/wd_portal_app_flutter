@@ -1,19 +1,24 @@
 import 'package:admin/services/api_service.dart';
 import 'package:admin/models/site_visit_models.dart';
+import 'package:admin/models/paginated_response.dart';
 
 class SiteVisitService {
   final ApiService _apiService = ApiService();
 
   /// Check in to a project site with GPS coordinates
   Future<SiteVisit> checkIn(CheckInRequest request) async {
-    final response = await _apiService.post('/site-visits/check-in', data: request.toJson());
-    return _apiService.unwrap<SiteVisit>(response, (json) => SiteVisit.fromJson(json as Map<String, dynamic>));
+    final response =
+        await _apiService.post('/site-visits/check-in', data: request.toJson());
+    return _apiService.unwrap<SiteVisit>(
+        response, (json) => SiteVisit.fromJson(json as Map<String, dynamic>));
   }
 
   /// Check out from a site visit
   Future<SiteVisit> checkOut(int visitId, CheckOutRequest request) async {
-    final response = await _apiService.post('/site-visits/$visitId/check-out', data: request.toJson());
-    return _apiService.unwrap<SiteVisit>(response, (json) => SiteVisit.fromJson(json as Map<String, dynamic>));
+    final response = await _apiService.post('/site-visits/$visitId/check-out',
+        data: request.toJson());
+    return _apiService.unwrap<SiteVisit>(
+        response, (json) => SiteVisit.fromJson(json as Map<String, dynamic>));
   }
 
   /// Get current active visit for logged-in user
@@ -29,19 +34,23 @@ class SiteVisitService {
   /// Get all currently active visits (admin only)
   Future<List<SiteVisit>> getAllActiveVisits() async {
     final response = await _apiService.get('/site-visits/all-active');
-    return _apiService.unwrapList<SiteVisit>(response, (json) => SiteVisit.fromJson(json));
+    return _apiService.unwrapList<SiteVisit>(
+        response, (json) => SiteVisit.fromJson(json));
   }
 
   /// Get visits for a specific project
   Future<List<SiteVisit>> getVisitsByProject(int projectId) async {
     final response = await _apiService.get('/site-visits/project/$projectId');
-    return _apiService.unwrapList<SiteVisit>(response, (json) => SiteVisit.fromJson(json));
+    return _apiService.unwrapList<SiteVisit>(
+        response, (json) => SiteVisit.fromJson(json));
   }
 
   /// Get today's visits for a project
   Future<List<SiteVisit>> getTodaysVisits(int projectId) async {
-    final response = await _apiService.get('/site-visits/project/$projectId/today');
-    return _apiService.unwrapList<SiteVisit>(response, (json) => SiteVisit.fromJson(json));
+    final response =
+        await _apiService.get('/site-visits/project/$projectId/today');
+    return _apiService.unwrapList<SiteVisit>(
+        response, (json) => SiteVisit.fromJson(json));
   }
 
   /// Get visits by project and date range
@@ -57,11 +66,13 @@ class SiteVisitService {
         'endDate': endDate.toIso8601String().split('T')[0],
       },
     );
-    return _apiService.unwrapList<SiteVisit>(response, (json) => SiteVisit.fromJson(json));
+    return _apiService.unwrapList<SiteVisit>(
+        response, (json) => SiteVisit.fromJson(json));
   }
 
   /// Get my visit history
-  Future<List<SiteVisit>> getMyVisitHistory(DateTime startDate, DateTime endDate) async {
+  Future<List<SiteVisit>> getMyVisitHistory(
+      DateTime startDate, DateTime endDate) async {
     final response = await _apiService.get(
       '/site-visits/my-history',
       queryParams: {
@@ -69,13 +80,15 @@ class SiteVisitService {
         'endDate': endDate.toIso8601String().split('T')[0],
       },
     );
-    return _apiService.unwrapList<SiteVisit>(response, (json) => SiteVisit.fromJson(json));
+    return _apiService.unwrapList<SiteVisit>(
+        response, (json) => SiteVisit.fromJson(json));
   }
 
   /// Get a specific visit by ID
   Future<SiteVisit> getVisitById(int id) async {
     final response = await _apiService.get('/site-visits/$id');
-    return _apiService.unwrap<SiteVisit>(response, (json) => SiteVisit.fromJson(json as Map<String, dynamic>));
+    return _apiService.unwrap<SiteVisit>(
+        response, (json) => SiteVisit.fromJson(json as Map<String, dynamic>));
   }
 
   /// Cancel a pending visit
@@ -87,6 +100,48 @@ class SiteVisitService {
   /// Get available visit types
   Future<List<VisitTypeOption>> getVisitTypes() async {
     final response = await _apiService.get('/site-visits/types');
-    return _apiService.unwrapList<VisitTypeOption>(response, (json) => VisitTypeOption.fromJson(json));
+    return _apiService.unwrapList<VisitTypeOption>(
+        response, (json) => VisitTypeOption.fromJson(json));
+  }
+
+  /// NEW: Standardized search endpoint for site visits
+  Future<PaginatedResponse<SiteVisit>> searchSiteVisits({
+    required int page,
+    required int size,
+    required String sortBy,
+    required String sortDirection,
+    String? search,
+    Map<String, dynamic>? filters,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'size': size,
+      'sortBy': sortBy,
+      'sortDirection': sortDirection,
+    };
+
+    if (search != null && search.isNotEmpty) {
+      queryParams['search'] = search;
+    }
+
+    if (filters != null) {
+      filters.forEach((key, value) {
+        if (value != null) {
+          if (value is DateTime) {
+            queryParams[key] = value.toIso8601String().split('T')[0];
+          } else {
+            queryParams[key] = value.toString();
+          }
+        }
+      });
+    }
+
+    final response = await _apiService.get('/api/site-visits/search',
+        queryParams: queryParams);
+    return _apiService.unwrap<PaginatedResponse<SiteVisit>>(
+      response,
+      (json) => PaginatedResponse.fromJson(
+          json as Map<String, dynamic>, SiteVisit.fromJson),
+    );
   }
 }

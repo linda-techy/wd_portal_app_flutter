@@ -137,4 +137,49 @@ class CustomerProjectService {
       throw Exception('Failed to fetch projects by lead: $e');
     }
   }
+
+  /// NEW: Standardized search endpoint for customer projects
+  Future<PaginatedResponse<CustomerProject>> searchProjects({
+    required int page,
+    required int size,
+    required String sortBy,
+    required String sortDirection,
+    String? search,
+    Map<String, dynamic>? filters,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'size': size,
+      'sortBy': sortBy,
+      'sortDirection': sortDirection,
+    };
+
+    if (search != null && search.isNotEmpty) {
+      queryParams['search'] = search;
+    }
+
+    if (filters != null) {
+      filters.forEach((key, value) {
+        if (value != null) {
+          if (value is DateTime) {
+            queryParams[key] = value.toIso8601String().split('T')[0];
+          } else {
+            queryParams[key] = value.toString();
+          }
+        }
+      });
+    }
+
+    final response = await _apiService.get('/customer-projects/search',
+        queryParams: queryParams);
+
+    if (response.data != null && response.data['data'] != null) {
+      return PaginatedResponse.fromJson(
+        response.data['data'],
+        (json) => CustomerProject.fromJson(json),
+      );
+    }
+
+    return PaginatedResponse.empty();
+  }
 }

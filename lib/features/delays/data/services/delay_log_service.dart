@@ -1,5 +1,6 @@
 import 'package:admin/services/api_service.dart';
 import 'package:admin/features/delays/data/models/delay_log.dart';
+import 'package:admin/models/paginated_response.dart';
 
 class DelayLogService {
   final ApiService _apiService = ApiService();
@@ -28,7 +29,8 @@ class DelayLogService {
     }
   }
 
-  Future<DelayLog> closeDelay(int projectId, int delayId, DateTime endDate) async {
+  Future<DelayLog> closeDelay(
+      int projectId, int delayId, DateTime endDate) async {
     final response = await _apiService.put(
       '/api/projects/$projectId/delays/$delayId/close?endDate=${endDate.toIso8601String().substring(0, 10)}',
       data: {},
@@ -42,9 +44,60 @@ class DelayLogService {
   }
 
   Future<void> deleteDelay(int projectId, int delayId) async {
-    final response = await _apiService.delete('/api/projects/$projectId/delays/$delayId');
+    final response =
+        await _apiService.delete('/api/projects/$projectId/delays/$delayId');
     if (response.statusCode != 204) {
       throw Exception('Failed to delete delay');
     }
+  }
+
+  /// NEW: Standardized search endpoint for delay logs
+  Future<PaginatedResponse<DelayLog>> searchDelayLogs({
+    required int page,
+    required int size,
+    required String sortBy,
+    required String sortDirection,
+    String? search,
+    Map<String, dynamic>? filters,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'size': size,
+      'sortBy': sortBy,
+      'sortDirection': sortDirection,
+    };
+
+    if (search != null && search.isNotEmpty) {
+      queryParams['search'] = search;
+    }
+
+    if (filters != null) {
+      filters.forEach((key, value) {
+        if (value != null) {
+          if (value is DateTime) {
+            queryParams[key] = value.toIso8601String().split('T')[0];
+          } else {
+            queryParams[key] = value.toString();
+          }
+        }
+      });
+    }
+
+    final response = await _apiService.get('/api/delay-logs/search',
+        queryParams: queryParams);
+
+    final List<dynamic> data = response.data['content'] ?? response.data;
+    final items = data.map((json) => DelayLog.fromJson(json)).toList();
+
+    return PaginatedResponse<DelayLog>(
+      content: items,
+      totalElements: response.data['totalElements'] ?? items.length,
+      totalPages: response.data['totalPages'] ?? 1,
+      size: size,
+      number: page,
+      numberOfElements: items.length,
+      first: page == 0,
+      last: response.data['last'] ?? true,
+    );
   }
 }

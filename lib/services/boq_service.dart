@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:admin/services/api_service.dart';
+import 'package:admin/models/paginated_response.dart';
 import '../../utils/error_handler.dart';
 
 class BoqItem {
@@ -28,7 +29,9 @@ class BoqItem {
       unit: json['unit'],
       quantity: (json['quantity'] as num).toDouble(),
       unitRate: (json['unitRate'] as num).toDouble(),
-      totalAmount: json['totalAmount'] != null ? (json['totalAmount'] as num).toDouble() : null,
+      totalAmount: json['totalAmount'] != null
+          ? (json['totalAmount'] as num).toDouble()
+          : null,
       notes: json['notes'],
     );
   }
@@ -64,7 +67,7 @@ class BoqService {
         '/boq/$id',
         data: item.toJson(),
       );
-      
+
       if (response.statusCode == 200 && response.data['success'] == true) {
         return BoqItem.fromJson(response.data['data']);
       }
@@ -72,5 +75,46 @@ class BoqService {
     } catch (e) {
       rethrow;
     }
+  }
+
+  /// NEW: Standardized search endpoint for BOQ items
+  Future<PaginatedResponse<BoqItem>> searchBoqItems({
+    required int page,
+    required int size,
+    required String sortBy,
+    required String sortDirection,
+    String? search,
+    Map<String, dynamic>? filters,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'size': size,
+      'sortBy': sortBy,
+      'sortDirection': sortDirection,
+    };
+
+    if (search != null && search.isNotEmpty) {
+      queryParams['search'] = search;
+    }
+
+    if (filters != null) {
+      filters.forEach((key, value) {
+        if (value != null) {
+          if (value is DateTime) {
+            queryParams[key] = value.toIso8601String().split('T')[0];
+          } else {
+            queryParams[key] = value.toString();
+          }
+        }
+      });
+    }
+
+    final response =
+        await _api.get('/api/boq/search', queryParams: queryParams);
+    return _api.unwrap<PaginatedResponse<BoqItem>>(
+      response,
+      (json) => PaginatedResponse.fromJson(
+          json as Map<String, dynamic>, BoqItem.fromJson),
+    );
   }
 }
