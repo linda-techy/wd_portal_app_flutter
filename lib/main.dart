@@ -12,6 +12,8 @@ import 'package:admin/providers/document_provider.dart';
 import 'package:admin/providers/project_tracking_provider.dart';
 import 'package:admin/providers/subcontract_provider.dart';
 import 'package:admin/providers/vendor_payment_provider.dart';
+import 'package:admin/providers/customer_project_provider.dart';
+import 'package:admin/providers/common_data_provider.dart';
 import 'package:admin/services/portal_auth_service.dart';
 import 'package:admin/services/user_service.dart';
 import 'package:admin/services/storage_service.dart';
@@ -147,6 +149,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ApprovalProvider()),
         ChangeNotifierProvider(create: (_) => DocumentProvider()),
         ChangeNotifierProvider(create: (_) => ProjectTrackingProvider(projectTrackingService)),
+
+        // Project Management
+        ChangeNotifierProvider(create: (_) => CustomerProjectProvider()),
+        ChangeNotifierProvider(create: (_) => CommonDataProvider()),
 
         // Phase 1: Subcontractor & Vendor Payment
         ChangeNotifierProvider(create: (_) => SubcontractProvider(subcontractService)),

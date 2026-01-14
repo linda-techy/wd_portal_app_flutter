@@ -7,6 +7,7 @@ import '../../widgets/components/enhanced_data_table.dart';
 import '../../widgets/charts/chart_card.dart';
 import 'package:provider/provider.dart';
 import '../../providers/document_provider.dart';
+import '../../providers/customer_project_provider.dart';
 import '../../models/document_models.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -15,6 +16,7 @@ import 'package:file_picker/file_picker.dart';
 import 'project_tracking_screen.dart';
 import 'view_360_list_screen.dart';
 import '../../models/customer_project.dart';
+import 'widgets/project_phase_badge.dart';
 
 /// Project Detail Screen - Single-Pane-of-Glass View
 /// Displays comprehensive project information in one unified view
@@ -33,11 +35,15 @@ class ProjectDetailScreen extends StatefulWidget {
 class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _isLoading = true;
+  CustomerProject? _project;
+  String? _error;
   
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _loadProjectData();
   }
   
   @override
@@ -45,9 +51,86 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     _tabController.dispose();
     super.dispose();
   }
+
+  Future<void> _loadProjectData() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final projectProvider = context.read<CustomerProjectProvider>();
+      await projectProvider.fetchProjectById(widget.projectId);
+      
+      if (mounted) {
+        setState(() {
+          _project = projectProvider.selectedProject;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
   
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: AppTheme.background,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_error != null || _project == null) {
+      return Scaffold(
+        backgroundColor: AppTheme.background,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: AppTheme.statusError),
+              const SizedBox(height: AppTheme.spacingMD),
+              Text(
+                'Error loading project',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: AppTheme.spacingSM),
+              Text(
+                _error ?? 'Project not found',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppTheme.textSecondary,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppTheme.spacingLG),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _loadProjectData,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                  const SizedBox(width: AppTheme.spacingMD),
+                  OutlinedButton.icon(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('Go Back'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: Column(
@@ -81,6 +164,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   }
   
   Widget _buildStickyHeader(BuildContext context) {
+    if (_project == null) return const SizedBox.shrink();
+
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingLG),
       decoration: BoxDecoration(
@@ -93,29 +178,41 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Project Name and Status
+          // Back Button and Actions
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context),
+              ),
+              const SizedBox(width: AppTheme.spacingSM),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (_project!.code != null)
+                      Text(
+                        _project!.code!,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppTheme.textSecondary,
+                            ),
+                      ),
                     Text(
-                      'Commercial Complex - Phase 2',
-                      style: Theme.of(context).textTheme.displaySmall,
+                      _project!.name,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
                     const SizedBox(height: AppTheme.spacingSM),
                     Row(
                       children: [
-                        ProjectStatusIndicator(
-                          status: 'On Track',
-                          isOnTrack: true,
-                          progress: 65.5,
-                        ),
+                        if (_project!.projectPhase != null)
+                          ProjectPhaseBadge(phase: _project!.projectPhase!),
                         const SizedBox(width: AppTheme.spacingMD),
+                        Icon(Icons.location_on, size: 16, color: AppTheme.textSecondary),
+                        const SizedBox(width: 4),
                         Text(
-                          'Project ID: #${widget.projectId}',
+                          _project!.location,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 color: AppTheme.textSecondary,
                               ),
@@ -125,61 +222,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                   ],
                 ),
               ),
-              
-              // Budget Utilization
-              Container(
-                padding: const EdgeInsets.all(AppTheme.spacingMD),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceElevated,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusMD),
-                  border: Border.all(color: AppTheme.borderLight),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Budget Utilization',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: AppTheme.spacingXS),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          '72.5%',
-                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                                color: AppTheme.statusWarning,
-                                fontWeight: FontWeight.w700,
-                              ),
-                        ),
-                        const SizedBox(width: AppTheme.spacingXS),
-                        Text(
-                          '/ 100%',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppTheme.textSecondary,
-                              ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppTheme.spacingXS),
-                    SizedBox(
-                      width: 150,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(AppTheme.radiusSM),
-                        child: LinearProgressIndicator(
-                          value: 0.725,
-                          backgroundColor: AppTheme.borderLight,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            AppTheme.statusWarning,
-                          ),
-                          minHeight: 6,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              IconButton.outlined(
+                onPressed: _loadProjectData,
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Refresh',
               ),
             ],
           ),
