@@ -1,47 +1,67 @@
-import 'package:flutter/material.dart';
 import 'package:admin/models/approval_models.dart';
+import 'package:admin/models/paginated_response.dart';
+import 'package:admin/providers/base_paginated_provider.dart';
 import 'package:admin/services/approval_service.dart';
 
-class ApprovalProvider with ChangeNotifier {
-  final ApprovalService _approvalService = ApprovalService();
+class ApprovalProvider extends BasePaginatedProvider<ApprovalRequest> {
+  final ApprovalService _service = ApprovalService();
 
-  List<ApprovalRequest> _pendingRequests = [];
-  bool _isLoading = false;
-
-  List<ApprovalRequest> get pendingRequests => _pendingRequests;
-  bool get isLoading => _isLoading;
-
-  Future<void> fetchPendingApprovals(int approverId) async {
-    _isLoading = true;
-    notifyListeners();
-    try {
-      _pendingRequests = await _approvalService.getPendingApprovals(approverId);
-    } catch (e) {
-      debugPrint("Error fetching approvals: $e");
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+  @override
+  Future<PaginatedResponse<ApprovalRequest>> fetchFromApi({
+    required int page,
+    required int size,
+    required String sortBy,
+    required String sortDirection,
+    String? search,
+    Map<String, dynamic>? filters,
+  }) async {
+    return await _service.searchApprovals(
+      page: page,
+      size: size,
+      sortBy: sortBy,
+      sortDirection: sortDirection,
+      search: search,
+      filters: filters,
+    );
   }
 
-  Future<void> requestApproval(ApprovalRequest request) async {
-    try {
-      await _approvalService.createRequest(request);
-      notifyListeners();
-    } catch (e) {
-      debugPrint("Error requesting approval: $e");
-      rethrow;
-    }
+  // Approval-specific convenience methods
+
+  void filterByApproverType(String? approverType) {
+    updateFilter('approverType', approverType);
   }
 
-  Future<void> processApproval(int requestId, String status, String comments, int approverId) async {
-    try {
-      await _approvalService.processRequest(requestId, status, comments, approverId);
-      _pendingRequests.removeWhere((r) => r.id == requestId);
-      notifyListeners();
-    } catch (e) {
-      debugPrint("Error processing approval: $e");
-      rethrow;
-    }
+  void filterByModuleType(String? moduleType) {
+    updateFilter('moduleType', moduleType);
+  }
+
+  void filterByApproverId(int? approverId) {
+    updateFilter('approverId', approverId);
+  }
+
+  void filterByRequesterId(int? requesterId) {
+    updateFilter('requesterId', requesterId);
+  }
+
+  void applyAllFilters({
+    String? approverType,
+    String? moduleType,
+    int? approverId,
+    int? requesterId,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? status,
+  }) {
+    final filters = <String, dynamic>{};
+
+    if (approverType != null) filters['approverType'] = approverType;
+    if (moduleType != null) filters['moduleType'] = moduleType;
+    if (approverId != null) filters['approverId'] = approverId;
+    if (requesterId != null) filters['requesterId'] = requesterId;
+    if (startDate != null) filters['startDate'] = startDate;
+    if (endDate != null) filters['endDate'] = endDate;
+    if (status != null) filters['status'] = status;
+
+    applyFilters(filters);
   }
 }

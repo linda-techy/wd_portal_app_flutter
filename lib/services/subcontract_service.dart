@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../models/subcontract_models.dart';
+import '../models/paginated_response.dart';
 import 'api_service.dart';
 
 /// Subcontract Service
@@ -12,7 +13,8 @@ class SubcontractService {
   // ===== WORK ORDERS =====
 
   /// Create a new work order
-  Future<SubcontractWorkOrder> createWorkOrder(SubcontractWorkOrder workOrder) async {
+  Future<SubcontractWorkOrder> createWorkOrder(
+      SubcontractWorkOrder workOrder) async {
     try {
       final response = await _apiService.post(
         '/subcontracts/work-orders',
@@ -27,7 +29,8 @@ class SubcontractService {
   /// Get all work orders for a project
   Future<List<SubcontractWorkOrder>> getProjectWorkOrders(int projectId) async {
     try {
-      final response = await _apiService.get('/subcontracts/projects/$projectId/work-orders');
+      final response = await _apiService
+          .get('/subcontracts/projects/$projectId/work-orders');
       return (response.data as List)
           .map((json) => SubcontractWorkOrder.fromJson(json))
           .toList();
@@ -39,7 +42,8 @@ class SubcontractService {
   /// Get active work orders
   Future<List<SubcontractWorkOrder>> getActiveWorkOrders() async {
     try {
-      final response = await _apiService.get('/subcontracts/work-orders/active');
+      final response =
+          await _apiService.get('/subcontracts/work-orders/active');
       return (response.data as List)
           .map((json) => SubcontractWorkOrder.fromJson(json))
           .toList();
@@ -51,7 +55,8 @@ class SubcontractService {
   /// Issue a work order
   Future<SubcontractWorkOrder> issueWorkOrder(int workOrderId) async {
     try {
-      final response = await _apiService.post('/subcontracts/work-orders/$workOrderId/issue', data: {});
+      final response = await _apiService
+          .post('/subcontracts/work-orders/$workOrderId/issue', data: {});
       return SubcontractWorkOrder.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
@@ -59,7 +64,8 @@ class SubcontractService {
   }
 
   /// Complete a work order
-  Future<SubcontractWorkOrder> completeWorkOrder(int workOrderId, DateTime completionDate) async {
+  Future<SubcontractWorkOrder> completeWorkOrder(
+      int workOrderId, DateTime completionDate) async {
     try {
       final response = await _apiService.post(
         '/subcontracts/work-orders/$workOrderId/complete',
@@ -73,7 +79,8 @@ class SubcontractService {
   }
 
   /// Terminate a work order
-  Future<SubcontractWorkOrder> terminateWorkOrder(int workOrderId, String reason) async {
+  Future<SubcontractWorkOrder> terminateWorkOrder(
+      int workOrderId, String reason) async {
     try {
       final response = await _apiService.post(
         '/subcontracts/work-orders/$workOrderId/terminate',
@@ -104,9 +111,11 @@ class SubcontractService {
   }
 
   /// Get measurements for a work order
-  Future<List<SubcontractMeasurement>> getWorkOrderMeasurements(int workOrderId) async {
+  Future<List<SubcontractMeasurement>> getWorkOrderMeasurements(
+      int workOrderId) async {
     try {
-      final response = await _apiService.get('/subcontracts/work-orders/$workOrderId/measurements');
+      final response = await _apiService
+          .get('/subcontracts/work-orders/$workOrderId/measurements');
       return (response.data as List)
           .map((json) => SubcontractMeasurement.fromJson(json))
           .toList();
@@ -116,7 +125,8 @@ class SubcontractService {
   }
 
   /// Approve a measurement
-  Future<SubcontractMeasurement> approveMeasurement(int measurementId, int approvedById) async {
+  Future<SubcontractMeasurement> approveMeasurement(
+      int measurementId, int approvedById) async {
     try {
       final response = await _apiService.post(
         '/subcontracts/measurements/$measurementId/approve',
@@ -150,7 +160,8 @@ class SubcontractService {
   /// Get pending measurements
   Future<List<SubcontractMeasurement>> getPendingMeasurements() async {
     try {
-      final response = await _apiService.get('/subcontracts/measurements/pending');
+      final response =
+          await _apiService.get('/subcontracts/measurements/pending');
       return (response.data as List)
           .map((json) => SubcontractMeasurement.fromJson(json))
           .toList();
@@ -177,7 +188,8 @@ class SubcontractService {
   /// Get payments for a work order
   Future<List<SubcontractPayment>> getWorkOrderPayments(int workOrderId) async {
     try {
-      final response = await _apiService.get('/subcontracts/work-orders/$workOrderId/payments');
+      final response = await _apiService
+          .get('/subcontracts/work-orders/$workOrderId/payments');
       return (response.data as List)
           .map((json) => SubcontractPayment.fromJson(json))
           .toList();
@@ -189,7 +201,8 @@ class SubcontractService {
   /// Get payments for a project
   Future<List<SubcontractPayment>> getProjectPayments(int projectId) async {
     try {
-      final response = await _apiService.get('/subcontracts/projects/$projectId/payments');
+      final response =
+          await _apiService.get('/subcontracts/projects/$projectId/payments');
       return (response.data as List)
           .map((json) => SubcontractPayment.fromJson(json))
           .toList();
@@ -203,7 +216,8 @@ class SubcontractService {
   /// Get work order financial summary
   Future<SubcontractSummary> getWorkOrderSummary(int workOrderId) async {
     try {
-      final response = await _apiService.get('/subcontracts/work-orders/$workOrderId/summary');
+      final response = await _apiService
+          .get('/subcontracts/work-orders/$workOrderId/summary');
       return SubcontractSummary.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
@@ -213,7 +227,8 @@ class SubcontractService {
   /// Get all summaries for a project
   Future<List<SubcontractSummary>> getProjectSummaries(int projectId) async {
     try {
-      final response = await _apiService.get('/subcontracts/projects/$projectId/summaries');
+      final response =
+          await _apiService.get('/subcontracts/projects/$projectId/summaries');
       return (response.data as List)
           .map((json) => SubcontractSummary.fromJson(json))
           .toList();
@@ -232,5 +247,50 @@ class SubcontractService {
       return 'Network error: ${error.message}';
     }
     return error.toString();
+  }
+
+  /// NEW: Standardized search endpoint for subcontracts
+  Future<PaginatedResponse<SubcontractWorkOrder>> searchSubcontracts({
+    required int page,
+    required int size,
+    required String sortBy,
+    required String sortDirection,
+    String? search,
+    Map<String, dynamic>? filters,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'size': size,
+      'sortBy': sortBy,
+      'sortDirection': sortDirection,
+    };
+
+    if (search != null && search.isNotEmpty) {
+      queryParams['search'] = search;
+    }
+
+    if (filters != null) {
+      filters.forEach((key, value) {
+        if (value != null) {
+          if (value is DateTime) {
+            queryParams[key] = value.toIso8601String().split('T')[0];
+          } else {
+            queryParams[key] = value.toString();
+          }
+        }
+      });
+    }
+
+    try {
+      final response = await _apiService.get('/api/subcontracts/search',
+          queryParams: queryParams);
+      return _apiService.unwrap<PaginatedResponse<SubcontractWorkOrder>>(
+        response,
+        (json) => PaginatedResponse.fromJson(
+            json as Map<String, dynamic>, SubcontractWorkOrder.fromJson),
+      );
+    } catch (e) {
+      throw _handleError(e);
+    }
   }
 }

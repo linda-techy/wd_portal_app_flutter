@@ -14,8 +14,10 @@ class LabourService {
     return response.data;
   }
 
-  Future<List<dynamic>> recordAttendance(List<Map<String, dynamic>> attendanceList) async {
-    final response = await _apiService.post('/api/labour/attendance', data: attendanceList);
+  Future<List<dynamic>> recordAttendance(
+      List<Map<String, dynamic>> attendanceList) async {
+    final response =
+        await _apiService.post('/api/labour/attendance', data: attendanceList);
     return response.data;
   }
 
@@ -44,11 +46,11 @@ class LabourService {
       'sortBy': sortBy,
       'sortDirection': sortDirection,
     };
-    
+
     if (search != null && search.isNotEmpty) {
       queryParams['search'] = search;
     }
-    
+
     if (filters != null) {
       filters.forEach((key, value) {
         if (value != null) {
@@ -60,11 +62,13 @@ class LabourService {
         }
       });
     }
-    
-    final response = await _apiService.get('/api/labour/search', queryParams: queryParams);
+
+    final response =
+        await _apiService.get('/api/labour/search', queryParams: queryParams);
     return _apiService.unwrap<PaginatedResponse<dynamic>>(
       response,
-      (json) => PaginatedResponse.fromJson(json as Map<String, dynamic>, (item) => item),
+      (json) => PaginatedResponse.fromJson(
+          json as Map<String, dynamic>, (item) => item),
     );
   }
 }

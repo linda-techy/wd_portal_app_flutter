@@ -1,5 +1,6 @@
 import 'package:admin/services/api_service.dart';
 import 'package:admin/models/payment_models.dart';
+import 'package:admin/models/paginated_response.dart';
 
 class PaymentService {
   static final PaymentService _instance = PaymentService._internal();
@@ -10,9 +11,11 @@ class PaymentService {
   PaymentService._internal();
 
   /// Create a new design package payment
-  Future<DesignPackagePayment> createDesignPayment(CreateDesignPaymentRequest request) async {
-    final response = await _apiService.post('/payments/design', data: request.toJson());
-    
+  Future<DesignPackagePayment> createDesignPayment(
+      CreateDesignPaymentRequest request) async {
+    final response =
+        await _apiService.post('/payments/design', data: request.toJson());
+
     if (response.data != null && response.data['data'] != null) {
       return DesignPackagePayment.fromJson(response.data['data']);
     }
@@ -22,8 +25,9 @@ class PaymentService {
   /// Get design payment details for a project
   Future<DesignPackagePayment?> getDesignPaymentByProject(int projectId) async {
     try {
-      final response = await _apiService.get('/payments/design/project/$projectId');
-      
+      final response =
+          await _apiService.get('/payments/design/project/$projectId');
+
       if (response.data != null && response.data['data'] != null) {
         return DesignPackagePayment.fromJson(response.data['data']);
       }
@@ -51,14 +55,15 @@ class PaymentService {
       queryParams['search'] = search;
     }
 
-    final response = await _apiService.get('/payments/all', queryParams: queryParams);
-    
+    final response =
+        await _apiService.get('/payments/all', queryParams: queryParams);
+
     if (response.data != null && response.data['data'] != null) {
       final data = response.data['data'];
       final content = (data['content'] as List)
           .map((json) => DesignPackagePayment.fromJson(json))
           .toList();
-      
+
       return {
         'content': content,
         'totalPages': data['totalPages'],
@@ -83,14 +88,15 @@ class PaymentService {
       queryParams['search'] = search;
     }
 
-    final response = await _apiService.get('/payments/pending', queryParams: queryParams);
-    
+    final response =
+        await _apiService.get('/payments/pending', queryParams: queryParams);
+
     if (response.data != null && response.data['data'] != null) {
       final data = response.data['data'];
       final content = (data['content'] as List)
           .map((json) => DesignPackagePayment.fromJson(json))
           .toList();
-      
+
       return {
         'content': content,
         'totalPages': data['totalPages'],
@@ -103,14 +109,11 @@ class PaymentService {
 
   /// Record a payment transaction against a schedule
   Future<PaymentTransactionItem> recordTransaction(
-    int scheduleId, 
-    RecordTransactionRequest request
-  ) async {
+      int scheduleId, RecordTransactionRequest request) async {
     final response = await _apiService.post(
-      '/payments/schedule/$scheduleId/transactions', 
-      data: request.toJson()
-    );
-    
+        '/payments/schedule/$scheduleId/transactions',
+        data: request.toJson());
+
     if (response.data != null && response.data['data'] != null) {
       return PaymentTransactionItem.fromJson(response.data['data']);
     }
@@ -134,17 +137,19 @@ class PaymentService {
     if (search != null && search.isNotEmpty) queryParams['search'] = search;
     if (method != null && method.isNotEmpty) queryParams['method'] = method;
     if (status != null && status.isNotEmpty) queryParams['status'] = status;
-    if (startDate != null) queryParams['startDate'] = startDate.toIso8601String();
+    if (startDate != null)
+      queryParams['startDate'] = startDate.toIso8601String();
     if (endDate != null) queryParams['endDate'] = endDate.toIso8601String();
 
-    final response = await _apiService.get('/payments/history', queryParams: queryParams);
-    
+    final response =
+        await _apiService.get('/payments/history', queryParams: queryParams);
+
     if (response.data != null && response.data['data'] != null) {
       final data = response.data['data'];
       final content = (data['content'] as List)
           .map((json) => PaymentTransactionItem.fromJson(json))
           .toList();
-      
+
       return {
         'content': content,
         'totalPages': data['totalPages'],
@@ -152,7 +157,55 @@ class PaymentService {
         'last': data['last'],
       };
     }
-    return {'content': <PaymentTransactionItem>[], 'totalPages': 0, 'last': true};
+    return {
+      'content': <PaymentTransactionItem>[],
+      'totalPages': 0,
+      'last': true
+    };
+  }
+
+  /// NEW: Standardized search endpoint for payments
+  Future<PaginatedResponse<dynamic>> searchPayments({
+    required int page,
+    required int size,
+    required String sortBy,
+    required String sortDirection,
+    String? search,
+    Map<String, dynamic>? filters,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'size': size,
+      'sortBy': sortBy,
+      'sortDirection': sortDirection,
+    };
+
+    if (search != null && search.isNotEmpty) {
+      queryParams['search'] = search;
+    }
+
+    if (filters != null) {
+      filters.forEach((key, value) {
+        if (value != null) {
+          if (value is DateTime) {
+            queryParams[key] = value.toIso8601String().split('T')[0];
+          } else {
+            queryParams[key] = value.toString();
+          }
+        }
+      });
+    }
+
+    final response =
+        await _apiService.get('/api/payments/search', queryParams: queryParams);
+
+    if (response.data != null && response.data['data'] != null) {
+      return PaginatedResponse.fromJson(
+        response.data['data'],
+        (json) => json,
+      );
+    }
+
+    return PaginatedResponse.empty();
   }
 }
-

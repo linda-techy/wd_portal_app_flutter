@@ -57,7 +57,7 @@ class LabourProvider extends BasePaginatedProvider<dynamic> {
     String? status,
   }) {
     final filters = <String, dynamic>{};
-    
+
     if (projectId != null) filters['projectId'] = projectId;
     if (workerId != null) filters['workerId'] = workerId;
     if (contractorName != null) filters['contractorName'] = contractorName;
@@ -66,7 +66,7 @@ class LabourProvider extends BasePaginatedProvider<dynamic> {
     if (startDate != null) filters['startDate'] = startDate;
     if (endDate != null) filters['endDate'] = endDate;
     if (status != null) filters['status'] = status;
-    
+
     applyFilters(filters);
   }
 }

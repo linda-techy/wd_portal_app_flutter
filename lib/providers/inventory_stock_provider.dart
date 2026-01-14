@@ -41,19 +41,19 @@ class InventoryStockProvider extends BasePaginatedProvider<InventoryStock> {
 
   void filterByQuantityRange(double? minQuantity, double? maxQuantity) {
     final updatedFilters = Map<String, dynamic>.from(filters);
-    
+
     if (minQuantity == null) {
       updatedFilters.remove('minQuantity');
     } else {
       updatedFilters['minQuantity'] = minQuantity;
     }
-    
+
     if (maxQuantity == null) {
       updatedFilters.remove('maxQuantity');
     } else {
       updatedFilters['maxQuantity'] = maxQuantity;
     }
-    
+
     applyFilters(updatedFilters);
   }
 
@@ -66,15 +66,14 @@ class InventoryStockProvider extends BasePaginatedProvider<InventoryStock> {
     String? status,
   }) {
     final filters = <String, dynamic>{};
-    
+
     if (projectId != null) filters['projectId'] = projectId;
     if (materialId != null) filters['materialId'] = materialId;
     if (lowStock != null) filters['lowStock'] = lowStock;
     if (minQuantity != null) filters['minQuantity'] = minQuantity;
     if (maxQuantity != null) filters['maxQuantity'] = maxQuantity;
     if (status != null) filters['status'] = status;
-    
+
     applyFilters(filters);
   }
 }
-

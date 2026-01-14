@@ -77,11 +77,11 @@ class InventoryService {
       'sortBy': sortBy,
       'sortDirection': sortDirection,
     };
-    
+
     if (search != null && search.isNotEmpty) {
       queryParams['search'] = search;
     }
-    
+
     if (filters != null) {
       filters.forEach((key, value) {
         if (value != null) {
@@ -93,11 +93,13 @@ class InventoryService {
         }
       });
     }
-    
-    final response = await _apiService.get('/api/inventory/materials/search', queryParams: queryParams);
+
+    final response = await _apiService.get('/api/inventory/materials/search',
+        queryParams: queryParams);
     return _apiService.unwrap<PaginatedResponse<MaterialModel>>(
       response,
-      (json) => PaginatedResponse.fromJson(json as Map<String, dynamic>, MaterialModel.fromJson),
+      (json) => PaginatedResponse.fromJson(
+          json as Map<String, dynamic>, MaterialModel.fromJson),
     );
   }
 
@@ -116,11 +118,11 @@ class InventoryService {
       'sortBy': sortBy,
       'sortDirection': sortDirection,
     };
-    
+
     if (search != null && search.isNotEmpty) {
       queryParams['search'] = search;
     }
-    
+
     if (filters != null) {
       filters.forEach((key, value) {
         if (value != null) {
@@ -132,11 +134,13 @@ class InventoryService {
         }
       });
     }
-    
-    final response = await _apiService.get('/api/inventory/stock/search', queryParams: queryParams);
+
+    final response = await _apiService.get('/api/inventory/stock/search',
+        queryParams: queryParams);
     return _apiService.unwrap<PaginatedResponse<InventoryStock>>(
       response,
-      (json) => PaginatedResponse.fromJson(json as Map<String, dynamic>, InventoryStock.fromJson),
+      (json) => PaginatedResponse.fromJson(
+          json as Map<String, dynamic>, InventoryStock.fromJson),
     );
   }
 }

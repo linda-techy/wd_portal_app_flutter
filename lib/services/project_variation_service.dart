@@ -19,11 +19,11 @@ class ProjectVariationService {
       'sortBy': sortBy,
       'sortDirection': sortDirection,
     };
-    
+
     if (search != null && search.isNotEmpty) {
       queryParams['search'] = search;
     }
-    
+
     if (filters != null) {
       filters.forEach((key, value) {
         if (value != null) {
@@ -35,18 +35,18 @@ class ProjectVariationService {
         }
       });
     }
-    
+
     // Extract projectId from filters if it exists
     final projectId = filters?['projectId'];
-    final endpoint = projectId != null 
+    final endpoint = projectId != null
         ? '/api/projects/$projectId/variations/search'
         : '/api/project-variations/search';
-    
+
     final response = await _apiService.get(endpoint, queryParams: queryParams);
     return _apiService.unwrap<PaginatedResponse<dynamic>>(
       response,
-      (json) => PaginatedResponse.fromJson(json as Map<String, dynamic>, (item) => item),
+      (json) => PaginatedResponse.fromJson(
+          json as Map<String, dynamic>, (item) => item),
     );
   }
 }
-

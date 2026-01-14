@@ -58,7 +58,7 @@ class DelayLogProvider extends BasePaginatedProvider<DelayLog> {
     String? status,
   }) {
     final filters = <String, dynamic>{};
-    
+
     if (projectId != null) filters['projectId'] = projectId;
     if (delayType != null) filters['delayType'] = delayType;
     if (loggedBy != null) filters['loggedBy'] = loggedBy;
@@ -67,8 +67,7 @@ class DelayLogProvider extends BasePaginatedProvider<DelayLog> {
     if (startDate != null) filters['startDate'] = startDate;
     if (endDate != null) filters['endDate'] = endDate;
     if (status != null) filters['status'] = status;
-    
+
     applyFilters(filters);
   }
 }
-

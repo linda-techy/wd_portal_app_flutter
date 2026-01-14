@@ -34,7 +34,8 @@ class QualityCheck {
       status: json['status'] ?? 'PENDING',
       result: json['result'],
       remarks: json['remarks'],
-      checkDate: json['checkDate'] != null ? DateTime.parse(json['checkDate']) : null,
+      checkDate:
+          json['checkDate'] != null ? DateTime.parse(json['checkDate']) : null,
       conductedBy: json['conductedBy'],
     );
   }
@@ -61,7 +62,8 @@ class QualityCheckService {
         final List<dynamic> data = response.data['data'];
         return data.map((e) => QualityCheck.fromJson(e)).toList();
       }
-      throw Exception(response.data['message'] ?? 'Failed to load quality checks');
+      throw Exception(
+          response.data['message'] ?? 'Failed to load quality checks');
     } catch (e) {
       rethrow;
     }
@@ -73,11 +75,12 @@ class QualityCheckService {
         '/quality-checks',
         data: check.toJson(),
       );
-      
+
       if (response.statusCode == 200 && response.data['success'] == true) {
         return QualityCheck.fromJson(response.data['data']);
       }
-      throw Exception(response.data['message'] ?? 'Failed to create quality check');
+      throw Exception(
+          response.data['message'] ?? 'Failed to create quality check');
     } catch (e) {
       rethrow;
     }
@@ -89,13 +92,55 @@ class QualityCheckService {
         '/quality-checks/$id',
         data: check.toJson(),
       );
-      
+
       if (response.statusCode == 200 && response.data['success'] == true) {
         return QualityCheck.fromJson(response.data['data']);
       }
-      throw Exception(response.data['message'] ?? 'Failed to update quality check');
+      throw Exception(
+          response.data['message'] ?? 'Failed to update quality check');
     } catch (e) {
       rethrow;
     }
+  }
+
+  /// NEW: Standardized search endpoint for quality checks
+  Future<PaginatedResponse<QualityCheck>> searchQualityChecks({
+    required int page,
+    required int size,
+    required String sortBy,
+    required String sortDirection,
+    String? search,
+    Map<String, dynamic>? filters,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'size': size,
+      'sortBy': sortBy,
+      'sortDirection': sortDirection,
+    };
+
+    if (search != null && search.isNotEmpty) {
+      queryParams['search'] = search;
+    }
+
+    if (filters != null) {
+      filters.forEach((key, value) {
+        if (value != null) {
+          if (value is DateTime) {
+            queryParams[key] = value.toIso8601String().split('T')[0];
+          } else {
+            queryParams[key] = value.toString();
+          }
+        }
+      });
+    }
+
+    final response =
+        await _api.get('/api/quality-checks/search', queryParams: queryParams);
+    return _api.unwrap<PaginatedResponse<QualityCheck>>(
+      response,
+      (json) => PaginatedResponse.fromJson(
+          json as Map<String, dynamic>, QualityCheck.fromJson),
+    );
   }
 }
