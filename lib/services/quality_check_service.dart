@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:admin/services/api_service.dart';
+import 'package:admin/models/paginated_response.dart';
 
 class QualityCheck {
   final int? id;

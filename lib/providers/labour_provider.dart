@@ -1,99 +1,72 @@
-import 'package:flutter/material.dart';
+import 'package:admin/models/paginated_response.dart';
+import 'package:admin/providers/base_paginated_provider.dart';
 import 'package:admin/services/labour_service.dart';
-import 'package:admin/models/labour_models.dart';
 
-class LabourProvider with ChangeNotifier {
+class LabourProvider extends BasePaginatedProvider<dynamic> {
   final LabourService _service = LabourService();
 
-  List<Labour> _labourList = [];
-  List<MeasurementBook> _mbEntries = [];
-  bool _isLoading = false;
-  String? _error;
-
-  List<Labour> get labourList => _labourList;
-  List<MeasurementBook> get mbEntries => _mbEntries;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
-
-  Future<void> fetchLabour() async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      final data = await _service.getLabour();
-      _labourList = (data as List).map((l) => Labour.fromJson(l)).toList();
-    } catch (e) {
-      _error = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+  @override
+  Future<PaginatedResponse<dynamic>> fetchFromApi({
+    required int page,
+    required int size,
+    required String sortBy,
+    required String sortDirection,
+    String? search,
+    Map<String, dynamic>? filters,
+  }) async {
+    return await _service.searchLabour(
+      page: page,
+      size: size,
+      sortBy: sortBy,
+      sortDirection: sortDirection,
+      search: search,
+      filters: filters,
+    );
   }
 
-  Future<bool> createLabour(Labour labour) async {
-    _isLoading = true;
-    notifyListeners();
+  // Labour-specific convenience methods
 
-    try {
-      await _service.createLabour(labour.toJson());
-      await fetchLabour();
-      return true;
-    } catch (e) {
-      _error = e.toString();
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+  void filterByProjectId(int? projectId) {
+    updateFilter('projectId', projectId);
   }
 
-  Future<bool> recordAttendance(List<LabourAttendance> attendanceList) async {
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      await _service.recordAttendance(attendanceList.map((a) => a.toJson()).toList());
-      return true;
-    } catch (e) {
-      _error = e.toString();
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+  void filterByWorkerId(int? workerId) {
+    updateFilter('workerId', workerId);
   }
 
-  Future<void> fetchMBEntries(int projectId) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      final data = await _service.getMBEntries(projectId);
-      _mbEntries = (data as List).map((m) => MeasurementBook.fromJson(m)).toList();
-    } catch (e) {
-      _error = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+  void filterByContractorName(String? contractorName) {
+    updateFilter('contractorName', contractorName);
   }
 
-  Future<bool> createMBEntry(MeasurementBook mb) async {
-    _isLoading = true;
-    notifyListeners();
+  void filterByRole(String? role) {
+    updateFilter('role', role);
+  }
 
-    try {
-      await _service.createMBEntry(mb.toJson());
-      await fetchMBEntries(mb.projectId);
-      return true;
-    } catch (e) {
-      _error = e.toString();
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+  void filterByEmploymentType(String? employmentType) {
+    updateFilter('employmentType', employmentType);
+  }
+
+  void applyAllFilters({
+    int? projectId,
+    int? workerId,
+    String? contractorName,
+    String? role,
+    String? employmentType,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? status,
+  }) {
+    final filters = <String, dynamic>{};
+    
+    if (projectId != null) filters['projectId'] = projectId;
+    if (workerId != null) filters['workerId'] = workerId;
+    if (contractorName != null) filters['contractorName'] = contractorName;
+    if (role != null) filters['role'] = role;
+    if (employmentType != null) filters['employmentType'] = employmentType;
+    if (startDate != null) filters['startDate'] = startDate;
+    if (endDate != null) filters['endDate'] = endDate;
+    if (status != null) filters['status'] = status;
+    
+    applyFilters(filters);
   }
 }
