@@ -128,3 +128,4 @@ class LabourPaymentsTab extends StatelessWidget {
     return const Center(child: Text("Labour Payments Management Coming Soon"));
   }
 }
+

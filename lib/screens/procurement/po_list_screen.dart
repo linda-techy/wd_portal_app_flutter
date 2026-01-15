@@ -1,270 +1,357 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:admin/constants.dart';
-import 'package:admin/theme/app_theme.dart';
-import 'package:admin/providers/procurement_provider.dart';
 import 'package:admin/models/procurement_models.dart';
+import 'package:admin/providers/purchase_order_provider.dart';
+import 'package:admin/widgets/common/search_bar_widget.dart';
+import 'package:admin/theme/app_theme.dart';
+import 'package:admin/providers/permission_provider.dart';
+import 'add_purchase_order_screen.dart';
 
-import 'package:admin/screens/procurement/add_purchase_order_screen.dart';
-import 'package:admin/screens/procurement/record_grn_screen.dart';
-
-
-class PurchaseOrderListScreen extends StatefulWidget {
-  const PurchaseOrderListScreen({super.key});
-
-  @override
-  State<PurchaseOrderListScreen> createState() => _PurchaseOrderListScreenState();
-}
-
-class _PurchaseOrderListScreenState extends State<PurchaseOrderListScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  String _statusFilter = 'All';
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProcurementProvider>().fetchPurchaseOrders();
-    });
-    _searchController.addListener(() {
-      setState(() {}); // Rebuild to filter
-    });
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
+class POListScreen extends StatelessWidget {
+  const POListScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Padding(
-        padding: const EdgeInsets.all(defaultPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Purchase Orders",
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.deepSlate,
-                  ),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const AddPurchaseOrderScreen()),
-                    );
+    return ChangeNotifierProvider(
+      create: (_) => PurchaseOrderProvider()..fetch(),
+      child: Consumer<PurchaseOrderProvider>(
+        builder: (context, provider, _) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Purchase Orders'),
+              actions: [
+                Consumer<PermissionProvider>(
+                  builder: (context, permissionProvider, _) {
+                    if (permissionProvider.hasPermission('purchase_order:create')) {
+                      return IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: () => _navigateToCreate(context),
+                      );
+                    }
+                    return const SizedBox.shrink();
                   },
-                  icon: const Icon(Icons.add),
-                  label: const Text("Create PO"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.coralRed,
-                    foregroundColor: Colors.white,
-                  ),
                 ),
               ],
             ),
-            const SizedBox(height: defaultPadding),
-            
-            // Search and Filter Bar
-            Card(
-              elevation: 0,
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: const InputDecoration(
-                          hintText: "Search PO Number, Vendor, or Project...",
-                          prefixIcon: Icon(Icons.search),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(vertical: 14),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _statusFilter,
-                        items: const [
-                          DropdownMenuItem(value: 'All', child: Text("All Status")),
-                          DropdownMenuItem(value: 'DRAFT', child: Text("Draft")),
-                          DropdownMenuItem(value: 'ISSUED', child: Text("Issued")),
-                          DropdownMenuItem(value: 'RECEIVED', child: Text("Received")),
-                          DropdownMenuItem(value: 'CANCELLED', child: Text("Cancelled")),
-                        ],
-                        onChanged: (val) {
-                          if (val != null) setState(() => _statusFilter = val);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            body: Column(
+              children: [
+                _buildSearchAndFilters(context, provider),
+                Expanded(child: _buildPOList(context, provider)),
+                if (provider.totalPages > 1) _buildPagination(context, provider),
+              ],
             ),
-            const SizedBox(height: defaultPadding),
+          );
+        },
+      ),
+    );
+  }
 
-            Expanded(
-              child: Consumer<ProcurementProvider>(
-                builder: (context, provider, child) {
-                  if (provider.isLoading) return const Center(child: CircularProgressIndicator());
-                  if (provider.error != null) return Center(child: Text("Error: ${provider.error}", style: const TextStyle(color: Colors.red)));
-                  if (provider.purchaseOrders.isEmpty) return const Center(child: Text("No Purchase Orders found."));
+  Widget _buildSearchAndFilters(BuildContext context, PurchaseOrderProvider provider) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.grey[100],
+      child: Column(
+        children: [
+          SearchBarWidget(
+            onSearch: (query) => provider.search(query),
+            hintText: 'Search purchase orders...',
+          ),
+          const SizedBox(height: 12),
+          _buildFilterChips(context, provider),
+        ],
+      ),
+    );
+  }
 
-                  // Filter Logic
-                  final filteredList = provider.purchaseOrders.where((po) {
-                    final matchesSearch = (po.poNumber?.toLowerCase() ?? "").contains(_searchController.text.toLowerCase()) ||
-                                          (po.vendorName?.toLowerCase() ?? "").contains(_searchController.text.toLowerCase()) ||
-                                          (po.projectName?.toLowerCase() ?? "").contains(_searchController.text.toLowerCase());
-                    final matchesStatus = _statusFilter == 'All' || po.status == _statusFilter;
-                    return matchesSearch && matchesStatus;
-                  }).toList();
+  Widget _buildFilterChips(BuildContext context, PurchaseOrderProvider provider) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _buildFilterChip(
+          context,
+          label: 'All',
+          isSelected: provider.filters['status'] == null,
+          onTap: () => provider.clearFilters(),
+        ),
+        _buildFilterChip(
+          context,
+          label: 'Draft',
+          isSelected: provider.filters['status'] == 'DRAFT',
+          onTap: () => provider.updateFilter('status', 'DRAFT'),
+        ),
+        _buildFilterChip(
+          context,
+          label: 'Pending',
+          isSelected: provider.filters['status'] == 'PENDING',
+          onTap: () => provider.updateFilter('status', 'PENDING'),
+        ),
+        _buildFilterChip(
+          context,
+          label: 'Approved',
+          isSelected: provider.filters['status'] == 'APPROVED',
+          onTap: () => provider.updateFilter('status', 'APPROVED'),
+        ),
+        _buildFilterChip(
+          context,
+          label: 'Completed',
+          isSelected: provider.filters['status'] == 'COMPLETED',
+          onTap: () => provider.updateFilter('status', 'COMPLETED'),
+        ),
+      ],
+    );
+  }
 
-                  if (filteredList.isEmpty) return const Center(child: Text("No matching Purchase Orders found."));
+  Widget _buildFilterChip(
+    BuildContext context, {
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) => onTap(),
+      selectedColor: Theme.of(context).primaryColor,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : Colors.black87,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+    );
+  }
 
-                  return ListView.builder(
-                    itemCount: filteredList.length,
-                    itemBuilder: (context, index) {
-                      final po = filteredList[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          title: Text(po.poNumber ?? "PO-${po.id}", style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text("${po.vendorName} | ${po.projectName}"),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text("₹${po.netAmount.toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  Text(po.status, style: TextStyle(color: _getStatusColor(po.status), fontSize: 12)),
-                                ],
-                              ),
-                              if (po.status != 'RECEIVED') 
-                                IconButton(
-                                  icon: const Icon(Icons.inventory, color: AppTheme.primaryBlue),
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => RecordGRNScreen(po: po)),
-                                    );
-                                  },
-                                  tooltip: "Record Receipt",
-                                ),
-                              if (po.status == 'DRAFT' || po.status == 'ISSUED') ...[
-                                IconButton(
-                                  icon: const Icon(Icons.edit, color: Colors.orange),
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => AddPurchaseOrderScreen(existingPO: po)),
-                                    );
-                                  },
-                                  tooltip: "Edit PO",
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        title: const Text("Delete Purchase Order"),
-                                        content: const Text("Are you sure you want to delete this PO? This action cannot be undone."),
-                                        actions: [
-                                          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-                                          TextButton(
-                                            onPressed: () async {
-                                              Navigator.pop(context);
-                                              final success = await provider.deletePurchaseOrder(po.id!);
-                                              if (context.mounted) {
-                                                if (success) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("PO Deleted Successfully")));
-                                                } else {
-                                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: ${provider.error}")));
-                                                }
-                                              }
-                                            },
-                                            child: const Text("Delete", style: TextStyle(color: Colors.red)),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                  tooltip: "Delete PO",
-                                ),
-                              ],
-                              // Close button - only for RECEIVED status
-                              if (po.status == 'RECEIVED')
-                                IconButton(
-                                  icon: const Icon(Icons.check_circle, color: Colors.green),
-                                  onPressed: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        title: const Text("Close Purchase Order"),
-                                        content: const Text("This will mark the PO as fully processed. Continue?"),
-                                        actions: [
-                                          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-                                          TextButton(
-                                            onPressed: () async {
-                                              Navigator.pop(context);
-                                              final success = await provider.closePurchaseOrder(po.id!);
-                                              if (context.mounted) {
-                                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                                  content: Text(success ? "PO Closed Successfully" : "Error: ${provider.error}"),
-                                                ));
-                                              }
-                                            },
-                                            child: const Text("Close PO", style: TextStyle(color: Colors.green)),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                  tooltip: "Close PO",
-                                ),
-                            ],
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => AddPurchaseOrderScreen(existingPO: po)),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
+  Widget _buildPOList(BuildContext context, PurchaseOrderProvider provider) {
+    if (provider.isLoading && provider.items.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (provider.error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('Error: ${provider.error}'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => provider.fetch(),
+              child: const Text('Retry'),
             ),
           ],
+        ),
+      );
+    }
+
+    if (provider.items.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.shopping_cart, size: 48, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('No purchase orders found', style: TextStyle(fontSize: 16)),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => provider.fetch(),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: provider.items.length,
+        itemBuilder: (context, index) {
+          final po = provider.items[index];
+          return _buildPOCard(context, po);
+        },
+      ),
+    );
+  }
+
+  Widget _buildPOCard(BuildContext context, PurchaseOrder po) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      child: InkWell(
+        onTap: () => _navigateToDetail(context, po),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          po.poNumber ?? 'PO-${po.id}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (po.vendorName != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            po.vendorName!,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  _buildStatusBadge(po.status),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  if (po.projectName != null)
+                    _buildInfoChip(
+                      icon: Icons.business,
+                      label: po.projectName!,
+                    ),
+                  _buildInfoChip(
+                    icon: Icons.currency_rupee,
+                    label: '₹${po.netAmount.toStringAsFixed(2)}',
+                    color: Colors.green,
+                  ),
+                  _buildInfoChip(
+                    icon: Icons.calendar_today,
+                    label: _formatDate(po.poDate),
+                  ),
+                  if (po.expectedDeliveryDate != null)
+                    _buildInfoChip(
+                      icon: Icons.local_shipping,
+                      label: 'Delivery: ${_formatDate(po.expectedDeliveryDate!)}',
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  Widget _buildStatusBadge(String status) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: _getStatusColor(status),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        status,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip({
+    required IconData icon,
+    required String label,
+    Color? color,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color ?? Colors.grey[600]),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(fontSize: 12, color: color ?? Colors.grey[600]),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPagination(BuildContext context, PurchaseOrderProvider provider) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Page ${provider.currentPage + 1} of ${provider.totalPages}',
+            style: const TextStyle(fontSize: 14),
+          ),
+          Row(
+            children: [
+              IconButton(
+                onPressed: provider.currentPage > 0
+                    ? () => provider.goToPage(provider.currentPage - 1)
+                    : null,
+                icon: const Icon(Icons.chevron_left),
+              ),
+              IconButton(
+                onPressed: provider.currentPage < provider.totalPages - 1
+                    ? () => provider.goToPage(provider.currentPage + 1)
+                    : null,
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Color _getStatusColor(String status) {
-    switch (status) {
-      case 'DRAFT': return Colors.grey;
-      case 'ISSUED': return Colors.blue;
-      case 'RECEIVED': return Colors.green;
-      case 'CANCELLED': return Colors.red;
-      default: return Colors.black;
+    switch (status.toUpperCase()) {
+      case 'COMPLETED':
+        return AppTheme.statusSuccess;
+      case 'APPROVED':
+        return Colors.blue;
+      case 'PENDING':
+        return AppTheme.statusWarning;
+      case 'DRAFT':
+        return Colors.grey;
+      default:
+        return Colors.grey;
     }
   }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  void _navigateToDetail(BuildContext context, PurchaseOrder po) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('View PO details: ${po.poNumber}')),
+    );
+  }
+
+  void _navigateToCreate(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddPurchaseOrderScreen(),
+      ),
+    );
+  }
 }
+

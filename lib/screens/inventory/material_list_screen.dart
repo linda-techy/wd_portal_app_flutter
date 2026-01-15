@@ -1,118 +1,332 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:admin/constants.dart';
-import 'package:admin/theme/app_theme.dart';
-import 'package:admin/providers/inventory_provider.dart';
 import 'package:admin/models/inventory_models.dart';
+import 'package:admin/providers/material_provider.dart';
+import 'package:admin/widgets/common/search_bar_widget.dart';
+import 'package:admin/theme/app_theme.dart';
+import 'package:admin/providers/permission_provider.dart';
 import 'add_material_screen.dart';
 
-class MaterialListScreen extends StatefulWidget {
+class MaterialListScreen extends StatelessWidget {
   const MaterialListScreen({super.key});
 
   @override
-  State<MaterialListScreen> createState() => _MaterialListScreenState();
-}
-
-class _MaterialListScreenState extends State<MaterialListScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<InventoryProvider>().fetchMaterials();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Padding(
-        padding: const EdgeInsets.all(defaultPadding),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Material Catalog", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                ElevatedButton.icon(
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AddMaterialScreen())),
-                  icon: const Icon(Icons.add),
-                  label: const Text("Add New Material"),
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.coralRed, foregroundColor: Colors.white),
+    return ChangeNotifierProvider(
+      create: (_) => MaterialProvider()..fetch(),
+      child: Consumer<MaterialProvider>(
+        builder: (context, provider, _) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Materials'),
+              actions: [
+                Consumer<PermissionProvider>(
+                  builder: (context, permissionProvider, _) {
+                    if (permissionProvider.hasPermission('material:create')) {
+                      return IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: () => _navigateToCreate(context),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: Consumer<InventoryProvider>(
-                builder: (context, provider, child) {
-                  if (provider.isLoading) return const Center(child: CircularProgressIndicator());
-                  if (provider.error != null) return Center(child: Text("Error: ${provider.error}"));
-                  if (provider.materials.isEmpty) return const Center(child: Text("No materials in catalog."));
+            body: Column(
+              children: [
+                _buildSearchAndFilters(context, provider),
+                Expanded(child: _buildMaterialList(context, provider)),
+                if (provider.totalPages > 1)
+                  _buildPagination(context, provider),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
 
-                  return ListView.builder(
-                    itemCount: provider.materials.length,
-                    itemBuilder: (context, index) {
-                      final m = provider.materials[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          leading: const CircleAvatar(child: Icon(Icons.category)),
-                          title: Text(m.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text("${m.category} | Unit: ${m.unit}"),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.orange),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => AddMaterialScreen(existingMaterial: m)),
-                                  );
-                                },
-                                tooltip: "Edit Material",
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.block, color: Colors.red),
-                                onPressed: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: const Text("Deactivate Material"),
-                                      content: Text("Are you sure you want to deactivate '${m.name}'? "
-                                          "It will no longer appear in selection lists."),
-                                      actions: [
-                                        TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-                                        TextButton(
-                                          onPressed: () async {
-                                            Navigator.pop(context);
-                                            final success = await provider.deactivateMaterial(m.id!);
-                                            if (context.mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                                content: Text(success ? "Material deactivated" : "Error: ${provider.error}"),
-                                              ));
-                                            }
-                                          },
-                                          child: const Text("Deactivate", style: TextStyle(color: Colors.red)),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                                tooltip: "Deactivate Material",
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
+  Widget _buildSearchAndFilters(
+      BuildContext context, MaterialProvider provider) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.grey[100],
+      child: Column(
+        children: [
+          SearchBarWidget(
+            onSearch: (query) => provider.search(query),
+            hintText: 'Search materials...',
+          ),
+          const SizedBox(height: 12),
+          _buildFilterChips(context, provider),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChips(BuildContext context, MaterialProvider provider) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _buildFilterChip(
+          context,
+          label: 'All',
+          isSelected: provider.filters['category'] == null,
+          onTap: () => provider.clearFilters(),
+        ),
+        _buildFilterChip(
+          context,
+          label: 'Raw Material',
+          isSelected: provider.filters['category'] == 'RAW_MATERIAL',
+          onTap: () => provider.updateFilter('category', 'RAW_MATERIAL'),
+        ),
+        _buildFilterChip(
+          context,
+          label: 'Finished Goods',
+          isSelected: provider.filters['category'] == 'FINISHED_GOODS',
+          onTap: () => provider.updateFilter('category', 'FINISHED_GOODS'),
+        ),
+        _buildFilterChip(
+          context,
+          label: 'Consumables',
+          isSelected: provider.filters['category'] == 'CONSUMABLES',
+          onTap: () => provider.updateFilter('category', 'CONSUMABLES'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterChip(
+    BuildContext context, {
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) => onTap(),
+      selectedColor: Theme.of(context).primaryColor,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : Colors.black87,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+    );
+  }
+
+  Widget _buildMaterialList(BuildContext context, MaterialProvider provider) {
+    if (provider.isLoading && provider.items.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (provider.error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('Error: ${provider.error}'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => provider.fetch(),
+              child: const Text('Retry'),
             ),
           ],
         ),
+      );
+    }
+
+    if (provider.items.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inventory_2, size: 48, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('No materials found', style: TextStyle(fontSize: 16)),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => provider.fetch(),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: provider.items.length,
+        itemBuilder: (context, index) {
+          final material = provider.items[index];
+          return _buildMaterialCard(context, material);
+        },
+      ),
+    );
+  }
+
+  Widget _buildMaterialCard(BuildContext context, MaterialModel material) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      child: InkWell(
+        onTap: () => _navigateToDetail(context, material),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          material.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          material.category,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (material.category != null)
+                    _buildCategoryBadge(material.category!),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  _buildInfoChip(
+                    icon: Icons.straighten,
+                    label: material.unit,
+                  ),
+                  _buildInfoChip(
+                    icon: Icons.category,
+                    label: material.category,
+                  ),
+                  _buildInfoChip(
+                    icon: Icons.check_circle,
+                    label: material.active ? 'Active' : 'Inactive',
+                    color: material.active ? Colors.green : Colors.grey,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryBadge(String category) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.blue,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        category,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip({
+    required IconData icon,
+    required String label,
+    Color? color,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color ?? Colors.grey[600]),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(fontSize: 12, color: color ?? Colors.grey[600]),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPagination(BuildContext context, MaterialProvider provider) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Page ${provider.currentPage + 1} of ${provider.totalPages}',
+            style: const TextStyle(fontSize: 14),
+          ),
+          Row(
+            children: [
+              IconButton(
+                onPressed: provider.currentPage > 0
+                    ? () => provider.goToPage(provider.currentPage - 1)
+                    : null,
+                icon: const Icon(Icons.chevron_left),
+              ),
+              IconButton(
+                onPressed: provider.currentPage < provider.totalPages - 1
+                    ? () => provider.goToPage(provider.currentPage + 1)
+                    : null,
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getStockColor(double stock, double? minLevel) {
+    if (minLevel == null) return Colors.grey;
+    if (stock <= minLevel) return AppTheme.statusError;
+    if (stock <= minLevel * 1.5) return AppTheme.statusWarning;
+    return AppTheme.statusSuccess;
+  }
+
+  void _navigateToDetail(BuildContext context, MaterialModel material) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('View material details: ${material.name}')),
+    );
+  }
+
+  void _navigateToCreate(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddMaterialScreen(),
       ),
     );
   }

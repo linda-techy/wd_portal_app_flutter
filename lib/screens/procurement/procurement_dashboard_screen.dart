@@ -8,10 +8,12 @@ class ProcurementDashboardScreen extends StatefulWidget {
   const ProcurementDashboardScreen({super.key});
 
   @override
-  State<ProcurementDashboardScreen> createState() => _ProcurementDashboardScreenState();
+  State<ProcurementDashboardScreen> createState() =>
+      _ProcurementDashboardScreenState();
 }
 
-class _ProcurementDashboardScreenState extends State<ProcurementDashboardScreen> with SingleTickerProviderStateMixin {
+class _ProcurementDashboardScreenState extends State<ProcurementDashboardScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -49,7 +51,7 @@ class _ProcurementDashboardScreenState extends State<ProcurementDashboardScreen>
         controller: _tabController,
         children: const [
           VendorListScreen(),
-          PurchaseOrderListScreen(),
+          POListScreen(),
         ],
       ),
     );

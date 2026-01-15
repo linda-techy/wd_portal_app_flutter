@@ -1,561 +1,343 @@
 import 'package:flutter/material.dart';
-import 'package:admin/constants.dart';
-import '../../data/models/customer.dart';
-import 'package:admin/models/customer_role.dart';
-import 'package:admin/responsive.dart';
-import '../../data/services/customer_service.dart';
-import 'package:admin/utils/container_styles.dart';
-import 'package:admin/models/pagination_params.dart';
 import 'package:provider/provider.dart';
+import 'package:admin/features/customers/data/models/customer.dart';
+import 'package:admin/features/customers/data/providers/customer_provider.dart';
+import 'package:admin/widgets/common/search_bar_widget.dart';
+import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
-import 'package:dio/dio.dart';
-import 'package:admin/providers/portal_auth_provider.dart';
-import 'package:admin/utils/error_handler.dart';
-import 'add_customer_screen.dart';
-import 'edit_customer_screen.dart';
 
-class CustomersScreen extends StatefulWidget {
+class CustomersScreen extends StatelessWidget {
   const CustomersScreen({super.key});
 
   @override
-  State<CustomersScreen> createState() => _CustomersScreenState();
-}
-
-class _CustomersScreenState extends State<CustomersScreen> {
-  List<Customer> customers = [];
-  List<CustomerRole> customerRoles = [];
-  bool isLoading = true;
-  String? errorMessage;
-  final CustomerService _customerService = CustomerService();
-  
-  // Pagination State
-  int currentPage = 0;
-  int pageSize = 10;
-  int totalItems = 0;
-  int totalPages = 1;
-
-  @override
-  void initState() {
-    super.initState();
-    _verifyAuthAndLoadData();
-    _loadCustomerRoles();
-  }
-
-  Future<void> _verifyAuthAndLoadData() async {
-    final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
-    
-    if (!authProvider.isAuthenticated) {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-          errorMessage = 'Please login to continue';
-        });
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            Navigator.of(context).pushReplacementNamed('/login');
-          }
-        });
-      }
-      return;
-    }
-    
-    await _loadCustomers();
-  }
-
-  Future<void> _loadCustomerRoles() async {
-    try {
-      final roles = await _customerService.getCustomerRoles();
-      if (mounted) {
-        setState(() {
-          customerRoles = roles;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error loading customer roles', showToast: false);
-      }
-    }
-  }
-
-  Future<void> _loadCustomers() async {
-    try {
-      setState(() {
-        isLoading = true;
-        errorMessage = null;
-      });
-
-      final params = PaginationParams(
-        page: currentPage + 1,
-        limit: pageSize,
-        sortBy: 'id',
-        sortOrder: 'desc',
-      );
-
-      final paginatedResponse = await _customerService.getCustomersPaginated(params);
-
-      if (mounted) {
-        setState(() {
-          customers = paginatedResponse.data;
-          totalItems = paginatedResponse.totalItems;
-          totalPages = paginatedResponse.totalPages;
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-          errorMessage = ErrorHandler.getErrorMessage(e);
-        });
-        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load customers', showToast: false);
-      }
-    }
-  }
-  
-  void _onPageChanged(int newPage) {
-    setState(() {
-      currentPage = newPage;
-    });
-    _loadCustomers();
-  }
-
-  String _getErrorMessage(dynamic error) {
-    if (error.toString().contains('SocketException') ||
-        error.toString().contains('HandshakeException')) {
-      return 'Network error. Please check your internet connection.';
-    } else if (error.toString().contains('TimeoutException')) {
-      return 'Request timed out. Please try again.';
-    } else if (error.toString().contains('FormatException')) {
-      return 'Invalid data received from server.';
-    } else if (error.toString().contains('500')) {
-      return 'Server error. Please try again later.';
-    } else if (error.toString().contains('404')) {
-      return 'Service not found. Please contact support.';
-    } else {
-      return 'Failed to load customers. Please try again.';
-    }
-  }
-
-  Future<void> _refreshCustomers() async {
-    await _loadCustomers();
-  }
-
-  Future<void> _editCustomer(Customer customer) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EditCustomerScreen(customer: customer),
-      ),
-    );
-
-    if (result == true) {
-      await _refreshCustomers();
-    }
-  }
-
-  Future<void> _deleteCustomer(Customer customer) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Delete Customer'),
-          content: Text(
-              'Are you sure you want to delete "${customer.fullName}"? This action cannot be undone.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed == true && customer.id != null) {
-      try {
-        await _customerService.deleteCustomer(customer.id!);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Customer deleted successfully!')),
-          );
-          _refreshCustomers();
-        }
-      } catch (e) {
-        if (mounted) {
-          await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error deleting customer');
-        }
-      }
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final permissions = Provider.of<PermissionProvider>(context);
-    
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(defaultPadding),
-        child: Column(
-          children: [
-            Responsive.isMobile(context)
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            "Customers",
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: defaultPadding),
-                      Row(
-                        children: [
-                          // Add Customer button - Only show if user has CREATE permission
-                          if (permissions.canCreateCustomer)
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: defaultPadding,
-                                  ),
-                                ),
-                                onPressed: () async {
-                                  final result = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const AddCustomerScreen()),
-                                  );
-                                  if (result == true) {
-                                    _loadCustomers();
-                                  }
-                                },
-                                icon: const Icon(Icons.add, size: 18),
-                                label: const Text("Add Customer"),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      if (!Responsive.isDesktop(context))
-                        IconButton(
-                          icon: const Icon(Icons.menu),
-                          onPressed: () {},
-                        ),
-                      Text(
-                        "Customers",
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const Spacer(),
-                      // Add Customer button - Only show if user has CREATE permission
-                      if (permissions.canCreateCustomer)
-                        ElevatedButton.icon(
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: defaultPadding * 1.5,
-                              vertical: defaultPadding,
-                            ),
-                          ),
-                          onPressed: () async {
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const AddCustomerScreen()),
-                            );
-
-                            if (result == true) {
-                              _loadCustomers();
-                            }
-                          },
-                          icon: const Icon(Icons.add),
-                          label: const Text("Add New Customer"),
-                        ),
-                    ],
-                  ),
-            const SizedBox(height: defaultPadding),
-            if (isLoading)
-              const Center(child: CircularProgressIndicator())
-            else if (errorMessage != null)
-              Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Colors.red.withOpacity(0.7),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Error',
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: Colors.red,
-                                fontWeight: FontWeight.bold,
-                              ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      errorMessage!,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.red.shade700,
-                          ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      onPressed: _loadCustomers,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else
-              Column(
-                children: [
-                  RefreshIndicator(
-                    onRefresh: _refreshCustomers,
-                    child: CustomersTable(
-                      customers: customers,
-                      customerRoles: customerRoles,
-                      onEdit: _editCustomer,
-                      onDelete: _deleteCustomer,
-                    ),
-                  ),
-                  const SizedBox(height: defaultPadding),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        "Showing ${currentPage * pageSize + 1} to ${(currentPage + 1) * pageSize > totalItems ? totalItems : (currentPage + 1) * pageSize} of $totalItems",
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(width: defaultPadding),
-                      IconButton(
-                        icon: const Icon(Icons.chevron_left),
-                        onPressed: currentPage > 0
-                            ? () => _onPageChanged(currentPage - 1)
-                            : null,
-                      ),
-                      Text(
-                        "Page ${currentPage + 1} of $totalPages",
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.chevron_right),
-                        onPressed: currentPage < totalPages - 1
-                            ? () => _onPageChanged(currentPage + 1)
-                            : null,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class CustomersTable extends StatelessWidget {
-  final List<Customer> customers;
-  final List<CustomerRole> customerRoles;
-  final Function(Customer) onEdit;
-  final Function(Customer) onDelete;
-
-  const CustomersTable({
-    super.key,
-    required this.customers,
-    required this.customerRoles,
-    required this.onEdit,
-    required this.onDelete,
-  });
-
-  String _getRoleDescription(int? roleId) {
-    if (roleId == null) return 'N/A';
-    final role = customerRoles.firstWhere(
-      (r) => r.id == roleId,
-      orElse: () => CustomerRole(id: 0, name: '', description: 'Unknown'),
-    );
-    return role.description;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(defaultPadding),
-      decoration: ContainerStyles.secondaryBox,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Scrollable table columns
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columnSpacing: defaultPadding,
-                    dataRowMinHeight: 52,
-                    dataRowMaxHeight: 52,
-                    headingRowHeight: 56,
-                    columns: const [
-                      DataColumn(label: Text("ID")),
-                      DataColumn(label: Text("Name")),
-                      DataColumn(label: Text("Email")),
-                      DataColumn(label: Text("Status")),
-                      DataColumn(label: Text("Role")),
-                      DataColumn(label: Text("Created At")),
-                    ],
-                    rows: customers.map((customer) {
-                      return DataRow(
-                        cells: [
-                          DataCell(Text(customer.id?.toString() ?? 'N/A')),
-                          DataCell(
-                            Text(
-                              customer.fullName,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          DataCell(Text(customer.email)),
-                          DataCell(
-                            Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: customer.enabled ? Colors.green : Colors.red,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                customer.enabled ? 'Enabled' : 'Disabled',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                          DataCell(Text(_getRoleDescription(customer.roleId))),
-                          DataCell(Text(
-                            customer.createdAt != null
-                                ? '${customer.createdAt!.day}/${customer.createdAt!.month}/${customer.createdAt!.year}'
-                                : 'N/A',
-                          )),
-                        ],
+    return ChangeNotifierProvider(
+      create: (_) => CustomerProvider()..fetch(),
+      child: Consumer<CustomerProvider>(
+        builder: (context, provider, _) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Customers'),
+              actions: [
+                Consumer<PermissionProvider>(
+                  builder: (context, permissionProvider, _) {
+                    if (permissionProvider.hasPermission('customer:create')) {
+                      return IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: () => _navigateToCreate(context),
                       );
-                    }).toList(),
-                  ),
+                    }
+                    return const SizedBox.shrink();
+                  },
                 ),
-              ),
-              
-              // Fixed Actions Column
-              Container(
-                width: 92,
-                decoration: BoxDecoration(
-                  border: Border(
-                    left: BorderSide(
-                      color: Colors.grey.withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Header
-                    Container(
-                      height: 56,
-                      alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: const Text(
-                        "Actions",
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                    ),
-                    // Rows
-                    ...customers.asMap().entries.map((entry) {
-                      final customer = entry.value;
-                      return Consumer<PermissionProvider>(
-                        builder: (context, permissions, child) {
-                          return Container(
-                            height: 52,
-                            alignment: Alignment.center,
-                            child: Wrap(
-                              alignment: WrapAlignment.center,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              spacing: 2,
-                              runSpacing: 2,
-                              children: [
-                                // Edit button - Only show if user has EDIT permission
-                                if (permissions.canEditCustomer)
-                                  SizedBox(
-                                    width: 36,
-                                    height: 36,
-                                    child: IconButton(
-                                      icon: const Icon(Icons.edit,
-                                          color: Colors.blue, size: 18),
-                                      tooltip: 'Edit Customer',
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                      onPressed: () {
-                                        onEdit(customer);
-                                      },
-                                    ),
-                                  ),
-                                // Delete button - Only show if user has DELETE permission
-                                if (permissions.canDeleteCustomer)
-                                  SizedBox(
-                                    width: 36,
-                                    height: 36,
-                                    child: IconButton(
-                                      icon: Icon(Icons.delete,
-                                          color: customer.projectCount > 0
-                                              ? Colors.grey
-                                              : Colors.red,
-                                          size: 18),
-                                      tooltip: customer.projectCount > 0
-                                          ? 'Cannot delete customer with associated projects'
-                                          : 'Delete Customer',
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                      onPressed: customer.projectCount > 0
-                                          ? null
-                                          : () {
-                                              onDelete(customer);
-                                            },
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                    }),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
+            body: Column(
+              children: [
+                _buildSearchAndFilters(context, provider),
+                Expanded(child: _buildCustomerList(context, provider)),
+                if (provider.totalPages > 1)
+                  _buildPagination(context, provider),
+              ],
+            ),
           );
         },
       ),
     );
   }
-}
 
+  Widget _buildSearchAndFilters(
+      BuildContext context, CustomerProvider provider) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.grey[100],
+      child: Column(
+        children: [
+          SearchBarWidget(
+            onSearch: (query) => provider.search(query),
+            hintText: 'Search customers...',
+          ),
+          const SizedBox(height: 12),
+          _buildFilterChips(context, provider),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChips(BuildContext context, CustomerProvider provider) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _buildFilterChip(
+          context,
+          label: 'All',
+          isSelected: provider.filters['customerType'] == null,
+          onTap: () => provider.clearFilters(),
+        ),
+        _buildFilterChip(
+          context,
+          label: 'Individual',
+          isSelected: provider.filters['customerType'] == 'INDIVIDUAL',
+          onTap: () => provider.updateFilter('customerType', 'INDIVIDUAL'),
+        ),
+        _buildFilterChip(
+          context,
+          label: 'Corporate',
+          isSelected: provider.filters['customerType'] == 'CORPORATE',
+          onTap: () => provider.updateFilter('customerType', 'CORPORATE'),
+        ),
+        const SizedBox(width: 16),
+        _buildFilterChip(
+          context,
+          label: 'Active',
+          isSelected: provider.filters['active'] == 'true',
+          onTap: () => provider.updateFilter('active', 'true'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterChip(
+    BuildContext context, {
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) => onTap(),
+      selectedColor: Theme.of(context).primaryColor,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : Colors.black87,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+    );
+  }
+
+  Widget _buildCustomerList(BuildContext context, CustomerProvider provider) {
+    if (provider.isLoading && provider.items.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (provider.error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('Error: ${provider.error}'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => provider.fetch(),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (provider.items.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.people, size: 48, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('No customers found', style: TextStyle(fontSize: 16)),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => provider.fetch(),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: provider.items.length,
+        itemBuilder: (context, index) {
+          final customer = provider.items[index];
+          return _buildCustomerCard(context, customer);
+        },
+      ),
+    );
+  }
+
+  Widget _buildCustomerCard(BuildContext context, Customer customer) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      child: InkWell(
+        onTap: () => _navigateToDetail(context, customer),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          customer.fullName,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (customer.companyName != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            customer.companyName!,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  _buildStatusBadge(customer.enabled),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  _buildInfoChip(
+                    icon: Icons.email,
+                    label: customer.email,
+                  ),
+                  if (customer.phone != null)
+                    _buildInfoChip(
+                      icon: Icons.phone,
+                      label: customer.phone!,
+                    ),
+                  if (customer.address != null)
+                    _buildInfoChip(
+                      icon: Icons.location_on,
+                      label: customer.address!,
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTypeBadge(String type) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: type == 'CORPORATE' ? Colors.blue : Colors.green,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        type,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(bool enabled) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: enabled ? AppTheme.statusSuccess : Colors.grey,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        enabled ? 'Active' : 'Inactive',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip({required IconData icon, required String label}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: Colors.grey[600]),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            label,
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPagination(BuildContext context, CustomerProvider provider) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Page ${provider.currentPage + 1} of ${provider.totalPages}',
+            style: const TextStyle(fontSize: 14),
+          ),
+          Row(
+            children: [
+              IconButton(
+                onPressed: provider.currentPage > 0
+                    ? () => provider.goToPage(provider.currentPage - 1)
+                    : null,
+                icon: const Icon(Icons.chevron_left),
+              ),
+              IconButton(
+                onPressed: provider.currentPage < provider.totalPages - 1
+                    ? () => provider.goToPage(provider.currentPage + 1)
+                    : null,
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToDetail(BuildContext context, Customer customer) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('View customer details: ${customer.fullName}')),
+    );
+  }
+
+  void _navigateToCreate(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+          content: Text('Create customer screen - to be implemented')),
+    );
+  }
+}

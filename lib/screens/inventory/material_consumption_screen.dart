@@ -135,3 +135,4 @@ class _MaterialConsumptionScreenState extends State<MaterialConsumptionScreen> {
     );
   }
 }
+

@@ -339,3 +339,4 @@ class PORow {
   MaterialModel? selectedMaterial;
   double get amount => quantity * rate;
 }
+

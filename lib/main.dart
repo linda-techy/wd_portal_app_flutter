@@ -148,15 +148,17 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => FinanceProvider()),
         ChangeNotifierProvider(create: (_) => ApprovalProvider()),
         ChangeNotifierProvider(create: (_) => DocumentProvider()),
-        ChangeNotifierProvider(create: (_) => ProjectTrackingProvider(projectTrackingService)),
+        ChangeNotifierProvider(
+            create: (_) => ProjectTrackingProvider(projectTrackingService)),
 
         // Project Management
         ChangeNotifierProvider(create: (_) => CustomerProjectProvider()),
         ChangeNotifierProvider(create: (_) => CommonDataProvider()),
 
         // Phase 1: Subcontractor & Vendor Payment
-        ChangeNotifierProvider(create: (_) => SubcontractProvider(subcontractService)),
-        ChangeNotifierProvider(create: (_) => VendorPaymentProvider(vendorPaymentService)),
+        ChangeNotifierProvider(create: (_) => SubcontractProvider()),
+        ChangeNotifierProvider(
+            create: (_) => VendorPaymentProvider(vendorPaymentService)),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

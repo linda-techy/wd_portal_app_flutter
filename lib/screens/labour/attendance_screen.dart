@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/labour_provider.dart';
-import 'package:admin/models/labour_models.dart';
 import 'package:admin/models/customer_project.dart';
 import 'package:admin/services/crm_service.dart';
+import 'package:admin/services/labour_service.dart';
 import 'package:intl/intl.dart';
 
 class AttendanceScreen extends StatefulWidget {
@@ -30,11 +30,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   Future<void> _loadInitialData() async {
     try {
-      final projectsResponse = await _crmService.getCustomerProjectsPaginated(page: 0, size: 100);
+      final projectsResponse =
+          await _crmService.getCustomerProjectsPaginated(page: 0, size: 100);
       setState(() {
         _projects = projectsResponse.data;
       });
-      await context.read<LabourProvider>().fetchLabour();
+      await context.read<LabourProvider>().fetch();
     } catch (e) {
       debugPrint("Error loading data: $e");
     }
@@ -42,7 +43,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final labourList = context.watch<LabourProvider>().labourList;
+    final labourList = context.watch<LabourProvider>().items;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -55,27 +56,35 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                  DropdownButtonFormField<CustomerProject>(
-                    value: _selectedProject,
-                    decoration: const InputDecoration(labelText: "Project", prefixIcon: Icon(Icons.folder)),
-                    items: _projects.map((p) => DropdownMenuItem(value: p, child: Text(p.name))).toList(),
-                    onChanged: (val) => setState(() => _selectedProject = val),
-                  ),
-                  const SizedBox(height: 16),
-                  ListTile(
-                    title: const Text("Attendance Date"),
-                    subtitle: Text(DateFormat('dd-MM-yyyy').format(_attendanceDate)),
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _attendanceDate,
-                        firstDate: DateTime.now().subtract(const Duration(days: 30)),
-                        lastDate: DateTime.now(),
-                      );
-                      if (picked != null) setState(() => _attendanceDate = picked);
-                    },
-                  ),
+                    DropdownButtonFormField<CustomerProject>(
+                      value: _selectedProject,
+                      decoration: const InputDecoration(
+                          labelText: "Project", prefixIcon: Icon(Icons.folder)),
+                      items: _projects
+                          .map((p) =>
+                              DropdownMenuItem(value: p, child: Text(p.name)))
+                          .toList(),
+                      onChanged: (val) =>
+                          setState(() => _selectedProject = val),
+                    ),
+                    const SizedBox(height: 16),
+                    ListTile(
+                      title: const Text("Attendance Date"),
+                      subtitle: Text(
+                          DateFormat('dd-MM-yyyy').format(_attendanceDate)),
+                      trailing: const Icon(Icons.calendar_today),
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: _attendanceDate,
+                          firstDate:
+                              DateTime.now().subtract(const Duration(days: 30)),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null)
+                          setState(() => _attendanceDate = picked);
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -96,9 +105,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                             trailing: Wrap(
                               spacing: 8,
                               children: [
-                                _statusChip(l.id!, 'PRESENT', Colors.green, status == 'PRESENT'),
-                                _statusChip(l.id!, 'HALF_DAY', Colors.orange, status == 'HALF_DAY'),
-                                _statusChip(l.id!, 'ABSENT', Colors.red, status == 'ABSENT'),
+                                _statusChip(l.id!, 'PRESENT', Colors.green,
+                                    status == 'PRESENT'),
+                                _statusChip(l.id!, 'HALF_DAY', Colors.orange,
+                                    status == 'HALF_DAY'),
+                                _statusChip(l.id!, 'ABSENT', Colors.red,
+                                    status == 'ABSENT'),
                               ],
                             ),
                           ),
@@ -112,8 +124,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               height: 50,
               child: ElevatedButton(
                 onPressed: _selectedProject == null ? null : _saveAttendance,
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
-                child: const Text("Record Bulk Attendance", style: TextStyle(color: Colors.white, fontSize: 16)),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlue),
+                child: const Text("Record Bulk Attendance",
+                    style: TextStyle(color: Colors.white, fontSize: 16)),
               ),
             ),
           ],
@@ -122,7 +136,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  Widget _statusChip(int labourId, String status, Color color, bool isSelected) {
+  Widget _statusChip(
+      int labourId, String status, Color color, bool isSelected) {
     return ChoiceChip(
       label: Text(status == 'HALF_DAY' ? '1/2' : status[0]),
       selected: isSelected,
@@ -134,26 +149,31 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   void _saveAttendance() async {
-    final labourList = context.read<LabourProvider>().labourList;
-    List<LabourAttendance> attendanceList = [];
+    final labourList = context.read<LabourProvider>().items;
+    List<Map<String, dynamic>> attendanceList = [];
 
     for (var l in labourList) {
-      attendanceList.add(LabourAttendance(
-        projectId: _selectedProject!.id!,
-        labourId: l.id!,
-        attendanceDate: _attendanceDate.toIso8601String(),
-        status: _attendanceMap[l.id] ?? 'ABSENT',
-      ));
+      attendanceList.add({
+        'projectId': _selectedProject!.id!,
+        'labourId': l.id!,
+        'attendanceDate': _attendanceDate.toIso8601String().split('T')[0],
+        'status': _attendanceMap[l.id] ?? 'ABSENT',
+      });
     }
 
-    final success = await context.read<LabourProvider>().recordAttendance(attendanceList);
-    if (success) {
+    try {
+      final labourService = LabourService();
+      await labourService.recordAttendance(attendanceList);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Attendance recorded successfully!")));
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Attendance recorded successfully!")));
+        _attendanceMap.clear();
+        setState(() {});
       }
-    } else {
+    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: ${context.read<LabourProvider>().error}")));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Error: $e")));
       }
     }
   }

@@ -1,12 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:admin/models/paginated_response.dart';
+import 'package:admin/models/labour_models.dart';
 import 'package:admin/providers/base_paginated_provider.dart';
 import 'package:admin/services/labour_service.dart';
 
-class LabourProvider extends BasePaginatedProvider<dynamic> {
+class LabourProvider extends BasePaginatedProvider<Labour> {
   final LabourService _service = LabourService();
 
   @override
-  Future<PaginatedResponse<dynamic>> fetchFromApi({
+  Future<PaginatedResponse<Labour>> fetchFromApi({
     required int page,
     required int size,
     required String sortBy,
@@ -68,5 +70,46 @@ class LabourProvider extends BasePaginatedProvider<dynamic> {
     if (status != null) filters['status'] = status;
 
     applyFilters(filters);
+  }
+
+  // MB Entry methods
+  List<MeasurementBook> _mbEntries = [];
+  bool _isLoadingMB = false;
+
+  List<MeasurementBook> get mbEntries => _mbEntries;
+  bool get isLoadingMB => _isLoadingMB;
+
+  Future<void> fetchMBEntries(int projectId) async {
+    _isLoadingMB = true;
+    notifyListeners();
+    try {
+      _mbEntries = await _service.getMBEntries(projectId);
+    } catch (e) {
+      debugPrint('Error fetching MB entries: $e');
+    } finally {
+      _isLoadingMB = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> createMBEntry(MeasurementBook mb) async {
+    try {
+      await _service.createMBEntry(mb.toJson());
+      return true;
+    } catch (e) {
+      debugPrint('Error creating MB entry: $e');
+      return false;
+    }
+  }
+
+  Future<bool> createLabour(Labour labour) async {
+    try {
+      await _service.createLabour(labour.toJson());
+      await fetch(); // Refresh the list
+      return true;
+    } catch (e) {
+      debugPrint('Error creating labour: $e');
+      return false;
+    }
   }
 }

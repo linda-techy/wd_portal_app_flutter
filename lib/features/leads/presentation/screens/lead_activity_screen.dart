@@ -17,3 +17,4 @@ class LeadActivityScreen extends StatelessWidget {
     );
   }
 }
+

@@ -603,3 +603,4 @@ class _AddEditClientDialogState extends State<AddEditClientDialog> {
     super.dispose();
   }
 }
+

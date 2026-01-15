@@ -1,350 +1,237 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
-import '../../providers/subcontract_provider.dart';
-import '../../theme/app_theme.dart';
-import '../../utils/error_handler.dart';
-import '../../providers/portal_auth_provider.dart';
+import 'package:admin/models/subcontract_models.dart';
+import 'package:admin/providers/subcontract_provider.dart';
+import 'package:admin/widgets/common/search_bar_widget.dart';
+import 'package:admin/theme/app_theme.dart';
+import 'package:admin/providers/permission_provider.dart';
+import 'subcontract_work_order_detail_screen.dart';
 
-/// Subcontract Work Orders Screen
-/// Lists all work orders for a project
-class SubcontractWorkOrdersScreen extends StatefulWidget {
-  final int projectId;
-  final String projectName;
-
-  const SubcontractWorkOrdersScreen({
-    Key? key,
-    required this.projectId,
-    required this.projectName,
-  }) : super(key: key);
-
-  @override
-  State<SubcontractWorkOrdersScreen> createState() => _SubcontractWorkOrdersScreenState();
-}
-
-class _SubcontractWorkOrdersScreenState extends State<SubcontractWorkOrdersScreen> {
-  final _currencyFormat = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _verifyAuthAndLoadData();
-    });
-  }
-
-  Future<void> _verifyAuthAndLoadData() async {
-    final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
-    if (!authProvider.isAuthenticated) {
-      if (mounted) {
-         Navigator.of(context).pushReplacementNamed('/login');
-      }
-      return;
-    }
-    await _loadData();
-  }
-
-  Future<void> _loadData() async {
-    try {
-      await context.read<SubcontractProvider>().loadProjectWorkOrders(widget.projectId);
-      if (mounted) {
-        await context.read<SubcontractProvider>().loadProjectSummaries(widget.projectId);
-      }
-    } catch (e) {
-      if (mounted) {
-         // Provider catches errors, but if any slip through:
-         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load work orders', showToast: false);
-      }
-    }
-  }
+class SubcontractWorkOrdersScreen extends StatelessWidget {
+  const SubcontractWorkOrdersScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Subcontract Work Orders', style: TextStyle(color: Colors.white, fontSize: 18)),
-            Text(
-              widget.projectName,
-              style: const TextStyle(color: Colors.white70, fontSize: 14),
+    return ChangeNotifierProvider(
+      create: (_) => SubcontractProvider()..fetch(),
+      child: Consumer<SubcontractProvider>(
+        builder: (context, provider, _) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Subcontract Work Orders'),
+              actions: [
+                Consumer<PermissionProvider>(
+                  builder: (context, permissionProvider, _) {
+                    if (permissionProvider.hasPermission('subcontract:create')) {
+                      return IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: () => _navigateToCreate(context),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ],
             ),
-          ],
-        ),
-        backgroundColor: AppTheme.deepSlate,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: _loadData,
-          ),
-        ],
-      ),
-      body: Consumer<SubcontractProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading && provider.workOrders.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (provider.error != null && provider.workOrders.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text('Error: ${provider.error}'),
-                  ElevatedButton(
-                    onPressed: _loadData,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return Column(
-            children: [
-              // Summary Cards
-              if (provider.summaries.isNotEmpty) _buildSummaryHeader(provider),
-
-              const SizedBox(height: 8),
-
-              // Work Orders List
-              Expanded(
-                child: provider.workOrders.isEmpty
-                    ? const Center(child: Text('No work orders found'))
-                    : RefreshIndicator(
-                        onRefresh: _loadData,
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: provider.workOrders.length,
-                          itemBuilder: (context, index) {
-                            final workOrder = provider.workOrders[index];
-                            final summary = provider.summaries.firstWhere(
-                              (s) => s.workOrderId == workOrder.id,
-                              orElse: () => provider.summaries.first,
-                            );
-                            return _buildWorkOrderCard(workOrder, summary);
-                          },
-                        ),
-                      ),
-              ),
-            ],
+            body: Column(
+              children: [
+                _buildSearchAndFilters(context, provider),
+                Expanded(child: _buildSubcontractList(context, provider)),
+                if (provider.totalPages > 1) _buildPagination(context, provider),
+              ],
+            ),
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // Navigate to create work order
-        },
-        backgroundColor: AppTheme.coralRed,
-        icon: const Icon(Icons.add),
-        label: const Text('New Work Order'),
-      ),
     );
   }
 
-  Widget _buildSummaryHeader(SubcontractProvider provider) {
-    final summaries = provider.summaries;
-    final totalContract = summaries.fold<double>(
-      0,
-      (sum, s) => sum + s.totalContractAmount,
-    );
-    final totalPaid = summaries.fold<double>(
-      0,
-      (sum, s) => sum + s.totalPaid,
-    );
-    final totalBalance = summaries.fold<double>(
-      0,
-      (sum, s) => sum + s.balanceDue,
-    );
-
+  Widget _buildSearchAndFilters(BuildContext context, SubcontractProvider provider) {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: AppTheme.deepSlate.withOpacity(0.05),
-      child: Row(
+      color: Colors.grey[100],
+      child: Column(
         children: [
-          Expanded(
-            child: _buildSummaryItem('Total Contract', _currencyFormat.format(totalContract), AppTheme.deepSlate),
+          SearchBarWidget(
+            onSearch: (query) => provider.search(query),
+            hintText: 'Search subcontracts...',
           ),
-          Expanded(
-            child: _buildSummaryItem('Paid', _currencyFormat.format(totalPaid), AppTheme.successGreen),
-          ),
-          Expanded(
-            child: _buildSummaryItem('Balance', _currencyFormat.format(totalBalance), AppTheme.warningAmber),
-          ),
+          const SizedBox(height: 12),
+          _buildFilterChips(context, provider),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryItem(String label, String value, Color color) {
-    return Column(
+  Widget _buildFilterChips(BuildContext context, SubcontractProvider provider) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
       children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+        _buildFilterChip(
+          context,
+          label: 'All',
+          isSelected: provider.filters['status'] == null,
+          onTap: () => provider.clearFilters(),
         ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
+        _buildFilterChip(
+          context,
+          label: 'Draft',
+          isSelected: provider.filters['status'] == 'DRAFT',
+          onTap: () => provider.updateFilter('status', 'DRAFT'),
+        ),
+        _buildFilterChip(
+          context,
+          label: 'Active',
+          isSelected: provider.filters['status'] == 'ACTIVE',
+          onTap: () => provider.updateFilter('status', 'ACTIVE'),
+        ),
+        _buildFilterChip(
+          context,
+          label: 'Completed',
+          isSelected: provider.filters['status'] == 'COMPLETED',
+          onTap: () => provider.updateFilter('status', 'COMPLETED'),
         ),
       ],
     );
   }
 
-  Widget _buildWorkOrderCard(workOrder, summary) {
-    final statusColor = _getStatusColor(workOrder.status);
-    final progress = summary.percentageCompleted ?? 0;
+  Widget _buildFilterChip(
+    BuildContext context, {
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) => onTap(),
+      selectedColor: Theme.of(context).primaryColor,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : Colors.black87,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+    );
+  }
 
+  Widget _buildSubcontractList(BuildContext context, SubcontractProvider provider) {
+    if (provider.isLoading && provider.items.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (provider.error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('Error: ${provider.error}'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => provider.fetch(),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (provider.items.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.construction, size: 48, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('No subcontracts found', style: TextStyle(fontSize: 16)),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => provider.fetch(),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: provider.items.length,
+        itemBuilder: (context, index) {
+          final subcontract = provider.items[index];
+          return _buildSubcontractCard(context, subcontract);
+        },
+      ),
+    );
+  }
+
+  Widget _buildSubcontractCard(BuildContext context, SubcontractWorkOrder subcontract) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
       child: InkWell(
-        onTap: () {
-          // Navigate to work order detail
-        },
+        onTap: () => _navigateToDetail(context, subcontract),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          workOrder.workOrderNumber,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.deepSlate,
+                          subcontract.workOrderNumber ?? 'WO-${subcontract.id}',
+                          style: const TextStyle(
                             fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          workOrder.vendorName ?? 'Vendor',
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
+                        if (subcontract.contractorName != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            subcontract.contractorName!,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      workOrder.statusDisplay,
-                      style: TextStyle(
-                        color: statusColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
+                  if (subcontract.status != null)
+                    _buildStatusBadge(subcontract.status!),
                 ],
               ),
-
-              const SizedBox(height: 12),
-
-              // Scope
-              Text(
-                workOrder.scopeDescription,
-                style: const TextStyle(fontSize: 14),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-
-              const SizedBox(height: 12),
-
-              // Financial Info
-              Row(
-                children: [
-                  _buildInfoChip(
-                    Icons.account_balance_wallet,
-                    _currencyFormat.format(workOrder.negotiatedAmount),
-                    AppTheme.deepSlate,
-                  ),
-                  const SizedBox(width: 12),
-                  _buildInfoChip(
-                    Icons.payment,
-                    _currencyFormat.format(summary.totalPaid),
-                    AppTheme.successGreen,
-                  ),
-                  const SizedBox(width: 12),
-                  _buildInfoChip(
-                    Icons.pending,
-                    _currencyFormat.format(summary.balanceDue),
-                    summary.balanceDue > 0 ? AppTheme.warningAmber : Colors.grey,
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              // Progress bar (for unit-rate contracts)
-              if (workOrder.isUnitRate && progress > 0) ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: LinearProgressIndicator(
-                        value: progress / 100,
-                        backgroundColor: Colors.grey[200],
-                        color: AppTheme.successGreen,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      '${progress.toStringAsFixed(1)}%',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
+              if (subcontract.workType != null) ...[
                 const SizedBox(height: 8),
+                Text(
+                  subcontract.workType!,
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
               ],
-
-              // Measurement basis tag
-              Row(
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
                 children: [
-                  Icon(
-                    workOrder.isLumpsum ? Icons.attach_money : Icons.straighten,
-                    size: 16,
-                    color: Colors.grey[600],
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    workOrder.measurementBasisDisplay,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                  if (summary.pendingMeasurements != null && summary.pendingMeasurements! > 0) ...[
-                    const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppTheme.warningAmber.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '${summary.pendingMeasurements} pending approval',
-                        style: TextStyle(fontSize: 11, color: AppTheme.warningAmber),
-                      ),
+                  if (subcontract.projectName != null)
+                    _buildInfoChip(
+                      icon: Icons.business,
+                      label: subcontract.projectName!,
                     ),
-                  ],
+                  if (subcontract.contractAmount != null)
+                    _buildInfoChip(
+                      icon: Icons.currency_rupee,
+                      label: '₹${subcontract.contractAmount!.toStringAsFixed(2)}',
+                      color: Colors.green,
+                    ),
+                  if (subcontract.startDate != null)
+                    _buildInfoChip(
+                      icon: Icons.calendar_today,
+                      label: _formatDate(subcontract.startDate!),
+                    ),
                 ],
               ),
             ],
@@ -354,34 +241,116 @@ class _SubcontractWorkOrdersScreenState extends State<SubcontractWorkOrdersScree
     );
   }
 
-  Widget _buildInfoChip(IconData icon, String text, Color color) {
+  Widget _buildStatusBadge(String status) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: _getStatusColor(status),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        status,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip({
+    required IconData icon,
+    required String label,
+    Color? color,
+  }) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: color),
+        Icon(icon, size: 14, color: color ?? Colors.grey[600]),
         const SizedBox(width: 4),
         Text(
-          text,
-          style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.bold),
+          label,
+          style: TextStyle(fontSize: 12, color: color ?? Colors.grey[600]),
         ),
       ],
     );
   }
 
+  Widget _buildPagination(BuildContext context, SubcontractProvider provider) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Page ${provider.currentPage + 1} of ${provider.totalPages}',
+            style: const TextStyle(fontSize: 14),
+          ),
+          Row(
+            children: [
+              IconButton(
+                onPressed: provider.currentPage > 0
+                    ? () => provider.goToPage(provider.currentPage - 1)
+                    : null,
+                icon: const Icon(Icons.chevron_left),
+              ),
+              IconButton(
+                onPressed: provider.currentPage < provider.totalPages - 1
+                    ? () => provider.goToPage(provider.currentPage + 1)
+                    : null,
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Color _getStatusColor(String status) {
-    switch (status) {
+    switch (status.toUpperCase()) {
+      case 'COMPLETED':
+        return AppTheme.statusSuccess;
+      case 'ACTIVE':
+        return Colors.blue;
       case 'DRAFT':
         return Colors.grey;
-      case 'ISSUED':
-        return AppTheme.skyBlue;
-      case 'IN_PROGRESS':
-        return AppTheme.successGreen;
-      case 'COMPLETED':
-        return Colors.green;
-      case 'TERMINATED':
-        return AppTheme.errorRed;
       default:
         return Colors.grey;
     }
   }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  void _navigateToDetail(BuildContext context, SubcontractWorkOrder subcontract) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SubcontractWorkOrderDetailScreen(
+          workOrderId: subcontract.id!,
+        ),
+      ),
+    );
+  }
+
+  void _navigateToCreate(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Create subcontract screen - to be implemented')),
+    );
+  }
 }
+

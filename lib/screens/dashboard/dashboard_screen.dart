@@ -10,3 +10,4 @@ class DashboardScreen extends StatelessWidget {
     return const CRMDashboardModern();
   }
 }
+

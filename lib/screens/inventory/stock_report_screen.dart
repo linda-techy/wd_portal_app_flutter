@@ -131,3 +131,4 @@ class _StockReportScreenState extends State<StockReportScreen> {
     );
   }
 }
+

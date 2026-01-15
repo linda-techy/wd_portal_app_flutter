@@ -43,3 +43,4 @@ class _ContractsScreenState extends State<ContractsScreen> {
     );
   }
 }
+

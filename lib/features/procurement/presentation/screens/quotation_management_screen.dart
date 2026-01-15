@@ -240,3 +240,4 @@ class __AddQuoteDialogState extends State<_AddQuoteDialog> {
     }
   }
 }
+

@@ -1693,3 +1693,4 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
     });
   }
 }
+

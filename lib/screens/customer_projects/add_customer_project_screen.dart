@@ -1536,3 +1536,4 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
     });
   }
 }
+

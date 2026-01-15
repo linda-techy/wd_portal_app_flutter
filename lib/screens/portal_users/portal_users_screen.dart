@@ -717,3 +717,4 @@ class _PortalUsersTableState extends State<_PortalUsersTable> {
     );
   }
 }
+

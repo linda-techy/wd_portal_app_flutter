@@ -122,3 +122,4 @@ class _AddLabourScreenState extends State<AddLabourScreen> {
     }
   }
 }
+

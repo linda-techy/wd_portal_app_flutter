@@ -550,3 +550,4 @@ class _CategorySelectionDialog extends StatelessWidget {
   }
 }
 
+

@@ -95,7 +95,8 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const ApprovalCenterScreen()),
+                MaterialPageRoute(
+                    builder: (context) => const ApprovalCenterScreen()),
               );
             },
             borderRadius: BorderRadius.circular(AppTheme.radiusMD),
@@ -122,16 +123,18 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
                       children: [
                         Text(
                           'Approval Pending',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${provider.pendingRequests.length} documents waiting for approval',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppTheme.textSecondary,
-                              ),
+                          '${provider.totalElements} documents waiting for approval',
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: AppTheme.textSecondary,
+                                  ),
                         ),
                       ],
                     ),

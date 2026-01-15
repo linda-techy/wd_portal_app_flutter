@@ -151,3 +151,4 @@ class _AddStockAdjustmentScreenState extends State<AddStockAdjustmentScreen> {
     }
   }
 }
+

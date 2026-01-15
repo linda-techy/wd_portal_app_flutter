@@ -140,3 +140,4 @@ class _AddProjectInvoiceScreenState extends State<AddProjectInvoiceScreen> {
     }
   }
 }
+

@@ -152,3 +152,4 @@ class _VendorListScreenState extends State<VendorListScreen> {
     );
   }
 }
+

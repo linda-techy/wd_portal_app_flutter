@@ -154,3 +154,4 @@ class _AddVendorScreenState extends State<AddVendorScreen> {
     }
   }
 }
+

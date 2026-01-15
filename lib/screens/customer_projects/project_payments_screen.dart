@@ -523,3 +523,4 @@ class _ProjectPaymentsScreenState extends State<ProjectPaymentsScreen> {
     );
   }
 }
+

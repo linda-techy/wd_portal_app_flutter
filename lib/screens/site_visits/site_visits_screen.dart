@@ -1,552 +1,399 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:admin/constants.dart';
-import 'package:admin/services/site_visit_service.dart';
-import 'package:admin/services/crm_service.dart';
+import 'package:provider/provider.dart';
 import 'package:admin/models/site_visit_models.dart';
-import 'package:admin/models/customer_project.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:intl/intl.dart';
-import '../reports/add_site_report_screen.dart';
-import '../../theme/app_theme.dart';
+import 'package:admin/providers/site_visit_provider.dart';
+import 'package:admin/widgets/common/search_bar_widget.dart';
+import 'package:admin/theme/app_theme.dart';
+import 'package:admin/providers/permission_provider.dart';
 
-class SiteVisitsScreen extends StatefulWidget {
+class SiteVisitsScreen extends StatelessWidget {
   const SiteVisitsScreen({super.key});
 
   @override
-  _SiteVisitsScreenState createState() => _SiteVisitsScreenState();
-}
-
-class _SiteVisitsScreenState extends State<SiteVisitsScreen> {
-  final SiteVisitService _siteVisitService = SiteVisitService();
-  final CRMService _crmService = CRMService();
-  
-  SiteVisit? _activeVisit;
-  List<CustomerProject> _projects = [];
-  List<VisitTypeOption> _visitTypes = [];
-  
-  bool _isLoading = false;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadInitialData();
-  }
-
-  Future<void> _loadInitialData() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      final activeVisit = await _siteVisitService.getMyActiveVisit();
-      final projects = await _crmService.getAllCustomerProjects();
-      final visitTypes = await _siteVisitService.getVisitTypes();
-      
-      setState(() {
-        _activeVisit = activeVisit;
-        _projects = projects;
-        _visitTypes = visitTypes;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<Position> _getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      throw Exception('Location services are disabled.');
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        throw Exception('Location permissions are denied');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      throw Exception(
-          'Location permissions are permanently denied, we cannot request permissions.');
-    }
-
-    return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-  }
-
-  Future<void> _handleCheckIn(int projectId, String visitType, String? notes) async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      final position = await _getCurrentLocation();
-
-      final request = CheckInRequest(
-        projectId: projectId,
-        latitude: position.latitude,
-        longitude: position.longitude,
-        visitType: visitType,
-        notes: notes ?? 'Checked in via mobile app',
-      );
-
-      final visit = await _siteVisitService.checkIn(request);
-
-      setState(() {
-        _activeVisit = visit;
-        _isLoading = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Successfully checked in'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _handleCheckOut(String notes) async {
-    if (_activeVisit == null) return;
-
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      final position = await _getCurrentLocation();
-
-      final request = CheckOutRequest(
-        latitude: position.latitude,
-        longitude: position.longitude,
-        notes: notes,
-      );
-
-      await _siteVisitService.checkOut(_activeVisit!.id, request);
-
-      setState(() {
-        _activeVisit = null;
-        _isLoading = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Successfully checked out'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
-  }
-
-  void _showCheckInDialog() async {
-    int? selectedProjectId;
-    String? selectedVisitType;
-    final notesController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    if (_projects.isEmpty || _visitTypes.isEmpty) {
-      await _loadInitialData();
-    }
-
-    if (mounted) {
-      final confirmed = await showDialog<Map<String, dynamic>?>(
-        context: context,
-        builder: (context) => StatefulBuilder(
-          builder: (context, setDialogState) => AlertDialog(
-            title: const Text('Check In'),
-            content: Form(
-              key: formKey,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Select project and visit type to start tracking.'),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<int>(
-                      decoration: const InputDecoration(
-                        labelText: 'Select Project',
-                        border: OutlineInputBorder(),
-                      ),
-                      value: selectedProjectId,
-                      items: _projects.map((p) => DropdownMenuItem(
-                        value: p.id,
-                        child: Text(p.projectName),
-                      )).toList(),
-                      validator: (v) => v == null ? 'Required' : null,
-                      onChanged: (v) => setDialogState(() => selectedProjectId = v),
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(
-                        labelText: 'Visit Type',
-                        border: OutlineInputBorder(),
-                      ),
-                      value: selectedVisitType,
-                      items: _visitTypes.map((t) => DropdownMenuItem(
-                        value: t.value,
-                        child: Text(t.label),
-                      )).toList(),
-                      validator: (v) => v == null ? 'Required' : null,
-                      onChanged: (v) => setDialogState(() => selectedVisitType = v),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: notesController,
-                      decoration: const InputDecoration(
-                        labelText: 'Check-in Notes (Optional)',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 2,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (formKey.currentState!.validate()) {
-                    Navigator.pop(context, {
-                      'projectId': selectedProjectId,
-                      'visitType': selectedVisitType,
-                      'notes': notesController.text,
-                    });
-                  }
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.coralRed, foregroundColor: Colors.white),
-                child: const Text('Check In'),
-              ),
-            ],
-          ),
-        ),
-      );
-
-      if (confirmed != null) {
-        await _handleCheckIn(
-          confirmed['projectId'] as int,
-          confirmed['visitType'] as String,
-          confirmed['notes'] as String?,
-        );
-      }
-    }
-  }
-
-  void _showCheckOutDialog() async {
-    final controller = TextEditingController();
-
-    final confirmed = await showDialog<String?>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Check Out'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Add any notes about today\'s work:'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                hintText: 'Work completed, issues encountered, etc.',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
-            child: const Text('Check Out'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != null) {
-      await _handleCheckOut(confirmed);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text("Site Visits"),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: AppTheme.textPrimary,
-        actions: [
-           IconButton(
-             icon: const Icon(Icons.refresh),
-             onPressed: _loadInitialData,
-           ),
-        ],
-      ),
-      body: Container(
-        padding: const EdgeInsets.all(defaultPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (_error != null)
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  borderRadius: BorderRadius.circular(8),
+    return ChangeNotifierProvider(
+      create: (_) => SiteVisitProvider()..fetch(),
+      child: Consumer<SiteVisitProvider>(
+        builder: (context, provider, _) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Site Visits'),
+              actions: [
+                Consumer<PermissionProvider>(
+                  builder: (context, permissionProvider, _) {
+                    if (permissionProvider.hasPermission('site_visit:create')) {
+                      return IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: () => _navigateToCreate(context),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.error, color: Colors.red.shade700),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _error!,
-                        style: TextStyle(color: Colors.red.shade900),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.coralRed))
-                  : _activeVisit != null
-                      ? _buildActiveVisitCard()
-                      : _buildCheckInPrompt(),
+              ],
             ),
-          ],
-        ),
+            body: Column(
+              children: [
+                _buildSearchAndFilters(context, provider),
+                Expanded(child: _buildVisitList(context, provider)),
+                if (provider.totalPages > 1)
+                  _buildPagination(context, provider),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildActiveVisitCard() {
-    final duration = _activeVisit!.checkInTime != null
-        ? DateTime.now().difference(_activeVisit!.checkInTime!)
-        : Duration.zero;
-
+  Widget _buildSearchAndFilters(
+      BuildContext context, SiteVisitProvider provider) {
     return Container(
-      padding: const EdgeInsets.all(defaultPadding),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.green.shade100, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.green.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.all(16),
+      color: Colors.grey[100],
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade500,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.circle, color: Colors.white, size: 8),
-                    SizedBox(width: 6),
-                    Text(
-                      'CHECKED IN',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${duration.inHours}h ${duration.inMinutes % 60}m',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Text(
-            _activeVisit!.projectName,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+          SearchBarWidget(
+            onSearch: (query) => provider.search(query),
+            hintText: 'Search site visits...',
           ),
           const SizedBox(height: 12),
-          _buildInfoRow(Icons.access_time, 'Check-in: ${DateFormat('hh:mm a').format(_activeVisit!.checkInTime!)}'),
-          const SizedBox(height: 8),
-          _buildInfoRow(Icons.category_outlined, 'Type: ${_activeVisit!.visitType ?? "N/A"}'),
-          const SizedBox(height: 8),
-          _buildInfoRow(Icons.location_on_outlined, 'GPS: ${_activeVisit!.checkInLatitude?.toStringAsFixed(6)}, ${_activeVisit!.checkInLongitude?.toStringAsFixed(6)}'),
-          if (_activeVisit!.notes != null && _activeVisit!.notes!.isNotEmpty) ...[
-             const SizedBox(height: 16),
-             Container(
-               padding: const EdgeInsets.all(12),
-               decoration: BoxDecoration(
-                 color: Colors.grey.shade50,
-                 borderRadius: BorderRadius.circular(8),
-               ),
-               child: Text(
-                 _activeVisit!.notes!,
-                 style: TextStyle(color: Colors.grey.shade700, fontStyle: FontStyle.italic),
-               ),
-             ),
-          ],
-          const Spacer(),
-          Column(
-            children: [
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    final project = _projects.firstWhere(
-                      (p) => p.id == _activeVisit!.projectId,
-                      orElse: () => CustomerProject(
-                        id: _activeVisit!.projectId,
-                        name: _activeVisit!.projectName,
-                        location: '',
-                        sqfeet: 0,
-                        projectPhase: '',
-                        startDate: DateTime.now(),
-                      ),
-                    );
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AddSiteReportScreen(
-                          initialProject: project,
-                          siteVisitId: _activeVisit!.id,
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.add_photo_alternate),
-                  label: const Text('Create Site Report'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.coralRed,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _showCheckOutDialog,
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Check Out'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.orange,
-                    side: const BorderSide(color: Colors.orange),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          _buildFilterChips(context, provider),
         ],
       ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
-    return Row(
+  Widget _buildFilterChips(BuildContext context, SiteVisitProvider provider) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
       children: [
-        Icon(icon, size: 16, color: Colors.grey.shade500),
-        const SizedBox(width: 8),
-        Text(text, style: TextStyle(color: Colors.grey.shade700, fontSize: 14)),
+        // Status filters
+        _buildFilterChip(
+          context,
+          label: 'All',
+          isSelected: provider.filters['status'] == null,
+          onTap: () => provider.clearFilters(),
+        ),
+        _buildFilterChip(
+          context,
+          label: 'Planned',
+          isSelected: provider.filters['status'] == 'PLANNED',
+          onTap: () => provider.updateFilter('status', 'PLANNED'),
+        ),
+        _buildFilterChip(
+          context,
+          label: 'Completed',
+          isSelected: provider.filters['status'] == 'COMPLETED',
+          onTap: () => provider.updateFilter('status', 'COMPLETED'),
+        ),
+        _buildFilterChip(
+          context,
+          label: 'Cancelled',
+          isSelected: provider.filters['status'] == 'CANCELLED',
+          onTap: () => provider.updateFilter('status', 'CANCELLED'),
+        ),
+        const SizedBox(width: 16),
+        // Visit Type filters
+        _buildFilterChip(
+          context,
+          label: 'Inspection',
+          isSelected: provider.filters['visitType'] == 'INSPECTION',
+          onTap: () => provider.updateFilter('visitType', 'INSPECTION'),
+        ),
+        _buildFilterChip(
+          context,
+          label: 'Progress Review',
+          isSelected: provider.filters['visitType'] == 'PROGRESS_REVIEW',
+          onTap: () => provider.updateFilter('visitType', 'PROGRESS_REVIEW'),
+        ),
+        _buildFilterChip(
+          context,
+          label: 'Safety Audit',
+          isSelected: provider.filters['visitType'] == 'SAFETY_AUDIT',
+          onTap: () => provider.updateFilter('visitType', 'SAFETY_AUDIT'),
+        ),
       ],
     );
   }
 
-  Widget _buildCheckInPrompt() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(30),
-            decoration: BoxDecoration(
-              color: AppTheme.coralRed.withOpacity(0.05),
-              shape: BoxShape.circle,
+  Widget _buildFilterChip(
+    BuildContext context, {
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) => onTap(),
+      selectedColor: Theme.of(context).primaryColor,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : Colors.black87,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+    );
+  }
+
+  Widget _buildVisitList(BuildContext context, SiteVisitProvider provider) {
+    if (provider.isLoading && provider.items.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (provider.error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('Error: ${provider.error}'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => provider.fetch(),
+              child: const Text('Retry'),
             ),
-            child: const Icon(Icons.location_on, size: 80, color: AppTheme.coralRed),
-          ),
-          const SizedBox(height: 30),
-          const Text(
-            "Ready to Start?",
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-          ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              "Check in to a site to track your visit, log notes, and create site reports.",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-            ),
-          ),
-          const SizedBox(height: 40),
-          SizedBox(
-            width: 250,
-            child: ElevatedButton.icon(
-              onPressed: _showCheckInDialog,
-              icon: const Icon(Icons.login),
-              label: const Text('Check In to Site'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.coralRed,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                elevation: 4,
-                shadowColor: AppTheme.coralRed.withOpacity(0.3),
+          ],
+        ),
+      );
+    }
+
+    if (provider.items.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.location_on, size: 48, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('No site visits found', style: TextStyle(fontSize: 16)),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => provider.fetch(),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: provider.items.length,
+        itemBuilder: (context, index) {
+          final visit = provider.items[index];
+          return _buildVisitCard(context, visit);
+        },
+      ),
+    );
+  }
+
+  Widget _buildVisitCard(BuildContext context, SiteVisit visit) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      child: InkWell(
+        onTap: () => _navigateToDetail(context, visit),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          visit.projectName ?? 'Unnamed Project',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (visit.visitType != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            visit.visitType!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (visit.visitStatus != null)
+                    _buildStatusBadge(visit.visitStatus!),
+                ],
               ),
-            ),
+              if (visit.notes != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  visit.notes!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  if (visit.visitedByName != null)
+                    _buildInfoChip(
+                      icon: Icons.person,
+                      label: visit.visitedByName!,
+                    ),
+                  if (visit.visitDate != null)
+                    _buildInfoChip(
+                      icon: Icons.calendar_today,
+                      label: _formatDate(visit.visitDate!),
+                    ),
+                  if (visit.durationMinutes != null)
+                    _buildInfoChip(
+                      icon: Icons.timer,
+                      label: '${visit.durationMinutes} mins',
+                    ),
+                ],
+              ),
+              if (visit.checkOutNotes != null &&
+                  visit.checkOutNotes!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.notes, size: 16, color: Colors.blue),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Check-out notes: ${visit.checkOutNotes}',
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.blue),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: _getStatusColor(status),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        status,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip({required IconData icon, required String label}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: Colors.grey[600]),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPagination(BuildContext context, SiteVisitProvider provider) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Page ${provider.currentPage + 1} of ${provider.totalPages}',
+            style: const TextStyle(fontSize: 14),
+          ),
+          Row(
+            children: [
+              IconButton(
+                onPressed: provider.currentPage > 0
+                    ? () => provider.goToPage(provider.currentPage - 1)
+                    : null,
+                icon: const Icon(Icons.chevron_left),
+              ),
+              IconButton(
+                onPressed: provider.currentPage < provider.totalPages - 1
+                    ? () => provider.goToPage(provider.currentPage + 1)
+                    : null,
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
+
+  Color _getStatusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'COMPLETED':
+        return AppTheme.statusSuccess;
+      case 'PLANNED':
+        return Colors.blue;
+      case 'CANCELLED':
+        return AppTheme.statusError;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  void _navigateToDetail(BuildContext context, SiteVisit visit) {
+    // Navigate to detail screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('View details for visit ${visit.id}')),
+    );
+  }
+
+  void _navigateToCreate(BuildContext context) {
+    // Navigate to create screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+          content: Text('Create site visit screen - to be implemented')),
+    );
+  }
 }
+

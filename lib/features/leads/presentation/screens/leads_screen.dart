@@ -94,12 +94,13 @@ class _LeadsScreenState extends State<LeadsScreen> {
   }
 
   Future<void> _verifyAuthAndLoadData() async {
-    final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
+    final authProvider =
+        Provider.of<PortalAuthProvider>(context, listen: false);
     if (!authProvider.isAuthenticated) {
       if (mounted) {
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) {
-             Navigator.of(context).pushReplacementNamed('/login');
+            Navigator.of(context).pushReplacementNamed('/login');
           }
         });
       }
@@ -176,13 +177,12 @@ class _LeadsScreenState extends State<LeadsScreen> {
           isLoadingMore = false;
           // Revert page increment on error if needed, but for load it's fine
         });
-         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load leads');
-         setState(() => errorMessage = ErrorHandler.getErrorMessage(e));
+        await ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'Failed to load leads');
+        setState(() => errorMessage = ErrorHandler.getErrorMessage(e));
       }
     }
   }
-
-
 
   Future<void> _loadMoreLeads() async {
     if (hasNextPage && !isLoadingMore) {
@@ -196,7 +196,8 @@ class _LeadsScreenState extends State<LeadsScreen> {
       });
 
       try {
-        final response = await _leadService.getLeadsPaginated(_paginationParams);
+        final response =
+            await _leadService.getLeadsPaginated(_paginationParams);
 
         if (mounted) {
           setState(() {
@@ -216,7 +217,8 @@ class _LeadsScreenState extends State<LeadsScreen> {
             // Revert page increment on error
             currentPage--;
           });
-          await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load more leads', showToast: true);
+          await ErrorHandler.handleApiError(context, e,
+              defaultMessage: 'Failed to load more leads', showToast: true);
         }
       }
     }
@@ -250,7 +252,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
   @override
   Widget build(BuildContext context) {
     final permissions = Provider.of<PermissionProvider>(context);
-    
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(defaultPadding),
@@ -455,17 +457,17 @@ class _LeadsScreenState extends State<LeadsScreen> {
                           onRefresh: _refreshLeads,
                           child: Column(
                             children: [
-                                LeadsTable(
-                                  leads: leads,
-                                  onEdit: _editLead,
-                                  onDelete: _deleteLead,
-                                  onConvert: _convertLead,
-                                  onViewQuotations: _viewQuotations,
-                                  onViewTasks: _viewTasks,
-                                  onViewActivity: _viewActivity,
-                                  onLogActivity: _logActivity,
-                                  onViewDocuments: _viewDocuments,
-                                ),
+                              LeadsTable(
+                                leads: leads,
+                                onEdit: _editLead,
+                                onDelete: _deleteLead,
+                                onConvert: _convertLead,
+                                onViewQuotations: _viewQuotations,
+                                onViewTasks: _viewTasks,
+                                onViewActivity: _viewActivity,
+                                onLogActivity: _logActivity,
+                                onViewDocuments: _viewDocuments,
+                              ),
                               if (isLoadingMore)
                                 const Padding(
                                   padding: EdgeInsets.all(defaultPadding),
@@ -891,11 +893,18 @@ class _LeadsScreenState extends State<LeadsScreen> {
 
   Future<void> _convertLead(Lead lead) async {
     final GlobalKey<FormState> conversionFormKey = GlobalKey<FormState>();
-    final TextEditingController projectNameController = TextEditingController(text: '${lead.name} Project');
-    final TextEditingController startDateController = TextEditingController(text: DateTime.now().toString().substring(0, 10));
-    final TextEditingController locationController = TextEditingController(text: lead.location.isNotEmpty ? lead.location : (lead.district.isNotEmpty ? lead.district : lead.state));
+    final TextEditingController projectNameController =
+        TextEditingController(text: '${lead.name} Project');
+    final TextEditingController startDateController =
+        TextEditingController(text: DateTime.now().toString().substring(0, 10));
+    final TextEditingController locationController = TextEditingController(
+        text: lead.location.isNotEmpty
+            ? lead.location
+            : (lead.district.isNotEmpty ? lead.district : lead.state));
 
-    String projectType = lead.projectType.isNotEmpty ? lead.projectType : ProjectTypeConstants.defaultValue;
+    String projectType = lead.projectType.isNotEmpty
+        ? lead.projectType
+        : ProjectTypeConstants.defaultValue;
     DateTime selectedDate = DateTime.now();
 
     // Show Dialog
@@ -911,44 +920,52 @@ class _LeadsScreenState extends State<LeadsScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                   Text('Convert "${lead.name}" into a Customer? This will create a Customer account and a Project.', style: TextStyle(color: Colors.grey[700])),
-                   const SizedBox(height: 20),
-                   TextFormField(
+                  Text(
+                      'Convert "${lead.name}" into a Customer? This will create a Customer account and a Project.',
+                      style: TextStyle(color: Colors.grey[700])),
+                  const SizedBox(height: 20),
+                  TextFormField(
                     controller: projectNameController,
-                    decoration: const InputDecoration(labelText: 'Project Name *', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                        labelText: 'Project Name *',
+                        border: OutlineInputBorder()),
                     validator: (v) => v?.isNotEmpty == true ? null : 'Required',
                   ),
-                   const SizedBox(height: 10),
-                   DropdownButtonFormField<String>(
+                  const SizedBox(height: 10),
+                  DropdownButtonFormField<String>(
                     value: projectType,
-                    decoration: const InputDecoration(labelText: 'Project Type', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                        labelText: 'Project Type',
+                        border: OutlineInputBorder()),
                     items: ProjectTypeConstants.formDropdownItems,
                     onChanged: (v) => projectType = v!,
                   ),
-                   const SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   TextFormField(
                     controller: locationController,
-                    decoration: const InputDecoration(labelText: 'Location / Site Address', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                        labelText: 'Location / Site Address',
+                        border: OutlineInputBorder()),
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: startDateController,
                     decoration: const InputDecoration(
-                      labelText: 'Start Date', 
+                      labelText: 'Start Date',
                       border: OutlineInputBorder(),
                       suffixIcon: Icon(Icons.calendar_today),
                     ),
                     readOnly: true,
                     onTap: () async {
                       final date = await showDatePicker(
-                        context: context, 
-                        initialDate: selectedDate, 
-                        firstDate: DateTime(2000), 
-                        lastDate: DateTime(2100)
-                      );
-                      if(date != null) {
+                          context: context,
+                          initialDate: selectedDate,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100));
+                      if (date != null) {
                         selectedDate = date;
-                        startDateController.text = date.toString().substring(0, 10);
+                        startDateController.text =
+                            date.toString().substring(0, 10);
                       }
                     },
                   ),
@@ -957,7 +974,9 @@ class _LeadsScreenState extends State<LeadsScreen> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel')),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               child: const Text('Convert'),
@@ -982,12 +1001,15 @@ class _LeadsScreenState extends State<LeadsScreen> {
         await _leadService.convertLead(lead.leadId, requestData);
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lead converted successfully!')));
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Lead converted successfully!')));
           _loadLeads(resetPage: false); // Refresh list to show updated status
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error converting lead: $e'), backgroundColor: Colors.red));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Error converting lead: $e'),
+              backgroundColor: Colors.red));
         }
       } finally {
         if (mounted) setState(() => isLoading = false);
@@ -999,7 +1021,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => LeadTasksScreen(lead: lead),
+        builder: (context) => LeadTasksScreen(lead: lead),
       ),
     );
   }
@@ -1024,7 +1046,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => LeadQuotationsScreen(lead: lead),
+        builder: (context) => const LeadQuotationsScreen(),
       ),
     );
   }
@@ -1132,235 +1154,250 @@ class _LeadsTableState extends State<LeadsTable> {
                     controller: _horizontalScrollController,
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
-                    columnSpacing: defaultPadding,
-                    dataRowMinHeight: 52,
-                    dataRowMaxHeight: 52,
-                    headingRowHeight: 56,
-                    columns: const [
-                      DataColumn(label: Text("Name")),
-                      DataColumn(label: Text("Contact")),
-                      DataColumn(label: Text("Status")),
-                      DataColumn(label: Text("Score")),
-                      DataColumn(label: Text("Priority")),
-                      DataColumn(label: Text("Project")),
-                      DataColumn(label: Text("Budget")),
-                      DataColumn(label: Text("Sales Rep")),
-                      DataColumn(label: Text("Next Follow-up")),
-                    ],
-                    rows: widget.leads.map((lead) {
-                      return DataRow(
-                        cells: [
-                          // Name Column
-                          DataCell(
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 150),
-                              child: Tooltip(
-                                message: lead.name,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      lead.name,
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            onTap: () => widget.onEdit(lead),
-                          ),
-
-                          // Contact Column
-                          DataCell(
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 180),
-                              child: Tooltip(
-                                message: '${lead.phone}\n${lead.email}',
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      lead.phone,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    if (lead.email.isNotEmpty)
+                      columnSpacing: defaultPadding,
+                      dataRowMinHeight: 52,
+                      dataRowMaxHeight: 52,
+                      headingRowHeight: 56,
+                      columns: const [
+                        DataColumn(label: Text("Name")),
+                        DataColumn(label: Text("Contact")),
+                        DataColumn(label: Text("Status")),
+                        DataColumn(label: Text("Score")),
+                        DataColumn(label: Text("Priority")),
+                        DataColumn(label: Text("Project")),
+                        DataColumn(label: Text("Budget")),
+                        DataColumn(label: Text("Sales Rep")),
+                        DataColumn(label: Text("Next Follow-up")),
+                      ],
+                      rows: widget.leads.map((lead) {
+                        return DataRow(
+                          cells: [
+                            // Name Column
+                            DataCell(
+                              ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 150),
+                                child: Tooltip(
+                                  message: lead.name,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
                                       Text(
-                                        lead.email,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey[400],
-                                        ),
+                                        lead.name,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
+                              onTap: () => widget.onEdit(lead),
                             ),
-                          ),
 
-                          // Status Column
-                          DataCell(
-                            Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: _getStatusColor(lead.status),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                lead.status,
-                                style: const TextStyle(
-                                  color: textPrimary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
+                            // Contact Column
+                            DataCell(
+                              ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 180),
+                                child: Tooltip(
+                                  message: '${lead.phone}\n${lead.email}',
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        lead.phone,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      if (lead.email.isNotEmpty)
+                                        Text(
+                                          lead.email,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[400],
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
 
-                          // Score Column
-                          DataCell(
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: _getScoreColor(lead.score).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                    color: _getScoreColor(lead.score), width: 1),
-                              ),
-                              child: Text(
-                                '${lead.score}',
-                                style: TextStyle(
-                                  color: _getScoreColor(lead.score),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
+                            // Status Column
+                            DataCell(
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: _getStatusColor(lead.status),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                              ),
-                            ),
-                          ),
-                          // Priority Column
-                          DataCell(
-                            Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: _getPriorityColor(lead.priority),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                lead.priorityString,
-                                style: const TextStyle(
-                                  color: textPrimary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          // Project Column
-                          DataCell(
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 120),
-                              child: Tooltip(
-                                message: '${lead.projectType}\n${lead.customerType}',
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      lead.projectType.isNotEmpty
-                                          ? lead.projectType
-                                          : 'N/A',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          // Budget Column
-                          DataCell(
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 100),
-                              child: Tooltip(
-                                message: lead.budget != null
-                                    ? '₹${lead.budget!.toStringAsFixed(0)}'
-                                    : 'N/A',
                                 child: Text(
-                                  lead.budget != null
+                                  lead.status,
+                                  style: const TextStyle(
+                                    color: textPrimary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            // Score Column
+                            DataCell(
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: _getScoreColor(lead.score)
+                                      .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                      color: _getScoreColor(lead.score),
+                                      width: 1),
+                                ),
+                                child: Text(
+                                  '${lead.score}',
+                                  style: TextStyle(
+                                    color: _getScoreColor(lead.score),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Priority Column
+                            DataCell(
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: _getPriorityColor(lead.priority),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  lead.priorityString,
+                                  style: const TextStyle(
+                                    color: textPrimary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            // Project Column
+                            DataCell(
+                              ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 120),
+                                child: Tooltip(
+                                  message:
+                                      '${lead.projectType}\n${lead.customerType}',
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        lead.projectType.isNotEmpty
+                                            ? lead.projectType
+                                            : 'N/A',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            // Budget Column
+                            DataCell(
+                              ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 100),
+                                child: Tooltip(
+                                  message: lead.budget != null
                                       ? '₹${lead.budget!.toStringAsFixed(0)}'
                                       : 'N/A',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color:
-                                        lead.budget != null ? Colors.green : Colors.grey,
+                                  child: Text(
+                                    lead.budget != null
+                                        ? '₹${lead.budget!.toStringAsFixed(0)}'
+                                        : 'N/A',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: lead.budget != null
+                                          ? Colors.green
+                                          : Colors.grey,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ),
-                          ),
 
-                          // Sales Rep Column
-                          DataCell(
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 100),
-                              child: Tooltip(
-                                message: lead.assignedTeam.isNotEmpty
-                                    ? lead.assignedTeam
-                                    : 'Unassigned',
-                                child: Text(
-                                  lead.assignedTeam.isNotEmpty
+                            // Sales Rep Column
+                            DataCell(
+                              ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 100),
+                                child: Tooltip(
+                                  message: lead.assignedTeam.isNotEmpty
                                       ? lead.assignedTeam
                                       : 'Unassigned',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  child: Text(
+                                    lead.assignedTeam.isNotEmpty
+                                        ? lead.assignedTeam
+                                        : 'Unassigned',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
 
-                          // Next Follow-up Column
-                          DataCell(
-                            Tooltip(
-                              message: lead.nextFollowUp?.toString() ??
-                                  'No follow-up scheduled',
-                              child: Text(
-                                lead.nextFollowUp != null
-                                    ? _formatDate(lead.nextFollowUp!)
-                                    : 'N/A',
-                                style: TextStyle(
-                                  color: lead.nextFollowUp != null &&
-                                          lead.nextFollowUp!.isBefore(DateTime.now())
-                                      ? Colors.red
-                                      : null,
-                                  fontWeight: lead.nextFollowUp != null &&
-                                          lead.nextFollowUp!.isBefore(DateTime.now())
-                                      ? FontWeight.bold
-                                      : null,
+                            // Next Follow-up Column
+                            DataCell(
+                              Tooltip(
+                                message: lead.nextFollowUp?.toString() ??
+                                    'No follow-up scheduled',
+                                child: Text(
+                                  lead.nextFollowUp != null
+                                      ? _formatDate(lead.nextFollowUp!)
+                                      : 'N/A',
+                                  style: TextStyle(
+                                    color: lead.nextFollowUp != null &&
+                                            lead.nextFollowUp!
+                                                .isBefore(DateTime.now())
+                                        ? Colors.red
+                                        : null,
+                                    fontWeight: lead.nextFollowUp != null &&
+                                            lead.nextFollowUp!
+                                                .isBefore(DateTime.now())
+                                        ? FontWeight.bold
+                                        : null,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      );
-                    }).toList(),
+                          ],
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
               ),
-            ),
-              
+
               // Fixed Actions Column
               Container(
                 width: 120,
@@ -1382,7 +1419,8 @@ class _LeadsTableState extends State<LeadsTable> {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       child: const Text(
                         "Actions",
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 13),
                       ),
                     ),
                     // Rows
@@ -1410,7 +1448,7 @@ class _LeadsTableState extends State<LeadsTable> {
                                       onPressed: () => widget.onEdit(lead),
                                     ),
                                   ),
-                                
+
                                 // More Actions Menu
                                 SizedBox(
                                   width: 32,
@@ -1440,18 +1478,22 @@ class _LeadsTableState extends State<LeadsTable> {
                                           widget.onViewDocuments(lead);
                                           break;
                                         case 'delete':
-                                          _showDeleteConfirmation(context, lead);
+                                          _showDeleteConfirmation(
+                                              context, lead);
                                           break;
                                       }
                                     },
                                     itemBuilder: (context) => [
-                                      if (permissions.canCreateLead && 
-                                          lead.status.toLowerCase() != 'converted')
+                                      if (permissions.canCreateLead &&
+                                          lead.status.toLowerCase() !=
+                                              'converted')
                                         const PopupMenuItem(
                                           value: 'convert',
                                           child: ListTile(
-                                            leading: Icon(Icons.transform, color: Colors.green, size: 20),
-                                            title: Text('Convert into Customer'),
+                                            leading: Icon(Icons.transform,
+                                                color: Colors.green, size: 20),
+                                            title:
+                                                Text('Convert into Customer'),
                                             contentPadding: EdgeInsets.zero,
                                             dense: true,
                                           ),
@@ -1459,7 +1501,8 @@ class _LeadsTableState extends State<LeadsTable> {
                                       const PopupMenuItem(
                                         value: 'log',
                                         child: ListTile(
-                                          leading: Icon(Icons.note_add, color: Colors.teal, size: 20),
+                                          leading: Icon(Icons.note_add,
+                                              color: Colors.teal, size: 20),
                                           title: Text('Log Activity'),
                                           contentPadding: EdgeInsets.zero,
                                           dense: true,
@@ -1468,7 +1511,8 @@ class _LeadsTableState extends State<LeadsTable> {
                                       const PopupMenuItem(
                                         value: 'quotes',
                                         child: ListTile(
-                                          leading: Icon(Icons.request_quote, color: Colors.amber, size: 20),
+                                          leading: Icon(Icons.request_quote,
+                                              color: Colors.amber, size: 20),
                                           title: Text('View Quotations'),
                                           contentPadding: EdgeInsets.zero,
                                           dense: true,
@@ -1477,7 +1521,8 @@ class _LeadsTableState extends State<LeadsTable> {
                                       const PopupMenuItem(
                                         value: 'tasks',
                                         child: ListTile(
-                                          leading: Icon(Icons.assignment, color: Colors.blue, size: 20),
+                                          leading: Icon(Icons.assignment,
+                                              color: Colors.blue, size: 20),
                                           title: Text('View Tasks'),
                                           contentPadding: EdgeInsets.zero,
                                           dense: true,
@@ -1486,7 +1531,8 @@ class _LeadsTableState extends State<LeadsTable> {
                                       const PopupMenuItem(
                                         value: 'activity',
                                         child: ListTile(
-                                          leading: Icon(Icons.history, color: Colors.purple, size: 20),
+                                          leading: Icon(Icons.history,
+                                              color: Colors.purple, size: 20),
                                           title: Text('View Activity'),
                                           contentPadding: EdgeInsets.zero,
                                           dense: true,
@@ -1495,7 +1541,8 @@ class _LeadsTableState extends State<LeadsTable> {
                                       const PopupMenuItem(
                                         value: 'docs',
                                         child: ListTile(
-                                          leading: Icon(Icons.folder, color: Colors.brown, size: 20),
+                                          leading: Icon(Icons.folder,
+                                              color: Colors.brown, size: 20),
                                           title: Text('View Documents'),
                                           contentPadding: EdgeInsets.zero,
                                           dense: true,
@@ -1505,7 +1552,8 @@ class _LeadsTableState extends State<LeadsTable> {
                                         const PopupMenuItem(
                                           value: 'delete',
                                           child: ListTile(
-                                            leading: Icon(Icons.delete, color: Colors.red, size: 20),
+                                            leading: Icon(Icons.delete,
+                                                color: Colors.red, size: 20),
                                             title: Text('Delete'),
                                             contentPadding: EdgeInsets.zero,
                                             dense: true,

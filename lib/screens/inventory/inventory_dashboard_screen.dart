@@ -49,3 +49,4 @@ class _InventoryDashboardScreenState extends State<InventoryDashboardScreen> wit
     );
   }
 }
+
