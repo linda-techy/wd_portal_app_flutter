@@ -1,28 +1,13 @@
-import 'package:dio/dio.dart';
+import 'package:admin/services/api_service.dart';
 import '../models/subcontract_models.dart';
-import 'package:admin/config/app_config.dart';
-import 'package:admin/services/auth_service.dart';
 
 class SubcontractService {
-  final Dio _dio = Dio();
-  final String _baseUrl = '${AppConfig.apiBaseUrl}/api/subcontracts'; // Adjust base URL
-
-  SubcontractService() {
-     _dio.options.headers['Content-Type'] = 'application/json';
-  }
-
-  Future<Options> _getOptions() async {
-      String? token = await AuthService.getToken();
-      return Options(headers: {
-        'Authorization': 'Bearer $token',
-      });
-  }
+  final ApiService _apiService = ApiService();
 
   Future<List<SubcontractWorkOrder>> getProjectWorkOrders(int projectId) async {
     try {
-      final response = await _dio.get(
-        '$_baseUrl/project/$projectId', // Assuming endpoint exists
-        options: await _getOptions(),
+      final response = await _apiService.get(
+        '/api/subcontracts/project/$projectId',
       );
       if (response.statusCode == 200 && response.data['success']) {
         final List<dynamic> list = response.data['data'];
@@ -36,12 +21,11 @@ class SubcontractService {
 
   Future<RetentionRelease> releaseRetention(RetentionRelease release) async {
     try {
-      final response = await _dio.post(
-        '$_baseUrl/retention/release', // Assuming endpoint
+      final response = await _apiService.post(
+        '/api/subcontracts/retention/release',
         data: release.toJson(),
-        options: await _getOptions(),
       );
-       if (response.data['success']) {
+      if (response.data['success']) {
         return RetentionRelease.fromJson(response.data['data']);
       } else {
         throw Exception(response.data['message']);

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:admin/models/lead_interaction_models.dart';
+import 'package:admin/features/leads/data/models/lead_interaction.dart';
 import 'package:admin/features/leads/presentation/providers/lead_interaction_provider.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';

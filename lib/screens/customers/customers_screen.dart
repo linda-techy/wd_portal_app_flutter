@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:admin/models/customer.dart';
+import 'package:admin/features/customers/data/models/customer.dart';
 import 'package:admin/features/customers/data/providers/customer_provider.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';

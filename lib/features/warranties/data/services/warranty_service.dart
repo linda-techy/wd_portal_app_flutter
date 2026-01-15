@@ -81,15 +81,20 @@ class WarrantyService {
     final List<dynamic> data = response.data['content'] ?? response.data;
     final items = data.map((json) => ProjectWarranty.fromJson(json)).toList();
 
+    final isLast = response.data['last'] ??
+        (page >= (response.data['totalPages'] ?? 1) - 1);
+    final isFirst = page == 0;
+
     return PaginatedResponse<ProjectWarranty>(
       content: items,
       totalElements: response.data['totalElements'] ?? items.length,
       totalPages: response.data['totalPages'] ?? 1,
-      size: size,
-      number: page,
-      numberOfElements: items.length,
-      first: page == 0,
-      last: response.data['last'] ?? true,
+      currentPage: page,
+      pageSize: size,
+      isFirst: isFirst,
+      isLast: isLast,
+      hasNext: !isLast,
+      hasPrevious: !isFirst,
     );
   }
 }

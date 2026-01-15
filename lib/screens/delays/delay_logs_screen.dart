@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:admin/models/delay_log_models.dart';
+import 'package:admin/features/delays/data/models/delay_log.dart';
 import 'package:admin/providers/delay_log_provider.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';

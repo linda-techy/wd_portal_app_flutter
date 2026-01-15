@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:admin/models/project_warranty_models.dart';
+import 'package:admin/features/warranties/data/models/project_warranty.dart';
 import 'package:admin/providers/project_warranty_provider.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';

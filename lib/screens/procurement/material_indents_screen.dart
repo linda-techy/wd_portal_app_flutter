@@ -233,11 +233,10 @@ class MaterialIndentsScreen extends StatelessWidget {
                       icon: Icons.person,
                       label: indent.requestedByName!,
                     ),
-                  if (indent.requestDate != null)
-                    _buildInfoChip(
-                      icon: Icons.calendar_today,
-                      label: _formatDate(indent.requestDate!),
-                    ),
+                  _buildInfoChip(
+                    icon: Icons.calendar_today,
+                    label: _formatDate(indent.indentDate),
+                  ),
                   if (indent.requiredByDate != null)
                     _buildInfoChip(
                       icon: Icons.event_available,
