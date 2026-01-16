@@ -212,21 +212,10 @@ class LeadInteractionsScreen extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        if (interaction.leadName != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            interaction.leadName!,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ),
-                  if (interaction.followUpRequired != null &&
-                      interaction.followUpRequired!)
+                  if (interaction.nextActionDate != null)
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
@@ -260,27 +249,21 @@ class LeadInteractionsScreen extends StatelessWidget {
                 spacing: 12,
                 runSpacing: 8,
                 children: [
-                  if (interaction.interactedByName != null)
-                    _buildInfoChip(
-                      icon: Icons.person,
-                      label: interaction.interactedByName!,
-                    ),
-                  if (interaction.interactionDate != null)
-                    _buildInfoChip(
-                      icon: Icons.calendar_today,
-                      label: _formatDate(interaction.interactionDate!),
-                    ),
+                  _buildInfoChip(
+                    icon: Icons.calendar_today,
+                    label: _formatDate(interaction.interactionDate),
+                  ),
                   if (interaction.outcome != null)
                     _buildInfoChip(
                       icon: Icons.check_circle,
                       label: interaction.outcome!,
                       color: _getOutcomeColor(interaction.outcome!),
                     ),
-                  if (interaction.nextFollowUpDate != null)
+                  if (interaction.nextActionDate != null)
                     _buildInfoChip(
                       icon: Icons.event_available,
                       label:
-                          'Next: ${_formatDate(interaction.nextFollowUpDate!)}',
+                          'Next: ${_formatDate(interaction.nextActionDate!)}',
                       color: AppTheme.statusWarning,
                     ),
                 ],

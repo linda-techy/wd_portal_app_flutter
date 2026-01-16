@@ -100,9 +100,6 @@ class _AddInteractionDialogState extends State<AddInteractionDialog> {
         notes: _notesController.text,
         subject: _subjectController.text.isNotEmpty ? _subjectController.text : 'Logged $_interactionType',
         outcome: _outcome,
-        location: (_interactionType == 'SITE_VISIT' || _interactionType == 'MEETING')
-            ? _locationController.text
-            : null,
       );
 
       await _leadService.createInteraction(interaction);

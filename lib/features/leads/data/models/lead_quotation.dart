@@ -46,23 +46,23 @@ class LeadQuotation {
   factory LeadQuotation.fromJson(Map<String, dynamic> json) {
     return LeadQuotation(
       id: json['id'],
-      leadId: json['leadId'],
-      quotationNumber: json['quotationNumber'],
+      leadId: json['leadId'] ?? json['lead_id'],
+      quotationNumber: json['quotationNumber'] ?? json['quotation_number'],
       version: json['version'] ?? 1,
       title: json['title'],
       description: json['description'],
-      totalAmount: (json['totalAmount'] as num?)?.toDouble(),
-      taxAmount: (json['taxAmount'] as num?)?.toDouble(),
-      discountAmount: (json['discountAmount'] as num?)?.toDouble(),
-      finalAmount: (json['finalAmount'] as num?)?.toDouble(),
-      validityDays: json['validityDays'] ?? 30,
+      totalAmount: (json['totalAmount'] ?? json['total_amount'] as num?)?.toDouble(),
+      taxAmount: (json['taxAmount'] ?? json['tax_amount'] as num?)?.toDouble(),
+      discountAmount: (json['discountAmount'] ?? json['discount_amount'] as num?)?.toDouble(),
+      finalAmount: (json['finalAmount'] ?? json['final_amount'] as num?)?.toDouble(),
+      validityDays: json['validityDays'] ?? json['validity_days'] ?? 30,
       status: json['status'] ?? 'DRAFT',
-      sentAt: json['sentAt'] != null ? DateTime.parse(json['sentAt']) : null,
-      viewedAt: json['viewedAt'] != null ? DateTime.parse(json['viewedAt']) : null,
-      respondedAt: json['respondedAt'] != null ? DateTime.parse(json['respondedAt']) : null,
-      createdById: json['createdById'],
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      sentAt: json['sentAt'] != null ? DateTime.parse(json['sentAt']) : (json['sent_at'] != null ? DateTime.parse(json['sent_at']) : null),
+      viewedAt: json['viewedAt'] != null ? DateTime.parse(json['viewedAt']) : (json['viewed_at'] != null ? DateTime.parse(json['viewed_at']) : null),
+      respondedAt: json['respondedAt'] != null ? DateTime.parse(json['respondedAt']) : (json['responded_at'] != null ? DateTime.parse(json['responded_at']) : null),
+      createdById: json['createdById'] ?? json['created_by_id'],
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : (json['created_at'] != null ? DateTime.parse(json['created_at']) : null),
+      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : (json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null),
       notes: json['notes'],
       items: json['items'] != null
           ? (json['items'] as List).map((i) => LeadQuotationItem.fromJson(i)).toList()
@@ -168,12 +168,12 @@ class LeadQuotationItem {
   factory LeadQuotationItem.fromJson(Map<String, dynamic> json) {
     return LeadQuotationItem(
       id: json['id'],
-      quotationId: json['quotationId'],
-      itemNumber: json['itemNumber'],
+      quotationId: json['quotationId'] ?? json['quotation_id'],
+      itemNumber: json['itemNumber'] ?? json['item_number'],
       description: json['description'],
       quantity: (json['quantity'] as num).toDouble(),
-      unitPrice: (json['unitPrice'] as num).toDouble(),
-      totalPrice: (json['totalPrice'] as num).toDouble(),
+      unitPrice: (json['unitPrice'] ?? json['unit_price'] as num).toDouble(),
+      totalPrice: (json['totalPrice'] ?? json['total_price'] as num).toDouble(),
       notes: json['notes'],
     );
   }

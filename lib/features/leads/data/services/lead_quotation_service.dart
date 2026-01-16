@@ -6,43 +6,30 @@ class LeadQuotationService {
   final ApiService _apiService = ApiService();
 
   Future<List<LeadQuotation>> getQuotationsByLead(int leadId) async {
-    try {
-      final response = await _apiService.get('/leads/quotations/lead/$leadId');
-      final List<dynamic> data = response.data;
-      return data.map((json) => LeadQuotation.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch quotations: $e');
-    }
+    final response = await _apiService.get('/leads/quotations/lead/$leadId');
+    return _apiService.unwrapList<LeadQuotation>(
+        response, (json) => LeadQuotation.fromJson(json));
   }
 
   Future<LeadQuotation> createQuotation(LeadQuotation quotation) async {
-    try {
-      final response = await _apiService.post('/leads/quotations',
-          data: quotation.toCreateJson());
-      return LeadQuotation.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to create quotation: $e');
-    }
+    final response = await _apiService.post('/leads/quotations',
+        data: quotation.toCreateJson());
+    return _apiService.unwrap<LeadQuotation>(
+        response, (json) => LeadQuotation.fromJson(json as Map<String, dynamic>));
   }
 
   Future<LeadQuotation> updateQuotation(int id, LeadQuotation quotation) async {
-    try {
-      final response = await _apiService.put('/leads/quotations/$id',
-          data: quotation.toCreateJson());
-      return LeadQuotation.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to update quotation: $e');
-    }
+    final response = await _apiService.put('/leads/quotations/$id',
+        data: quotation.toCreateJson());
+    return _apiService.unwrap<LeadQuotation>(
+        response, (json) => LeadQuotation.fromJson(json as Map<String, dynamic>));
   }
 
   Future<LeadQuotation> sendQuotation(int id) async {
-    try {
-      final response =
-          await _apiService.post('/leads/quotations/$id/send', data: {});
-      return LeadQuotation.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Failed to send quotation: $e');
-    }
+    final response =
+        await _apiService.post('/leads/quotations/$id/send', data: {});
+    return _apiService.unwrap<LeadQuotation>(
+        response, (json) => LeadQuotation.fromJson(json as Map<String, dynamic>));
   }
 
   Future<void> deleteQuotation(int id) async {
@@ -87,10 +74,20 @@ class LeadQuotationService {
 
     final response = await _apiService.get('/leads/quotations/search',
         queryParams: queryParams);
+    // Backend returns ApiResponse<Page<LeadQuotation>>, unwrap extracts the Page object
     return _apiService.unwrap<PaginatedResponse<LeadQuotation>>(
       response,
-      (json) => PaginatedResponse.fromJson(
-          json as Map<String, dynamic>, LeadQuotation.fromJson),
+      (json) {
+        // Handle both direct Page format and wrapped in ApiResponse
+        Map<String, dynamic> pageData;
+        if (json is Map<String, dynamic> && json.containsKey('data')) {
+          // If wrapped in ApiResponse, extract data field
+          pageData = json['data'] as Map<String, dynamic>;
+        } else {
+          pageData = json as Map<String, dynamic>;
+        }
+        return PaginatedResponse.fromJson(pageData, LeadQuotation.fromJson);
+      },
     );
   }
 }

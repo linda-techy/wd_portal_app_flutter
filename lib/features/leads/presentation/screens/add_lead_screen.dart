@@ -12,7 +12,6 @@ import 'package:admin/constants/project_type_constants.dart';
 import 'constants/add_lead_constants.dart';
 import 'components/form_sections.dart';
 import 'package:provider/provider.dart';
-import 'package:dio/dio.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
 import 'package:admin/utils/error_handler.dart';
 

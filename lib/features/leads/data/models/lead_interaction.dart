@@ -6,17 +6,25 @@ part 'lead_interaction.g.dart';
 @JsonSerializable()
 class LeadInteraction {
   final int? id;
+  @JsonKey(name: 'leadId')
   final int leadId;
+  @JsonKey(name: 'interactionType')
   final String interactionType; // CALL, EMAIL, MEETING, SITE_VISIT, WHATSAPP, OTHER
+  @JsonKey(name: 'interactionDate')
   final DateTime interactionDate;
+  @JsonKey(name: 'durationMinutes')
   final int? durationMinutes;
   final String? subject;
   final String? notes;
   final String? outcome; // SCHEDULED_FOLLOWUP, QUOTE_SENT, NEEDS_INFO, NOT_INTERESTED, CONVERTED, OTHER
+  @JsonKey(name: 'nextAction')
   final String? nextAction;
+  @JsonKey(name: 'nextActionDate')
   final DateTime? nextActionDate;
-  final String? location;
-  final String? metadata;
+  @JsonKey(name: 'createdById')
+  final int? createdById;
+  @JsonKey(name: 'createdAt')
+  final DateTime? createdAt;
 
   LeadInteraction({
     this.id,
@@ -29,8 +37,8 @@ class LeadInteraction {
     this.outcome,
     this.nextAction,
     this.nextActionDate,
-    this.location,
-    this.metadata,
+    this.createdById,
+    this.createdAt,
   });
 
   factory LeadInteraction.fromJson(Map<String, dynamic> json) => _$LeadInteractionFromJson(json);

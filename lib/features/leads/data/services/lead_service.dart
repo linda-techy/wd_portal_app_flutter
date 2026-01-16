@@ -71,10 +71,21 @@ class LeadService {
 
     final response =
         await _apiService.get('/leads/search', queryParams: queryParams);
+    // Backend returns ApiResponse<Page<Lead>>, unwrap extracts the Page object
+    // which is then converted to PaginatedResponse
     return _apiService.unwrap<PaginatedResponse<Lead>>(
       response,
-      (json) => PaginatedResponse.fromJson(
-          json as Map<String, dynamic>, Lead.fromJson),
+      (json) {
+        // Handle both direct Page format and wrapped in ApiResponse
+        Map<String, dynamic> pageData;
+        if (json is Map<String, dynamic> && json.containsKey('data')) {
+          // If wrapped in ApiResponse, extract data field
+          pageData = json['data'] as Map<String, dynamic>;
+        } else {
+          pageData = json as Map<String, dynamic>;
+        }
+        return PaginatedResponse.fromJson(pageData, Lead.fromJson);
+      },
     );
   }
 
@@ -207,10 +218,19 @@ class LeadService {
 
     final response = await _apiService.get('/leads/interactions/search',
         queryParams: queryParams);
+    // Backend returns Page<LeadInteraction> (not wrapped in ApiResponse for this endpoint)
+    // But handle both cases for safety
     return _apiService.unwrap<PaginatedResponse<LeadInteraction>>(
       response,
-      (json) => PaginatedResponse.fromJson(
-          json as Map<String, dynamic>, LeadInteraction.fromJson),
+      (json) {
+        Map<String, dynamic> pageData;
+        if (json is Map<String, dynamic> && json.containsKey('data')) {
+          pageData = json['data'] as Map<String, dynamic>;
+        } else {
+          pageData = json as Map<String, dynamic>;
+        }
+        return PaginatedResponse.fromJson(pageData, LeadInteraction.fromJson);
+      },
     );
   }
 }

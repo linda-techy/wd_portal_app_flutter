@@ -36,7 +36,7 @@ class LeadQuotationProvider extends BasePaginatedProvider<LeadQuotation> {
   }
 
   void filterByPreparedBy(int? preparedById) {
-    updateFilter('preparedBy', preparedById);
+    updateFilter('preparedById', preparedById);
   }
 
   void filterByStatus(String? status) {
@@ -80,7 +80,7 @@ class LeadQuotationProvider extends BasePaginatedProvider<LeadQuotation> {
     
     if (leadId != null) filters['leadId'] = leadId;
     if (quotationNumber != null) filters['quotationNumber'] = quotationNumber;
-    if (preparedBy != null) filters['preparedBy'] = preparedBy;
+    if (preparedBy != null) filters['preparedById'] = preparedBy;
     if (status != null) filters['status'] = status;
     if (validityStatus != null) filters['validityStatus'] = validityStatus;
     if (minAmount != null) filters['minAmount'] = minAmount;
