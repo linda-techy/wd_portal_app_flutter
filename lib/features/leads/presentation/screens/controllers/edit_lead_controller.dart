@@ -111,8 +111,13 @@ class EditLeadController extends ChangeNotifier {
       assignedToId = lead.assignedToId is int
           ? lead.assignedToId as int
           : int.tryParse(lead.assignedToId.toString());
+      print(
+          '_initializeFields - Original lead.assignedToId: ${lead.assignedToId} (type: ${lead.assignedToId.runtimeType})');
+      print(
+          '_initializeFields - Parsed assignedToId: $assignedToId (type: ${assignedToId.runtimeType})');
     } else {
       assignedToId = null;
+      print('_initializeFields - assignedToId is null');
     }
 
     // Location Information
@@ -228,56 +233,75 @@ class EditLeadController extends ChangeNotifier {
   Future<void> _loadTeamMembers() async {
     _isLoadingTeamMembers = true;
     notifyListeners();
-    
+
     try {
       // Load users with roles SALES, CRM, EMPLOYEE
       List<PortalUser> members = await UserService.getPortalUsersByRoleCodes(
           ['SALES', 'CRM', 'EMPLOYEE']);
 
       // Ensure the currently assigned user is included even if they don't have one of these roles
-      if (_originalLead.assignedToId != null) {
-        // Convert assignedToId to int for comparison
-        final assignedId = _originalLead.assignedToId is int
-            ? _originalLead.assignedToId as int
-            : int.tryParse(_originalLead.assignedToId.toString());
+      // Use the controller's assignedToId (which was initialized from _originalLead)
+      if (assignedToId != null) {
+        print(
+            '_loadTeamMembers - Checking assignedToId: $assignedToId (type: ${assignedToId.runtimeType})');
 
-        if (assignedId != null) {
-          // Check if assigned user already exists in the filtered list
-          final assignedUserExists = members.any((m) => m.id == assignedId);
+        // Check if assigned user already exists in the filtered list
+        final assignedUserExists =
+            members.any((m) => m.id != null && m.id == assignedToId);
+        print(
+            '_loadTeamMembers - Assigned user exists in filtered list: $assignedUserExists');
 
-          if (!assignedUserExists) {
-            // Load all users to find the assigned user
-            try {
-              final allUsers = await UserService.getAllPortalUsers();
-              final assignedUserIndex =
-                  allUsers.indexWhere((u) => u.id == assignedId);
-
-              if (assignedUserIndex != -1) {
-                final assignedUser = allUsers[assignedUserIndex];
-                // Add assigned user at the beginning of the list so it's visible
-                members.insert(0, assignedUser);
-                print(
-                    'Added assigned user ${assignedUser.fullName} (ID: $assignedId) to team members list');
-              } else {
-                print(
-                    'Assigned user with ID $assignedId not found in all users');
-              }
-            } catch (e) {
-              // If we can't find the assigned user, continue with filtered list
-              print('Could not load assigned user: $e');
-            }
-          } else {
+        if (!assignedUserExists) {
+          // Load all users to find the assigned user
+          try {
             print(
-                'Assigned user (ID: $assignedId) already exists in filtered list');
+                '_loadTeamMembers - Loading all users to find assigned user ID: $assignedToId');
+            final allUsers = await UserService.getAllPortalUsers();
+            final assignedUserIndex = allUsers
+                .indexWhere((u) => u.id != null && u.id == assignedToId);
+
+            if (assignedUserIndex != -1) {
+              final assignedUser = allUsers[assignedUserIndex];
+              // Add assigned user at the beginning of the list so it's visible
+              members.insert(0, assignedUser);
+              print(
+                  'Added assigned user ${assignedUser.fullName} (ID: ${assignedUser.id}) to team members list');
+            } else {
+              print(
+                  'Assigned user with ID $assignedToId not found in all users');
+              print('All user IDs: ${allUsers.map((u) => u.id).toList()}');
+            }
+          } catch (e) {
+            // If we can't find the assigned user, continue with filtered list
+            print('Could not load assigned user: $e');
           }
+        } else {
+          print(
+              'Assigned user (ID: $assignedToId) already exists in filtered list');
         }
+      } else {
+        print(
+            '_loadTeamMembers - assignedToId is null, skipping assigned user check');
       }
 
       _teamMembers = members;
       _isLoadingTeamMembers = false;
+
+      // Debug: Verify assignedToId is still set after loading
+      print('_loadTeamMembers - After loading, assignedToId: $assignedToId');
+      print('_loadTeamMembers - Team members loaded: ${members.length}');
+      print(
+          '_loadTeamMembers - Team member IDs: ${members.map((m) => m.id).toList()}');
+      if (assignedToId != null) {
+        final found = members.any((m) => m.id == assignedToId);
+        print(
+            '_loadTeamMembers - assignedToId $assignedToId found in members: $found');
+      }
+
       notifyListeners();
-    } catch (e) {
+    } catch (e, stackTrace) {
       print('Error loading team members: $e');
+      print('Stack trace: $stackTrace');
       // Continue without team members - form will show empty list
       _teamMembers = [];
       _isLoadingTeamMembers = false;

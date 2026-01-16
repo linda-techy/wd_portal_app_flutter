@@ -131,12 +131,36 @@ class ApiService {
 
   /// Version of unwrap for lists of items
   List<T> unwrapList<T>(Response response, T Function(Map<String, dynamic> json) fromJsonT) {
-    return unwrap<List<T>>(response, (json) {
-      if (json is List) {
-        return json.map((item) => fromJsonT(item as Map<String, dynamic>)).toList();
-      }
-      return [];
-    });
+    try {
+      return unwrap<List<T>>(response, (json) {
+        if (json == null) {
+          return <T>[];
+        }
+        if (json is List) {
+          return json.map((item) {
+            try {
+              if (item is Map<String, dynamic>) {
+                return fromJsonT(item);
+              } else {
+                print('Warning: List item is not a Map: $item (type: ${item.runtimeType})');
+                return null;
+              }
+            } catch (e) {
+              print('Error parsing list item: $e');
+              print('Item data: $item');
+              return null;
+            }
+          }).whereType<T>().toList();
+        }
+        print('Warning: Expected List but got ${json.runtimeType}: $json');
+        return <T>[];
+      });
+    } catch (e, stackTrace) {
+      print('Error in unwrapList: $e');
+      print('Stack trace: $stackTrace');
+      print('Response data: ${response.data}');
+      rethrow;
+    }
   }
 
   /// Version of unwrap for **paginated** lists (Spring Data Page format)

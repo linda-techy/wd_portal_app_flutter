@@ -34,12 +34,20 @@ class UserService {
       'roleCodes': roleCodes, // Dio will automatically handle List as multiple query params
     };
     try {
+      print('Fetching portal users by role codes: $roleCodes');
       final response = await _apiService.get('/portal-users/by-role-codes',
           queryParams: queryParams);
-      return _apiService.unwrapList<PortalUser>(
+      print('Response status: ${response.statusCode}');
+      print('Response data type: ${response.data.runtimeType}');
+      print('Response data: ${response.data}');
+      
+      final users = _apiService.unwrapList<PortalUser>(
           response, (json) => PortalUser.fromJson(json));
-    } catch (e) {
+      print('Parsed ${users.length} users');
+      return users;
+    } catch (e, stackTrace) {
       print('Error in getPortalUsersByRoleCodes: $e');
+      print('Stack trace: $stackTrace');
       print('Role codes requested: $roleCodes');
       rethrow;
     }
