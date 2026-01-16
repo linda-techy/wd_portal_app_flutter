@@ -94,6 +94,43 @@ class _LeadTasksScreenState extends State<LeadTasksScreen> {
       }
   }
 
+  Future<void> _deleteTask(TaskModel task) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Task'),
+        content: Text('Are you sure you want to delete "${task.title}"? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await _taskService.deleteTask(task.id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Task deleted successfully')),
+          );
+          _loadTasks();
+        }
+      } catch (e) {
+        if (mounted) {
+          await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to delete task');
+        }
+      }
+    }
+  }
+
   Color _getStatusColor(String status) {
       switch (status) {
           case 'PENDING': return Colors.orange;
@@ -176,9 +213,9 @@ class _LeadTasksScreenState extends State<LeadTasksScreen> {
                                 ]
                             ),
                             trailing: PopupMenuButton<String>(
-                                onSelected: (value) {
+                                onSelected: (value) async {
                                     if (value == 'DELETE') {
-                                        // TODO: Implement delete
+                                        await _deleteTask(task);
                                     } else {
                                         _updateTaskStatus(task, value);
                                     }
