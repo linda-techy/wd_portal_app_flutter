@@ -28,12 +28,20 @@ class UserService {
   /// Get portal users filtered by role codes (SALES, CRM, EMPLOYEE)
   static Future<List<PortalUser>> getPortalUsersByRoleCodes(
       List<String> roleCodes) async {
+    // Dio needs list parameters to be sent as multiple query params with the same key
+    // Convert list to Map with List values so Dio sends: ?roleCodes=SALES&roleCodes=CRM&roleCodes=EMPLOYEE
     final queryParams = <String, dynamic>{
-      'roleCodes': roleCodes,
+      'roleCodes': roleCodes, // Dio will automatically handle List as multiple query params
     };
-    final response = await _apiService.get('/portal-users/by-role-codes',
-        queryParams: queryParams);
-    return _apiService.unwrapList<PortalUser>(
-        response, (json) => PortalUser.fromJson(json));
+    try {
+      final response = await _apiService.get('/portal-users/by-role-codes',
+          queryParams: queryParams);
+      return _apiService.unwrapList<PortalUser>(
+          response, (json) => PortalUser.fromJson(json));
+    } catch (e) {
+      print('Error in getPortalUsersByRoleCodes: $e');
+      print('Role codes requested: $roleCodes');
+      rethrow;
+    }
   }
 }

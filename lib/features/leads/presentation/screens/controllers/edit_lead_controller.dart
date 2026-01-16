@@ -226,6 +226,9 @@ class EditLeadController extends ChangeNotifier {
   }
 
   Future<void> _loadTeamMembers() async {
+    _isLoadingTeamMembers = true;
+    notifyListeners();
+    
     try {
       // Load users with roles SALES, CRM, EMPLOYEE
       List<PortalUser> members = await UserService.getPortalUsersByRoleCodes(
@@ -271,11 +274,13 @@ class EditLeadController extends ChangeNotifier {
       }
 
       _teamMembers = members;
+      _isLoadingTeamMembers = false;
       notifyListeners();
     } catch (e) {
       print('Error loading team members: $e');
       // Continue without team members - form will show empty list
       _teamMembers = [];
+      _isLoadingTeamMembers = false;
       notifyListeners();
     }
   }
