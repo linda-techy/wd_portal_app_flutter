@@ -143,7 +143,15 @@ class Lead {
               ? DateTime.tryParse(json['dateOfEnquiry'])
               : null,
       lostReason: json['lost_reason'] ?? json['lostReason'],
-      assignedToId: json['assigned_to_id'],
+      assignedToId: json['assigned_to_id'] is int
+          ? json['assigned_to_id'] as int?
+          : json['assignedToId'] is int
+              ? json['assignedToId'] as int?
+              : (json['assigned_to_id'] != null
+                  ? int.tryParse(json['assigned_to_id'].toString())
+                  : (json['assignedToId'] != null
+                      ? int.tryParse(json['assignedToId'].toString())
+                      : null)),
       assignedTo: json['assignedTo'] != null ? PortalUser.fromJson(json['assignedTo']) : null,
       score: json['score'] ?? 0,
       scoreCategory: json['score_category'] ?? 'COLD',

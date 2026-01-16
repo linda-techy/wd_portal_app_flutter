@@ -104,7 +104,14 @@ class EditLeadController extends ChangeNotifier {
 
     // Assignment
     assignedTeam = lead.assignedTeam;
-    assignedToId = lead.assignedToId;
+    // Ensure assignedToId is properly converted to int
+    if (lead.assignedToId != null) {
+      assignedToId = lead.assignedToId is int
+          ? lead.assignedToId as int
+          : int.tryParse(lead.assignedToId.toString());
+    } else {
+      assignedToId = null;
+    }
 
     // Location Information
     state = lead.state;
@@ -219,27 +226,44 @@ class EditLeadController extends ChangeNotifier {
   Future<void> _loadTeamMembers() async {
     try {
       // Load users with roles SALES, CRM, EMPLOYEE
-      final members = await UserService.getPortalUsersByRoleCodes(
+      List<PortalUser> members = await UserService.getPortalUsersByRoleCodes(
           ['SALES', 'CRM', 'EMPLOYEE']);
 
       // Ensure the currently assigned user is included even if they don't have one of these roles
       if (_originalLead.assignedToId != null) {
-        final assignedUserExists =
-            members.any((m) => m.id == _originalLead.assignedToId);
-        if (!assignedUserExists) {
-          try {
-            final allUsers = await UserService.getAllPortalUsers();
-            final assignedUser = allUsers.firstWhere(
-              (u) => u.id == _originalLead.assignedToId,
-              orElse: () =>
-                  members.first, // Fallback, won't be used if user found
-            );
-            if (assignedUser.id == _originalLead.assignedToId) {
-              members.add(assignedUser);
+        // Convert assignedToId to int for comparison
+        final assignedId = _originalLead.assignedToId is int
+            ? _originalLead.assignedToId as int
+            : int.tryParse(_originalLead.assignedToId.toString());
+
+        if (assignedId != null) {
+          // Check if assigned user already exists in the filtered list
+          final assignedUserExists = members.any((m) => m.id == assignedId);
+
+          if (!assignedUserExists) {
+            // Load all users to find the assigned user
+            try {
+              final allUsers = await UserService.getAllPortalUsers();
+              final assignedUserIndex =
+                  allUsers.indexWhere((u) => u.id == assignedId);
+
+              if (assignedUserIndex != -1) {
+                final assignedUser = allUsers[assignedUserIndex];
+                // Add assigned user at the beginning of the list so it's visible
+                members.insert(0, assignedUser);
+                print(
+                    'Added assigned user ${assignedUser.fullName} (ID: $assignedId) to team members list');
+              } else {
+                print(
+                    'Assigned user with ID $assignedId not found in all users');
+              }
+            } catch (e) {
+              // If we can't find the assigned user, continue with filtered list
+              print('Could not load assigned user: $e');
             }
-          } catch (e) {
-            // If we can't find the assigned user, continue with filtered list
-            print('Could not load assigned user: $e');
+          } else {
+            print(
+                'Assigned user (ID: $assignedId) already exists in filtered list');
           }
         }
       }
@@ -249,6 +273,8 @@ class EditLeadController extends ChangeNotifier {
     } catch (e) {
       print('Error loading team members: $e');
       // Continue without team members - form will show empty list
+      _teamMembers = [];
+      notifyListeners();
     }
   }
 

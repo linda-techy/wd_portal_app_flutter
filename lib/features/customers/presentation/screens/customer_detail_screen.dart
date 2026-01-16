@@ -78,18 +78,73 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     }
   }
 
+  Future<void> _deleteCustomer() async {
+    if (_customer == null || _customer!.id == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Customer'),
+        content: Text(
+          'Are you sure you want to delete "${_customer!.fullName}"? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await _customerService.deleteCustomer(_customer!.id!);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Customer deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context, true); // Return to list with refresh flag
+        }
+      } catch (e) {
+        if (mounted) {
+          await ErrorHandler.handleApiError(
+            context,
+            e,
+            defaultMessage: 'Failed to delete customer',
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(_customer?.fullName ?? 'Customer Details'),
         actions: [
-          if (_customer != null)
+          if (_customer != null) ...[
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: _navigateToEdit,
               tooltip: 'Edit Customer',
             ),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: _deleteCustomer,
+              tooltip: 'Delete Customer',
+              color: Colors.red,
+            ),
+          ],
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadCustomer,

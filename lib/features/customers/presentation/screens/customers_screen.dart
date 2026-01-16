@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/features/customers/data/models/customer.dart';
 import 'package:admin/features/customers/data/providers/customer_provider.dart';
+import 'package:admin/features/customers/data/services/customer_service.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'customer_detail_screen.dart';
 import 'add_customer_screen.dart';
+import 'edit_customer_screen.dart';
 
 class CustomersScreen extends StatelessWidget {
   const CustomersScreen({super.key});
@@ -205,6 +208,37 @@ class CustomersScreen extends StatelessWidget {
                     ),
                   ),
                   _buildStatusBadge(customer.enabled),
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'delete') {
+                        _deleteCustomer(context, customer);
+                      } else if (value == 'edit') {
+                        _navigateToEdit(context, customer);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit, size: 20),
+                            SizedBox(width: 8),
+                            Text('Edit'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, size: 20, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Delete', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -364,6 +398,92 @@ class CustomersScreen extends StatelessWidget {
     if (result == true && context.mounted) {
       final provider = Provider.of<CustomerProvider>(context, listen: false);
       provider.fetch();
+    }
+  }
+
+  void _navigateToEdit(BuildContext context, Customer customer) async {
+    if (customer.id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Customer ID is missing'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditCustomerScreen(customer: customer),
+      ),
+    );
+
+    // Refresh the customer list if a customer was updated
+    if (result == true && context.mounted) {
+      final provider = Provider.of<CustomerProvider>(context, listen: false);
+      provider.fetch();
+    }
+  }
+
+  void _deleteCustomer(BuildContext context, Customer customer) async {
+    if (customer.id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Customer ID is missing'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Customer'),
+        content: Text(
+          'Are you sure you want to delete "${customer.fullName}"? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        final customerService = CustomerService();
+        await customerService.deleteCustomer(customer.id!);
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Customer deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          
+          // Refresh the customer list
+          final provider = Provider.of<CustomerProvider>(context, listen: false);
+          provider.fetch();
+        }
+      } catch (e) {
+        if (context.mounted) {
+          await ErrorHandler.handleApiError(
+            context,
+            e,
+            defaultMessage: 'Failed to delete customer',
+          );
+        }
+      }
     }
   }
 }
