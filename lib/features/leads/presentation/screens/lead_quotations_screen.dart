@@ -213,8 +213,7 @@ class LeadQuotationsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (quotation.status != null)
-                    _buildStatusBadge(quotation.status!),
+                  _buildStatusBadge(quotation.status),
                 ],
               ),
               if (quotation.description != null &&

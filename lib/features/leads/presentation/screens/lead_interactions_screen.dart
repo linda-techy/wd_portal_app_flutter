@@ -206,7 +206,7 @@ class LeadInteractionsScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          interaction.interactionType ?? 'Interaction',
+                          interaction.interactionType,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
