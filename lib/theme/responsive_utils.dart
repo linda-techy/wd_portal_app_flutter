@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 
+import 'package:flutter/material.dart';
+import 'design_tokens.dart';
+
 /// Enhanced Responsive Utilities for Construction Admin Portal
 /// Supports desktop, tablet, and mobile layouts with breakpoints optimized for data-heavy interfaces
 class ResponsiveUtils {
-  // Breakpoints optimized for admin portals
-  static const double mobileBreakpoint = 768;
-  static const double tabletBreakpoint = 1024;
-  static const double desktopBreakpoint = 1024;
-  static const double largeDesktopBreakpoint = 1920;
+  // Breakpoints using DesignTokens
+  static const double mobileBreakpoint = DesignTokens.breakpointMobile;
+  static const double tabletBreakpoint = DesignTokens.breakpointTablet;
+  static const double desktopBreakpoint = DesignTokens.breakpointDesktop;
+  static const double wideBreakpoint = DesignTokens.breakpointWide;
+  static const double largeDesktopBreakpoint = DesignTokens.breakpointUltraWide;
   
   // Check device type
   static bool isMobile(BuildContext context) =>
@@ -23,16 +27,23 @@ class ResponsiveUtils {
   static bool isLargeDesktop(BuildContext context) =>
       MediaQuery.of(context).size.width >= largeDesktopBreakpoint;
   
+  static bool isWideDesktop(BuildContext context) =>
+      MediaQuery.of(context).size.width >= wideBreakpoint;
+  
   // Get responsive value based on screen size
   static T responsiveValue<T>({
     required BuildContext context,
     required T mobile,
     T? tablet,
     T? desktop,
+    T? wide,
     T? largeDesktop,
   }) {
     if (isLargeDesktop(context) && largeDesktop != null) {
       return largeDesktop;
+    }
+    if (isWideDesktop(context) && wide != null) {
+      return wide;
     }
     if (isDesktop(context) && desktop != null) {
       return desktop;
@@ -43,22 +54,24 @@ class ResponsiveUtils {
     return mobile;
   }
   
-  // Get responsive padding
+  // Get responsive padding using DesignTokens
   static EdgeInsets responsivePadding(BuildContext context) {
     return EdgeInsets.symmetric(
       horizontal: responsiveValue(
         context: context,
-        mobile: 16.0,
-        tablet: 24.0,
-        desktop: 32.0,
-        largeDesktop: 48.0,
+        mobile: DesignTokens.spacingMD,
+        tablet: DesignTokens.spacingLG,
+        desktop: DesignTokens.spacingXL,
+        wide: DesignTokens.spacing2XL,
+        largeDesktop: DesignTokens.spacing3XL,
       ),
       vertical: responsiveValue(
         context: context,
-        mobile: 12.0,
-        tablet: 16.0,
-        desktop: 20.0,
-        largeDesktop: 24.0,
+        mobile: DesignTokens.spacingSM2,
+        tablet: DesignTokens.spacingMD,
+        desktop: DesignTokens.spacingMD2,
+        wide: DesignTokens.spacingLG,
+        largeDesktop: DesignTokens.spacingXL,
       ),
     );
   }

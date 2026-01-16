@@ -3,11 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_motion.dart';
 import '../../widgets/animations/entrance_animation.dart';
-import '../../widgets/animations/motion_button.dart';
 import '../../widgets/animations/shake_widget.dart';
+import '../../widgets/components/premium_input.dart';
+import '../../widgets/components/premium_button.dart';
+import '../../widgets/accessibility/keyboard_navigation.dart';
 import '../../providers/portal_auth_provider.dart';
 import '../../theme/app_theme.dart';
-import '../../theme/responsive_utils.dart';
+import '../../theme/design_tokens.dart';
 import '../../utils/motion_toast.dart';
 
 class PortalLoginScreen extends StatefulWidget {
@@ -17,11 +19,11 @@ class PortalLoginScreen extends StatefulWidget {
   State<PortalLoginScreen> createState() => _PortalLoginScreenState();
 }
 
-class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTickerProviderStateMixin {
+class _PortalLoginScreenState extends State<PortalLoginScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
   bool _isLoading = false;
   bool _shouldShake = false;
   late AnimationController _animationController;
@@ -35,7 +37,8 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTicker
       duration: AppMotion.durationSlow,
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: AppMotion.curveEnter),
+      CurvedAnimation(
+          parent: _animationController, curve: AppMotion.curveEnter),
     );
     _animationController.forward();
   }
@@ -71,18 +74,16 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTicker
       );
 
       if (!success && mounted) {
-        MotionToast.show(
+        MotionToast.showError(
           context,
           message: 'Login failed: Invalid credentials',
-          isError: true,
         );
       }
     } catch (e) {
       if (mounted) {
-        MotionToast.show(
+        MotionToast.showError(
           context,
           message: 'Login failed: ${e.toString()}',
-          isError: true,
         );
       }
     } finally {
@@ -97,7 +98,7 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTicker
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 768;
-    
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: FadeTransition(
@@ -231,228 +232,105 @@ class _PortalLoginScreenState extends State<PortalLoginScreen> with SingleTicker
             shouldShake: _shouldShake,
             child: Form(
               key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Login heading
-                Text(
-                  'Login',
-                  style: GoogleFonts.poppins(
-                    fontSize: isMobile ? 28 : 36,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.deepSlate,
-                    letterSpacing: -1,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Login heading
+                  Text(
+                    'Login',
+                    style: GoogleFonts.poppins(
+                      fontSize: isMobile ? 28 : 36,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.deepSlate,
+                      letterSpacing: -1,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Welcome back! Please login to your account.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.textSecondary,
-                    height: 1.5,
+                  const SizedBox(height: 4),
+                  Text(
+                    'Welcome back! Please login to your account.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.textSecondary,
+                      height: 1.5,
+                    ),
                   ),
-                ),
-                SizedBox(height: isMobile ? 24 : 40),
+                  SizedBox(
+                      height: isMobile
+                          ? DesignTokens.spacingLG
+                          : DesignTokens.spacingXXL),
 
-                // Email Field
-                EntranceAnimation(
-                  delay: const Duration(milliseconds: 100),
-                  child: TextFormField(
-                    controller: _emailController,
-                  textInputAction: TextInputAction.next,
-                  keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(fontSize: 15),
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'username@gmail.com',
-                    prefixIcon: Icon(
-                      Icons.email_outlined,
-                      color: AppTheme.coralRed,
-                      size: 22,
-                    ),
-                    filled: true,
-                    fillColor: AppTheme.surfaceElevated.withOpacity(0.3),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: AppTheme.borderLight.withOpacity(0.5),
+                  // Email Field
+                  EntranceAnimation(
+                    delay: const Duration(milliseconds: 100),
+                    child: KeyboardNavigationWrapper(
+                      child: PremiumTextInput(
+                        controller: _emailController,
+                        label: 'Email',
+                        hint: 'username@gmail.com',
+                        prefixIcon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                        semanticLabel: 'Email address',
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your email';
+                          }
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                              .hasMatch(value)) {
+                            return 'Please enter a valid email';
+                          }
+                          return null;
+                        },
                       ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: AppTheme.coralRed,
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: AppTheme.errorRed,
-                      ),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: AppTheme.errorRed,
-                        width: 2,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(value)) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                ),
-                SizedBox(height: isMobile ? 16 : 20),
+                  SizedBox(height: DesignTokens.spacingMD),
 
-                // Password Field
-                EntranceAnimation(
-                  delay: const Duration(milliseconds: 200),
-                  child: TextFormField(
-                    controller: _passwordController,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _handleLogin(),
-                  obscureText: _obscurePassword,
-                  style: const TextStyle(fontSize: 15),
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText: 'Enter your password',
-                    prefixIcon: Icon(
-                      Icons.lock_outlined,
-                      color: AppTheme.coralRed,
-                      size: 22,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                        color: AppTheme.textSecondary,
-                        size: 22,
+                  // Password Field
+                  EntranceAnimation(
+                    delay: const Duration(milliseconds: 200),
+                    child: KeyboardNavigationWrapper(
+                      child: PremiumPasswordInput(
+                        controller: _passwordController,
+                        label: 'Password',
+                        hint: 'Enter your password',
+                        semanticLabel: 'Password',
+                        onFieldSubmitted: _handleLogin,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your password';
+                          }
+                          if (value.length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
+                          return null;
+                        },
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                    filled: true,
-                    fillColor: AppTheme.surfaceElevated.withOpacity(0.3),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: AppTheme.borderLight.withOpacity(0.5),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: AppTheme.coralRed,
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: AppTheme.errorRed,
-                      ),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: AppTheme.errorRed,
-                        width: 2,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
-                ),
-                ),
-                SizedBox(height: isMobile ? 24 : 32),
+                  SizedBox(
+                      height: isMobile
+                          ? DesignTokens.spacingLG
+                          : DesignTokens.spacingXL),
 
-                // Login Button
-                EntranceAnimation(
-                  delay: const Duration(milliseconds: 300),
-                  child: SizedBox(
-                    height: 54,
-                    child: MotionButton(
-                      isEnabled: !_isLoading,
-                      onPressed: _handleLogin,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleLogin,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.coralRed,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                          shadowColor: AppTheme.coralRed.withOpacity(0.3),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                              )
-                            : Text(
-                                'Sign In',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                      ),
+                  // Login Button
+                  EntranceAnimation(
+                    delay: const Duration(milliseconds: 300),
+                    child: PrimaryButton(
+                      label: 'Sign In',
+                      onPressed: _isLoading ? null : _handleLogin,
+                      isLoading: _isLoading,
+                      fullWidth: true,
+                      semanticLabel: 'Sign in to your account',
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
-              ],
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
     );
 
     // Only scroll locally if NOT mobile (Desktop side)
@@ -475,11 +353,15 @@ class _GeometricPatternPainter extends CustomPainter {
     final mortarGap = 2.0;
 
     // Draw brick pattern
-    for (double y = 0; y < size.height + brickHeight; y += brickHeight + mortarGap) {
+    for (double y = 0;
+        y < size.height + brickHeight;
+        y += brickHeight + mortarGap) {
       final isOffsetRow = ((y / (brickHeight + mortarGap)) % 2) == 1;
       final startX = isOffsetRow ? -brickWidth / 2 : 0.0;
-      
-      for (double x = startX; x < size.width + brickWidth; x += brickWidth + mortarGap) {
+
+      for (double x = startX;
+          x < size.width + brickWidth;
+          x += brickWidth + mortarGap) {
         // Draw brick outline
         canvas.drawRect(
           Rect.fromLTWH(x, y, brickWidth, brickHeight),
@@ -507,4 +389,3 @@ class _GeometricPatternPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-

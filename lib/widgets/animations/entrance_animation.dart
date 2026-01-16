@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_motion.dart';
 
-/// Entrance animation for content blocks, cards, and list items
-/// Provides a coordinated fade + slide-up effect
+/// Enhanced entrance animation for content blocks, cards, and list items
+/// Provides a coordinated fade + slide-up effect with premium easing
 class EntranceAnimation extends StatefulWidget {
   final Widget child;
   final Duration delay;
@@ -29,12 +29,12 @@ class _EntranceAnimationState extends State<EntranceAnimation> with SingleTicker
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: AppMotion.durationMedium,
+      duration: AppMotion.getDuration(AppMotion.durationMedium),
     );
 
     _fadeAnimation = CurvedAnimation(
       parent: _controller,
-      curve: AppMotion.curveEnter,
+      curve: AppMotion.getCurve(AppMotion.curveEaseOutCubic),
     );
 
     _slideAnimation = Tween<Offset>(
@@ -42,11 +42,15 @@ class _EntranceAnimationState extends State<EntranceAnimation> with SingleTicker
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _controller,
-      curve: AppMotion.curveStandard,
+      curve: AppMotion.getCurve(AppMotion.curveEaseOutCubic),
     ));
 
     Future.delayed(widget.delay, () {
-      if (mounted) _controller.forward();
+      if (mounted && !AppMotion.shouldDisableAnimations()) {
+        _controller.forward();
+      } else if (mounted) {
+        _controller.value = 1.0; // Skip animation if reduced motion
+      }
     });
   }
 
@@ -58,6 +62,10 @@ class _EntranceAnimationState extends State<EntranceAnimation> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
+    if (AppMotion.shouldDisableAnimations()) {
+      return widget.child;
+    }
+
     return FadeTransition(
       opacity: _fadeAnimation,
       child: SlideTransition(

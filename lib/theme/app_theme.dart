@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'design_tokens.dart';
 
 /// Walldot Builders Design System
 /// Professional construction company theme with brand identity colors
@@ -181,6 +182,7 @@ class AppTheme {
   }
 
   // ========== Spacing System ==========
+  // Use DesignTokens for spacing (backward compatibility maintained)
   static const double spacingXS = 4.0;
   static const double spacingSM = 8.0;
   static const double spacingMD = 16.0;
@@ -189,35 +191,18 @@ class AppTheme {
   static const double spacingXXL = 48.0;
   
   // ========== Border Radius ==========
+  // Use DesignTokens for radius (backward compatibility maintained)
   static const double radiusSM = 6.0;
   static const double radiusMD = 12.0;
   static const double radiusLG = 16.0;
   static const double radiusXL = 24.0;
   
   // ========== Shadows ==========
-  static List<BoxShadow> get shadowSM => [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.05),
-      blurRadius: 4,
-      offset: const Offset(0, 2),
-    ),
-  ];
-  
-  static List<BoxShadow> get shadowMD => [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.08),
-      blurRadius: 8,
-      offset: const Offset(0, 4),
-    ),
-  ];
-  
-  static List<BoxShadow> get shadowLG => [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.12),
-      blurRadius: 16,
-      offset: const Offset(0, 8),
-    ),
-  ];
+  // Use DesignTokens for shadows (backward compatibility maintained)
+  static List<BoxShadow> get shadowSM => DesignTokens.shadowSM;
+  static List<BoxShadow> get shadowMD => DesignTokens.shadowMD;
+  static List<BoxShadow> get shadowLG => DesignTokens.shadowLG;
+  static List<BoxShadow> get shadowXL => DesignTokens.shadowXL;
 
   // ========== Theme Data ==========
   static ThemeData get lightTheme {
@@ -259,7 +244,7 @@ class AppTheme {
         elevation: 0,
         shadowColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusLG),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLG),
           side: const BorderSide(color: borderLight, width: 1),
         ),
         margin: EdgeInsets.zero,
@@ -272,17 +257,18 @@ class AppTheme {
           foregroundColor: textInverse,
           elevation: 0,
           shadowColor: Colors.transparent,
+          minimumSize: const Size(0, DesignTokens.touchTargetMin),
           padding: const EdgeInsets.symmetric(
-            horizontal: spacingLG,
-            vertical: spacingMD,
+            horizontal: DesignTokens.spacingLG,
+            vertical: DesignTokens.spacingMD,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusMD),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
           ),
-          textStyle: GoogleFonts.inter(
-            fontSize: 14,
+          textStyle: GoogleFonts.manrope(
+            fontSize: DesignTokens.fontSizeLabelLarge,
             fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
+            letterSpacing: DesignTokens.letterSpacingWide,
           ),
         ),
       ),
@@ -292,15 +278,16 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: deepSlate, // Walldot brand color for outlined buttons
           side: const BorderSide(color: deepSlate, width: 1.5),
+          minimumSize: const Size(0, DesignTokens.touchTargetMin),
           padding: const EdgeInsets.symmetric(
-            horizontal: spacingLG,
-            vertical: spacingMD,
+            horizontal: DesignTokens.spacingLG,
+            vertical: DesignTokens.spacingMD,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusMD),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
           ),
-          textStyle: GoogleFonts.inter(
-            fontSize: 14,
+          textStyle: GoogleFonts.manrope(
+            fontSize: DesignTokens.fontSizeLabelLarge,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -311,36 +298,36 @@ class AppTheme {
         filled: true,
         fillColor: surface,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: spacingMD,
-          vertical: spacingMD,
+          horizontal: DesignTokens.spacingMD,
+          vertical: DesignTokens.spacingMD,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMD),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
           borderSide: const BorderSide(color: borderLight, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMD),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
           borderSide: const BorderSide(color: borderLight, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMD),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
           borderSide: const BorderSide(color: primaryBlue, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMD),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
           borderSide: const BorderSide(color: safetyRed, width: 1),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMD),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
           borderSide: const BorderSide(color: safetyRed, width: 2),
         ),
-        labelStyle: GoogleFonts.inter(
-          fontSize: 14,
+        labelStyle: GoogleFonts.manrope(
+          fontSize: DesignTokens.fontSizeBodyMedium,
           fontWeight: FontWeight.w500,
           color: textSecondary,
         ),
-        hintStyle: GoogleFonts.inter(
-          fontSize: 14,
+        hintStyle: GoogleFonts.manrope(
+          fontSize: DesignTokens.fontSizeBodyMedium,
           color: textTertiary,
         ),
       ),
@@ -371,21 +358,45 @@ class AppTheme {
         selectedColor: primaryBlue,
         secondarySelectedColor: statusInfoBg,
         padding: const EdgeInsets.symmetric(
-          horizontal: spacingSM,
-          vertical: spacingXS,
+          horizontal: DesignTokens.spacingSM,
+          vertical: DesignTokens.spacingXS,
         ),
-        labelStyle: GoogleFonts.inter(
-          fontSize: 12,
+        labelStyle: GoogleFonts.manrope(
+          fontSize: DesignTokens.fontSizeLabelMedium,
           fontWeight: FontWeight.w500,
           color: textPrimary,
         ),
-        secondaryLabelStyle: GoogleFonts.inter(
-          fontSize: 12,
+        secondaryLabelStyle: GoogleFonts.manrope(
+          fontSize: DesignTokens.fontSizeLabelMedium,
           fontWeight: FontWeight.w500,
           color: textInverse,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusSM),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusSM),
+        ),
+      ),
+      
+      // Text Button Theme
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: coralRed,
+          minimumSize: const Size(0, DesignTokens.touchTargetMin),
+          padding: const EdgeInsets.symmetric(
+            horizontal: DesignTokens.spacingMD,
+            vertical: DesignTokens.spacingSM,
+          ),
+          textStyle: GoogleFonts.manrope(
+            fontSize: DesignTokens.fontSizeLabelLarge,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      
+      // Icon Button Theme
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: textPrimary,
+          minimumSize: const Size(DesignTokens.touchTargetMin, DesignTokens.touchTargetMin),
         ),
       ),
     );
