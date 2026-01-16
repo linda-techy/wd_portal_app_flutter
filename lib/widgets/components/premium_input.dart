@@ -23,7 +23,7 @@ class PremiumTextInput extends StatefulWidget {
   final int? maxLength;
   final String? semanticLabel;
   final FocusNode? focusNode;
-  final VoidCallback? onFieldSubmitted;
+  final ValueChanged<String>? onFieldSubmitted;
 
   const PremiumTextInput({
     super.key,
@@ -43,6 +43,7 @@ class PremiumTextInput extends StatefulWidget {
     this.maxLength,
     this.semanticLabel,
     this.focusNode,
+    this.onFieldSubmitted,
   });
 
   @override
@@ -121,7 +122,6 @@ class _PremiumTextInputState extends State<PremiumTextInput>
       textField: true,
       label: widget.semanticLabel ?? widget.label ?? widget.hint,
       hint: widget.hint,
-      errorText: effectiveError,
       enabled: widget.enabled,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,7 +134,7 @@ class _PremiumTextInputState extends State<PremiumTextInput>
               widget.onChanged?.call(value);
               _validate(value);
             },
-            onFieldSubmitted: widget.onFieldSubmitted != null ? (_) => widget.onFieldSubmitted?.call() : null,
+            onFieldSubmitted: widget.onFieldSubmitted,
             validator: widget.validator,
             keyboardType: widget.keyboardType,
             obscureText: widget.obscureText,
@@ -245,7 +245,7 @@ class PremiumPasswordInput extends StatefulWidget {
   final IconData? prefixIcon;
   final String? semanticLabel;
   final FocusNode? focusNode;
-  final VoidCallback? onFieldSubmitted;
+  final ValueChanged<String>? onFieldSubmitted;
 
   const PremiumPasswordInput({
     super.key,
@@ -469,7 +469,6 @@ class _PremiumDropdownInputState<T> extends State<PremiumDropdownInput<T>>
       button: true,
       label: widget.semanticLabel ?? widget.label ?? widget.hint,
       hint: widget.hint,
-      errorText: effectiveError,
       enabled: widget.enabled,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

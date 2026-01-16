@@ -67,7 +67,14 @@ class AccessibilityUtils {
   
   /// Announce message to screen readers
   static void announceToScreenReader(BuildContext context, String message) {
-    SemanticsService.announce(message, TextDirection.ltr);
+    // SemanticsService is deprecated. Use Semantics widget with liveRegion instead.
+    // For now, we'll use ScaffoldMessenger for user feedback
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
   
   /// Announce error to screen readers

@@ -109,7 +109,7 @@ class FocusTrap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FocusScope(
-      node: focusNode,
+      node: focusNode != null ? FocusScopeNode() : null,
       autofocus: true,
       child: child,
     );
