@@ -42,6 +42,7 @@ class EditLeadController extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   List<PortalUser> _teamMembers = [];
+  bool _isLoadingTeamMembers = true;
 
   EditLeadController(this._originalLead) {
     _initializeFields();
@@ -51,6 +52,7 @@ class EditLeadController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   List<PortalUser> get teamMembers => _teamMembers;
+  bool get isLoadingTeamMembers => _isLoadingTeamMembers;
 
   Map<String, dynamic> get formData => {
         'name': name,

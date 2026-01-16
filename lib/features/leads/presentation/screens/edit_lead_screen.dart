@@ -121,6 +121,7 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
                             onLastContactDateChanged:
                                 _controller.updateLastContactDate,
                             teamMembers: _controller.teamMembers,
+                            isLoadingTeamMembers: _controller.isLoadingTeamMembers,
                           ),
                           const SizedBox(height: defaultPadding),
                           _buildSectionHeader(EditLeadConstants.additionalHeader),

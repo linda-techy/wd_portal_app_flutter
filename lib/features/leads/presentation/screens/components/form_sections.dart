@@ -11,6 +11,100 @@ import 'package:admin/utils/india_location_data.dart';
 import 'package:admin/responsive.dart';
 
 class FormSections {
+  // Helper method to build Assigned To field with proper loading state
+  static Widget _buildAssignedToField({
+    required bool isLoading,
+    List<PortalUser>? teamMembers,
+    required Map<String, dynamic> formData,
+    required Function(String, dynamic) onChanged,
+  }) {
+    // Show loading indicator while team members are being fetched
+    if (isLoading) {
+      return InputDecorator(
+        decoration: const InputDecoration(
+          labelText: 'Assigned To',
+          border: OutlineInputBorder(),
+          prefixIcon: Padding(
+            padding: EdgeInsets.all(12.0),
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        ),
+        child: const Text('Loading team members...'),
+      );
+    }
+
+    // Show dropdown only when team members are loaded
+    if (teamMembers != null && teamMembers.isNotEmpty) {
+      // Parse assignedToId value properly
+      int? selectedValue;
+      final assignedToIdValue = formData['assignedToId'];
+
+      if (assignedToIdValue is int) {
+        selectedValue = assignedToIdValue;
+      } else if (assignedToIdValue != null) {
+        selectedValue = int.tryParse(assignedToIdValue.toString());
+      }
+
+      // Verify the selected value exists in the team members list
+      if (selectedValue != null) {
+        final exists = teamMembers.any((m) => m.id == selectedValue);
+        if (!exists) {
+          print('Warning: Assigned user ID $selectedValue not found in team members list');
+          // Keep selectedValue as is - it will show as selected even if not in items
+        }
+      }
+
+      return DropdownButtonFormField<int>(
+        decoration: const InputDecoration(
+          labelText: 'Assigned To',
+          border: OutlineInputBorder(),
+        ),
+        value: selectedValue,
+        items: [
+          const DropdownMenuItem<int>(
+            value: null,
+            child: Text('-- Not Assigned --'),
+          ),
+          ...teamMembers
+              .where((m) => m.id != null)
+              .map((member) => DropdownMenuItem<int>(
+                    value: member.id,
+                    child: Text(member.fullName),
+                  )),
+        ],
+        onChanged: (value) {
+          onChanged('assignedToId', value);
+        },
+        onSaved: (value) {
+          onChanged('assignedToId', value);
+        },
+      );
+    }
+
+    // If no team members loaded and not loading, show empty state
+    return DropdownButtonFormField<int>(
+      decoration: const InputDecoration(
+        labelText: 'Assigned To',
+        border: OutlineInputBorder(),
+        helperText: 'No team members available',
+      ),
+      value: null,
+      items: const [
+        DropdownMenuItem<int>(
+          value: null,
+          child: Text('-- Not Assigned --'),
+        ),
+      ],
+      onChanged: (value) {
+        onChanged('assignedToId', value);
+      },
+    );
+  }
+
   // Helper method to create responsive row/column
   static Widget _responsiveRow(
     BuildContext context,
@@ -450,6 +544,7 @@ class FormSections {
     required Function(DateTime?) onNextFollowUpChanged,
     required Function(DateTime?) onLastContactDateChanged,
     List<PortalUser>? teamMembers, // Use PortalUser
+    bool isLoadingTeamMembers = false, // Loading state
   }) {
     return Card(
       child: Padding(
@@ -532,80 +627,12 @@ class FormSections {
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      teamMembers != null && teamMembers.isNotEmpty
-                          ? Builder(
-                              builder: (context) {
-                                // Parse assignedToId value properly
-                                int? selectedValue;
-                                final assignedToIdValue =
-                                    formData['assignedToId'];
-
-                                if (assignedToIdValue is int) {
-                                  selectedValue = assignedToIdValue;
-                                } else if (assignedToIdValue != null) {
-                                  selectedValue = int.tryParse(
-                                      assignedToIdValue.toString());
-                                }
-
-                                // Verify the selected value exists in the team members list
-                                if (selectedValue != null) {
-                                  final exists = teamMembers
-                                      .any((m) => m.id == selectedValue);
-                                  if (!exists) {
-                                    // Value doesn't exist in list - keep the value but show a warning
-                                    // Don't set to null, let it show the value even if not in dropdown
-                                    print(
-                                        'Warning: Assigned user ID $selectedValue not found in team members list');
-                                    // Keep selectedValue as is - it will show as selected even if not in items
-                                  }
-                                }
-
-                                return DropdownButtonFormField<int>(
-                                  decoration: const InputDecoration(
-                                    labelText: 'Assigned To',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  value: selectedValue,
-                                  items: [
-                                    const DropdownMenuItem<int>(
-                                      value: null,
-                                      child: Text('-- Not Assigned --'),
-                                    ),
-                                    ...teamMembers
-                                        .where((m) => m.id != null)
-                                        .map((member) => DropdownMenuItem<int>(
-                                              value: member.id,
-                                              child: Text(member.fullName),
-                                            )),
-                                  ],
-                                  onChanged: (value) {
-                                    onChanged('assignedToId', value);
-                                  },
-                                  onSaved: (value) {
-                                    onChanged('assignedToId', value);
-                                  },
-                                );
-                              },
-                            )
-                          : (formData['assignedToId'] != null
-                              ? TextFormField(
-                                  initialValue: 'Loading team members...',
-                                  decoration: const InputDecoration(
-                                    labelText: 'Assigned To',
-                                    border: OutlineInputBorder(),
-                                    helperText:
-                                        'Please wait while team members are loaded',
-                                  ),
-                                  readOnly: true,
-                                )
-                              : TextFormField(
-                                  initialValue: formData['assignedTeam'] ?? '',
-                                  decoration: const InputDecoration(
-                                    labelText: 'Assigned Team (Legacy)',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  readOnly: true,
-                                )),
+                      _buildAssignedToField(
+                        isLoading: isLoadingTeamMembers,
+                        teamMembers: teamMembers,
+                        formData: formData,
+                        onChanged: onChanged,
+                      ),
                       const SizedBox(height: defaultPadding),
                       Wrap(
                         crossAxisAlignment: WrapCrossAlignment.center,
@@ -640,82 +667,12 @@ class FormSections {
                     children: [
                       SizedBox(
                         width: 380,
-                        child: teamMembers != null && teamMembers.isNotEmpty
-                            ? Builder(
-                                builder: (context) {
-                                  // Parse assignedToId value properly
-                                  int? selectedValue;
-                                  final assignedToIdValue =
-                                      formData['assignedToId'];
-                                  if (assignedToIdValue is int) {
-                                    selectedValue = assignedToIdValue;
-                                  } else if (assignedToIdValue != null) {
-                                    selectedValue = int.tryParse(
-                                        assignedToIdValue.toString());
-                                  }
-
-                                  // Verify the selected value exists in the team members list
-                                  if (selectedValue != null) {
-                                    final exists = teamMembers
-                                        .any((m) => m.id == selectedValue);
-                                    if (!exists) {
-                                      // Value doesn't exist in list - log warning but keep value
-                                      print(
-                                          'Warning: Assigned user ID $selectedValue not found in team members. Team members count: ${teamMembers.length}');
-                                      // Keep selectedValue - it will be shown if it matches an item
-                                    }
-                                  }
-
-                                  return DropdownButtonFormField<int>(
-                                    decoration: const InputDecoration(
-                                      labelText: 'Assigned To',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    value: selectedValue,
-                                    items: [
-                                      const DropdownMenuItem<int>(
-                                        value: null,
-                                        child: Text('-- Not Assigned --'),
-                                      ),
-                                      ...teamMembers
-                                          .where((m) => m.id != null)
-                                          .map((member) =>
-                                              DropdownMenuItem<int>(
-                                                value: member.id,
-                                                child: Text(member.fullName),
-                                              )),
-                                    ],
-                                    onChanged: (value) {
-                                      onChanged('assignedToId', value);
-                                    },
-                                    onSaved: (value) {
-                                      onChanged('assignedToId', value);
-                                    },
-                                  );
-                                },
-                              )
-                            : (formData['assignedToId'] != null
-                                ? TextFormField(
-                                    initialValue: 'Loading team members...',
-                                    decoration: const InputDecoration(
-                                      labelText: 'Assigned To',
-                                      border: OutlineInputBorder(),
-                                      helperText:
-                                          'Please wait while team members are loaded',
-                                    ),
-                                    readOnly: true,
-                                  )
-                                : TextFormField(
-                                    initialValue:
-                                        formData['assignedTeam'] ?? '',
-                                    decoration: const InputDecoration(
-                                      labelText: 'Assigned Team (Legacy)',
-                                      border: OutlineInputBorder(),
-                                      helperText:
-                                          'No users loaded or legacy data',
-                                    ),
-                                    readOnly: true,
-                                  )),
+                        child: _buildAssignedToField(
+                          isLoading: isLoadingTeamMembers,
+                          teamMembers: teamMembers,
+                          formData: formData,
+                          onChanged: onChanged,
+                        ),
                       ),
                       Wrap(
                         crossAxisAlignment: WrapCrossAlignment.center,
