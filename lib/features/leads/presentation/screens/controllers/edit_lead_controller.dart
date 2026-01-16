@@ -172,7 +172,7 @@ class EditLeadController extends ChangeNotifier {
         break;
       case 'assignedToId':
         assignedToId = value;
-        break; 
+        break;
       case 'state':
         state = value;
         break;
@@ -218,7 +218,32 @@ class EditLeadController extends ChangeNotifier {
 
   Future<void> _loadTeamMembers() async {
     try {
-      final members = await UserService.getAllPortalUsers();
+      // Load users with roles SALES, CRM, EMPLOYEE
+      final members = await UserService.getPortalUsersByRoleCodes(
+          ['SALES', 'CRM', 'EMPLOYEE']);
+
+      // Ensure the currently assigned user is included even if they don't have one of these roles
+      if (_originalLead.assignedToId != null) {
+        final assignedUserExists =
+            members.any((m) => m.id == _originalLead.assignedToId);
+        if (!assignedUserExists) {
+          try {
+            final allUsers = await UserService.getAllPortalUsers();
+            final assignedUser = allUsers.firstWhere(
+              (u) => u.id == _originalLead.assignedToId,
+              orElse: () =>
+                  members.first, // Fallback, won't be used if user found
+            );
+            if (assignedUser.id == _originalLead.assignedToId) {
+              members.add(assignedUser);
+            }
+          } catch (e) {
+            // If we can't find the assigned user, continue with filtered list
+            print('Could not load assigned user: $e');
+          }
+        }
+      }
+
       _teamMembers = members;
       notifyListeners();
     } catch (e) {
@@ -298,5 +323,4 @@ class EditLeadController extends ChangeNotifier {
       rethrow;
     }
   }
-
 }

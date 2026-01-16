@@ -20,13 +20,13 @@ class FormSections {
     if (forceColumn || Responsive.isMobile(context)) {
       // Expanded/Flexible cannot be inside a Column within a scroll view
       // Unwrap Expanded to its child for mobile/column layout
-      final List<Widget> columnChildren = children
-          .map((w) => w is Expanded ? w.child : w)
-          .toList();
+      final List<Widget> columnChildren =
+          children.map((w) => w is Expanded ? w.child : w).toList();
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: columnChildren
-            .expand((widget) => [widget, const SizedBox(height: defaultPadding)])
+            .expand(
+                (widget) => [widget, const SizedBox(height: defaultPadding)])
             .toList()
           ..removeLast(),
       );
@@ -128,10 +128,8 @@ class FormSections {
                       }
                       return null;
                     },
-                    onChanged: (value) =>
-                        onChanged('whatsappNumber', value),
-                    onSaved: (value) =>
-                        onChanged('whatsappNumber', value),
+                    onChanged: (value) => onChanged('whatsappNumber', value),
+                    onSaved: (value) => onChanged('whatsappNumber', value),
                   ),
                 ),
               ],
@@ -377,8 +375,7 @@ class FormSections {
                 border: OutlineInputBorder(),
               ),
               maxLines: 3,
-                    onChanged: (value) =>
-                  onChanged('projectDescription', value),
+              onChanged: (value) => onChanged('projectDescription', value),
             ),
             const SizedBox(height: defaultPadding),
             TextFormField(
@@ -541,7 +538,12 @@ class FormSections {
                                 labelText: 'Assigned To',
                                 border: OutlineInputBorder(),
                               ),
-                              value: formData['assignedToId'],
+                              value: formData['assignedToId'] is int
+                                  ? formData['assignedToId'] as int?
+                                  : (formData['assignedToId'] != null
+                                      ? int.tryParse(
+                                          formData['assignedToId'].toString())
+                                      : null),
                               items: [
                                 const DropdownMenuItem<int>(
                                   value: null,
@@ -565,7 +567,8 @@ class FormSections {
                                 labelText: 'Assigned Team (Legacy)',
                                 border: OutlineInputBorder(),
                               ),
-                              readOnly: true, // Legacy field is read-only if no users loaded
+                              readOnly:
+                                  true, // Legacy field is read-only if no users loaded
                             ),
                       const SizedBox(height: defaultPadding),
                       Wrap(
@@ -607,7 +610,12 @@ class FormSections {
                                   labelText: 'Assigned To',
                                   border: OutlineInputBorder(),
                                 ),
-                                value: formData['assignedToId'],
+                                value: formData['assignedToId'] is int
+                                    ? formData['assignedToId'] as int?
+                                    : (formData['assignedToId'] != null
+                                        ? int.tryParse(
+                                            formData['assignedToId'].toString())
+                                        : null),
                                 items: [
                                   const DropdownMenuItem<int>(
                                     value: null,

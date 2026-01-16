@@ -5,6 +5,8 @@ import 'package:admin/features/customers/data/providers/customer_provider.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
+import 'customer_detail_screen.dart';
+import 'add_customer_screen.dart';
 
 class CustomersScreen extends StatelessWidget {
   const CustomersScreen({super.key});
@@ -329,15 +331,39 @@ class CustomersScreen extends StatelessWidget {
   }
 
   void _navigateToDetail(BuildContext context, Customer customer) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('View customer details: ${customer.fullName}')),
+    if (customer.id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Customer ID is missing'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CustomerDetailScreen(
+          customerId: customer.id!,
+          initialCustomer: customer,
+        ),
+      ),
     );
   }
 
-  void _navigateToCreate(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text('Create customer screen - to be implemented')),
+  void _navigateToCreate(BuildContext context) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddCustomerScreen(),
+      ),
     );
+
+    // Refresh the customer list if a customer was created
+    if (result == true && context.mounted) {
+      final provider = Provider.of<CustomerProvider>(context, listen: false);
+      provider.fetch();
+    }
   }
 }

@@ -96,7 +96,8 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
 
   Future<void> _loadTeamMembers() async {
     try {
-      final members = await UserService.getAllPortalUsers();
+      // Load users with roles SALES, CRM, EMPLOYEE
+      final members = await UserService.getPortalUsersByRoleCodes(['SALES', 'CRM', 'EMPLOYEE']);
       setState(() {
         teamMembers = members;
       });

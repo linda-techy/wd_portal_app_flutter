@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:admin/config/app_config.dart';
 import 'package:admin/models/portal_user.dart';
-import 'package:admin/services/portal_auth_service.dart';
 import 'package:admin/services/api_service.dart';
 import 'package:admin/services/http_interceptor.dart';
 
@@ -22,6 +21,19 @@ class UserService {
 
   static Future<List<PortalUser>> getAllPortalUsers() async {
     final response = await _apiService.get('/portal-users');
-    return _apiService.unwrapList<PortalUser>(response, (json) => PortalUser.fromJson(json));
+    return _apiService.unwrapList<PortalUser>(
+        response, (json) => PortalUser.fromJson(json));
+  }
+
+  /// Get portal users filtered by role codes (SALES, CRM, EMPLOYEE)
+  static Future<List<PortalUser>> getPortalUsersByRoleCodes(
+      List<String> roleCodes) async {
+    final queryParams = <String, dynamic>{
+      'roleCodes': roleCodes,
+    };
+    final response = await _apiService.get('/portal-users/by-role-codes',
+        queryParams: queryParams);
+    return _apiService.unwrapList<PortalUser>(
+        response, (json) => PortalUser.fromJson(json));
   }
 }
