@@ -295,7 +295,9 @@ class _PortalLoginScreenState extends State<PortalLoginScreen>
                         label: 'Password',
                         hint: 'Enter your password',
                         semanticLabel: 'Password',
-                        onFieldSubmitted: _handleLogin,
+                        onFieldSubmitted: (_) {
+                          _handleLogin();
+                        },
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter your password';

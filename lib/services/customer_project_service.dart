@@ -173,9 +173,11 @@ class CustomerProjectService {
     final response = await _apiService.get('/customer-projects/search',
         queryParams: queryParams);
 
-    if (response.data != null && response.data['data'] != null) {
+    // The /customer-projects/search endpoint returns Page<CustomerProjectResponse> directly
+    // (not wrapped in ApiResponse), so we parse response.data directly
+    if (response.data != null) {
       return PaginatedResponse.fromJson(
-        response.data['data'],
+        response.data,
         (json) => CustomerProject.fromJson(json),
       );
     }

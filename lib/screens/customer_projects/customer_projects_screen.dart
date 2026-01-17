@@ -5,7 +5,11 @@ import 'package:admin/providers/customer_project_provider_paginated.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
-// import 'customer_project_detail_screen.dart'; // TODO: Create this file
+import 'package:admin/services/customer_project_service.dart';
+import 'package:admin/utils/motion_toast.dart';
+import 'add_customer_project_screen.dart';
+import 'edit_customer_project_screen.dart';
+import 'project_details_screen.dart';
 
 class CustomerProjectsScreen extends StatelessWidget {
   const CustomerProjectsScreen({super.key});
@@ -231,8 +235,52 @@ class CustomerProjectsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (project.projectPhase != null)
-                    _buildPhaseBadge(project.projectPhase!),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (project.projectPhase != null)
+                        _buildPhaseBadge(project.projectPhase!),
+                      const SizedBox(width: 8),
+                      Consumer<PermissionProvider>(
+                        builder: (context, permissionProvider, _) {
+                          return PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_vert),
+                            onSelected: (value) {
+                              if (value == 'edit') {
+                                _navigateToEdit(context, project);
+                              } else if (value == 'delete') {
+                                _confirmAndDelete(context, project);
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              if (permissionProvider.hasPermission('project:edit'))
+                                const PopupMenuItem(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.edit, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Edit'),
+                                    ],
+                                  ),
+                                ),
+                              if (permissionProvider.hasPermission('project:delete'))
+                                const PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.delete, size: 20, color: Colors.red),
+                                      SizedBox(width: 8),
+                                      Text('Delete', style: TextStyle(color: Colors.red)),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -399,24 +447,91 @@ class CustomerProjectsScreen extends StatelessWidget {
   }
 
   void _navigateToDetail(BuildContext context, CustomerProject project) {
-    // TODO: Implement CustomerProjectDetailScreen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Project detail screen coming soon')),
-    );
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (context) =>
-    //         CustomerProjectDetailScreen(projectId: project.id!),
-    //   ),
-    // );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProjectDetailsScreen(project: project),
+      ),
+    ).then((_) {
+      // Refresh the list when returning from detail screen
+      final provider = Provider.of<CustomerProjectProviderPaginated>(context, listen: false);
+      provider.fetch();
+    });
   }
 
   void _navigateToCreate(BuildContext context) {
-    // Navigate to create screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text('Create project screen - to be implemented')),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddCustomerProjectScreen(),
+      ),
+    ).then((_) {
+      // Refresh the list when returning from create screen
+      final provider = Provider.of<CustomerProjectProviderPaginated>(context, listen: false);
+      provider.fetch();
+    });
+  }
+
+  void _navigateToEdit(BuildContext context, CustomerProject project) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditCustomerProjectScreen(project: project),
+      ),
+    ).then((_) {
+      // Refresh the list when returning from edit screen
+      final provider = Provider.of<CustomerProjectProviderPaginated>(context, listen: false);
+      provider.fetch();
+    });
+  }
+
+  Future<void> _confirmAndDelete(BuildContext context, CustomerProject project) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete Project'),
+          content: Text(
+            'Are you sure you want to delete "${project.name}"? This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
     );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        final service = CustomerProjectService();
+        await service.deleteProject(project.id!);
+        
+        if (context.mounted) {
+          MotionToast.showSuccess(
+            context,
+            message: 'Project deleted successfully',
+          );
+          
+          // Refresh the list
+          final provider = Provider.of<CustomerProjectProviderPaginated>(context, listen: false);
+          provider.fetch();
+        }
+      } catch (e) {
+        if (context.mounted) {
+          MotionToast.showError(
+            context,
+            message: 'Failed to delete project: ${e.toString()}',
+          );
+        }
+      }
+    }
   }
 }
