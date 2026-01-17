@@ -31,12 +31,13 @@ class _SubcontractWorkOrderDetailScreenState extends State<SubcontractWorkOrderD
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<SubcontractProvider>();
-      provider.loadWorkOrderSummary(widget.workOrderId);
-      provider.loadWorkOrderMeasurements(widget.workOrderId);
-      provider.loadWorkOrderPayments(widget.workOrderId);
-    });
+    // TODO: Implement loadWorkOrderSummary, loadWorkOrderMeasurements, loadWorkOrderPayments in SubcontractProvider
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   final provider = context.read<SubcontractProvider>();
+    //   provider.loadWorkOrderSummary(widget.workOrderId);
+    //   provider.loadWorkOrderMeasurements(widget.workOrderId);
+    //   provider.loadWorkOrderPayments(widget.workOrderId);
+    // });
   }
 
   @override
@@ -66,57 +67,69 @@ class _SubcontractWorkOrderDetailScreenState extends State<SubcontractWorkOrderD
       ),
       body: Consumer<SubcontractProvider>(
         builder: (context, provider, child) {
-          if (provider.isLoading && provider.currentSummary == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final summary = provider.currentSummary;
-          if (summary == null) {
-            return const Center(child: Text('Work order not found'));
-          }
-
-          return TabBarView(
-            controller: _tabController,
-            children: [
-              _buildDetailsTab(summary),
-              _buildMeasurementsTab(provider),
-              _buildPaymentsTab(provider),
-            ],
+          // TODO: Implement currentSummary, measurements, payments in SubcontractProvider
+          // Temporary placeholder until SubcontractProvider methods are implemented
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24.0),
+              child: Text(
+                'Work order detail functionality to be implemented.\n\nSubcontractProvider needs:\n- loadWorkOrderSummary\n- loadWorkOrderMeasurements\n- loadWorkOrderPayments\n- currentSummary property\n- measurements property\n- payments property',
+                textAlign: TextAlign.center,
+              ),
+            ),
           );
+
+          // Original code - uncomment when SubcontractProvider methods are implemented
+          // if (provider.isLoading && provider.currentSummary == null) {
+          //   return const Center(child: CircularProgressIndicator());
+          // }
+          // final summary = provider.currentSummary;
+          // if (summary == null) {
+          //   return const Center(child: Text('Work order not found'));
+          // }
+          // return TabBarView(
+          //   controller: _tabController,
+          //   children: [
+          //     _buildDetailsTab(summary),
+          //     _buildMeasurementsTab(provider),
+          //     _buildPaymentsTab(provider),
+          //   ],
+          // );
         },
       ),
-      floatingActionButton: ValueListenableBuilder(
-        valueListenable: _tabController.animation!,
-        builder: (context, value, child) {
-          if (_tabController.index == 2) { // Payments Tab
-            return FloatingActionButton.extended(
-              onPressed: () {
-                final summary = context.read<SubcontractProvider>().currentSummary;
-                if (summary != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => RecordSubcontractPaymentScreen(
-                        workOrderId: widget.workOrderId,
-                        balanceDue: summary.balanceDue,
-                      ),
-                    ),
-                  ).then((_) {
-                    // Refresh data
-                    final p = context.read<SubcontractProvider>();
-                    p.loadWorkOrderPayments(widget.workOrderId);
-                    p.loadWorkOrderSummary(widget.workOrderId);
-                  });
-                }
-              },
-              label: const Text('Record Payment'),
-              icon: const Icon(Icons.payment),
-              backgroundColor: AppTheme.coralRed,
-            );
-          }
-          return const SizedBox.shrink();
-        },
-      ),
+      // TODO: Uncomment when SubcontractProvider methods are implemented
+      // floatingActionButton: ValueListenableBuilder(
+      //   valueListenable: _tabController.animation!,
+      //   builder: (context, value, child) {
+      //     if (_tabController.index == 2) { // Payments Tab
+      //       return FloatingActionButton.extended(
+      //         onPressed: () {
+      //           final summary = context.read<SubcontractProvider>().currentSummary;
+      //           if (summary != null) {
+      //             Navigator.push(
+      //               context,
+      //               MaterialPageRoute(
+      //                 builder: (_) => RecordSubcontractPaymentScreen(
+      //                   workOrderId: widget.workOrderId,
+      //                   balanceDue: summary.balanceDue,
+      //                 ),
+      //               ),
+      //             ).then((_) {
+      //               // Refresh data
+      //               final p = context.read<SubcontractProvider>();
+      //               p.loadWorkOrderPayments(widget.workOrderId);
+      //               p.loadWorkOrderSummary(widget.workOrderId);
+      //             });
+      //           }
+      //         },
+      //         label: const Text('Record Payment'),
+      //         icon: const Icon(Icons.payment),
+      //         backgroundColor: AppTheme.coralRed,
+      //       );
+      //     }
+      //     return const SizedBox.shrink();
+      //   },
+      // ),
     );
   }
 
@@ -219,7 +232,9 @@ class _SubcontractWorkOrderDetailScreenState extends State<SubcontractWorkOrderD
   }
 
   Widget _buildMeasurementsTab(SubcontractProvider provider) {
-    final measurements = provider.measurements;
+    // TODO: Implement measurements property in SubcontractProvider
+    // final measurements = provider.measurements;
+    final measurements = <SubcontractMeasurement>[];
 
     return Column(
       children: [
@@ -243,7 +258,9 @@ class _SubcontractWorkOrderDetailScreenState extends State<SubcontractWorkOrderD
   }
 
   Widget _buildPaymentsTab(SubcontractProvider provider) {
-    final payments = provider.payments;
+    // TODO: Implement payments property in SubcontractProvider
+    // final payments = provider.payments;
+    final payments = <SubcontractPayment>[];
 
     return Column(
       children: [

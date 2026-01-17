@@ -302,7 +302,9 @@ class _RecordSubcontractPaymentScreenState extends State<RecordSubcontractPaymen
       );
 
       try {
-        await context.read<SubcontractProvider>().recordPayment(payment);
+        // TODO: Implement recordPayment method in SubcontractProvider
+        // await context.read<SubcontractProvider>().recordPayment(payment);
+        throw Exception('recordPayment method not yet implemented in SubcontractProvider');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Payment recorded successfully')),

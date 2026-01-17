@@ -8,7 +8,14 @@ import 'package:admin/providers/permission_provider.dart';
 import 'subcontract_work_order_detail_screen.dart';
 
 class SubcontractWorkOrdersScreen extends StatelessWidget {
-  const SubcontractWorkOrdersScreen({super.key});
+  final int? projectId;
+  final String? projectName;
+
+  const SubcontractWorkOrdersScreen({
+    super.key,
+    this.projectId,
+    this.projectName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -181,16 +188,16 @@ class SubcontractWorkOrdersScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          subcontract.workOrderNumber ?? 'WO-${subcontract.id}',
+                          subcontract.workOrderNumber,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        if (subcontract.contractorName != null) ...[
+                        if (subcontract.vendorName != null) ...[
                           const SizedBox(height: 4),
                           Text(
-                            subcontract.contractorName!,
+                            subcontract.vendorName!,
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey[600],
@@ -200,15 +207,16 @@ class SubcontractWorkOrdersScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (subcontract.status != null)
-                    _buildStatusBadge(subcontract.status!),
+                  _buildStatusBadge(subcontract.status),
                 ],
               ),
-              if (subcontract.workType != null) ...[
+              if (subcontract.scopeDescription.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(
-                  subcontract.workType!,
+                  subcontract.scopeDescription,
                   style: TextStyle(color: Colors.grey[600]),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
               const SizedBox(height: 12),
@@ -221,12 +229,11 @@ class SubcontractWorkOrdersScreen extends StatelessWidget {
                       icon: Icons.business,
                       label: subcontract.projectName!,
                     ),
-                  if (subcontract.contractAmount != null)
-                    _buildInfoChip(
-                      icon: Icons.currency_rupee,
-                      label: '₹${subcontract.contractAmount!.toStringAsFixed(2)}',
-                      color: Colors.green,
-                    ),
+                  _buildInfoChip(
+                    icon: Icons.currency_rupee,
+                    label: '₹${subcontract.negotiatedAmount.toStringAsFixed(2)}',
+                    color: Colors.green,
+                  ),
                   if (subcontract.startDate != null)
                     _buildInfoChip(
                       icon: Icons.calendar_today,
