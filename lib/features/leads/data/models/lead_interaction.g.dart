@@ -24,6 +24,8 @@ LeadInteraction _$LeadInteractionFromJson(Map<String, dynamic> json) =>
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),
+      location: json['location'] as String?,
+      metadata: json['metadata'] as String?,
     );
 
 Map<String, dynamic> _$LeadInteractionToJson(LeadInteraction instance) =>
@@ -40,4 +42,6 @@ Map<String, dynamic> _$LeadInteractionToJson(LeadInteraction instance) =>
       'nextActionDate': instance.nextActionDate?.toIso8601String(),
       'createdById': instance.createdById,
       'createdAt': instance.createdAt?.toIso8601String(),
+      'location': instance.location,
+      'metadata': instance.metadata,
     };
