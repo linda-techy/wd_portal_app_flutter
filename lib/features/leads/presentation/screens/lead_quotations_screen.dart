@@ -1,27 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/features/leads/data/models/lead_quotation.dart';
+import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/features/leads/presentation/providers/lead_quotation_provider.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
+import 'add_quotation_screen.dart';
+import 'lead_quotation_detail_screen.dart';
 
 class LeadQuotationsScreen extends StatelessWidget {
-  const LeadQuotationsScreen({super.key});
+  final Lead? lead;
+  final int? leadId;
+
+  const LeadQuotationsScreen({super.key, this.lead, this.leadId});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => LeadQuotationProvider()..fetch(),
+      create: (_) {
+        final provider = LeadQuotationProvider();
+        // If leadId is provided, filter by that lead
+        if (leadId != null) {
+          provider.filterByLeadId(leadId);
+        }
+        provider.fetch();
+        return provider;
+      },
       child: Consumer<LeadQuotationProvider>(
         builder: (context, provider, _) {
           return Scaffold(
             appBar: AppBar(
-              title: const Text('Lead Quotations'),
+              title: Text(lead != null ? 'Quotations: ${lead!.name}' : 'Lead Quotations'),
               actions: [
                 Consumer<PermissionProvider>(
                   builder: (context, permissionProvider, _) {
-                    if (permissionProvider.hasPermission('lead:edit')) {
+                    if (permissionProvider.hasPermission('lead:edit') && lead != null) {
                       return IconButton(
                         icon: const Icon(Icons.add),
                         onPressed: () => _navigateToCreate(context),
@@ -214,6 +228,42 @@ class LeadQuotationsScreen extends StatelessWidget {
                     ),
                   ),
                   _buildStatusBadge(quotation.status),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (value) {
+                      if (value == 'view') {
+                        _navigateToDetail(context, quotation);
+                      } else if (value == 'edit' && quotation.status == 'DRAFT') {
+                        if (lead != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddQuotationScreen(
+                                lead: lead!,
+                                quotationToEdit: quotation,
+                              ),
+                            ),
+                          ).then((result) {
+                            if (result == true) {
+                              final provider = Provider.of<LeadQuotationProvider>(context, listen: false);
+                              provider.fetch();
+                            }
+                          });
+                        }
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'view',
+                        child: Row(children: [Icon(Icons.visibility, size: 20), SizedBox(width: 8), Text('View Details')]),
+                      ),
+                      if (quotation.status == 'DRAFT' && lead != null)
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Row(children: [Icon(Icons.edit, size: 20), SizedBox(width: 8), Text('Edit')]),
+                        ),
+                    ],
+                  ),
                 ],
               ),
               if (quotation.description != null &&
@@ -241,6 +291,12 @@ class LeadQuotationsScreen extends StatelessWidget {
                       icon: Icons.currency_rupee,
                       label: '₹${quotation.totalAmount!.toStringAsFixed(2)}',
                       color: AppTheme.statusSuccess,
+                    ),
+                  if (quotation.items.isNotEmpty)
+                    _buildInfoChip(
+                      icon: Icons.list,
+                      label: '${quotation.items.length} item(s)',
+                      color: Colors.blue,
                     ),
                   if (quotation.createdAt != null)
                     _buildInfoChip(
@@ -368,15 +424,36 @@ class LeadQuotationsScreen extends StatelessWidget {
   }
 
   void _navigateToDetail(BuildContext context, LeadQuotation quotation) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('View details for ${quotation.quotationNumber}')),
-    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LeadQuotationDetailScreen(quotationId: quotation.id!),
+      ),
+    ).then((_) {
+      // Refresh the list when returning from detail screen
+      final provider = Provider.of<LeadQuotationProvider>(context, listen: false);
+      provider.fetch();
+    });
   }
 
   void _navigateToCreate(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text('Create lead quotation - to be implemented')),
-    );
+    if (lead == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a lead first')),
+      );
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddQuotationScreen(lead: lead!),
+      ),
+    ).then((result) {
+      // Refresh the list when returning from create screen
+      if (result == true) {
+        final provider = Provider.of<LeadQuotationProvider>(context, listen: false);
+        provider.fetch();
+      }
+    });
   }
 }

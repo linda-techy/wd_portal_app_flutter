@@ -5,6 +5,12 @@ import 'package:admin/models/paginated_response.dart';
 class LeadQuotationService {
   final ApiService _apiService = ApiService();
 
+  Future<LeadQuotation> getQuotationById(int id) async {
+    final response = await _apiService.get('/leads/quotations/$id');
+    return _apiService.unwrap<LeadQuotation>(
+        response, (json) => LeadQuotation.fromJson(json as Map<String, dynamic>));
+  }
+
   Future<List<LeadQuotation>> getQuotationsByLead(int leadId) async {
     final response = await _apiService.get('/leads/quotations/lead/$leadId');
     return _apiService.unwrapList<LeadQuotation>(
@@ -28,6 +34,20 @@ class LeadQuotationService {
   Future<LeadQuotation> sendQuotation(int id) async {
     final response =
         await _apiService.post('/leads/quotations/$id/send', data: {});
+    return _apiService.unwrap<LeadQuotation>(
+        response, (json) => LeadQuotation.fromJson(json as Map<String, dynamic>));
+  }
+
+  Future<LeadQuotation> acceptQuotation(int id) async {
+    final response =
+        await _apiService.post('/leads/quotations/$id/accept', data: {});
+    return _apiService.unwrap<LeadQuotation>(
+        response, (json) => LeadQuotation.fromJson(json as Map<String, dynamic>));
+  }
+
+  Future<LeadQuotation> rejectQuotation(int id, {String? reason}) async {
+    final response = await _apiService.post('/leads/quotations/$id/reject',
+        data: reason != null ? {'reason': reason} : {});
     return _apiService.unwrap<LeadQuotation>(
         response, (json) => LeadQuotation.fromJson(json as Map<String, dynamic>));
   }

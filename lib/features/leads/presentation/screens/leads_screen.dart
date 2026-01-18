@@ -1068,7 +1068,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const LeadQuotationsScreen(),
+        builder: (context) => LeadQuotationsScreen(lead: lead, leadId: int.tryParse(lead.leadId)),
       ),
     );
   }
