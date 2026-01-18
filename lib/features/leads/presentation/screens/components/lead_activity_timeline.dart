@@ -93,6 +93,8 @@ class _LeadActivityTimelineState extends State<LeadActivityTimeline> {
   }
 
   Widget _buildTimelineItem(ActivityFeed activity, bool isLast) {
+    final bool isInteraction = _isInteractionType(activity.activityType);
+    
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,11 +107,11 @@ class _LeadActivityTimelineState extends State<LeadActivityTimeline> {
                   width: 30,
                   height: 30,
                   decoration: BoxDecoration(
-                    color: _getColorForType(activity.activityType),
+                    color: isInteraction ? Colors.purple : _getColorForType(activity.activityType),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    _getIconForType(activity.activityType),
+                    isInteraction ? _getInteractionIcon(activity.activityType) : _getIconForType(activity.activityType),
                     color: Colors.white,
                     size: 16,
                   ),
@@ -132,6 +134,10 @@ class _LeadActivityTimelineState extends State<LeadActivityTimeline> {
                 elevation: 1,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(
+                    color: isInteraction ? Colors.purple.withOpacity(0.3) : Colors.transparent,
+                    width: 1,
+                  ),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
@@ -141,11 +147,36 @@ class _LeadActivityTimelineState extends State<LeadActivityTimeline> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            activity.title,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                          Expanded(
+                            child: Row(
+                              children: [
+                                // Badge to distinguish type
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: isInteraction ? Colors.purple.withOpacity(0.2) : Colors.blue.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    isInteraction ? 'INTERACTION' : 'SYSTEM EVENT',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: isInteraction ? Colors.purple.shade700 : Colors.blue.shade700,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    activity.title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           Text(
@@ -179,6 +210,32 @@ class _LeadActivityTimelineState extends State<LeadActivityTimeline> {
         ],
       ),
     );
+  }
+  
+  // Check if activity type is an interaction (from lead_interactions table)
+  bool _isInteractionType(String activityType) {
+    const interactionTypes = ['CALL', 'EMAIL', 'MEETING', 'SITE_VISIT', 'WHATSAPP', 'SMS', 'OTHER'];
+    return interactionTypes.contains(activityType.toUpperCase());
+  }
+  
+  // Get icon for interaction types
+  IconData _getInteractionIcon(String type) {
+    switch (type.toUpperCase()) {
+      case 'CALL':
+        return Icons.phone;
+      case 'EMAIL':
+        return Icons.email;
+      case 'MEETING':
+        return Icons.people;
+      case 'SITE_VISIT':
+        return Icons.location_on;
+      case 'WHATSAPP':
+        return Icons.chat;
+      case 'SMS':
+        return Icons.message;
+      default:
+        return Icons.chat_bubble;
+    }
   }
 
   Color _getColorForType(String type) {

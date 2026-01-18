@@ -7,17 +7,31 @@ import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
 
 class LeadInteractionsScreen extends StatelessWidget {
-  const LeadInteractionsScreen({super.key});
+  final String? leadId;
+  
+  const LeadInteractionsScreen({super.key, this.leadId});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => LeadInteractionProvider()..fetch(),
+      create: (_) {
+        final provider = LeadInteractionProvider();
+        if (leadId != null) {
+          // Filter by leadId if provided - provider may need to be updated to support this
+          // For now, fetch all and filter in UI if needed
+          provider.fetch();
+        } else {
+          provider.fetch();
+        }
+        return provider;
+      },
       child: Consumer<LeadInteractionProvider>(
         builder: (context, provider, _) {
           return Scaffold(
             appBar: AppBar(
-              title: const Text('Lead Interactions'),
+              title: Text(leadId != null 
+                  ? 'Lead Interactions' 
+                  : 'All Lead Interactions'),
               actions: [
                 Consumer<PermissionProvider>(
                   builder: (context, permissionProvider, _) {

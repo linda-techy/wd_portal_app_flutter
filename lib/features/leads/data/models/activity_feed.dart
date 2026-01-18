@@ -2,9 +2,9 @@ class ActivityFeed {
   final int id;
   final String title;
   final String description;
-  final String activityType; // Simplified mapping from ActivityType.name
+  final String activityType; // ActivityType name from ActivityFeedDTO
   final DateTime createdAt;
-  final String? createdBy;
+  final String? createdByName; // Created by name from ActivityFeedDTO
 
   ActivityFeed({
     required this.id,
@@ -12,20 +12,22 @@ class ActivityFeed {
     required this.description,
     required this.activityType,
     required this.createdAt,
-    this.createdBy,
+    this.createdByName,
   });
 
   factory ActivityFeed.fromJson(Map<String, dynamic> json) {
     return ActivityFeed(
       id: json['id'],
       title: json['title'],
-      description: json['description'],
-      // Handle nested ActivityType object
-      activityType: json['activityType'] != null 
-          ? (json['activityType'] is Map ? json['activityType']['name'] : json['activityType'].toString()) 
-          : 'UNKNOWN',
+      description: json['description'] ?? '',
+      // ActivityFeedDTO returns activityType as String (ActivityType.name)
+      activityType: json['activityType']?.toString() ?? 'UNKNOWN',
       createdAt: DateTime.parse(json['createdAt']),
-      createdBy: json['createdBy'] != null ? json['createdBy']['email'] : (json['portalUser'] != null ? json['portalUser']['email'] : 'System'),
+      // ActivityFeedDTO returns createdByName as String
+      createdByName: json['createdByName'],
     );
   }
+
+  // Backward compatibility getter
+  String? get createdBy => createdByName;
 }

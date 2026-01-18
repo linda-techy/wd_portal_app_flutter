@@ -22,6 +22,8 @@ import 'lead_quotations_screen.dart';
 import 'lead_tasks_screen.dart';
 import 'lead_activity_screen.dart';
 import 'lead_documents_screen.dart';
+import 'lead_interactions_screen.dart';
+import 'lead_score_history_screen.dart';
 // import 'lead_table.dart'; // Removed to avoid conflict with local LeadsTable class
 import 'components/add_interaction_dialog.dart';
 // import 'components/leads_summary_card.dart';
@@ -463,6 +465,8 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                 onViewQuotations: _viewQuotations,
                                 onViewTasks: _viewTasks,
                                 onViewActivity: _viewActivity,
+                                onViewInteractions: _viewInteractions,
+                                onViewScoreHistory: _viewScoreHistory,
                                 onLogActivity: _logActivity,
                                 onViewDocuments: _viewDocuments,
                               ),
@@ -502,6 +506,8 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                   onViewQuotations: _viewQuotations,
                                   onViewTasks: _viewTasks,
                                   onViewActivity: _viewActivity,
+                                  onViewInteractions: _viewInteractions,
+                                  onViewScoreHistory: _viewScoreHistory,
                                   onLogActivity: _logActivity,
                                   onViewDocuments: _viewDocuments,
                                 ),
@@ -542,6 +548,8 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                   onViewQuotations: _viewQuotations,
                                   onViewTasks: _viewTasks,
                                   onViewActivity: _viewActivity,
+                                  onViewInteractions: _viewInteractions,
+                                  onViewScoreHistory: _viewScoreHistory,
                                   onLogActivity: _logActivity,
                                   onViewDocuments: _viewDocuments,
                                 ),
@@ -1032,6 +1040,22 @@ class _LeadsScreenState extends State<LeadsScreen> {
     );
   }
 
+  void _viewInteractions(Lead lead) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => LeadInteractionsScreen(leadId: lead.leadId),
+      ),
+    );
+  }
+
+  void _viewScoreHistory(Lead lead) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => LeadScoreHistoryScreen(lead: lead),
+      ),
+    );
+  }
+
   void _viewDocuments(Lead lead) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -1103,6 +1127,8 @@ class LeadsTable extends StatefulWidget {
   final Function(Lead) onViewQuotations;
   final Function(Lead) onViewTasks;
   final Function(Lead) onViewActivity;
+  final Function(Lead) onViewInteractions;
+  final Function(Lead) onViewScoreHistory;
   final Function(Lead) onViewDocuments;
   final Function(Lead) onLogActivity;
 
@@ -1115,6 +1141,8 @@ class LeadsTable extends StatefulWidget {
     required this.onViewQuotations,
     required this.onViewTasks,
     required this.onViewActivity,
+    required this.onViewInteractions,
+    required this.onViewScoreHistory,
     required this.onViewDocuments,
     required this.onLogActivity,
   });
@@ -1472,6 +1500,12 @@ class _LeadsTableState extends State<LeadsTable> {
                                         case 'activity':
                                           widget.onViewActivity(lead);
                                           break;
+                                        case 'interactions':
+                                          widget.onViewInteractions(lead);
+                                          break;
+                                        case 'score_history':
+                                          widget.onViewScoreHistory(lead);
+                                          break;
                                         case 'docs':
                                           widget.onViewDocuments(lead);
                                           break;
@@ -1532,6 +1566,26 @@ class _LeadsTableState extends State<LeadsTable> {
                                           leading: Icon(Icons.history,
                                               color: Colors.purple, size: 20),
                                           title: Text('View Activity'),
+                                          contentPadding: EdgeInsets.zero,
+                                          dense: true,
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'interactions',
+                                        child: ListTile(
+                                          leading: Icon(Icons.chat_bubble,
+                                              color: Colors.indigo, size: 20),
+                                          title: Text('View Interactions'),
+                                          contentPadding: EdgeInsets.zero,
+                                          dense: true,
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'score_history',
+                                        child: ListTile(
+                                          leading: Icon(Icons.trending_up,
+                                              color: Colors.amber, size: 20),
+                                          title: Text('View Score History'),
                                           contentPadding: EdgeInsets.zero,
                                           dense: true,
                                         ),

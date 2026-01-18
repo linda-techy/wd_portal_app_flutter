@@ -10,6 +10,7 @@ import 'dart:io';
 import 'package:dio/dio.dart'; // Import Dio for MultipartFile
 
 import 'package:admin/features/leads/data/models/lead_interaction.dart';
+import 'package:admin/features/leads/data/models/lead_score_history.dart';
 
 class LeadService {
   final ApiService _apiService = ApiService();
@@ -182,6 +183,13 @@ class LeadService {
         data: interaction.toJson());
     return _apiService.unwrap<LeadInteraction>(response,
         (json) => LeadInteraction.fromJson(json as Map<String, dynamic>));
+  }
+
+  /// Get score history for a lead
+  Future<List<LeadScoreHistory>> getLeadScoreHistory(String leadId) async {
+    final response = await _apiService.get('/leads/$leadId/score-history');
+    return _apiService.unwrapList<LeadScoreHistory>(
+        response, (json) => LeadScoreHistory.fromJson(json));
   }
 
   /// NEW: Standardized search endpoint for lead interactions
