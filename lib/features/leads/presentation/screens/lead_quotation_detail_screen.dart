@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +9,8 @@ import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/utils/motion_toast.dart';
 import 'package:admin/utils/error_handler.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'add_quotation_screen.dart';
 
 class LeadQuotationDetailScreen extends StatefulWidget {
@@ -16,7 +19,8 @@ class LeadQuotationDetailScreen extends StatefulWidget {
   const LeadQuotationDetailScreen({super.key, required this.quotationId});
 
   @override
-  State<LeadQuotationDetailScreen> createState() => _LeadQuotationDetailScreenState();
+  State<LeadQuotationDetailScreen> createState() =>
+      _LeadQuotationDetailScreenState();
 }
 
 class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
@@ -49,19 +53,21 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
           _isLoading = false;
           _errorMessage = e.toString();
         });
-        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load quotation');
+        await ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'Failed to load quotation');
       }
     }
   }
 
   Future<void> _sendQuotation() async {
     if (_quotation == null) return;
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Send Quotation'),
-        content: Text('Are you sure you want to send "${_quotation!.quotationNumber}" to the lead?'),
+        content: Text(
+            'Are you sure you want to send "${_quotation!.quotationNumber}" to the lead?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -79,12 +85,14 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
       try {
         await _service.sendQuotation(_quotation!.id!);
         if (mounted) {
-          MotionToast.showSuccess(context, message: 'Quotation sent successfully');
+          MotionToast.showSuccess(context,
+              message: 'Quotation sent successfully');
           _loadQuotation();
         }
       } catch (e) {
         if (mounted) {
-          await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to send quotation');
+          await ErrorHandler.handleApiError(context, e,
+              defaultMessage: 'Failed to send quotation');
         }
       }
     }
@@ -92,7 +100,7 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
 
   Future<void> _acceptQuotation() async {
     if (_quotation == null) return;
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -120,7 +128,8 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
         }
       } catch (e) {
         if (mounted) {
-          await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to accept quotation');
+          await ErrorHandler.handleApiError(context, e,
+              defaultMessage: 'Failed to accept quotation');
         }
       }
     }
@@ -128,7 +137,7 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
 
   Future<void> _rejectQuotation() async {
     if (_quotation == null) return;
-    
+
     final reasonController = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
@@ -165,14 +174,18 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
 
     if (confirmed == true && mounted) {
       try {
-        await _service.rejectQuotation(_quotation!.id!, reason: reasonController.text.isNotEmpty ? reasonController.text : null);
+        await _service.rejectQuotation(_quotation!.id!,
+            reason: reasonController.text.isNotEmpty
+                ? reasonController.text
+                : null);
         if (mounted) {
           MotionToast.showSuccess(context, message: 'Quotation rejected');
           _loadQuotation();
         }
       } catch (e) {
         if (mounted) {
-          await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to reject quotation');
+          await ErrorHandler.handleApiError(context, e,
+              defaultMessage: 'Failed to reject quotation');
         }
       }
     }
@@ -180,12 +193,13 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
 
   Future<void> _deleteQuotation() async {
     if (_quotation == null) return;
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Quotation'),
-        content: Text('Are you sure you want to delete "${_quotation!.quotationNumber}"? This action cannot be undone.'),
+        content: Text(
+            'Are you sure you want to delete "${_quotation!.quotationNumber}"? This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -209,20 +223,66 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
         }
       } catch (e) {
         if (mounted) {
-          await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to delete quotation');
+          await ErrorHandler.handleApiError(context, e,
+              defaultMessage: 'Failed to delete quotation');
         }
+      }
+    }
+  }
+
+  Future<void> _downloadPdf() async {
+    if (_quotation == null) return;
+
+    try {
+      // Show loading indicator
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => const Center(child: CircularProgressIndicator()),
+        );
+      }
+
+      final bytes = await _service.downloadQuotationPdf(_quotation!.id!);
+      final dir = await getTemporaryDirectory();
+      final filename =
+          'Quotation_${_quotation!.quotationNumber?.replaceAll("/", "_") ?? _quotation!.id}.pdf';
+      final file = File('${dir.path}/$filename');
+      await file.writeAsBytes(bytes);
+
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+      }
+
+      // Share/download PDF
+      if (mounted) {
+        await Share.shareXFiles(
+          [XFile(file.path)],
+          text: 'Quotation - ${_quotation!.quotationNumber}',
+        );
+        MotionToast.showSuccess(context,
+            message: 'PDF downloaded successfully');
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+        await ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'Failed to download PDF');
       }
     }
   }
 
   void _editQuotation() {
     if (_quotation == null) return;
-    
+
     // Create a minimal Lead object from quotation data
     // In a real scenario, you might want to fetch the full lead
     final lead = Lead(
       leadId: _quotation!.leadId.toString(),
-      name: 'Lead ${_quotation!.leadId}', // Placeholder - ideally fetch from API
+      name:
+          'Lead ${_quotation!.leadId}', // Placeholder - ideally fetch from API
       email: '',
       phone: '',
       source: LeadSource.website,
@@ -239,7 +299,7 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
       projectDescription: '',
       requirements: '',
     );
-    
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -308,12 +368,18 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
     final quotation = _quotation!;
     final canEdit = quotation.status == 'DRAFT';
     final canSend = quotation.status == 'DRAFT';
-    final canAcceptReject = quotation.status == 'SENT' || quotation.status == 'VIEWED';
+    final canAcceptReject =
+        quotation.status == 'SENT' || quotation.status == 'VIEWED';
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Quotation: ${quotation.quotationNumber}'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf),
+            tooltip: 'Download PDF',
+            onPressed: _downloadPdf,
+          ),
           Consumer<PermissionProvider>(
             builder: (context, permissionProvider, _) {
               if (!permissionProvider.hasPermission('lead:edit')) {
@@ -343,27 +409,47 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
                   if (canEdit)
                     const PopupMenuItem(
                       value: 'edit',
-                      child: Row(children: [Icon(Icons.edit, size: 20), SizedBox(width: 8), Text('Edit')]),
+                      child: Row(children: [
+                        Icon(Icons.edit, size: 20),
+                        SizedBox(width: 8),
+                        Text('Edit')
+                      ]),
                     ),
                   if (canSend)
                     const PopupMenuItem(
                       value: 'send',
-                      child: Row(children: [Icon(Icons.send, size: 20), SizedBox(width: 8), Text('Send')]),
+                      child: Row(children: [
+                        Icon(Icons.send, size: 20),
+                        SizedBox(width: 8),
+                        Text('Send')
+                      ]),
                     ),
                   if (canAcceptReject) ...[
                     const PopupMenuItem(
                       value: 'accept',
-                      child: Row(children: [Icon(Icons.check_circle, size: 20, color: Colors.green), SizedBox(width: 8), Text('Accept')]),
+                      child: Row(children: [
+                        Icon(Icons.check_circle, size: 20, color: Colors.green),
+                        SizedBox(width: 8),
+                        Text('Accept')
+                      ]),
                     ),
                     const PopupMenuItem(
                       value: 'reject',
-                      child: Row(children: [Icon(Icons.cancel, size: 20, color: Colors.red), SizedBox(width: 8), Text('Reject')]),
+                      child: Row(children: [
+                        Icon(Icons.cancel, size: 20, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Reject')
+                      ]),
                     ),
                   ],
                   if (canEdit)
                     const PopupMenuItem(
                       value: 'delete',
-                      child: Row(children: [Icon(Icons.delete, size: 20, color: Colors.red), SizedBox(width: 8), Text('Delete')]),
+                      child: Row(children: [
+                        Icon(Icons.delete, size: 20, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Delete')
+                      ]),
                     ),
                 ],
               );
@@ -392,30 +478,36 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
                             children: [
                               Text(
                                 quotation.title,
-                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                    fontSize: 20, fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 'Quotation #${quotation.quotationNumber}',
-                                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                                style: TextStyle(
+                                    fontSize: 14, color: Colors.grey[600]),
                               ),
                             ],
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: _getStatusColor(quotation.status),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             quotation.status,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
                     ),
-                    if (quotation.description != null && quotation.description!.isNotEmpty) ...[
+                    if (quotation.description != null &&
+                        quotation.description!.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       Text(quotation.description!),
                     ],
@@ -432,18 +524,24 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text('Details',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
                     _buildDetailRow('Lead ID', quotation.leadId.toString()),
                     _buildDetailRow('Version', quotation.version.toString()),
-                    _buildDetailRow('Validity', '${quotation.validityDays} days'),
-                    _buildDetailRow('Created', _formatDate(quotation.createdAt)),
+                    _buildDetailRow(
+                        'Validity', '${quotation.validityDays} days'),
+                    _buildDetailRow(
+                        'Created', _formatDate(quotation.createdAt)),
                     if (quotation.sentAt != null)
                       _buildDetailRow('Sent', _formatDate(quotation.sentAt)),
                     if (quotation.viewedAt != null)
-                      _buildDetailRow('Viewed', _formatDate(quotation.viewedAt)),
+                      _buildDetailRow(
+                          'Viewed', _formatDate(quotation.viewedAt)),
                     if (quotation.respondedAt != null)
-                      _buildDetailRow('Responded', _formatDate(quotation.respondedAt)),
+                      _buildDetailRow(
+                          'Responded', _formatDate(quotation.respondedAt)),
                   ],
                 ),
               ),
@@ -457,12 +555,16 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Line Items', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text('Line Items',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
                     if (quotation.items.isEmpty)
                       const Padding(
                         padding: EdgeInsets.all(16.0),
-                        child: Center(child: Text('No items', style: TextStyle(color: Colors.grey))),
+                        child: Center(
+                            child: Text('No items',
+                                style: TextStyle(color: Colors.grey))),
                       )
                     else
                       Table(
@@ -476,22 +578,57 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
                         children: [
                           const TableRow(
                             children: [
-                              Padding(padding: EdgeInsets.all(8), child: Text('Item', style: TextStyle(fontWeight: FontWeight.bold))),
-                              Padding(padding: EdgeInsets.all(8), child: Text('Description', style: TextStyle(fontWeight: FontWeight.bold))),
-                              Padding(padding: EdgeInsets.all(8), child: Text('Qty', style: TextStyle(fontWeight: FontWeight.bold))),
-                              Padding(padding: EdgeInsets.all(8), child: Text('Unit Price', style: TextStyle(fontWeight: FontWeight.bold))),
-                              Padding(padding: EdgeInsets.all(8), child: Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
+                              Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Text('Item',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold))),
+                              Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Text('Description',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold))),
+                              Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Text('Qty',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold))),
+                              Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Text('Unit Price',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold))),
+                              Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Text('Total',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold))),
                             ],
                           ),
                           ...quotation.items.map((item) => TableRow(
-                            children: [
-                              Padding(padding: const EdgeInsets.all(8), child: Text(item.itemNumber.toString())),
-                              Padding(padding: const EdgeInsets.all(8), child: Text(item.description)),
-                              Padding(padding: const EdgeInsets.all(8), child: Text(item.quantity.toStringAsFixed(2))),
-                              Padding(padding: const EdgeInsets.all(8), child: Text('₹${item.unitPrice.toStringAsFixed(2)}')),
-                              Padding(padding: const EdgeInsets.all(8), child: Text('₹${item.totalPrice.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold))),
-                            ],
-                          )),
+                                children: [
+                                  Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Text(item.itemNumber.toString())),
+                                  Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Text(item.description)),
+                                  Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Text(
+                                          item.quantity.toStringAsFixed(2))),
+                                  Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Text(
+                                          '₹${item.unitPrice.toStringAsFixed(2)}')),
+                                  Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Text(
+                                          '₹${item.totalPrice.toStringAsFixed(2)}',
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold))),
+                                ],
+                              )),
                         ],
                       ),
                   ],
@@ -507,15 +644,20 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Amounts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text('Amounts',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
                     _buildAmountRow('Subtotal', quotation.totalAmount),
                     if (quotation.taxAmount != null && quotation.taxAmount! > 0)
                       _buildAmountRow('Tax', quotation.taxAmount),
-                    if (quotation.discountAmount != null && quotation.discountAmount! > 0)
-                      _buildAmountRow('Discount', quotation.discountAmount, isDiscount: true),
+                    if (quotation.discountAmount != null &&
+                        quotation.discountAmount! > 0)
+                      _buildAmountRow('Discount', quotation.discountAmount,
+                          isDiscount: true),
                     const Divider(),
-                    _buildAmountRow('Final Amount', quotation.finalAmount, isTotal: true),
+                    _buildAmountRow('Final Amount', quotation.finalAmount,
+                        isTotal: true),
                   ],
                 ),
               ),
@@ -528,7 +670,9 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Notes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      const Text('Notes',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
                       Text(quotation.notes!),
                     ],
@@ -555,14 +699,18 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
     );
   }
 
-  Widget _buildAmountRow(String label, double? amount, {bool isDiscount = false, bool isTotal = false}) {
+  Widget _buildAmountRow(String label, double? amount,
+      {bool isDiscount = false, bool isTotal = false}) {
     if (amount == null) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: isTotal ? 16 : 14, fontWeight: isTotal ? FontWeight.bold : FontWeight.normal)),
+          Text(label,
+              style: TextStyle(
+                  fontSize: isTotal ? 16 : 14,
+                  fontWeight: isTotal ? FontWeight.bold : FontWeight.normal)),
           Text(
             '${isDiscount ? '-' : ''}₹${amount.toStringAsFixed(2)}',
             style: TextStyle(

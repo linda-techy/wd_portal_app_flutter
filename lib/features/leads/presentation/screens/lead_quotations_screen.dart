@@ -1,11 +1,17 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/features/leads/data/models/lead_quotation.dart';
 import 'package:admin/features/leads/data/models/lead.dart';
+import 'package:admin/features/leads/data/services/lead_quotation_service.dart';
 import 'package:admin/features/leads/presentation/providers/lead_quotation_provider.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
+import 'package:admin/utils/motion_toast.dart';
+import 'package:admin/utils/error_handler.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'add_quotation_screen.dart';
 import 'lead_quotation_detail_screen.dart';
 
@@ -14,6 +20,44 @@ class LeadQuotationsScreen extends StatelessWidget {
   final int? leadId;
 
   const LeadQuotationsScreen({super.key, this.lead, this.leadId});
+
+  Future<void> _downloadPdf(BuildContext context, LeadQuotation quotation) async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => const Center(child: CircularProgressIndicator()),
+      );
+
+      final quotationService = LeadQuotationService();
+      final bytes = await quotationService.downloadQuotationPdf(quotation.id!);
+      final dir = await getTemporaryDirectory();
+      final filename = 'Quotation_${quotation.quotationNumber?.replaceAll("/", "_") ?? quotation.id}.pdf';
+      final file = File('${dir.path}/$filename');
+      await file.writeAsBytes(bytes);
+
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+      }
+
+      // Share/download PDF
+      if (context.mounted) {
+        await Share.shareXFiles(
+          [XFile(file.path)],
+          text: 'Quotation - ${quotation.quotationNumber}',
+        );
+        MotionToast.showSuccess(context, message: 'PDF downloaded successfully');
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to download PDF');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -250,12 +294,18 @@ class LeadQuotationsScreen extends StatelessWidget {
                             }
                           });
                         }
+                      } else if (value == 'pdf') {
+                        _downloadPdf(context, quotation);
                       }
                     },
                     itemBuilder: (context) => [
                       const PopupMenuItem(
                         value: 'view',
                         child: Row(children: [Icon(Icons.visibility, size: 20), SizedBox(width: 8), Text('View Details')]),
+                      ),
+                      const PopupMenuItem(
+                        value: 'pdf',
+                        child: Row(children: [Icon(Icons.picture_as_pdf, size: 20, color: Colors.red), SizedBox(width: 8), Text('Export PDF', style: TextStyle(color: Colors.red))]),
                       ),
                       if (quotation.status == 'DRAFT' && lead != null)
                         const PopupMenuItem(

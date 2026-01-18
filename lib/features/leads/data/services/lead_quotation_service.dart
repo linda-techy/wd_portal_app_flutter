@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+import 'package:dio/dio.dart';
 import 'package:admin/services/api_service.dart';
 import 'package:admin/features/leads/data/models/lead_quotation.dart';
 import 'package:admin/models/paginated_response.dart';
@@ -58,6 +60,15 @@ class LeadQuotationService {
     } catch (e) {
       throw Exception('Failed to delete quotation: $e');
     }
+  }
+
+  /// Download quotation PDF for client presentation
+  Future<Uint8List> downloadQuotationPdf(int id) async {
+    final response = await _apiService.get(
+      '/leads/quotations/$id/pdf',
+      options: Options(responseType: ResponseType.bytes),
+    );
+    return Uint8List.fromList(response.data);
   }
 
   /// NEW: Standardized search endpoint for lead quotations
