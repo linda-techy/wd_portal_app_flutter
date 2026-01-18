@@ -1,4 +1,7 @@
 // Extract Lead Service
+import 'dart:typed_data';
+import 'dart:io';
+import 'package:dio/dio.dart'; // Import Dio for MultipartFile
 import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/models/paginated_response.dart';
 import 'package:admin/models/pagination_params.dart';
@@ -6,9 +9,6 @@ import 'package:admin/models/team_member_simple.dart';
 import 'package:admin/services/api_service.dart';
 import 'package:admin/features/leads/data/models/activity_feed.dart';
 import 'package:admin/features/leads/data/models/lead_document.dart';
-import 'dart:io';
-import 'package:dio/dio.dart'; // Import Dio for MultipartFile
-
 import 'package:admin/features/leads/data/models/lead_interaction.dart';
 import 'package:admin/features/leads/data/models/lead_score_history.dart';
 
@@ -240,5 +240,73 @@ class LeadService {
         return PaginatedResponse.fromJson(pageData, LeadInteraction.fromJson);
       },
     );
+  }
+
+  /// Export leads to Excel based on search filters
+  /// Returns Excel file as bytes for download
+  Future<Uint8List> exportLeadsToExcel({
+    String? search,
+    String? status,
+    String? source,
+    String? priority,
+    String? customerType,
+    String? projectType,
+    String? assignedTeam,
+    String? state,
+    String? district,
+    double? minBudget,
+    double? maxBudget,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    final queryParams = <String, dynamic>{};
+
+    // Add all filter parameters to queryParams
+    if (search != null && search.isNotEmpty) {
+      queryParams['search'] = search;
+    }
+    if (status != null && status.isNotEmpty) {
+      queryParams['status'] = status;
+    }
+    if (source != null && source.isNotEmpty) {
+      queryParams['source'] = source;
+    }
+    if (priority != null && priority.isNotEmpty) {
+      queryParams['priority'] = priority;
+    }
+    if (customerType != null && customerType.isNotEmpty) {
+      queryParams['customerType'] = customerType;
+    }
+    if (projectType != null && projectType.isNotEmpty) {
+      queryParams['projectType'] = projectType;
+    }
+    if (assignedTeam != null && assignedTeam.isNotEmpty) {
+      queryParams['assignedTeam'] = assignedTeam;
+    }
+    if (state != null && state.isNotEmpty) {
+      queryParams['state'] = state;
+    }
+    if (district != null && district.isNotEmpty) {
+      queryParams['district'] = district;
+    }
+    if (minBudget != null) {
+      queryParams['minBudget'] = minBudget;
+    }
+    if (maxBudget != null) {
+      queryParams['maxBudget'] = maxBudget;
+    }
+    if (startDate != null) {
+      queryParams['startDate'] = startDate.toIso8601String().split('T')[0];
+    }
+    if (endDate != null) {
+      queryParams['endDate'] = endDate.toIso8601String().split('T')[0];
+    }
+
+    final response = await _apiService.get(
+      '/leads/export',
+      queryParams: queryParams,
+      options: Options(responseType: ResponseType.bytes),
+    );
+    return Uint8List.fromList(response.data);
   }
 }

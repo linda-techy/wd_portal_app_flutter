@@ -16,6 +16,10 @@ import 'package:admin/providers/permission_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
 import 'package:admin/utils/error_handler.dart';
+import 'package:admin/utils/motion_toast.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:io';
 import 'add_lead_screen.dart';
 import 'edit_lead_screen.dart';
 import 'lead_quotations_screen.dart';
@@ -249,6 +253,63 @@ class _LeadsScreenState extends State<LeadsScreen> {
     _loadLeads(resetPage: true);
   }
 
+  Future<void> _exportToExcel() async {
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => const Center(child: CircularProgressIndicator()),
+      );
+
+      // Prepare filter parameters
+      final bytes = await _leadService.exportLeadsToExcel(
+        status: statusFilter == 'All' ? null : statusFilter,
+        source: sourceFilter != null ? Lead.getSourceApiValue(sourceFilter!) : null,
+        priority: priorityFilter,
+        customerType: customerTypeFilter,
+        projectType: projectTypeFilter,
+        assignedTeam: salesRepFilter,
+        state: stateFilter,
+        district: districtFilter,
+        minBudget: minBudgetFilter,
+        maxBudget: maxBudgetFilter,
+        startDate: dateRangeFilter?.start,
+        endDate: dateRangeFilter?.end,
+      );
+
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Save file to temporary directory
+      final dir = await getTemporaryDirectory();
+      final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-').split('.')[0];
+      final filename = 'Leads_Export_$timestamp.xlsx';
+      final file = File('${dir.path}/$filename');
+      await file.writeAsBytes(bytes);
+
+      // Share the file
+      if (mounted) {
+        await Share.shareXFiles(
+          [XFile(file.path)],
+          text: 'Leads Export - ${DateTime.now().toString().split('.')[0]}',
+        );
+        MotionToast.showSuccess(context, message: 'Excel file exported successfully');
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading dialog if still open
+        await ErrorHandler.handleApiError(
+          context,
+          e,
+          defaultMessage: 'Failed to export leads to Excel',
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final permissions = Provider.of<PermissionProvider>(context);
@@ -283,6 +344,20 @@ class _LeadsScreenState extends State<LeadsScreen> {
                               onPressed: _clearAllFilters,
                               icon: const Icon(Icons.clear_all, size: 18),
                               label: const Text("Clear"),
+                            ),
+                          ),
+                          const SizedBox(width: defaultPadding / 2),
+                          // Export to Excel button
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: defaultPadding,
+                                ),
+                              ),
+                              onPressed: _exportToExcel,
+                              icon: const Icon(Icons.file_download, size: 18, color: Colors.green),
+                              label: const Text("Export Excel", style: TextStyle(color: Colors.green)),
                             ),
                           ),
                           const SizedBox(width: defaultPadding / 2),
@@ -336,6 +411,19 @@ class _LeadsScreenState extends State<LeadsScreen> {
                         onPressed: _clearAllFilters,
                         icon: const Icon(Icons.clear_all),
                         label: const Text("Clear Filters"),
+                      ),
+                      const SizedBox(width: defaultPadding),
+                      // Export to Excel button
+                      OutlinedButton.icon(
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: defaultPadding * 1.5,
+                            vertical: defaultPadding,
+                          ),
+                        ),
+                        onPressed: _exportToExcel,
+                        icon: const Icon(Icons.file_download, color: Colors.green),
+                        label: const Text("Export Excel", style: TextStyle(color: Colors.green)),
                       ),
                       const SizedBox(width: defaultPadding),
                       // Add Lead button - Only show if user has CREATE permission
