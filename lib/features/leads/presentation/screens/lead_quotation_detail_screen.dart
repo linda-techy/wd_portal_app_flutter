@@ -7,7 +7,7 @@ import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/utils/motion_toast.dart';
-import 'package:admin/core/errors/error_handler.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'add_quotation_screen.dart';
 
 class LeadQuotationDetailScreen extends StatefulWidget {
