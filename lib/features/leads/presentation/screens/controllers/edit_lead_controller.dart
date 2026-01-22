@@ -5,6 +5,7 @@ import 'package:admin/services/user_service.dart';
 import 'package:admin/features/leads/data/services/lead_service.dart';
 import 'package:admin/constants/customer_type_constants.dart';
 import 'package:admin/constants/lead_status_constants.dart';
+import 'package:admin/constants/project_type_constants.dart';
 
 class EditLeadController extends ChangeNotifier {
   final Lead _originalLead;
@@ -43,16 +44,18 @@ class EditLeadController extends ChangeNotifier {
   String? _errorMessage;
   List<PortalUser> _teamMembers = [];
   bool _isLoadingTeamMembers = true;
+  bool _isInitializing = true; // New: Track initialization state
 
   EditLeadController(this._originalLead) {
-    _initializeFields();
-    _loadTeamMembers();
+    _initializeAsync();
   }
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   List<PortalUser> get teamMembers => _teamMembers;
   bool get isLoadingTeamMembers => _isLoadingTeamMembers;
+  bool get isInitializing =>
+      _isInitializing; // New: Expose initialization state
 
   Map<String, dynamic> get formData => {
         'name': name,
@@ -83,6 +86,30 @@ class EditLeadController extends ChangeNotifier {
         'lostReason': lostReason,
       };
 
+  /// Initialize controller asynchronously - loads dropdown data first, then sets form values
+  /// This ensures dropdowns have their items available before setting selected values
+  Future<void> _initializeAsync() async {
+    _isInitializing = true;
+    notifyListeners();
+
+    try {
+      // Step 1: Load all dropdown data first (team members)
+      await _loadTeamMembers();
+
+      // Step 2: Initialize form fields AFTER dropdown data is loaded
+      _initializeFields();
+
+      _isInitializing = false;
+      notifyListeners();
+    } catch (e) {
+      print('Error initializing edit lead controller: $e');
+      // Still initialize fields even if team members fail to load
+      _initializeFields();
+      _isInitializing = false;
+      notifyListeners();
+    }
+  }
+
   void _initializeFields() {
     final lead = _originalLead;
 
@@ -98,7 +125,9 @@ class EditLeadController extends ChangeNotifier {
     customerType = CustomerTypeConstants.getValidValue(lead.customerType);
 
     // Project Information
-    projectType = lead.projectType;
+    // Validate projectType against available options
+    projectType = _validateProjectType(lead.projectType);
+
     projectDescription = lead.projectDescription;
     requirements = lead.requirements;
     budget = lead.budget;
@@ -106,19 +135,13 @@ class EditLeadController extends ChangeNotifier {
 
     // Assignment
     assignedTeam = lead.assignedTeam;
-    // Ensure assignedToId is properly converted to int
-    if (lead.assignedToId != null) {
-      assignedToId = lead.assignedToId is int
-          ? lead.assignedToId as int
-          : int.tryParse(lead.assignedToId.toString());
-      print(
-          '_initializeFields - Original lead.assignedToId: ${lead.assignedToId} (type: ${lead.assignedToId.runtimeType})');
-      print(
-          '_initializeFields - Parsed assignedToId: $assignedToId (type: ${assignedToId.runtimeType})');
-    } else {
-      assignedToId = null;
-      print('_initializeFields - assignedToId is null');
+    // assignedToId is already validated and set in _loadTeamMembers()
+    // Only validate if team members haven't been loaded yet (shouldn't happen in normal flow)
+    if (_teamMembers.isEmpty) {
+      // Fallback: validate if team members not loaded (shouldn't happen)
+      assignedToId = _validateAssignedToId(lead.assignedToId);
     }
+    // Otherwise, use the value that was set in _loadTeamMembers()
 
     // Location Information
     state = lead.state;
@@ -138,6 +161,81 @@ class EditLeadController extends ChangeNotifier {
 
     // Lost reason
     lostReason = lead.lostReason;
+  }
+
+  /// Validate and convert assignedToId, ensuring it exists in team members list
+  int? _validateAssignedToId(dynamic leadAssignedToId) {
+    if (leadAssignedToId == null) {
+      return null;
+    }
+
+    // Convert to int
+    int? parsedId = leadAssignedToId is int
+        ? leadAssignedToId as int
+        : int.tryParse(leadAssignedToId.toString());
+
+    if (parsedId == null) {
+      print(
+          '_validateAssignedToId - Could not parse assignedToId: $leadAssignedToId');
+      return null;
+    }
+
+    // Validate that the ID exists in the team members list
+    if (_teamMembers.isNotEmpty) {
+      final exists = _teamMembers.any((m) => m.id != null && m.id == parsedId);
+      if (!exists) {
+        print(
+            '_validateAssignedToId - assignedToId $parsedId not found in team members list');
+        print(
+            'Available IDs: ${_teamMembers.where((m) => m.id != null).map((m) => m.id).toList()}');
+        // Return null if not found - dropdown will show "Not Assigned"
+        return null;
+      }
+    } else {
+      // If team members not loaded yet, store the ID for later validation
+      // It will be validated when team members are loaded
+      print(
+          '_validateAssignedToId - Team members not loaded yet, storing ID: $parsedId');
+    }
+
+    return parsedId;
+  }
+
+  /// Validate projectType against available options
+  String _validateProjectType(String? leadProjectType) {
+    if (leadProjectType == null || leadProjectType.isEmpty) {
+      return '';
+    }
+
+    // Get all valid project type values
+    final validValues = ProjectTypeConstants.formDropdownItems
+        .map((item) => item.value)
+        .where((value) => value != null)
+        .cast<String>()
+        .toList();
+
+    // Check if the lead's project type is in the valid list
+    if (validValues.contains(leadProjectType)) {
+      return leadProjectType;
+    }
+
+    // If not found, try to find a match (case-insensitive)
+    final match = validValues.firstWhere(
+      (value) => value.toLowerCase() == leadProjectType.toLowerCase(),
+      orElse: () => '',
+    );
+
+    if (match.isNotEmpty) {
+      print(
+          '_validateProjectType - Found case-insensitive match: $leadProjectType -> $match');
+      return match;
+    }
+
+    // If no match found, return empty string (will show as unselected)
+    print(
+        '_validateProjectType - Project type "$leadProjectType" not found in valid values');
+    print('Valid values: $validValues');
+    return '';
   }
 
   void updateFormData(String key, dynamic value) {
@@ -239,15 +337,22 @@ class EditLeadController extends ChangeNotifier {
       List<PortalUser> members = await UserService.getPortalUsersByRoleCodes(
           ['SALES', 'CRM', 'EMPLOYEE']);
 
+      // Get the assignedToId from the original lead BEFORE initializing fields
+      int? originalAssignedToId;
+      if (_originalLead.assignedToId != null) {
+        originalAssignedToId = _originalLead.assignedToId is int
+            ? _originalLead.assignedToId as int
+            : int.tryParse(_originalLead.assignedToId.toString());
+      }
+
       // Ensure the currently assigned user is included even if they don't have one of these roles
-      // Use the controller's assignedToId (which was initialized from _originalLead)
-      if (assignedToId != null) {
+      if (originalAssignedToId != null) {
         print(
-            '_loadTeamMembers - Checking assignedToId: $assignedToId (type: ${assignedToId.runtimeType})');
+            '_loadTeamMembers - Checking original assignedToId: $originalAssignedToId');
 
         // Check if assigned user already exists in the filtered list
         final assignedUserExists =
-            members.any((m) => m.id != null && m.id == assignedToId);
+            members.any((m) => m.id != null && m.id == originalAssignedToId);
         print(
             '_loadTeamMembers - Assigned user exists in filtered list: $assignedUserExists');
 
@@ -255,10 +360,10 @@ class EditLeadController extends ChangeNotifier {
           // Load all users to find the assigned user
           try {
             print(
-                '_loadTeamMembers - Loading all users to find assigned user ID: $assignedToId');
+                '_loadTeamMembers - Loading all users to find assigned user ID: $originalAssignedToId');
             final allUsers = await UserService.getAllPortalUsers();
-            final assignedUserIndex = allUsers
-                .indexWhere((u) => u.id != null && u.id == assignedToId);
+            final assignedUserIndex = allUsers.indexWhere(
+                (u) => u.id != null && u.id == originalAssignedToId);
 
             if (assignedUserIndex != -1) {
               final assignedUser = allUsers[assignedUserIndex];
@@ -268,7 +373,7 @@ class EditLeadController extends ChangeNotifier {
                   'Added assigned user ${assignedUser.fullName} (ID: ${assignedUser.id}) to team members list');
             } else {
               print(
-                  'Assigned user with ID $assignedToId not found in all users');
+                  'Assigned user with ID $originalAssignedToId not found in all users');
               print('All user IDs: ${allUsers.map((u) => u.id).toList()}');
             }
           } catch (e) {
@@ -277,25 +382,36 @@ class EditLeadController extends ChangeNotifier {
           }
         } else {
           print(
-              'Assigned user (ID: $assignedToId) already exists in filtered list');
+              'Assigned user (ID: $originalAssignedToId) already exists in filtered list');
         }
       } else {
         print(
-            '_loadTeamMembers - assignedToId is null, skipping assigned user check');
+            '_loadTeamMembers - originalAssignedToId is null, skipping assigned user check');
       }
 
       _teamMembers = members;
       _isLoadingTeamMembers = false;
 
-      // Debug: Verify assignedToId is still set after loading
-      print('_loadTeamMembers - After loading, assignedToId: $assignedToId');
       print('_loadTeamMembers - Team members loaded: ${members.length}');
       print(
           '_loadTeamMembers - Team member IDs: ${members.map((m) => m.id).toList()}');
-      if (assignedToId != null) {
-        final found = members.any((m) => m.id == assignedToId);
-        print(
-            '_loadTeamMembers - assignedToId $assignedToId found in members: $found');
+
+      // After team members are loaded, validate and update the instance variable assignedToId
+      // This ensures the assigned user is in the list before form initialization
+      if (originalAssignedToId != null) {
+        final exists =
+            members.any((m) => m.id != null && m.id == originalAssignedToId);
+        if (!exists) {
+          print(
+              '_loadTeamMembers - assignedToId $originalAssignedToId not found after loading, setting to null');
+          // Update instance variable - this will be used when _initializeFields() is called
+          assignedToId = null;
+        } else {
+          print(
+              '_loadTeamMembers - assignedToId $originalAssignedToId validated successfully');
+          // Update instance variable with the validated ID
+          assignedToId = originalAssignedToId;
+        }
       }
 
       notifyListeners();

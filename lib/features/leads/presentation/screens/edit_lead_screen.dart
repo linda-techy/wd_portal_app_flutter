@@ -25,6 +25,7 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
     super.initState();
     _controller = EditLeadController(widget.lead);
     _controller.addListener(_onControllerChanged);
+    // Controller will initialize asynchronously and notify listeners when ready
   }
 
   @override
@@ -81,7 +82,7 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
         body: TabBarView(
           children: [
             // Tab 1: Details
-            _controller.isLoading
+            _controller.isInitializing || _controller.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : SingleChildScrollView(
                     padding: const EdgeInsets.all(defaultPadding),

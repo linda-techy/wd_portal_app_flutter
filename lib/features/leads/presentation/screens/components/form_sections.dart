@@ -11,6 +11,27 @@ import 'package:admin/utils/india_location_data.dart';
 import 'package:admin/responsive.dart';
 
 class FormSections {
+  /// Helper method to validate dropdown value exists in items list
+  /// Returns the value if it exists, null otherwise
+  static T? _validateDropdownValue<T>(
+    dynamic value,
+    List<DropdownMenuItem<T>> items,
+  ) {
+    if (value == null) {
+      return null;
+    }
+
+    // Check if value exists in items
+    final exists = items.any((item) => item.value == value);
+    if (exists) {
+      return value as T;
+    }
+
+    // Value not found in items - return null to avoid Flutter error
+    print('Warning: Dropdown value $value not found in items list');
+    return null;
+  }
+
   // Helper method to build Assigned To field with proper loading state
   static Widget _buildAssignedToField({
     required bool isLoading,
@@ -290,7 +311,11 @@ class FormSections {
                       border: OutlineInputBorder(),
                     ),
                     isExpanded: true,
-                    value: formData['customerType'],
+                    // Validate value exists in items before setting
+                    value: _validateDropdownValue<String>(
+                      formData['customerType'],
+                      CustomerTypeConstants.dropdownItems,
+                    ),
                     items: CustomerTypeConstants.dropdownItems,
                     onChanged: (val) => onChanged('customerType',
                         val ?? CustomerTypeConstants.defaultValue),
@@ -311,7 +336,11 @@ class FormSections {
                       border: OutlineInputBorder(),
                     ),
                     isExpanded: true,
-                    value: formData['source'],
+                    // Validate value exists in items before setting
+                    value: _validateDropdownValue<LeadSource>(
+                      formData['source'],
+                      LeadSourceConstants.dropdownItems,
+                    ),
                     items: LeadSourceConstants.dropdownItems,
                     onChanged: (val) =>
                         onChanged('source', val ?? LeadSource.website),
@@ -353,9 +382,18 @@ class FormSections {
                       border: OutlineInputBorder(),
                     ),
                     isExpanded: true,
-                    value: formData['state']?.isNotEmpty == true
-                        ? formData['state']
-                        : null,
+                    // Validate value exists in items before setting
+                    value: _validateDropdownValue<String>(
+                      formData['state']?.isNotEmpty == true
+                          ? formData['state']
+                          : null,
+                      IndiaLocationData.getStates()
+                          .map((state) => DropdownMenuItem(
+                                value: state,
+                                child: Text(state),
+                              ))
+                          .toList(),
+                    ),
                     items: IndiaLocationData.getStates()
                         .map((state) => DropdownMenuItem(
                               value: state,
@@ -390,9 +428,7 @@ class FormSections {
                       border: OutlineInputBorder(),
                     ),
                     isExpanded: true,
-                    value: formData['district']?.isNotEmpty == true
-                        ? formData['district']
-                        : null,
+                    // Get district items based on state
                     items: formData['state']?.isNotEmpty == true
                         ? IndiaLocationData.getDistricts(formData['state'])
                             .map((district) => DropdownMenuItem(
@@ -401,6 +437,20 @@ class FormSections {
                                 ))
                             .toList()
                         : [],
+                    // Validate value exists in items before setting (only if state is set)
+                    value: formData['state']?.isNotEmpty == true
+                        ? _validateDropdownValue<String>(
+                            formData['district']?.isNotEmpty == true
+                                ? formData['district']
+                                : null,
+                            IndiaLocationData.getDistricts(formData['state'])
+                                .map((district) => DropdownMenuItem(
+                                      value: district,
+                                      child: Text(district),
+                                    ))
+                                .toList(),
+                          )
+                        : null,
                     onChanged: (value) {
                       if (value != null) {
                         onChanged('district', value);
@@ -476,9 +526,13 @@ class FormSections {
                       border: OutlineInputBorder(),
                     ),
                     isExpanded: true,
-                    value: formData['projectType']?.isNotEmpty == true
-                        ? formData['projectType']
-                        : null,
+                    // Validate value exists in items before setting
+                    value: _validateDropdownValue<String>(
+                      formData['projectType']?.isNotEmpty == true
+                          ? formData['projectType']
+                          : null,
+                      ProjectTypeConstants.formDropdownItems,
+                    ),
                     items: ProjectTypeConstants.formDropdownItems,
                     onChanged: (val) => onChanged('projectType', val ?? ''),
                     onSaved: (value) => onChanged('projectType', value ?? ''),
@@ -612,7 +666,11 @@ class FormSections {
                       border: OutlineInputBorder(),
                     ),
                     isExpanded: true,
-                    value: formData['status'],
+                    // Validate value exists in items before setting
+                    value: _validateDropdownValue<String>(
+                      formData['status'],
+                      LeadStatusConstants.dropdownItems,
+                    ),
                     items: LeadStatusConstants.dropdownItems,
                     onChanged: (val) => onChanged(
                         'status', val ?? LeadStatusConstants.defaultValue),
@@ -632,7 +690,11 @@ class FormSections {
                       labelText: 'Priority *',
                       border: OutlineInputBorder(),
                     ),
-                    value: formData['priority'],
+                    // Validate value exists in items before setting
+                    value: _validateDropdownValue<LeadPriority>(
+                      formData['priority'],
+                      PriorityConstants.dropdownItems,
+                    ),
                     items: PriorityConstants.dropdownItems,
                     onChanged: (val) => onChanged(
                         'priority', val ?? PriorityConstants.defaultValue),
