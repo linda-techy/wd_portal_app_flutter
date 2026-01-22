@@ -6,10 +6,13 @@ class LeadDocument {
   final String? fileType;
   final int? fileSize;
   final String? description;
-  final String? category;
+  final int? categoryId;
+  final String? categoryName;
   final int? uploadedById;
+  final String? uploadedByName;
   final DateTime uploadedAt;
   final bool isActive;
+  final String? downloadUrl;
 
   LeadDocument({
     required this.id,
@@ -19,25 +22,56 @@ class LeadDocument {
     this.fileType,
     this.fileSize,
     this.description,
-    this.category,
+    this.categoryId,
+    this.categoryName,
     this.uploadedById,
+    this.uploadedByName,
     required this.uploadedAt,
     this.isActive = true,
+    this.downloadUrl,
   });
 
   factory LeadDocument.fromJson(Map<String, dynamic> json) {
+    // Handle both old and new API response formats
+    int? leadIdValue;
+    if (json['lead'] != null && json['lead'] is Map) {
+      leadIdValue = json['lead']['id'];
+    } else if (json['lead_id'] != null) {
+      leadIdValue = json['lead_id'];
+    } else if (json['reference_id'] != null) {
+      leadIdValue = json['reference_id'];
+    } else {
+      leadIdValue = 0;
+    }
+
+    DateTime uploadedAtValue;
+    if (json['uploadedAt'] != null) {
+      uploadedAtValue = DateTime.parse(json['uploadedAt']);
+    } else if (json['uploaded_at'] != null) {
+      uploadedAtValue = DateTime.parse(json['uploaded_at']);
+    } else if (json['created_at'] != null) {
+      uploadedAtValue = DateTime.parse(json['created_at']);
+    } else {
+      uploadedAtValue = DateTime.now();
+    }
+
     return LeadDocument(
       id: json['id'],
-      leadId: json['lead'] != null ? json['lead']['id'] : (json['lead_id'] ?? 0),
-      filename: json['filename'],
-      filePath: json['filePath'] ?? json['file_path'],
+      leadId: leadIdValue ?? 0,
+      filename: json['filename'] ?? '',
+      filePath: json['filePath'] ?? json['file_path'] ?? '',
       fileType: json['fileType'] ?? json['file_type'],
       fileSize: json['fileSize'] ?? json['file_size'],
       description: json['description'],
-      category: json['category'],
-      uploadedById: json['uploadedBy'] != null ? json['uploadedBy']['id'] : json['uploaded_by_id'],
-      uploadedAt: DateTime.parse(json['uploadedAt'] ?? json['uploaded_at']),
+      categoryId: json['categoryId'] ?? json['category_id'],
+      categoryName: json['categoryName'] ?? json['category_name'] ?? json['category'],
+      uploadedById: json['uploadedBy'] != null && json['uploadedBy'] is Map
+          ? json['uploadedBy']['id']
+          : (json['uploadedById'] ?? json['uploaded_by_id']),
+      uploadedByName: json['uploadedByName'] ?? json['uploaded_by_name'],
+      uploadedAt: uploadedAtValue,
       isActive: json['isActive'] ?? json['is_active'] ?? true,
+      downloadUrl: json['downloadUrl'] ?? json['download_url'],
     );
   }
 
@@ -50,10 +84,13 @@ class LeadDocument {
       'file_type': fileType,
       'file_size': fileSize,
       'description': description,
-      'category': category,
+      'category_id': categoryId,
+      'category_name': categoryName,
       'uploaded_by_id': uploadedById,
+      'uploaded_by_name': uploadedByName,
       'uploaded_at': uploadedAt.toIso8601String(),
       'is_active': isActive,
+      'download_url': downloadUrl,
     };
   }
 }

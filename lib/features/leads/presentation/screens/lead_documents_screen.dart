@@ -66,11 +66,11 @@ class _LeadDocumentsScreenState extends State<LeadDocumentsScreen> {
           );
         }
 
-        // Using "General" as default category and simple description
+        // Upload without category (null) and with description
         await _leadService.uploadDocument(
             widget.lead.leadId, 
             file, 
-            "General", 
+            null, // categoryId - can be null
             "Uploaded via Mobile App"
         );
         

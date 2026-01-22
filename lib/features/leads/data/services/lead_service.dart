@@ -162,20 +162,38 @@ class LeadService {
         response, (json) => LeadDocument.fromJson(json));
   }
 
+  /// Upload a document for a lead
+  /// [leadId] - The lead ID
+  /// [file] - The file to upload
+  /// [categoryId] - Optional category ID (use null if no category)
+  /// [description] - Optional description
   Future<LeadDocument> uploadDocument(
-      String leadId, File file, String category, String description) async {
+      String leadId, File file, int? categoryId, String? description) async {
     String fileName = file.path.split(RegExp(r'[/\\]')).last;
+    
     FormData formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(file.path, filename: fileName),
-      'leadId': leadId,
-      'category': category,
-      'description': description,
+      if (description != null && description.isNotEmpty) 'description': description,
+      if (categoryId != null) 'categoryId': categoryId,
     });
 
     final response =
         await _apiService.post('/api/leads/$leadId/documents', data: formData);
     return _apiService.unwrap<LeadDocument>(response,
         (json) => LeadDocument.fromJson(json as Map<String, dynamic>));
+  }
+
+  /// Delete a document
+  Future<void> deleteDocument(int documentId) async {
+    final response = await _apiService.delete('/api/leads/documents/$documentId');
+    _apiService.unwrap<void>(response, (_) {});
+  }
+
+  /// Get all document categories
+  Future<List<DocumentCategory>> getDocumentCategories() async {
+    final response = await _apiService.get('/api/leads/documents/categories');
+    return _apiService.unwrapList<DocumentCategory>(
+        response, (json) => DocumentCategory.fromJson(json));
   }
 
   Future<LeadInteraction> createInteraction(LeadInteraction interaction) async {
@@ -308,5 +326,38 @@ class LeadService {
       options: Options(responseType: ResponseType.bytes),
     );
     return Uint8List.fromList(response.data);
+  }
+}
+
+/// Document category model for lead documents
+class DocumentCategory {
+  final int id;
+  final String name;
+  final String? description;
+  final int? displayOrder;
+
+  DocumentCategory({
+    required this.id,
+    required this.name,
+    this.description,
+    this.displayOrder,
+  });
+
+  factory DocumentCategory.fromJson(Map<String, dynamic> json) {
+    return DocumentCategory(
+      id: json['id'],
+      name: json['name'] ?? '',
+      description: json['description'],
+      displayOrder: json['displayOrder'] ?? json['display_order'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'display_order': displayOrder,
+    };
   }
 }

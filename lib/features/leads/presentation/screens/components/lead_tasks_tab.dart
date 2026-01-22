@@ -4,6 +4,7 @@ import 'package:admin/constants.dart';
 import '../../../../../../models/task_models.dart';
 import '../../../../../../services/task_service.dart';
 import '../../../../../../utils/error_handler.dart';
+import '../../../../../../screens/tasks/task_detail_screen.dart';
 
 class LeadTasksTab extends StatefulWidget {
   final String leadId;
@@ -125,7 +126,12 @@ class _LeadTasksTabState extends State<LeadTasksTab> {
                                 ),
                                 trailing: const Icon(Icons.chevron_right),
                                 onTap: () {
-                                  // Navigate to task detail if needed
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => TaskDetailScreen(taskId: task.id),
+                                    ),
+                                  );
                                 },
                               );
                             },
