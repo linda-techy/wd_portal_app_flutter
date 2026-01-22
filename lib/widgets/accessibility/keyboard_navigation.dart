@@ -18,26 +18,11 @@ class KeyboardNavigationWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!enabled) return child;
 
+    // Use FocusTraversalPolicy instead of custom shortcuts to preserve native tab behavior
+    // This ensures proper tab navigation while still providing accessibility support
     return FocusTraversalGroup(
-      child: Shortcuts(
-        shortcuts: {
-          LogicalKeySet(LogicalKeyboardKey.tab): const NextFocusIntent(),
-          LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.tab):
-              const PreviousFocusIntent(),
-          LogicalKeySet(LogicalKeyboardKey.enter): const ActivateIntent(),
-          LogicalKeySet(LogicalKeyboardKey.space): const ActivateIntent(),
-        },
-        child: Actions(
-          actions: {
-            NextFocusIntent: NextFocusAction(),
-            PreviousFocusIntent: PreviousFocusAction(),
-            ActivateIntent: ActivateAction(),
-          },
-          child: FocusScope(
-            child: child,
-          ),
-        ),
-      ),
+      policy: ReadingOrderTraversalPolicy(), // Use standard reading order for tab navigation
+      child: child,
     );
   }
 }

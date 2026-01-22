@@ -6,7 +6,6 @@ import '../../widgets/animations/entrance_animation.dart';
 import '../../widgets/animations/shake_widget.dart';
 import '../../widgets/components/premium_input.dart';
 import '../../widgets/components/premium_button.dart';
-import '../../widgets/accessibility/keyboard_navigation.dart';
 import '../../providers/portal_auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/design_tokens.dart';
@@ -24,6 +23,8 @@ class _PortalLoginScreenState extends State<PortalLoginScreen>
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _emailFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
   bool _isLoading = false;
   bool _shouldShake = false;
   late AnimationController _animationController;
@@ -47,6 +48,8 @@ class _PortalLoginScreenState extends State<PortalLoginScreen>
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -232,6 +235,8 @@ class _PortalLoginScreenState extends State<PortalLoginScreen>
             shouldShake: _shouldShake,
             child: Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode
+                  .disabled, // Only validate on submit or field blur
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
@@ -263,25 +268,25 @@ class _PortalLoginScreenState extends State<PortalLoginScreen>
                   // Email Field
                   EntranceAnimation(
                     delay: const Duration(milliseconds: 100),
-                    child: KeyboardNavigationWrapper(
-                      child: PremiumTextInput(
-                        controller: _emailController,
-                        label: 'Email',
-                        hint: 'username@gmail.com',
-                        prefixIcon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
-                        semanticLabel: 'Email address',
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your email';
-                          }
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                              .hasMatch(value)) {
-                            return 'Please enter a valid email';
-                          }
-                          return null;
-                        },
-                      ),
+                    child: PremiumTextInput(
+                      controller: _emailController,
+                      focusNode: _emailFocusNode,
+                      label: 'Email',
+                      hint: 'username@gmail.com',
+                      prefixIcon: Icons.email_outlined,
+                      keyboardType: TextInputType.emailAddress,
+                      semanticLabel: 'Email address',
+                      // Cross-platform: Tab key (desktop/web) or Next button (mobile) moves to password
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your email';
+                        }
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                            .hasMatch(value)) {
+                          return 'Please enter a valid email';
+                        }
+                        return null;
+                      },
                     ),
                   ),
                   SizedBox(height: DesignTokens.spacingMD),
@@ -289,25 +294,25 @@ class _PortalLoginScreenState extends State<PortalLoginScreen>
                   // Password Field
                   EntranceAnimation(
                     delay: const Duration(milliseconds: 200),
-                    child: KeyboardNavigationWrapper(
-                      child: PremiumPasswordInput(
-                        controller: _passwordController,
-                        label: 'Password',
-                        hint: 'Enter your password',
-                        semanticLabel: 'Password',
-                        onFieldSubmitted: (_) {
-                          _handleLogin();
-                        },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your password';
-                          }
-                          if (value.length < 6) {
-                            return 'Password must be at least 6 characters';
-                          }
-                          return null;
-                        },
-                      ),
+                    child: PremiumPasswordInput(
+                      controller: _passwordController,
+                      focusNode: _passwordFocusNode,
+                      label: 'Password',
+                      hint: 'Enter your password',
+                      semanticLabel: 'Password',
+                      // Cross-platform: Enter/Done submits form on all platforms
+                      onFieldSubmitted: (_) {
+                        _handleLogin();
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your password';
+                        }
+                        if (value.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
+                        return null;
+                      },
                     ),
                   ),
                   SizedBox(

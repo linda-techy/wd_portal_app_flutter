@@ -90,13 +90,29 @@ class _PremiumTextInputState extends State<PremiumTextInput>
   }
 
   void _onFocusChange() {
+    final wasFocused = _isFocused;
     setState(() {
       _isFocused = _focusNode.hasFocus;
     });
+    
+    // Validate when field loses focus (blur)
+    // Works on all platforms: desktop, mobile, web, Windows
+    // On mobile: when user taps away or keyboard dismisses
+    // On desktop/web: when user tabs away or clicks elsewhere
+    if (wasFocused && !_isFocused && widget.controller?.text != null) {
+      // Small delay to ensure state is updated
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_focusNode.hasFocus) {
+          _validate(widget.controller!.text, force: true);
+        }
+      });
+    }
   }
 
-  void _validate(String? value) {
-    if (widget.validator != null) {
+  void _validate(String? value, {bool force = false}) {
+    // Only validate if field has been interacted with (has focus or has been blurred)
+    // This prevents validation errors from showing on page load
+    if (widget.validator != null && (_isFocused || force)) {
       final error = widget.validator!(value);
       setState(() {
         _hasError = error != null;
@@ -132,7 +148,30 @@ class _PremiumTextInputState extends State<PremiumTextInput>
             focusNode: _focusNode,
             onChanged: (value) {
               widget.onChanged?.call(value);
-              _validate(value);
+              // Only validate while field is focused (user is typing)
+              // Don't validate on initial load
+              if (_isFocused) {
+                _validate(value);
+              }
+            },
+            onTap: () {
+              // Clear any previous errors when user starts interacting
+              if (_hasError && !_isFocused) {
+                setState(() {
+                  _hasError = false;
+                });
+              }
+            },
+            onEditingComplete: () {
+              // Validate when user finishes editing (blur)
+              // Works on all platforms: desktop (Tab), mobile (Next button), web (Tab)
+              if (widget.controller?.text != null) {
+                _validate(widget.controller!.text, force: true);
+              }
+              // Move to next field on desktop/web (Tab key) or mobile (Next button)
+              if (widget.onFieldSubmitted == null) {
+                FocusScope.of(context).nextFocus();
+              }
             },
             onFieldSubmitted: widget.onFieldSubmitted,
             validator: widget.validator,
@@ -141,7 +180,13 @@ class _PremiumTextInputState extends State<PremiumTextInput>
             enabled: widget.enabled,
             maxLines: widget.maxLines,
             maxLength: widget.maxLength,
-            textInputAction: widget.onFieldSubmitted != null ? TextInputAction.done : TextInputAction.next,
+            // Cross-platform text input action:
+            // - Desktop/Web: Tab key moves to next field
+            // - Mobile: Shows "Next" button on keyboard that moves to next field
+            // - Last field: Shows "Done" button
+            textInputAction: widget.onFieldSubmitted != null 
+                ? TextInputAction.done 
+                : TextInputAction.next,
             style: TextStyle(
               fontSize: DesignTokens.fontSizeBodyMedium,
               color: AppTheme.textPrimary,
