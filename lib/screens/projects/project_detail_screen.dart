@@ -13,6 +13,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import '../../utils/file_upload_helper.dart';
 import 'project_tracking_screen.dart';
 import 'view_360_list_screen.dart';
 import '../../models/customer_project.dart';
@@ -968,9 +969,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
   Future<void> _uploadDocument(BuildContext context) async {
     final result = await FilePicker.platform.pickFiles();
-    if (result == null || result.files.single.path == null) return;
+    if (result == null) return;
 
-    final file = File(result.files.single.path!);
+    // Extract file data using cross-platform helper
+    final fileData = FileUploadHelper.extractFromResult(result);
     final provider = context.read<DocumentProvider>();
 
     if (provider.categories.isEmpty) {
@@ -1005,7 +1007,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       try {
         await provider.uploadDocument(
           projectId: widget.projectId,
-          file: file,
+          file: fileData.file,
+          bytes: fileData.bytes,
+          fileName: fileData.fileName,
           categoryId: categoryId,
         );
         ScaffoldMessenger.of(context).showSnackBar(

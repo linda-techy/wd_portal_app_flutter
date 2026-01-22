@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:motion_toast/motion_toast.dart';
 import '../../services/view_360_service.dart';
 import '../../theme/app_theme.dart';
 import '../../constants.dart';
+import '../../utils/file_upload_helper.dart';
 
 class UploadView360Screen extends StatefulWidget {
   final int projectId;
@@ -21,9 +23,8 @@ class _UploadView360ScreenState extends State<UploadView360Screen> {
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
   final _service = View360Service();
-  final _imagePicker = ImagePicker();
 
-  File? _selectedFile;
+  FileUploadData? _selectedFileData;
   bool _isSaving = false;
 
   @override
@@ -36,13 +37,15 @@ class _UploadView360ScreenState extends State<UploadView360Screen> {
 
   Future<void> _pickImage() async {
     try {
-      final pickedFile = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 100, // Keep high quality for 360
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
       );
 
-      if (pickedFile != null) {
-        setState(() => _selectedFile = File(pickedFile.path));
+      if (result != null) {
+        setState(() {
+          _selectedFileData = FileUploadHelper.extractFromResult(result);
+        });
       }
     } catch (e) {
       MotionToast.error(description: Text('Error picking image: $e')).show(context);
@@ -50,7 +53,7 @@ class _UploadView360ScreenState extends State<UploadView360Screen> {
   }
 
   Future<void> _handleUpload() async {
-    if (_selectedFile == null) {
+    if (_selectedFileData == null) {
       MotionToast.warning(description: const Text('Please select a 360 panorama image')).show(context);
       return;
     }
@@ -65,7 +68,9 @@ class _UploadView360ScreenState extends State<UploadView360Screen> {
         title: _titleController.text,
         description: _descriptionController.text,
         location: _locationController.text,
-        file: _selectedFile!,
+        file: _selectedFileData!.file,
+        bytes: _selectedFileData!.bytes,
+        fileName: _selectedFileData!.fileName,
       );
 
       MotionToast.success(description: const Text('Virtual tour uploaded successfully')).show(context);
@@ -138,13 +143,21 @@ class _UploadView360ScreenState extends State<UploadView360Screen> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
             ),
-            child: _selectedFile != null
+            child: _selectedFileData != null
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        Image.file(_selectedFile!, fit: BoxFit.cover),
+                        // Display image - use file if available, otherwise show placeholder
+                        _selectedFileData!.file != null
+                            ? Image.file(_selectedFileData!.file!, fit: BoxFit.cover)
+                            : Container(
+                                color: Colors.grey.shade200,
+                                child: const Center(
+                                  child: Icon(Icons.image, size: 48, color: Colors.grey),
+                                ),
+                              ),
                         Container(color: Colors.black26),
                         const Center(child: Icon(Icons.panorama, color: Colors.white, size: 48)),
                       ],

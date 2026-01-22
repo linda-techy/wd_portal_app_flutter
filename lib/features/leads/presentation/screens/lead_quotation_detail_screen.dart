@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -9,8 +8,7 @@ import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/utils/motion_toast.dart';
 import 'package:admin/utils/error_handler.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:admin/utils/file_download_helper.dart';
 import 'add_quotation_screen.dart';
 
 class LeadQuotationDetailScreen extends StatefulWidget {
@@ -244,22 +242,21 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
       }
 
       final bytes = await _service.downloadQuotationPdf(_quotation!.id!);
-      final dir = await getTemporaryDirectory();
       final filename =
           'Quotation_${_quotation!.quotationNumber?.replaceAll("/", "_") ?? _quotation!.id}.pdf';
-      final file = File('${dir.path}/$filename');
-      await file.writeAsBytes(bytes);
 
       // Close loading dialog
       if (mounted) {
         Navigator.of(context).pop(); // Close loading dialog
       }
 
-      // Share/download PDF
+      // Download and share PDF using cross-platform helper
       if (mounted) {
-        await Share.shareXFiles(
-          [XFile(file.path)],
-          text: 'Quotation - ${_quotation!.quotationNumber}',
+        await FileDownloadHelper.downloadAndShareFile(
+          bytes: bytes,
+          fileName: filename,
+          mimeType: 'application/pdf',
+          shareText: 'Quotation - ${_quotation!.quotationNumber}',
         );
         MotionToast.showSuccess(context,
             message: 'PDF downloaded successfully');

@@ -6,6 +6,7 @@ import 'package:admin/models/document_category.dart';
 import 'package:admin/services/project_module_service.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/utils/error_handler.dart';
+import 'package:admin/utils/file_upload_helper.dart';
 import 'dart:io';
 
 class ProjectDocumentsScreen extends StatefulWidget {
@@ -80,9 +81,10 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
       allowMultiple: false,
     );
 
-    if (result == null || result.files.single.path == null) return;
+    if (result == null) return;
 
-    final file = File(result.files.single.path!);
+    // Extract file data using cross-platform helper
+    final fileData = FileUploadHelper.extractFromResult(result);
     final description = await _showDescriptionDialog();
 
     setState(() {
@@ -92,9 +94,11 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
     try {
       await _moduleService.uploadDocument(
         widget.project.id!,
-        file,
-        category.id,
-        description,
+        file: fileData.file,
+        bytes: fileData.bytes,
+        fileName: fileData.fileName,
+        categoryId: category.id,
+        description: description,
       );
 
       // Reload documents

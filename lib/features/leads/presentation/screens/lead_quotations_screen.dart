@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/features/leads/data/models/lead_quotation.dart';
@@ -10,8 +9,7 @@ import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/utils/motion_toast.dart';
 import 'package:admin/utils/error_handler.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:admin/utils/file_download_helper.dart';
 import 'add_quotation_screen.dart';
 import 'lead_quotation_detail_screen.dart';
 
@@ -21,7 +19,8 @@ class LeadQuotationsScreen extends StatelessWidget {
 
   const LeadQuotationsScreen({super.key, this.lead, this.leadId});
 
-  Future<void> _downloadPdf(BuildContext context, LeadQuotation quotation) async {
+  Future<void> _downloadPdf(
+      BuildContext context, LeadQuotation quotation) async {
     try {
       // Show loading indicator
       showDialog(
@@ -32,29 +31,31 @@ class LeadQuotationsScreen extends StatelessWidget {
 
       final quotationService = LeadQuotationService();
       final bytes = await quotationService.downloadQuotationPdf(quotation.id!);
-      final dir = await getTemporaryDirectory();
-      final filename = 'Quotation_${quotation.quotationNumber?.replaceAll("/", "_") ?? quotation.id}.pdf';
-      final file = File('${dir.path}/$filename');
-      await file.writeAsBytes(bytes);
+      final filename =
+          'Quotation_${quotation.quotationNumber?.replaceAll("/", "_") ?? quotation.id}.pdf';
 
       // Close loading dialog
       if (context.mounted) {
         Navigator.of(context).pop(); // Close loading dialog
       }
 
-      // Share/download PDF
+      // Download and share PDF using cross-platform helper
       if (context.mounted) {
-        await Share.shareXFiles(
-          [XFile(file.path)],
-          text: 'Quotation - ${quotation.quotationNumber}',
+        await FileDownloadHelper.downloadAndShareFile(
+          bytes: bytes,
+          fileName: filename,
+          mimeType: 'application/pdf',
+          shareText: 'Quotation - ${quotation.quotationNumber}',
         );
-        MotionToast.showSuccess(context, message: 'PDF downloaded successfully');
+        MotionToast.showSuccess(context,
+            message: 'PDF downloaded successfully');
       }
     } catch (e) {
       // Close loading dialog if still open
       if (context.mounted) {
         Navigator.of(context).pop(); // Close loading dialog
-        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to download PDF');
+        await ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'Failed to download PDF');
       }
     }
   }
@@ -75,11 +76,14 @@ class LeadQuotationsScreen extends StatelessWidget {
         builder: (context, provider, _) {
           return Scaffold(
             appBar: AppBar(
-              title: Text(lead != null ? 'Quotations: ${lead!.name}' : 'Lead Quotations'),
+              title: Text(lead != null
+                  ? 'Quotations: ${lead!.name}'
+                  : 'Lead Quotations'),
               actions: [
                 Consumer<PermissionProvider>(
                   builder: (context, permissionProvider, _) {
-                    if (permissionProvider.hasPermission('lead:edit') && lead != null) {
+                    if (permissionProvider.hasPermission('lead:edit') &&
+                        lead != null) {
                       return IconButton(
                         icon: const Icon(Icons.add),
                         onPressed: () => _navigateToCreate(context),
@@ -277,7 +281,8 @@ class LeadQuotationsScreen extends StatelessWidget {
                     onSelected: (value) {
                       if (value == 'view') {
                         _navigateToDetail(context, quotation);
-                      } else if (value == 'edit' && quotation.status == 'DRAFT') {
+                      } else if (value == 'edit' &&
+                          quotation.status == 'DRAFT') {
                         if (lead != null) {
                           Navigator.push(
                             context,
@@ -289,7 +294,9 @@ class LeadQuotationsScreen extends StatelessWidget {
                             ),
                           ).then((result) {
                             if (result == true) {
-                              final provider = Provider.of<LeadQuotationProvider>(context, listen: false);
+                              final provider =
+                                  Provider.of<LeadQuotationProvider>(context,
+                                      listen: false);
                               provider.fetch();
                             }
                           });
@@ -301,16 +308,30 @@ class LeadQuotationsScreen extends StatelessWidget {
                     itemBuilder: (context) => [
                       const PopupMenuItem(
                         value: 'view',
-                        child: Row(children: [Icon(Icons.visibility, size: 20), SizedBox(width: 8), Text('View Details')]),
+                        child: Row(children: [
+                          Icon(Icons.visibility, size: 20),
+                          SizedBox(width: 8),
+                          Text('View Details')
+                        ]),
                       ),
                       const PopupMenuItem(
                         value: 'pdf',
-                        child: Row(children: [Icon(Icons.picture_as_pdf, size: 20, color: Colors.red), SizedBox(width: 8), Text('Export PDF', style: TextStyle(color: Colors.red))]),
+                        child: Row(children: [
+                          Icon(Icons.picture_as_pdf,
+                              size: 20, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Export PDF',
+                              style: TextStyle(color: Colors.red))
+                        ]),
                       ),
                       if (quotation.status == 'DRAFT' && lead != null)
                         const PopupMenuItem(
                           value: 'edit',
-                          child: Row(children: [Icon(Icons.edit, size: 20), SizedBox(width: 8), Text('Edit')]),
+                          child: Row(children: [
+                            Icon(Icons.edit, size: 20),
+                            SizedBox(width: 8),
+                            Text('Edit')
+                          ]),
                         ),
                     ],
                   ),
@@ -477,11 +498,13 @@ class LeadQuotationsScreen extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => LeadQuotationDetailScreen(quotationId: quotation.id!),
+        builder: (context) =>
+            LeadQuotationDetailScreen(quotationId: quotation.id!),
       ),
     ).then((_) {
       // Refresh the list when returning from detail screen
-      final provider = Provider.of<LeadQuotationProvider>(context, listen: false);
+      final provider =
+          Provider.of<LeadQuotationProvider>(context, listen: false);
       provider.fetch();
     });
   }
@@ -501,7 +524,8 @@ class LeadQuotationsScreen extends StatelessWidget {
     ).then((result) {
       // Refresh the list when returning from create screen
       if (result == true) {
-        final provider = Provider.of<LeadQuotationProvider>(context, listen: false);
+        final provider =
+            Provider.of<LeadQuotationProvider>(context, listen: false);
         provider.fetch();
       }
     });

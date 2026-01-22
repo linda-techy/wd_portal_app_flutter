@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:admin/models/document_models.dart';
 import 'package:admin/services/document_service.dart';
@@ -36,9 +37,19 @@ class DocumentProvider with ChangeNotifier {
     }
   }
 
+  /// Upload a document
+  /// Supports all platforms: Web, Android, iOS, Windows, macOS, Linux
+  /// [projectId] - The project ID
+  /// [file] - File object (for mobile/desktop) or null (for web)
+  /// [bytes] - File bytes (for web) or null (for mobile/desktop)
+  /// [fileName] - File name (required for all platforms)
+  /// [categoryId] - Document category ID
+  /// [description] - Optional description
   Future<void> uploadDocument({
     required int projectId,
-    required File file,
+    File? file,
+    Uint8List? bytes,
+    String? fileName,
     required int categoryId,
     String? description,
   }) async {
@@ -48,6 +59,8 @@ class DocumentProvider with ChangeNotifier {
       final doc = await _documentService.uploadDocument(
         projectId: projectId,
         file: file,
+        bytes: bytes,
+        fileName: fileName,
         categoryId: categoryId,
         description: description,
       );

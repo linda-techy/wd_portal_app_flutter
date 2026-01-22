@@ -17,9 +17,7 @@ import 'package:provider/provider.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
 import 'package:admin/utils/error_handler.dart';
 import 'package:admin/utils/motion_toast.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
-import 'dart:io';
+import 'package:admin/utils/file_download_helper.dart';
 import 'add_lead_screen.dart';
 import 'edit_lead_screen.dart';
 import 'lead_quotations_screen.dart';
@@ -265,7 +263,8 @@ class _LeadsScreenState extends State<LeadsScreen> {
       // Prepare filter parameters
       final bytes = await _leadService.exportLeadsToExcel(
         status: statusFilter == 'All' ? null : statusFilter,
-        source: sourceFilter != null ? Lead.getSourceApiValue(sourceFilter!) : null,
+        source:
+            sourceFilter != null ? Lead.getSourceApiValue(sourceFilter!) : null,
         priority: priorityFilter,
         customerType: customerTypeFilter,
         projectType: projectTypeFilter,
@@ -283,20 +282,22 @@ class _LeadsScreenState extends State<LeadsScreen> {
         Navigator.of(context).pop();
       }
 
-      // Save file to temporary directory
-      final dir = await getTemporaryDirectory();
-      final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-').split('.')[0];
+      // Download and share file using cross-platform helper
+      final timestamp =
+          DateTime.now().toIso8601String().replaceAll(':', '-').split('.')[0];
       final filename = 'Leads_Export_$timestamp.xlsx';
-      final file = File('${dir.path}/$filename');
-      await file.writeAsBytes(bytes);
 
-      // Share the file
       if (mounted) {
-        await Share.shareXFiles(
-          [XFile(file.path)],
-          text: 'Leads Export - ${DateTime.now().toString().split('.')[0]}',
+        await FileDownloadHelper.downloadAndShareFile(
+          bytes: bytes,
+          fileName: filename,
+          mimeType:
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          shareText:
+              'Leads Export - ${DateTime.now().toString().split('.')[0]}',
         );
-        MotionToast.showSuccess(context, message: 'Excel file exported successfully');
+        MotionToast.showSuccess(context,
+            message: 'Excel file exported successfully');
       }
     } catch (e) {
       if (mounted) {
@@ -356,8 +357,10 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                 ),
                               ),
                               onPressed: _exportToExcel,
-                              icon: const Icon(Icons.file_download, size: 18, color: Colors.green),
-                              label: const Text("Export Excel", style: TextStyle(color: Colors.green)),
+                              icon: const Icon(Icons.file_download,
+                                  size: 18, color: Colors.green),
+                              label: const Text("Export Excel",
+                                  style: TextStyle(color: Colors.green)),
                             ),
                           ),
                           const SizedBox(width: defaultPadding / 2),
@@ -422,8 +425,10 @@ class _LeadsScreenState extends State<LeadsScreen> {
                           ),
                         ),
                         onPressed: _exportToExcel,
-                        icon: const Icon(Icons.file_download, color: Colors.green),
-                        label: const Text("Export Excel", style: TextStyle(color: Colors.green)),
+                        icon: const Icon(Icons.file_download,
+                            color: Colors.green),
+                        label: const Text("Export Excel",
+                            style: TextStyle(color: Colors.green)),
                       ),
                       const SizedBox(width: defaultPadding),
                       // Add Lead button - Only show if user has CREATE permission
@@ -1156,7 +1161,8 @@ class _LeadsScreenState extends State<LeadsScreen> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => LeadQuotationsScreen(lead: lead, leadId: int.tryParse(lead.leadId)),
+        builder: (context) =>
+            LeadQuotationsScreen(lead: lead, leadId: int.tryParse(lead.leadId)),
       ),
     );
   }

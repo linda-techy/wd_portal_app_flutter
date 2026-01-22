@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import '../services/api_service.dart';
 import '../models/view_360_models.dart';
@@ -10,19 +11,33 @@ class View360Service {
   Future<List<View360>> getToursByProject(int projectId) async {
     try {
       final response = await _apiService.get('/view360/project/$projectId');
-      return (response.data as List).map((json) => View360.fromJson(json)).toList();
+      return (response.data as List)
+          .map((json) => View360.fromJson(json))
+          .toList();
     } catch (e) {
       rethrow;
     }
   }
 
+  /// Upload a 360 tour
+  /// Supports all platforms: Web, Android, iOS, Windows, macOS, Linux
+  /// [projectId] - The project ID
+  /// [title] - Tour title
+  /// [description] - Optional description
+  /// [location] - Optional location
+  /// [captureDate] - Optional capture date
+  /// [file] - File object (for mobile/desktop) or null (for web)
+  /// [bytes] - File bytes (for web) or null (for mobile/desktop)
+  /// [fileName] - File name (required for all platforms)
   Future<View360> uploadTour({
     required int projectId,
     required String title,
     String? description,
     String? location,
     DateTime? captureDate,
-    required File file,
+    File? file,
+    Uint8List? bytes,
+    String? fileName,
   }) async {
     try {
       final Map<String, dynamic> tourData = {
@@ -33,15 +48,35 @@ class View360Service {
         'captureDate': captureDate?.toIso8601String(),
       };
 
+      MultipartFile multipartFile;
+      String finalFileName;
+
+      // Determine which method to use based on available data
+      // Priority: bytes (web) > file path (mobile/desktop)
+      if (bytes != null && fileName != null) {
+        // Web platform or desktop with bytes available
+        multipartFile = MultipartFile.fromBytes(
+          bytes,
+          filename: fileName,
+        );
+        finalFileName = fileName;
+      } else if (file != null) {
+        // Mobile/Desktop platform with file path
+        finalFileName = fileName ?? file.path.split(RegExp(r'[/\\]')).last;
+        multipartFile =
+            await MultipartFile.fromFile(file.path, filename: finalFileName);
+      } else {
+        // Error: neither bytes nor file provided
+        throw Exception(
+            'Either bytes+fileName (for web) or file (for mobile/desktop) must be provided');
+      }
+
       final formData = FormData.fromMap({
         'tour': MultipartFile.fromString(
           jsonEncode(tourData),
           contentType: DioMediaType.parse('application/json'),
         ),
-        'file': await MultipartFile.fromFile(
-          file.path,
-          filename: file.path.split('/').last,
-        ),
+        'file': multipartFile,
       });
 
       final response = await _apiService.post(

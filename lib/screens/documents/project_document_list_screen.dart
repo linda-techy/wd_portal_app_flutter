@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:math';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import '../../utils/file_upload_helper.dart';
 
 class ProjectDocumentListScreen extends StatefulWidget {
   final int projectId;
@@ -420,7 +421,7 @@ class UploadDocumentDialog extends StatefulWidget {
 class _UploadDocumentDialogState extends State<UploadDocumentDialog> {
   final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
-  File? _selectedFile;
+  FileUploadData? _selectedFileData;
   int? _selectedCategoryId;
   bool _isUploading = false;
 
@@ -432,14 +433,14 @@ class _UploadDocumentDialogState extends State<UploadDocumentDialog> {
 
     if (result != null) {
       setState(() {
-        _selectedFile = File(result.files.single.path!);
+        _selectedFileData = FileUploadHelper.extractFromResult(result);
       });
     }
   }
 
   Future<void> _handleUpload() async {
-    if (!_formKey.currentState!.validate() || _selectedFile == null) {
-      if (_selectedFile == null) {
+    if (!_formKey.currentState!.validate() || _selectedFileData == null) {
+      if (_selectedFileData == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Please select a file")),
         );
@@ -452,7 +453,9 @@ class _UploadDocumentDialogState extends State<UploadDocumentDialog> {
     try {
       await context.read<DocumentProvider>().uploadDocument(
             projectId: widget.projectId,
-            file: _selectedFile!,
+            file: _selectedFileData!.file,
+            bytes: _selectedFileData!.bytes,
+            fileName: _selectedFileData!.fileName,
             categoryId: _selectedCategoryId!,
             description: _descriptionController.text.trim(),
           );
@@ -499,14 +502,14 @@ class _UploadDocumentDialogState extends State<UploadDocumentDialog> {
                   child: Row(
                     children: [
                       Icon(
-                        _selectedFile != null ? Icons.check_circle : Icons.file_present,
-                        color: _selectedFile != null ? Colors.green : AppTheme.coralRed,
+                        _selectedFileData != null ? Icons.check_circle : Icons.file_present,
+                        color: _selectedFileData != null ? Colors.green : AppTheme.coralRed,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          _selectedFile != null
-                              ? _selectedFile!.path.split('/').last
+                          _selectedFileData != null
+                              ? _selectedFileData!.fileName
                               : "Select File (PDF, DOC, Images...)",
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

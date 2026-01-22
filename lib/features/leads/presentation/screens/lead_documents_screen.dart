@@ -6,6 +6,7 @@ import '../../data/models/lead.dart';
 import '../../data/models/lead_document.dart';
 import '../../data/services/lead_service.dart';
 import 'package:admin/utils/error_handler.dart';
+import 'package:admin/utils/file_upload_helper.dart';
 
 class LeadDocumentsScreen extends StatefulWidget {
   final Lead lead;
@@ -55,10 +56,8 @@ class _LeadDocumentsScreenState extends State<LeadDocumentsScreen> {
       FilePickerResult? result = await FilePicker.platform.pickFiles();
 
       if (result != null) {
-        final platformFile = result.files.single;
-        if (platformFile.path == null) return;
-
-        final file = File(platformFile.path!);
+        // Extract file data using cross-platform helper
+        final fileData = FileUploadHelper.extractFromResult(result);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -69,9 +68,11 @@ class _LeadDocumentsScreenState extends State<LeadDocumentsScreen> {
         // Upload without category (null) and with description
         await _leadService.uploadDocument(
             widget.lead.leadId, 
-            file, 
+            fileData.file, 
             null, // categoryId - can be null
-            "Uploaded via Mobile App"
+            "Uploaded via App",
+            bytes: fileData.bytes,
+            fileName: fileData.fileName,
         );
         
         if (mounted) {

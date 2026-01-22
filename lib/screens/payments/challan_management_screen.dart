@@ -1,12 +1,10 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/models/payment_models.dart';
 import 'package:admin/services/challan_service.dart';
 import 'package:admin/utils/motion_toast.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:admin/utils/file_download_helper.dart';
 
 class ChallanManagementScreen extends StatefulWidget {
   const ChallanManagementScreen({super.key});
@@ -54,11 +52,14 @@ class _ChallanManagementScreenState extends State<ChallanManagementScreen> {
   Future<void> _downloadChallan(ChallanItem challan) async {
     try {
       final bytes = await _challanService.downloadChallan(challan.id);
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/Walldot_Challan_${challan.challanNumber.replaceAll("/", "_")}.pdf');
-      await file.writeAsBytes(bytes);
+      final filename = 'Walldot_Challan_${challan.challanNumber.replaceAll("/", "_")}.pdf';
       
-      await Share.shareXFiles([XFile(file.path)], text: 'Payment Challan - ${challan.challanNumber}');
+      await FileDownloadHelper.downloadAndShareFile(
+        bytes: bytes,
+        fileName: filename,
+        mimeType: 'application/pdf',
+        shareText: 'Payment Challan - ${challan.challanNumber}',
+      );
     } catch (e) {
       MotionToast.show(context, message: e.toString(), isError: true);
     }
@@ -70,11 +71,13 @@ class _ChallanManagementScreenState extends State<ChallanManagementScreen> {
     try {
       MotionToast.show(context, message: 'Generating ZIP archive...');
       final bytes = await _challanService.downloadBulk(_selectedIds.toList());
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/Walldot_Challans_Bulk.zip');
-      await file.writeAsBytes(bytes);
       
-      await Share.shareXFiles([XFile(file.path)], text: 'Walldot Challans - Bulk Download');
+      await FileDownloadHelper.downloadAndShareFile(
+        bytes: bytes,
+        fileName: 'Walldot_Challans_Bulk.zip',
+        mimeType: 'application/zip',
+        shareText: 'Walldot Challans - Bulk Download',
+      );
     } catch (e) {
       MotionToast.show(context, message: e.toString(), isError: true);
     }
