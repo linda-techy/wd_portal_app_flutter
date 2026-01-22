@@ -35,7 +35,9 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
   DateTime? lastContactDate;
 
   bool isLoading = false;
+  bool isInitializing = true; // Track initialization state
   List<PortalUser> teamMembers = [];
+  bool isLoadingTeamMembers = true; // Track team members loading state
 
   @override
   void initState() {
@@ -73,36 +75,65 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
     // Initialize with current date for date of enquiry
     dateOfEnquiry = DateTime.now();
 
-    // Load team members
-    _verifyAuthAndLoadData();
+    // Load dropdown data first, then initialize form
+    _initializeAsync();
   }
 
-  Future<void> _verifyAuthAndLoadData() async {
-    final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
-    
-    if (!authProvider.isAuthenticated) {
-      if (mounted) {
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            Navigator.of(context).pushReplacementNamed('/login');
-          }
-        });
+  /// Initialize controller asynchronously - loads dropdown data first, then initializes form
+  /// This ensures dropdowns have their items available before form is displayed
+  Future<void> _initializeAsync() async {
+    isInitializing = true;
+    if (mounted) setState(() {});
+
+    try {
+      // Step 1: Verify authentication
+      final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
+      
+      if (!authProvider.isAuthenticated) {
+        if (mounted) {
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              Navigator.of(context).pushReplacementNamed('/login');
+            }
+          });
+        }
+        return;
       }
-      return;
+      
+      // Step 2: Load all dropdown data first (team members)
+      await _loadTeamMembers();
+
+      // Step 3: Form is ready - initialization complete
+      isInitializing = false;
+      if (mounted) setState(() {});
+    } catch (e) {
+      print('Error initializing add lead screen: $e');
+      // Still allow form to be shown even if team members fail to load
+      isInitializing = false;
+      if (mounted) setState(() {});
     }
-    
-    await _loadTeamMembers();
   }
 
   Future<void> _loadTeamMembers() async {
+    isLoadingTeamMembers = true;
+    if (mounted) setState(() {});
+
     try {
       // Load users with roles SALES, CRM, EMPLOYEE
       final members = await UserService.getPortalUsersByRoleCodes(['SALES', 'CRM', 'EMPLOYEE']);
-      setState(() {
-        teamMembers = members;
-      });
-    } catch (e) {
       if (mounted) {
+        setState(() {
+          teamMembers = members;
+          isLoadingTeamMembers = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading team members: $e');
+      if (mounted) {
+        setState(() {
+          teamMembers = [];
+          isLoadingTeamMembers = false;
+        });
         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error loading team members', showToast: false);
       }
     }
@@ -143,7 +174,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
       ),
-      body: isLoading
+      body: isInitializing || isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(defaultPadding),
@@ -182,6 +213,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
                       onNextFollowUpChanged: _updateNextFollowUp,
                       onLastContactDateChanged: _updateLastContactDate,
                       teamMembers: teamMembers,
+                      isLoadingTeamMembers: isLoadingTeamMembers,
                     ),
                     const SizedBox(height: defaultPadding),
                     _buildSectionHeader(AddLeadConstants.additionalHeader),

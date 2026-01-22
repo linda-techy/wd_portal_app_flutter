@@ -57,6 +57,7 @@ class _PremiumTextInputState extends State<PremiumTextInput>
   late Animation<double> _helperAnimation;
   bool _isFocused = false;
   bool _hasError = false;
+  bool _hasBeenTouched = false; // Track if user has interacted with the field
 
   @override
   void initState() {
@@ -95,6 +96,13 @@ class _PremiumTextInputState extends State<PremiumTextInput>
       _isFocused = _focusNode.hasFocus;
     });
     
+    // Mark as touched when field gains focus
+    if (!_hasBeenTouched && _isFocused) {
+      setState(() {
+        _hasBeenTouched = true;
+      });
+    }
+    
     // Validate when field loses focus (blur)
     // Works on all platforms: desktop, mobile, web, Windows
     // On mobile: when user taps away or keyboard dismisses
@@ -125,7 +133,12 @@ class _PremiumTextInputState extends State<PremiumTextInput>
 
   @override
   Widget build(BuildContext context) {
-    final effectiveError = widget.errorText ?? (_hasError ? 'Invalid input' : null);
+    // Only show error if:
+    // 1. widget.errorText is explicitly provided, OR
+    // 2. _hasError is true AND the field has been touched by the user
+    // This prevents errors from showing on page load
+    final effectiveError = widget.errorText ?? 
+        (_hasError && _hasBeenTouched ? 'Invalid input' : null);
     final showHelper = widget.helperText != null || effectiveError != null;
     
     if (showHelper && _helperController.status != AnimationStatus.forward) {
@@ -148,6 +161,12 @@ class _PremiumTextInputState extends State<PremiumTextInput>
             focusNode: _focusNode,
             onChanged: (value) {
               widget.onChanged?.call(value);
+              // Mark field as touched when user starts typing
+              if (!_hasBeenTouched) {
+                setState(() {
+                  _hasBeenTouched = true;
+                });
+              }
               // Only validate while field is focused (user is typing)
               // Don't validate on initial load
               if (_isFocused) {
@@ -155,6 +174,12 @@ class _PremiumTextInputState extends State<PremiumTextInput>
               }
             },
             onTap: () {
+              // Mark field as touched when user taps on it
+              if (!_hasBeenTouched) {
+                setState(() {
+                  _hasBeenTouched = true;
+                });
+              }
               // Clear any previous errors when user starts interacting
               if (_hasError && !_isFocused) {
                 setState(() {
@@ -163,6 +188,12 @@ class _PremiumTextInputState extends State<PremiumTextInput>
               }
             },
             onEditingComplete: () {
+              // Mark as touched when user finishes editing
+              if (!_hasBeenTouched) {
+                setState(() {
+                  _hasBeenTouched = true;
+                });
+              }
               // Validate when user finishes editing (blur)
               // Works on all platforms: desktop (Tab), mobile (Next button), web (Tab)
               if (widget.controller?.text != null) {
@@ -174,7 +205,31 @@ class _PremiumTextInputState extends State<PremiumTextInput>
               }
             },
             onFieldSubmitted: widget.onFieldSubmitted,
-            validator: widget.validator,
+            // Only validate when form is explicitly validated (on submit)
+            // Don't validate on initial load - autovalidateMode is disabled
+            validator: widget.validator != null 
+                ? (value) {
+                    // Only run validator if field has been touched or form is being validated
+                    // This prevents validation errors on page load
+                    if (!_hasBeenTouched && (value == null || value.isEmpty)) {
+                      return null; // Don't show error for empty field that hasn't been touched
+                    }
+                    final error = widget.validator!(value);
+                    if (error != null) {
+                      // Mark as touched when validation fails
+                      if (!_hasBeenTouched) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) {
+                            setState(() {
+                              _hasBeenTouched = true;
+                            });
+                          }
+                        });
+                      }
+                    }
+                    return error;
+                  }
+                : null,
             keyboardType: widget.keyboardType,
             obscureText: widget.obscureText,
             enabled: widget.enabled,
