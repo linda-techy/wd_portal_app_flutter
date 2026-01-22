@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:intl/intl.dart';
 import '../../../../../../constants.dart';
 import '../../../data/models/lead_document.dart';
@@ -78,55 +80,105 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
         allowMultiple: false,
       );
 
-      if (pickerResult != null && pickerResult.files.single.path != null) {
-        final platformFile = pickerResult.files.single;
-        final file = File(platformFile.path!);
+      if (pickerResult == null || pickerResult.files.isEmpty) {
+        return;
+      }
 
-        // Show upload dialog with category and description
-        final dialogResult = await showDialog<Map<String, dynamic>>(
-          context: context,
-          builder: (context) => _UploadDocumentDialog(categories: _categories),
-        );
+      final platformFile = pickerResult.files.single;
+      
+      // Handle all platforms: Web, Android, iOS, Windows, macOS, Linux
+      // Priority: bytes (web) > path (mobile/desktop)
+      Uint8List? fileBytes;
+      String? fileName;
+      File? file;
 
-        if (dialogResult != null && mounted) {
-          setState(() {
-            _isUploading = true;
-          });
+      // Get file name (available on all platforms)
+      fileName = platformFile.name;
 
-          try {
-            final categoryId = dialogResult['categoryId'] as int?;
-            final description = dialogResult['description'] as String?;
-
-            await _leadService.uploadDocument(
-              widget.leadId,
-              file,
-              categoryId,
-              description,
+      // Web platform: bytes are available
+      if (kIsWeb) {
+        if (platformFile.bytes == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to read file. Please try again.'),
+                backgroundColor: Colors.orange,
+              ),
             );
-
+          }
+          return;
+        }
+        fileBytes = platformFile.bytes;
+      } 
+      // Desktop and Mobile platforms: path is available
+      // This includes: Android, iOS, Windows, macOS, Linux
+      else {
+        if (platformFile.path == null) {
+          // Fallback: try bytes if available (some desktop platforms support both)
+          if (platformFile.bytes != null) {
+            fileBytes = platformFile.bytes;
+          } else {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Document uploaded successfully'),
-                  backgroundColor: Colors.green,
+                  content: Text('Failed to get file. Please try again.'),
+                  backgroundColor: Colors.orange,
                 ),
               );
-              _fetchDocuments();
             }
-          } catch (e) {
-            if (mounted) {
-              await ErrorHandler.handleApiError(
-                context,
-                e,
-                defaultMessage: 'Failed to upload document',
-              );
-            }
-          } finally {
-            if (mounted) {
-              setState(() {
-                _isUploading = false;
-              });
-            }
+            return;
+          }
+        } else {
+          file = File(platformFile.path!);
+        }
+      }
+
+      // Show upload dialog with category and description
+      final dialogResult = await showDialog<Map<String, dynamic>>(
+        context: context,
+        builder: (context) => _UploadDocumentDialog(categories: _categories),
+      );
+
+      if (dialogResult != null && mounted) {
+        setState(() {
+          _isUploading = true;
+        });
+
+        try {
+          final categoryId = dialogResult['categoryId'] as int?;
+          final description = dialogResult['description'] as String?;
+
+          await _leadService.uploadDocument(
+            widget.leadId,
+            file, // null on web, File on mobile/desktop (Android/iOS/Windows/macOS/Linux)
+            categoryId,
+            description,
+            bytes: fileBytes, // Uint8List on web, null on mobile/desktop (unless fallback)
+            fileName: fileName, // Required on all platforms
+          );
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Document uploaded successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            _fetchDocuments();
+          }
+        } catch (e) {
+          if (mounted) {
+            await ErrorHandler.handleApiError(
+              context,
+              e,
+              defaultMessage: 'Failed to upload document',
+            );
+          }
+        } finally {
+          if (mounted) {
+            setState(() {
+              _isUploading = false;
+            });
           }
         }
       }

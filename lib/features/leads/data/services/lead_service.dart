@@ -165,14 +165,47 @@ class LeadService {
   /// Upload a document for a lead
   /// [leadId] - The lead ID
   /// [file] - The file to upload
+  /// Upload a document for a lead
+  /// Supports all platforms: Web, Android, iOS, Windows, macOS, Linux
+  /// [leadId] - The lead ID
+  /// [file] - File object (for mobile/desktop) or null (for web)
+  /// [bytes] - File bytes (for web or fallback) or null (for mobile/desktop with path)
+  /// [fileName] - File name (required for all platforms)
   /// [categoryId] - Optional category ID (use null if no category)
   /// [description] - Optional description
   Future<LeadDocument> uploadDocument(
-      String leadId, File file, int? categoryId, String? description) async {
-    String fileName = file.path.split(RegExp(r'[/\\]')).last;
+      String leadId, 
+      File? file, 
+      int? categoryId, 
+      String? description, {
+      Uint8List? bytes,
+      String? fileName,
+    }) async {
+    MultipartFile multipartFile;
+    String finalFileName;
+
+    // Determine which method to use based on available data
+    // Priority: bytes (web) > file path (mobile/desktop)
+    if (bytes != null && fileName != null) {
+      // Web platform or desktop with bytes available
+      multipartFile = MultipartFile.fromBytes(
+        bytes,
+        filename: fileName,
+      );
+      finalFileName = fileName;
+    } else if (file != null) {
+      // Mobile/Desktop platform with file path
+      finalFileName = fileName ?? file.path.split(RegExp(r'[/\\]')).last;
+      multipartFile = await MultipartFile.fromFile(file.path, filename: finalFileName);
+    } else {
+      // Error: neither bytes nor file provided
+      throw Exception(
+        'Either bytes+fileName (for web) or file (for mobile/desktop) must be provided'
+      );
+    }
     
     FormData formData = FormData.fromMap({
-      'file': await MultipartFile.fromFile(file.path, filename: fileName),
+      'file': multipartFile,
       if (description != null && description.isNotEmpty) 'description': description,
       if (categoryId != null) 'categoryId': categoryId,
     });
