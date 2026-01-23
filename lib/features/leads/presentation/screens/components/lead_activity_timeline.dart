@@ -51,8 +51,11 @@ class _LeadActivityTimelineState extends State<LeadActivityTimeline> {
       });
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
-        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load activities');
+        setState(() {
+          _isLoading = false;
+          _errorMessage = ErrorHandler.getErrorMessage(e);
+        });
+        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load activities', showToast: false);
       }
     }
   }
@@ -79,16 +82,24 @@ class _LeadActivityTimelineState extends State<LeadActivityTimeline> {
     }
 
     if (_activities.isEmpty) {
-      return const Center(child: Text('No activities recorded yet.'));
+      return const Center(
+        child: Text(
+          'No activities recorded yet.',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
     }
 
-    return ListView.builder(
+    return RefreshIndicator(
+      onRefresh: _loadActivities,
+      child: ListView.builder(
       padding: const EdgeInsets.all(16.0),
       itemCount: _activities.length,
       itemBuilder: (context, index) {
         final activity = _activities[index];
         return _buildTimelineItem(activity, index == _activities.length - 1);
       },
+      ),
     );
   }
 

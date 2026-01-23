@@ -126,12 +126,21 @@ class _LeadTasksTabState extends State<LeadTasksTab> {
                                 ),
                                 trailing: const Icon(Icons.chevron_right),
                                 onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => TaskDetailScreen(taskId: task.id),
-                                    ),
-                                  );
+                                  if (task.id != null) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => TaskDetailScreen(taskId: task.id!),
+                                      ),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Task ID is missing'),
+                                        backgroundColor: Colors.orange,
+                                      ),
+                                    );
+                                  }
                                 },
                               );
                             },
@@ -272,7 +281,14 @@ class _AddTaskDialogState extends State<_AddTaskDialog> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_dueDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Due Date is mandatory')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Due Date is mandatory'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
       return;
     }
     
@@ -287,8 +303,18 @@ class _AddTaskDialogState extends State<_AddTaskDialog> {
         dueDate: dateStr,
         priority: _priority,
       ));
-      widget.onSave();
-      if (mounted) Navigator.pop(context);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Task created successfully'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        Navigator.pop(context);
+        widget.onSave(); // Refresh task list
+      }
     } catch (e) {
       setState(() => _isSaving = false);
       if (mounted) {

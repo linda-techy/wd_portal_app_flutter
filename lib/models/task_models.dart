@@ -243,7 +243,9 @@ class CreateTaskRequest {
       if (dueDate != null) 'dueDate': dueDate,
       if (assignedToId != null) 'assignedTo': {'id': assignedToId},
       if (projectId != null) 'project': {'id': projectId},
-      if (leadId != null) 'lead': {'leadId': leadId},
+      // Backend Task entity expects a Lead reference via primary key `id`
+      // This ensures Hibernate attaches the correct managed Lead entity
+      if (leadId != null) 'lead': {'id': leadId},
     };
   }
 }
@@ -279,7 +281,8 @@ class UpdateTaskRequest {
     if (dueDate != null) data['dueDate'] = dueDate;
     if (assignedToId != null) data['assignedTo'] = {'id': assignedToId};
     if (projectId != null) data['project'] = {'id': projectId};
-    if (leadId != null) data['lead'] = {'leadId': leadId};
+    // Keep JSON shape consistent with CreateTaskRequest
+    if (leadId != null) data['lead'] = {'id': leadId};
     return data;
   }
 }

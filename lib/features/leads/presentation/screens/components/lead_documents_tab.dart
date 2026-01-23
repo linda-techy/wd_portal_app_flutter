@@ -8,6 +8,8 @@ import '../../../../../../constants.dart';
 import '../../../data/models/lead_document.dart';
 import '../../../data/services/lead_service.dart';
 import 'package:admin/utils/error_handler.dart';
+import 'package:admin/config/app_config.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // Import DocumentCategory from lead_service
 export '../../../data/services/lead_service.dart' show DocumentCategory;
@@ -209,23 +211,16 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
       String fullUrl = doc.downloadUrl!;
       if (!fullUrl.startsWith('http')) {
         // Get base URL from API config
-        fullUrl = '${ApiConfig.fullApiUrl}$fullUrl';
+        fullUrl = '${AppConfig.fullApiUrl}$fullUrl';
       }
 
-      // For web, open in new tab; for mobile, download directly
-      // Using url_launcher would be ideal, but for now show a message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Download: ${doc.filename}'),
-          action: SnackBarAction(
-            label: 'Open',
-            onPressed: () {
-              // In production, use url_launcher: launchUrl(Uri.parse(fullUrl));
-              print('Download URL: $fullUrl');
-            },
-          ),
-        ),
-      );
+      // Use url_launcher to open/download document
+      final uri = Uri.parse(fullUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        throw Exception('Could not launch URL: $fullUrl');
+      }
     } catch (e) {
       if (mounted) {
         await ErrorHandler.handleApiError(
