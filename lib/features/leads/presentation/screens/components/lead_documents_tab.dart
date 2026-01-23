@@ -339,14 +339,16 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
                         ],
                       ),
                     )
-                  : ListView.builder(
-                      itemCount: _documents.length,
-                      itemBuilder: (context, index) {
-                        final doc = _documents[index];
-                        return Card(
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: defaultPadding, vertical: 4),
-                          child: ListTile(
+                  : RefreshIndicator(
+                      onRefresh: _fetchDocuments,
+                      child: ListView.builder(
+                        itemCount: _documents.length,
+                        itemBuilder: (context, index) {
+                          final doc = _documents[index];
+                          return Card(
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: defaultPadding, vertical: 4),
+                            child: ListTile(
                             leading: Icon(Icons.insert_drive_file,
                                 color: primaryColor),
                             title: Text(doc.filename),
@@ -384,6 +386,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
                         );
                       },
                     ),
+                  ),
         ),
       ],
     );

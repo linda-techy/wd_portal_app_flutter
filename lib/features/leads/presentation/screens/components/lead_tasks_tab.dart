@@ -111,39 +111,77 @@ class _LeadTasksTabState extends State<LeadTasksTab> {
                               ],
                             ),
                           )
-                        : ListView.builder(
-                            itemCount: _tasks.length,
-                            itemBuilder: (context, index) {
-                              final task = _tasks[index];
-                              return ListTile(
-                                leading: Icon(
-                                  Icons.task,
-                                  color: _getStatusColor(task.status.name),
-                                ),
-                                title: Text(task.title),
-                                subtitle: Text(
-                                  '${task.status.displayName}${task.dueDate != null ? ' • Due: ${_formatDate(task.dueDate!)}' : ''}',
-                                ),
-                                trailing: const Icon(Icons.chevron_right),
-                                onTap: () {
-                                  if (task.id != null) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => TaskDetailScreen(taskId: task.id!),
-                                      ),
-                                    );
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Task ID is missing'),
-                                        backgroundColor: Colors.orange,
-                                      ),
-                                    );
-                                  }
-                                },
-                              );
-                            },
+                        : RefreshIndicator(
+                            onRefresh: _fetchTasks,
+                            child: ListView.builder(
+                              itemCount: _tasks.length,
+                              itemBuilder: (context, index) {
+                                final task = _tasks[index];
+                                final isOverdue = task.dueDate != null &&
+                                    task.dueDate!.isBefore(DateTime.now()) &&
+                                    task.status != TaskStatus.completed;
+                                return Card(
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: defaultPadding, vertical: 4),
+                                  child: ListTile(
+                                    leading: Icon(
+                                      Icons.task,
+                                      color: _getStatusColor(task.status.name),
+                                    ),
+                                    title: Text(task.title),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '${task.status.displayName}${task.dueDate != null ? ' • Due: ${_formatDate(task.dueDate!)}' : ''}',
+                                        ),
+                                        if (isOverdue)
+                                          Container(
+                                            margin: const EdgeInsets.only(top: 4),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.red,
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: const Text(
+                                              'OVERDUE',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    trailing: const Icon(Icons.chevron_right),
+                                    onTap: () {
+                                      if (task.id != null) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                TaskDetailScreen(taskId: task.id!),
+                                          ),
+                                        ).then((_) {
+                                          // Refresh tasks when returning from detail screen
+                                          _fetchTasks();
+                                        });
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Task ID is missing'),
+                                            backgroundColor: Colors.orange,
+                                          ),
+                                        );
+                                      }
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
                           ),
               ),
             ],
