@@ -205,7 +205,7 @@ class Lead {
 
   // JSON for create API (omit server-generated fields like id)
   Map<String, dynamic> toCreateJson() {
-    return {
+    final json = <String, dynamic>{
       'name': name,
       'email': email,
       'phone': phone,
@@ -236,14 +236,22 @@ class Lead {
           .substring(0, 10), // Send only date part (YYYY-MM-DD)
       'lost_reason': lostReason?.isNotEmpty == true ? lostReason : null,
       'assigned_to_id': assignedToId,
-      'plot_area': plotArea,
-      'floors': floors,
     };
+
+    // Conditionally add plot_area and floors only if they have values
+    if (plotArea != null) {
+      json['plot_area'] = plotArea;
+    }
+    if (floors != null) {
+      json['floors'] = floors;
+    }
+
+    return json;
   }
 
   // JSON for update API (omit lead_id as it's in URL path)
   Map<String, dynamic> toUpdateJson() {
-    return {
+    final json = <String, dynamic>{
       'name': name,
       'email': email,
       'phone': phone,
@@ -274,9 +282,17 @@ class Lead {
           .substring(0, 10), // Send only date part (YYYY-MM-DD)
       'lost_reason': lostReason?.isNotEmpty == true ? lostReason : null,
       'assigned_to_id': assignedToId,
-      'plot_area': plotArea,
-      'floors': floors,
     };
+
+    // Conditionally add plot_area and floors only if they have values
+    if (plotArea != null) {
+      json['plot_area'] = plotArea;
+    }
+    if (floors != null) {
+      json['floors'] = floors;
+    }
+
+    return json;
   }
 
   Color get sourceColor {

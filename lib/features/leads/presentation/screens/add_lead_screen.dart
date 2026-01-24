@@ -57,8 +57,6 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
       'requirements': '',
       'budget': null,
       'projectSqftArea': null,
-      'plotArea': null,
-      'floors': null,
       'assignedTeam': '',
       'assignedToId': null, // Added assignedToId
       'state': IndiaLocationData.getDefaultState(),
@@ -285,23 +283,90 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
   }
 
   Future<void> _saveLead() async {
-    if (!_formKey.currentState!.validate()) return;
+    // First validate the form
+    if (!_formKey.currentState!.validate()) {
+      // Show generic message if form validation fails
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please fix the errors in the form'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+    
     _formKey.currentState!.save();
 
     setState(() => isLoading = true);
 
     try {
-      // Validate required fields
+      // Validate required fields with detailed messages
       final String name = (formData['name'] ?? '').toString().trim();
       if (name.isEmpty) {
         if (mounted) {
           setState(() => isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Name is required')),
+            const SnackBar(
+              content: Text('❌ Name is required - please enter lead name'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
           );
         }
         return;
       }
+
+      final String phone = (formData['phone'] ?? '').toString().trim();
+      if (phone.isEmpty) {
+        if (mounted) {
+          setState(() => isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ Phone number is required'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+
+      final String state = (formData['state'] ?? '').toString().trim();
+      if (state.isEmpty) {
+        if (mounted) {
+          setState(() => isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ State is required - please select a state'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+
+      final String district = (formData['district'] ?? '').toString().trim();
+      if (district.isEmpty) {
+        if (mounted) {
+          setState(() => isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ District is required - please select a district'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+
+      print('=== Add Lead - Creating Lead Object ===');
+      print('formData[\'assignedToId\']: ${formData['assignedToId']}');
+      print('formData[\'assignedTeam\']: ${formData['assignedTeam']}');
 
       final lead = Lead(
         leadId: '', // Let the API generate UUID
@@ -321,8 +386,6 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
             formData['projectType'] ?? ProjectTypeConstants.defaultValue,
         budget: formData['budget'],
         projectSqftArea: formData['projectSqftArea'],
-        plotArea: formData['plotArea'],
-        floors: formData['floors'],
         clientRating: formData['clientRating'] ?? 3,
         probabilityToWin: formData['probabilityToWin'] ?? 50,
         lastContactDate: lastContactDate,
@@ -340,7 +403,16 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
             : null,
       );
 
+      print('Lead object assignedToId: ${lead.assignedToId}');
+      print('Lead object assignedTeam: ${lead.assignedTeam}');
+      
+      final createJson = lead.toCreateJson();
+      print('Create JSON payload: $createJson');
+      print('Create JSON assigned_to_id: ${createJson['assigned_to_id']}');
+
       await _leadService.createLead(lead);
+
+      print('Lead created successfully');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -351,7 +423,11 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
         );
         Navigator.pop(context, true); // Return true to indicate success
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('=== Error creating lead ===');
+      print('Error: $e');
+      print('Stack trace: $stackTrace');
+      
       if (mounted) {
         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error creating lead');
       }

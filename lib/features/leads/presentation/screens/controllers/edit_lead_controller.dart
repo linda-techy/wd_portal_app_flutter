@@ -113,6 +113,11 @@ class EditLeadController extends ChangeNotifier {
   void _initializeFields() {
     final lead = _originalLead;
 
+    print('=== EditLeadController._initializeFields ===');
+    print('Original lead.assignedToId: ${lead.assignedToId}');
+    print('Original lead.assignedTo: ${lead.assignedTo}');
+    print('Original lead.assignedTeam: ${lead.assignedTeam}');
+
     // Basic Information
     name = lead.name;
     email = lead.email;
@@ -133,21 +138,30 @@ class EditLeadController extends ChangeNotifier {
     budget = lead.budget;
     projectSqftArea = lead.projectSqftArea;
 
-    // Assignment
-    assignedTeam = lead.assignedTeam;
-    // assignedToId is already validated and set in _loadTeamMembers()
-    // Only validate if team members haven't been loaded yet (shouldn't happen in normal flow)
-    if (_teamMembers.isEmpty) {
-      // Fallback: validate if team members not loaded (shouldn't happen)
-      assignedToId = _validateAssignedToId(lead.assignedToId);
-    }
-    // Otherwise, use the value that was set in _loadTeamMembers()
-
-    // Location Information
+    // Location Information - Initialize BEFORE assignment to prevent late initialization error
     state = lead.state;
     district = lead.district;
     location = lead.location;
     address = lead.address;
+
+    // Assignment - CRITICAL FIX: Always preserve assignedToId from original lead first
+    // The validation was already done in _loadTeamMembers() which runs BEFORE this
+    assignedTeam = lead.assignedTeam;
+    
+    // IMPORTANT: Don't re-validate here if team members are loaded
+    // The assignedToId was already set correctly in _loadTeamMembers()
+    // Only set it if it wasn't already set (shouldn't happen in normal flow)
+    if (_teamMembers.isNotEmpty && assignedToId != null) {
+      // assignedToId was already validated and set in _loadTeamMembers()
+      print('Team members loaded - keeping pre-validated assignedToId: $assignedToId');
+    } else {
+      // Fallback: directly use the original value
+      // This handles edge case where team members failed to load
+      assignedToId = lead.assignedToId;
+      print('Using original lead.assignedToId directly: $assignedToId');
+    }
+
+    print('Final assignedToId after all fields initialized: $assignedToId');
 
     // Additional Information
     notes = lead.notes;
@@ -161,6 +175,8 @@ class EditLeadController extends ChangeNotifier {
 
     // Lost reason
     lostReason = lead.lostReason;
+
+    print('=== End _initializeFields ===\n');
   }
 
   /// Validate and convert assignedToId, ensuring it exists in team members list
@@ -426,12 +442,33 @@ class EditLeadController extends ChangeNotifier {
   }
 
   Future<bool> saveLead() async {
+    // Run form-level validation first so field-level validators show errors
     if (!formKey.currentState!.validate()) {
       _errorMessage = 'Please fix the validation errors before saving';
       return false;
     }
 
     formKey.currentState!.save();
+
+    // Additional defensive validation before calling the API.
+    // This mirrors backend NOT NULL / required constraints to avoid 500 errors.
+    if (name.trim().isEmpty) {
+      _errorMessage = 'Name is required';
+      return false;
+    }
+    if (phone.trim().isEmpty) {
+      _errorMessage = 'Phone number is required';
+      return false;
+    }
+    if (state.trim().isEmpty) {
+      _errorMessage = 'State is required';
+      return false;
+    }
+    if (district.trim().isEmpty) {
+      _errorMessage = 'District is required';
+      return false;
+    }
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -468,13 +505,34 @@ class EditLeadController extends ChangeNotifier {
         lostReason: lostReason,
       );
 
+      // Log the update payload for debugging
+      print('=== Updating Lead ${updatedLead.leadId} ===');
+      print('Assigned To ID: $assignedToId');
+      final updateJson = updatedLead.toUpdateJson();
+      print('Update JSON payload: $updateJson');
+
       await _leadService.updateLead(updatedLead.leadId, updatedLead);
+      
+      print('Lead ${updatedLead.leadId} updated successfully');
       _isLoading = false;
       notifyListeners();
       return true;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('=== Error updating lead ===');
+      print('Error: $e');
+      print('Stack trace: $stackTrace');
+      
       _isLoading = false;
-      _errorMessage = 'Error updating lead: ${e.toString()}';
+      // Provide more specific error messages
+      if (e.toString().contains('500')) {
+        _errorMessage = 'Server error while updating lead. Please check the backend logs for details.';
+      } else if (e.toString().contains('404')) {
+        _errorMessage = 'Lead not found. It may have been deleted.';
+      } else if (e.toString().contains('400')) {
+        _errorMessage = 'Invalid data provided. Please check all fields and try again.';
+      } else {
+        _errorMessage = 'Error updating lead: ${e.toString()}';
+      }
       notifyListeners();
       return false;
     }
