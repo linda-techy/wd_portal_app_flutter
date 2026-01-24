@@ -223,8 +223,9 @@ class ApiService {
             case 404:
               return Exception(errorMessage.contains('error') ? 'Resource not found' : errorMessage);
             case 409:
-              return Exception(
-                  'This resource already exists. Please check and try again.');
+              // For conflicts (e.g. invalid status transitions), surface the
+              // backend-provided message so the user understands the rule.
+              return Exception(errorMessage);
             case 422:
               return Exception('Invalid data provided: $errorMessage');
             case 500:
