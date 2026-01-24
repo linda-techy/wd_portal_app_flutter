@@ -442,32 +442,15 @@ class EditLeadController extends ChangeNotifier {
   }
 
   Future<bool> saveLead() async {
-    // Run form-level validation first so field-level validators show errors
+    // Simple validation - only check essential fields
+    // Form field validators will handle format validation
     if (!formKey.currentState!.validate()) {
-      _errorMessage = 'Please fix the validation errors before saving';
+      _errorMessage = 'Please check the form for errors';
+      notifyListeners();
       return false;
     }
 
     formKey.currentState!.save();
-
-    // Additional defensive validation before calling the API.
-    // This mirrors backend NOT NULL / required constraints to avoid 500 errors.
-    if (name.trim().isEmpty) {
-      _errorMessage = 'Name is required';
-      return false;
-    }
-    if (phone.trim().isEmpty) {
-      _errorMessage = 'Phone number is required';
-      return false;
-    }
-    if (state.trim().isEmpty) {
-      _errorMessage = 'State is required';
-      return false;
-    }
-    if (district.trim().isEmpty) {
-      _errorMessage = 'District is required';
-      return false;
-    }
 
     _isLoading = true;
     _errorMessage = null;
@@ -517,22 +500,12 @@ class EditLeadController extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return true;
-    } catch (e, stackTrace) {
-      print('=== Error updating lead ===');
-      print('Error: $e');
-      print('Stack trace: $stackTrace');
+    } catch (e) {
+      print('Error updating lead: $e');
       
       _isLoading = false;
-      // Provide more specific error messages
-      if (e.toString().contains('500')) {
-        _errorMessage = 'Server error while updating lead. Please check the backend logs for details.';
-      } else if (e.toString().contains('404')) {
-        _errorMessage = 'Lead not found. It may have been deleted.';
-      } else if (e.toString().contains('400')) {
-        _errorMessage = 'Invalid data provided. Please check all fields and try again.';
-      } else {
-        _errorMessage = 'Error updating lead: ${e.toString()}';
-      }
+      // Simple error message
+      _errorMessage = 'Failed to update lead. Please try again.';
       notifyListeners();
       return false;
     }
