@@ -102,29 +102,17 @@ class _PremiumTextInputState extends State<PremiumTextInput>
         _hasBeenTouched = true;
       });
     }
-    
-    // Validate when field loses focus (blur)
-    // Works on all platforms: desktop, mobile, web, Windows
-    // On mobile: when user taps away or keyboard dismisses
-    // On desktop/web: when user tabs away or clicks elsewhere
-    if (wasFocused && !_isFocused && widget.controller?.text != null) {
-      // Small delay to ensure state is updated
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && !_focusNode.hasFocus) {
-          _validate(widget.controller!.text, force: true);
-        }
-      });
-    }
   }
 
   void _validate(String? value, {bool force = false}) {
     // Only validate if field has been interacted with (has focus or has been blurred)
-    // This prevents validation errors from showing on page load
     if (widget.validator != null && (_isFocused || force)) {
       final error = widget.validator!(value);
-      setState(() {
-        _hasError = error != null;
-      });
+      if (mounted) {
+        setState(() {
+          _hasError = error != null;
+        });
+      }
       if (_hasError && error != null) {
         AccessibilityUtils.announceError(context, error);
       }
@@ -133,12 +121,9 @@ class _PremiumTextInputState extends State<PremiumTextInput>
 
   @override
   Widget build(BuildContext context) {
-    // Only show error if:
-    // 1. widget.errorText is explicitly provided, OR
-    // 2. _hasError is true AND the field has been touched by the user
-    // This prevents errors from showing on page load
-    final effectiveError = widget.errorText ?? 
-        (_hasError && _hasBeenTouched ? 'Invalid input' : null);
+    // Only show helper text if explicitly provided or if errorText is explicitly provided
+    // We rely on TextFormField's built-in error display for validation errors
+    final effectiveError = widget.errorText; 
     final showHelper = widget.helperText != null || effectiveError != null;
     
     if (showHelper && _helperController.status != AnimationStatus.forward) {
@@ -167,10 +152,19 @@ class _PremiumTextInputState extends State<PremiumTextInput>
                   _hasBeenTouched = true;
                 });
               }
-              // Only validate while field is focused (user is typing)
-              // Don't validate on initial load
-              if (_isFocused) {
-                _validate(value);
+              // Only validate while field is focused (user is typing) AND has an existing error
+              if (_isFocused && _hasError) {
+                 // Trigger a form re-validation for this field only
+                 // Since we can't easily trigger standardFormField validation without form key,
+                 // we rely on the parent form or manual validation call. 
+                 // However, we can manually check and update internal state for lazy clear.
+                 final error = widget.validator!(value);
+                 setState(() {
+                   _hasError = error != null;
+                 });
+                 // If error is resolved, we want the TextFormField to clear its visual error.
+                 // The best way to do this in TextFormField is via form autovalidation or manual validate.
+                 // For now, let's at least update our internal state.
               }
             },
             onTap: () {
@@ -180,12 +174,6 @@ class _PremiumTextInputState extends State<PremiumTextInput>
                   _hasBeenTouched = true;
                 });
               }
-              // Clear any previous errors when user starts interacting
-              if (_hasError && !_isFocused) {
-                setState(() {
-                  _hasError = false;
-                });
-              }
             },
             onEditingComplete: () {
               // Mark as touched when user finishes editing
@@ -193,11 +181,6 @@ class _PremiumTextInputState extends State<PremiumTextInput>
                 setState(() {
                   _hasBeenTouched = true;
                 });
-              }
-              // Validate when user finishes editing (blur)
-              // Works on all platforms: desktop (Tab), mobile (Next button), web (Tab)
-              if (widget.controller?.text != null) {
-                _validate(widget.controller!.text, force: true);
               }
               // Move to next field on desktop/web (Tab key) or mobile (Next button)
               if (widget.onFieldSubmitted == null) {
@@ -209,12 +192,17 @@ class _PremiumTextInputState extends State<PremiumTextInput>
             // Don't validate on initial load - autovalidateMode is disabled
             validator: widget.validator != null 
                 ? (value) {
-                    // Only run validator if field has been touched or form is being validated
-                    // This prevents validation errors on page load
-                    if (!_hasBeenTouched && (value == null || value.isEmpty)) {
-                      return null; // Don't show error for empty field that hasn't been touched
-                    }
                     final error = widget.validator!(value);
+                    // Sync internal state with framework validation result
+                    if (mounted && _hasError != (error != null)) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                           if (mounted) {
+                               setState(() {
+                                   _hasError = error != null;
+                               });
+                           }
+                        });
+                    }
                     if (error != null) {
                       // Mark as touched when validation fails
                       if (!_hasBeenTouched) {

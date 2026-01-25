@@ -1,12 +1,11 @@
-import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:admin/config/app_config.dart';
 import '../../data/models/lead.dart';
 import '../../data/models/lead_document.dart';
 import '../../data/services/lead_service.dart';
 import 'package:admin/utils/error_handler.dart';
-import 'package:admin/utils/file_upload_helper.dart';
 
 class LeadDocumentsScreen extends StatefulWidget {
   final Lead lead;
@@ -51,40 +50,42 @@ class _LeadDocumentsScreenState extends State<LeadDocumentsScreen> {
     }
   }
 
-  Future<void> _pickAndUploadFile() async {
+
+  Future<void> _downloadDocument(LeadDocument doc) async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
-
-      if (result != null) {
-        // Extract file data using cross-platform helper
-        final fileData = FileUploadHelper.extractFromResult(result);
-
+      if (doc.downloadUrl == null || doc.downloadUrl!.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Uploading document...')),
+            const SnackBar(
+              content: Text('Download URL not available'),
+              backgroundColor: Colors.orange,
+            ),
           );
         }
+        return;
+      }
 
-        // Upload without category (null) and with description
-        await _leadService.uploadDocument(
-            widget.lead.leadId, 
-            fileData.file, 
-            null, // categoryId - can be null
-            "Uploaded via App",
-            bytes: fileData.bytes,
-            fileName: fileData.fileName,
-        );
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Upload successful')),
-          );
-          _loadDocuments();
-        }
+      // Construct full URL if relative
+      String fullUrl = doc.downloadUrl!;
+      if (!fullUrl.startsWith('http')) {
+        // Get base URL from API config
+        fullUrl = '${AppConfig.fullApiUrl}$fullUrl';
+      }
+
+      // Use url_launcher to open/download document
+      final uri = Uri.parse(fullUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        throw Exception('Could not launch URL: $fullUrl');
       }
     } catch (e) {
       if (mounted) {
-        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Upload failed');
+        await ErrorHandler.handleApiError(
+          context,
+          e,
+          defaultMessage: 'Failed to download document',
+        );
       }
     }
   }
@@ -109,14 +110,14 @@ class _LeadDocumentsScreenState extends State<LeadDocumentsScreen> {
                           leading: const Icon(Icons.description),
                           title: Text(doc.filename),
                           subtitle: Text('${(doc.fileSize ?? 0) ~/ 1024} KB • ${DateFormat.yMMMd().format(doc.uploadedAt)}'),
-                          // Add trailing delete button if needed, checking Service support later
+                          trailing: IconButton(
+                            icon: const Icon(Icons.visibility),
+                            tooltip: 'View Document',
+                            onPressed: () => _downloadDocument(doc),
+                          ),
                         );
                       },
                     ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _pickAndUploadFile,
-        child: const Icon(Icons.upload_file),
-      ),
     );
   }
 }
