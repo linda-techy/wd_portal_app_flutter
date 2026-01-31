@@ -662,7 +662,6 @@ class _LeadsScreenState extends State<LeadsScreen> {
                 ],
               ),
           ],
-          ],
         ),
       ),
     );
@@ -931,7 +930,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
   Future<void> _refreshCurrentPage() async {
     try {
       setState(() {
-        isLoading = true;
+        _isPageLoading = true;
         errorMessage = null;
       });
 
@@ -946,13 +945,13 @@ class _LeadsScreenState extends State<LeadsScreen> {
           itemsPerPage = response.itemsPerPage;
           hasNextPage = response.hasNextPage;
           hasPreviousPage = response.hasPreviousPage;
-          isLoading = false;
+          _isPageLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          isLoading = false;
+          _isPageLoading = false;
           errorMessage = ErrorHandler.getErrorMessage(e);
         });
       }
@@ -1087,7 +1086,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
     );
 
     if (shouldConvert == true) {
-      if (mounted) setState(() => isLoading = true);
+      if (mounted) setState(() => _isPageLoading = true);
       try {
         final requestData = {
           "projectName": projectNameController.text,
@@ -1112,7 +1111,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
               backgroundColor: Colors.red));
         }
       } finally {
-        if (mounted) setState(() => isLoading = false);
+        if (mounted) setState(() => _isPageLoading = false);
       }
     }
   }
