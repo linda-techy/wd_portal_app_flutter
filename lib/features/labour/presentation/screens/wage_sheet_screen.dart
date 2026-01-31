@@ -20,6 +20,7 @@ class _WageSheetScreenState extends State<WageSheetScreen> {
   
   WageSheet? _currentSheet;
   bool _isLoading = false;
+  bool _isPageLoading = true;
   DateTime _startDate = DateTime.now().subtract(const Duration(days: 7));
   DateTime _endDate = DateTime.now();
   
@@ -32,6 +33,8 @@ class _WageSheetScreenState extends State<WageSheetScreen> {
     _selectedProjectId = widget.projectId;
     if (_selectedProjectId == null || _selectedProjectId == 0) {
       _loadProjects();
+    } else {
+      _isPageLoading = false;
     }
   }
 
@@ -41,11 +44,13 @@ class _WageSheetScreenState extends State<WageSheetScreen> {
       if (mounted) {
         setState(() {
           _projects = projects;
+          _isPageLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading projects: $e')));
+         setState(() => _isPageLoading = false);
       }
     }
   }
@@ -99,7 +104,9 @@ class _WageSheetScreenState extends State<WageSheetScreen> {
       appBar: AppBar(
         title: const Text('Wage Sheet Generation'),
       ),
-      body: Padding(
+      body: _isPageLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [

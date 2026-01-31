@@ -37,6 +37,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
   List<CustomerRole> _customerRoles = [];
   bool _isLoadingRoles = false;
 
+  bool _isPageLoading = true;
   bool _isLoading = false;
   bool _obscurePassword = true;
 
@@ -71,11 +72,15 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
         setState(() {
           _customerRoles = roles;
           _isLoadingRoles = false;
+          _isPageLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoadingRoles = false);
+        setState(() {
+          _isLoadingRoles = false;
+          _isPageLoading = false;
+        });
         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error loading roles');
       }
     }
@@ -186,7 +191,9 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
           ),
         ],
       ),
-      body: _isLoading
+      body: _isPageLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(defaultPadding),

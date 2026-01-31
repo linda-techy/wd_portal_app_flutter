@@ -21,7 +21,7 @@ class SiteReportsScreen extends StatefulWidget {
 class _SiteReportsScreenState extends State<SiteReportsScreen> {
   final SiteReportService _service = SiteReportService();
   List<SiteReport> _reports = [];
-  bool _isLoading = true;
+  bool _isPageLoading = true;
 
   @override
   void initState() {
@@ -42,16 +42,16 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+    setState(() => _isPageLoading = true);
     try {
       final reports = await _service.getReportsByProject(widget.projectId);
       setState(() {
         _reports = reports;
-        _isLoading = false;
+        _isPageLoading = false;
       });
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() => _isPageLoading = false);
         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load site reports');
       }
     }
@@ -79,7 +79,7 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
           ),
         ],
       ),
-      body: _isLoading
+      body: _isPageLoading
           ? const Center(child: CircularProgressIndicator())
           : _reports.isEmpty
               ? Center(

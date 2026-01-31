@@ -26,7 +26,7 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
   List<ProjectDocument> _documents = [];
   List<DocumentCategory> _categories = [];
   DocumentCategory? _selectedCategory;
-  bool _isLoading = true;
+  bool _isPageLoading = true;
   bool _isUploading = false;
 
   @override
@@ -37,7 +37,7 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
 
   Future<void> _loadData() async {
     setState(() {
-      _isLoading = true;
+      _isPageLoading = true;
     });
 
     try {
@@ -47,11 +47,11 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
       setState(() {
         _categories = categories;
         _documents = documents;
-        _isLoading = false;
+        _isPageLoading = false;
       });
     } catch (e) {
       setState(() {
-        _isLoading = false;
+        _isPageLoading = false;
       });
       if (mounted) {
         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error loading documents');
@@ -214,7 +214,7 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
         elevation: 0,
         backgroundColor: AppTheme.surface,
       ),
-      body: _isLoading
+      body: _isPageLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [

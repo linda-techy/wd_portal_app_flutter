@@ -22,7 +22,7 @@ class CRMDashboardModern extends StatefulWidget {
 class _CRMDashboardModernState extends State<CRMDashboardModern> {
   final CRMService _crmService = CRMService();
   Map<String, dynamic> dashboardMetrics = {};
-  bool isLoading = true;
+  bool _isPageLoading = true;
   List<Lead> leads = [];
   List<Customer> customers = [];
   List<CustomerProject> customerProjects = [];
@@ -36,7 +36,7 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
   Future<void> _loadDashboardData() async {
     try {
       setState(() {
-        isLoading = true;
+        _isPageLoading = true;
       });
 
       final leadsData = await _crmService.getAllLeads();
@@ -47,14 +47,16 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
         leads = leadsData;
         customers = customersData;
         customerProjects = projectsData;
-        isLoading = false;
+        customerProjects = projectsData;
+        _isPageLoading = false;
       });
 
       _calculateRealMetrics();
     } catch (e) {
       print('Error fetching API data: $e');
+      print('Error fetching API data: $e');
       setState(() {
-        isLoading = false;
+        _isPageLoading = false;
       });
       _calculateRealMetrics();
     }
@@ -144,7 +146,7 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: AdaptiveContainer(
-        child: isLoading
+        child: _isPageLoading
             ? _buildShimmerLoading()
             : SingleChildScrollView(
                 padding: ResponsiveUtils.responsivePadding(context),

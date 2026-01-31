@@ -32,14 +32,16 @@ class ProjectWarrantiesScreen extends StatelessWidget {
                 ),
               ],
             ),
-            body: Column(
-              children: [
-                _buildSearchAndFilters(context, provider),
-                Expanded(child: _buildWarrantyList(context, provider)),
-                if (provider.totalPages > 1)
-                  _buildPagination(context, provider),
-              ],
-            ),
+            body: (provider.isLoading && provider.items.isEmpty)
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    children: [
+                      _buildSearchAndFilters(context, provider),
+                      Expanded(child: _buildWarrantyList(context, provider)),
+                      if (provider.totalPages > 1)
+                        _buildPagination(context, provider),
+                    ],
+                  ),
           );
         },
       ),
@@ -128,7 +130,7 @@ class ProjectWarrantiesScreen extends StatelessWidget {
 
   Widget _buildWarrantyList(BuildContext context, ProjectWarrantyProvider provider) {
     if (provider.isLoading && provider.items.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const SizedBox(); // Loader is handled at body level now
     }
 
     if (provider.error != null) {

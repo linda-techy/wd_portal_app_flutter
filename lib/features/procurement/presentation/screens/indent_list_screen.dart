@@ -16,7 +16,7 @@ class IndentListScreen extends StatefulWidget {
 
 class _IndentListScreenState extends State<IndentListScreen> {
   final _service = MaterialIndentService();
-  bool _isLoading = true;
+  bool _isPageLoading = true;
   List<MaterialIndent> _indents = [];
 
   @override
@@ -26,18 +26,18 @@ class _IndentListScreenState extends State<IndentListScreen> {
   }
 
   Future<void> _loadIndents() async {
-    setState(() => _isLoading = true);
+    setState(() => _isPageLoading = true);
     try {
       final list = await _service.getIndents(widget.projectId);
       if (mounted) {
         setState(() {
           _indents = list;
-          _isLoading = false;
+          _isPageLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() => _isPageLoading = false);
         ErrorHandler.handleApiError(context, e);
       }
     }
@@ -70,7 +70,7 @@ class _IndentListScreenState extends State<IndentListScreen> {
         onPressed: _navigateToCreate,
         child: const Icon(Icons.add),
       ),
-      body: _isLoading
+      body: _isPageLoading
           ? const Center(child: CircularProgressIndicator())
           : _indents.isEmpty
               ? const Center(child: Text('No indents found.'))

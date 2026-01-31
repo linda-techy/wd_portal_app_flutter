@@ -37,14 +37,16 @@ class CustomersScreen extends StatelessWidget {
                 ),
               ],
             ),
-            body: Column(
-              children: [
-                _buildSearchAndFilters(context, provider),
-                Expanded(child: _buildCustomerList(context, provider)),
-                if (provider.totalPages > 1)
-                  _buildPagination(context, provider),
-              ],
-            ),
+            body: (provider.isLoading && provider.items.isEmpty)
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    children: [
+                      _buildSearchAndFilters(context, provider),
+                      Expanded(child: _buildCustomerList(context, provider)),
+                      if (provider.totalPages > 1)
+                        _buildPagination(context, provider),
+                    ],
+                  ),
           );
         },
       ),
@@ -123,7 +125,7 @@ class CustomersScreen extends StatelessWidget {
 
   Widget _buildCustomerList(BuildContext context, CustomerProvider provider) {
     if (provider.isLoading && provider.items.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const SizedBox(); // Loader is handled at body level
     }
 
     if (provider.error != null) {

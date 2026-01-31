@@ -19,7 +19,7 @@ class DelayLogsScreen extends StatefulWidget {
 class _DelayLogsScreenState extends State<DelayLogsScreen> {
   final DelayLogService _service = DelayLogService();
   List<DelayLog> _delays = [];
-  bool _isLoading = true;
+  bool _isPageLoading = true;
 
   @override
   void initState() {
@@ -40,17 +40,17 @@ class _DelayLogsScreenState extends State<DelayLogsScreen> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+    setState(() => _isPageLoading = true);
     try {
       final data = await _service.getDelays(widget.projectId);
       setState(() {
         _delays = data;
-        _isLoading = false;
+        _isPageLoading = false;
       });
     } catch (e) {
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() => _isPageLoading = false);
         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load delays');
       }
     }
@@ -88,47 +88,47 @@ class _DelayLogsScreenState extends State<DelayLogsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Header
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return _isPageLoading
+        ? const Center(child: CircularProgressIndicator())
+        : Column(
             children: [
-              Text(
-                'Delay Logs',
-                style: AppTheme.headlineMedium,
-              ),
-              ElevatedButton.icon(
-                onPressed: _showAddDialog,
-                icon: const Icon(Icons.timer_off_outlined),
-                label: const Text('Log Delay'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.safetyOrange,
-                  foregroundColor: Colors.white,
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Delay Logs',
+                      style: AppTheme.headlineMedium,
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: _showAddDialog,
+                      icon: const Icon(Icons.timer_off_outlined),
+                      label: const Text('Log Delay'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.safetyOrange,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
 
-        // List
-        Expanded(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _delays.isEmpty
-                  ? Center(child: Text('No delays recorded.', style: AppTheme.bodyMedium))
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _delays.length,
-                      itemBuilder: (context, index) {
-                        return _buildCard(_delays[index]);
-                      },
-                    ),
-        ),
-      ],
-    );
+              // List
+              Expanded(
+                child: _delays.isEmpty
+                    ? Center(child: Text('No delays recorded.', style: AppTheme.bodyMedium))
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _delays.length,
+                        itemBuilder: (context, index) {
+                          return _buildCard(_delays[index]);
+                        },
+                      ),
+              ),
+            ],
+          );
   }
 
   Widget _buildCard(DelayLog delay) {

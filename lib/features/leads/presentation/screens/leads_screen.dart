@@ -58,7 +58,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
   int itemsPerPage = 10;
   bool hasNextPage = false;
   bool hasPreviousPage = false;
-  bool isLoading = true;
+  bool _isPageLoading = true;
   bool isLoadingMore = false;
   String? errorMessage;
   final LeadService _leadService = LeadService();
@@ -143,7 +143,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
   Future<void> _loadLeads({bool resetPage = true}) async {
     try {
       setState(() {
-        isLoading = true;
+        _isPageLoading = true;
         errorMessage = null;
         if (resetPage) {
           currentPage = 1;
@@ -168,14 +168,14 @@ class _LeadsScreenState extends State<LeadsScreen> {
           itemsPerPage = response.itemsPerPage;
           hasNextPage = response.hasNextPage;
           hasPreviousPage = response.hasPreviousPage;
-          isLoading = false;
+          _isPageLoading = false;
           isLoadingMore = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          isLoading = false;
+          _isPageLoading = false;
           isLoadingMore = false;
           // Revert page increment on error if needed, but for load it's fine
         });
@@ -316,9 +316,11 @@ class _LeadsScreenState extends State<LeadsScreen> {
     final permissions = Provider.of<PermissionProvider>(context);
 
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(defaultPadding),
-        child: Column(
+      child: _isPageLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(defaultPadding),
+              child: Column(
           children: [
             Responsive.isMobile(context)
                 ? Column(
@@ -481,9 +483,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
               ),
             ),
             const SizedBox(height: defaultPadding),
-            if (isLoading)
-              const Center(child: CircularProgressIndicator())
-            else if (errorMessage != null)
+            if (errorMessage != null)
               Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -661,6 +661,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                   ),
                 ],
               ),
+          ],
           ],
         ),
       ),

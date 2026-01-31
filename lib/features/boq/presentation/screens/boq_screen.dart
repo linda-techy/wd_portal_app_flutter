@@ -18,7 +18,7 @@ class BoqScreen extends StatefulWidget {
 class _BoqScreenState extends State<BoqScreen> {
   final BoqService _service = BoqService();
   List<BoqItem> _items = [];
-  bool _isLoading = true;
+  bool _isPageLoading = true;
 
   @override
   void initState() {
@@ -39,16 +39,17 @@ class _BoqScreenState extends State<BoqScreen> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+    setState(() => _isPageLoading = true);
     try {
       final items = await _service.getProjectBoq(widget.projectId);
       setState(() {
         _items = items;
-        _isLoading = false;
+        _items = items;
+        _isPageLoading = false;
       });
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() => _isPageLoading = false);
         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load BoQ');
       }
     }
@@ -72,7 +73,7 @@ class _BoqScreenState extends State<BoqScreen> {
           ),
         ],
       ),
-      body: _isLoading
+      body: _isPageLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [

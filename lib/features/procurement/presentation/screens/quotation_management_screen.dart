@@ -19,7 +19,7 @@ class QuotationManagementScreen extends StatefulWidget {
 
 class _QuotationManagementScreenState extends State<QuotationManagementScreen> {
   final _service = MaterialIndentService();
-  bool _isLoading = true;
+  bool _isPageLoading = true;
   List<VendorQuotation> _quotations = [];
 
   @override
@@ -33,18 +33,18 @@ class _QuotationManagementScreenState extends State<QuotationManagementScreen> {
   }
 
   Future<void> _loadQuotations() async {
-    setState(() => _isLoading = true);
+    setState(() => _isPageLoading = true);
     try {
       final list = await _service.getQuotations(widget.indent.id!);
       if (mounted) {
         setState(() {
           _quotations = list;
-          _isLoading = false;
+          _isPageLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() => _isPageLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
@@ -74,16 +74,16 @@ class _QuotationManagementScreenState extends State<QuotationManagementScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Quotations: ${widget.indent.indentNumber}')),
-      body: Column(
-        children: [
-          _buildIndentSummary(),
-          const Divider(),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _quotations.isEmpty
-                    ? const Center(child: Text('No quotations received.'))
-                    : ListView.builder(
+      body: _isPageLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                _buildIndentSummary(),
+                const Divider(),
+                Expanded(
+                  child: _quotations.isEmpty
+                      ? const Center(child: Text('No quotations received.'))
+                      : ListView.builder(
                         itemCount: _quotations.length,
                         itemBuilder: (context, index) {
                           final quote = _quotations[index];

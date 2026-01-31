@@ -19,7 +19,7 @@ class ChangeOrdersScreen extends StatefulWidget {
 class _ChangeOrdersScreenState extends State<ChangeOrdersScreen> {
   final ChangeOrderService _service = ChangeOrderService();
   List<ChangeOrder> _changeOrders = [];
-  bool _isLoading = true;
+  bool _isPageLoading = true;
 
   @override
   void initState() {
@@ -42,16 +42,16 @@ class _ChangeOrdersScreenState extends State<ChangeOrdersScreen> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+    setState(() => _isPageLoading = true);
     try {
       final data = await _service.getChangeOrders(widget.projectId);
       setState(() {
         _changeOrders = data;
-        _isLoading = false;
+        _isPageLoading = false;
       });
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() => _isPageLoading = false);
         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load change orders');
       }
     }
@@ -69,52 +69,52 @@ class _ChangeOrdersScreenState extends State<ChangeOrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Header / Actions
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return _isPageLoading
+        ? const Center(child: CircularProgressIndicator())
+        : Column(
             children: [
-              Text(
-                'Change Orders (${_changeOrders.length})',
-                style: AppTheme.headlineMedium,
-              ),
-              ElevatedButton.icon(
-                onPressed: _showAddDialog,
-                icon: const Icon(Icons.add),
-                label: const Text('New Change Order'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.deepSlate,
-                  foregroundColor: Colors.white,
+              // Header / Actions
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Change Orders (${_changeOrders.length})',
+                      style: AppTheme.headlineMedium,
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: _showAddDialog,
+                      icon: const Icon(Icons.add),
+                      label: const Text('New Change Order'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.deepSlate,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
 
-        // List
-        Expanded(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _changeOrders.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No change orders found.',
-                        style: AppTheme.bodyMedium,
+              // List
+              Expanded(
+                child: _changeOrders.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No change orders found.',
+                          style: AppTheme.bodyMedium,
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _changeOrders.length,
+                        itemBuilder: (context, index) {
+                          return _buildCard(_changeOrders[index]);
+                        },
                       ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _changeOrders.length,
-                      itemBuilder: (context, index) {
-                        return _buildCard(_changeOrders[index]);
-                      },
-                    ),
-        ),
-      ],
-    );
+              ),
+            ],
+          );
   }
 
   Widget _buildCard(ChangeOrder order) {

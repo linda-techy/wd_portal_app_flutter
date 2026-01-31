@@ -16,7 +16,7 @@ class MilestoneListScreen extends StatefulWidget {
 class _MilestoneListScreenState extends State<MilestoneListScreen> {
   final FinanceService _financeService = FinanceService();
   List<ProjectMilestone> _milestones = [];
-  bool _isLoading = true;
+  bool _isPageLoading = true;
 
   @override
   void initState() {
@@ -26,17 +26,18 @@ class _MilestoneListScreenState extends State<MilestoneListScreen> {
 
   Future<void> _loadMilestones() async {
     setState(() {
-      _isLoading = true;
+      _isPageLoading = true;
     });
     try {
       final milestones = await _financeService.getProjectMilestones(widget.projectId);
       setState(() {
         _milestones = milestones;
-        _isLoading = false;
+        _milestones = milestones;
+        _isPageLoading = false;
       });
     } catch (e) {
       setState(() {
-        _isLoading = false;
+        _isPageLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading milestones: $e')));
     }
@@ -175,7 +176,7 @@ class _MilestoneListScreenState extends State<MilestoneListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _isLoading
+      body: _isPageLoading
           ? Center(child: CircularProgressIndicator())
           : Column(
             children: [

@@ -18,7 +18,7 @@ class QualityChecksScreen extends StatefulWidget {
 class _QualityChecksScreenState extends State<QualityChecksScreen> {
   final QualityCheckService _service = QualityCheckService();
   List<QualityCheck> _checks = [];
-  bool _isLoading = true;
+  bool _isPageLoading = true;
 
   @override
   void initState() {
@@ -39,16 +39,16 @@ class _QualityChecksScreenState extends State<QualityChecksScreen> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+    setState(() => _isPageLoading = true);
     try {
       final checks = await _service.getProjectChecks(widget.projectId);
       setState(() {
         _checks = checks;
-        _isLoading = false;
+        _isPageLoading = false;
       });
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() => _isPageLoading = false);
         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load quality checks');
       }
     }
@@ -85,7 +85,7 @@ class _QualityChecksScreenState extends State<QualityChecksScreen> {
           ),
         ],
       ),
-      body: _isLoading
+      body: _isPageLoading
           ? const Center(child: CircularProgressIndicator())
           : _checks.isEmpty
               ? Center(

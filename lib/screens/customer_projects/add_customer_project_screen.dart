@@ -60,6 +60,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   List<Lead> _leads = [];
   List<Lead> _filteredLeads = [];
   bool _isLoadingLeads = false;
+  bool _isPageLoading = true;
   bool _isLoading = false;
   bool _showLeadDropdown = false;
   final FocusNode _leadSearchFocusNode = FocusNode();
@@ -218,7 +219,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
 
   Future<void> _loadData() async {
     try {
-      setState(() => _isLoading = true);
+      // _isPageLoading is true initially
       
       // Fetch all required data sequentially to avoid any potential race conditions
       final leads = await _crmService.getAllLeads();
@@ -342,13 +343,18 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
           _filteredLeads = leads;
           _customers = customers;
           _teamMembers = allTeamMembers;
+          _teamMembers = allTeamMembers;
           _selectedTeamMembers = autoSelectedAdmins;
           _isLoading = false;
+          _isPageLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _isPageLoading = false;
+        });
         await ErrorHandler.handleApiError(
           context,
           e,
@@ -483,7 +489,9 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
         ),
         title: const Text('Add Customer Project'),
       ),
-      body: AdaptiveContainer(
+      body: _isPageLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : AdaptiveContainer(
         child: SingleChildScrollView(
           padding: ResponsiveUtils.responsivePadding(context),
           child: ShakeWidget(
