@@ -33,7 +33,9 @@ class ProjectDetailsScreen extends StatefulWidget {
 
 class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   Lead? customerLead;
-  bool isLoadingLead = true;
+
+  // Master loading flag for Data-First pattern
+  bool _isPageLoading = true;
   final CRMService _crmService = CRMService();
 
   @override
@@ -44,10 +46,12 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
 
   Future<void> _loadCustomerLead() async {
     if (widget.project.leadId == null) {
+    if (widget.project.leadId == null) {
       setState(() {
-        isLoadingLead = false;
+        _isPageLoading = false;
       });
       return;
+    }
     }
 
     try {
@@ -56,13 +60,13 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       if (mounted) {
         setState(() {
           customerLead = lead;
-          isLoadingLead = false;
+          _isPageLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          isLoadingLead = false;
+          _isPageLoading = false;
         });
         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load lead details', showToast: false);
       }
@@ -125,7 +129,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         elevation: 0,
         backgroundColor: AppTheme.surface,
       ),
-      body: AdaptiveContainer(
+
+      body: _isPageLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : AdaptiveContainer(
         padding: ResponsiveUtils.responsivePadding(context),
         child: SingleChildScrollView(
           child: Column(
@@ -250,9 +257,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             )),
             
             // Customer Name
-            if (isLoadingLead)
-              const LinearProgressIndicator()
-            else if (customerLead != null)
+             if (customerLead != null)
               Row(
                 children: [
                   Icon(Icons.person_outline, 

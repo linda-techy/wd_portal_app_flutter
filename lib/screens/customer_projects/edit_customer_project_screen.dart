@@ -65,8 +65,10 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
   Lead? _selectedLead;
   List<Lead> _leads = [];
   List<Lead> _filteredLeads = [];
-  bool _isLoadingLeads = false;
-  bool _isLoading = false;
+
+  // Master loading flag for Data-First pattern
+  bool _isPageLoading = true;
+  bool _isLoading = false; // For save operation
   bool _showLeadDropdown = false;
   bool _shouldShake = false;
   final FocusNode _leadSearchFocusNode = FocusNode();
@@ -231,11 +233,8 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
 
   Future<void> _loadData() async {
     try {
-      setState(() {
-        _isLoadingLeads = true;
-        _isLoadingTeamMembers = true;
-      });
-
+      // _isPageLoading is already true from initialization
+      
       // Fetch all required data sequentially
       final leads = await _crmService.getAllLeads();
       final portalUsers = await _crmService.getAllPortalUsers();
@@ -401,7 +400,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
               _selectedLead = null;
             }
           }
-          _isLoadingLeads = false;
+
 
           _teamMembers = allTeamMembers;
           
@@ -433,13 +432,13 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
           _selectedTeamMembers = finalSelectedMembers;
           _adminIds = adminIds;
           _isLoadingTeamMembers = false;
+          _isPageLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _isLoadingLeads = false;
-          _isLoadingTeamMembers = false;
+          _isPageLoading = false;
         });
         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error loading data');
       }
@@ -629,7 +628,9 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
         ),
         title: const Text('Edit Customer Project'),
       ),
-      body: AdaptiveContainer(
+      body: _isPageLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : AdaptiveContainer(
           child: SingleChildScrollView(
             padding: ResponsiveUtils.responsivePadding(context),
             child: ShakeWidget(
@@ -1427,12 +1428,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                 border: Border.all(color: AppTheme.borderLight),
                 borderRadius: BorderRadius.circular(AppTheme.radiusMD),
               ),
-            child: _isLoadingLeads
-                ? const Padding(
-                    padding: EdgeInsets.all(AppTheme.spacingMD),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                : _filteredLeads.isEmpty
+            child: _filteredLeads.isEmpty
                     ? Padding(
                         padding: const EdgeInsets.all(AppTheme.spacingMD),
                         child: Text(
