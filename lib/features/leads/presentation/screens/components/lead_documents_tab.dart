@@ -10,6 +10,10 @@ import '../../../data/services/lead_service.dart';
 import 'package:admin/utils/error_handler.dart';
 import 'package:admin/config/app_config.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:admin/services/storage_service.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
+import '../document_viewer_screen.dart';
 
 // Import DocumentCategory from lead_service
 export '../../../data/services/lead_service.dart' show DocumentCategory;
@@ -195,6 +199,129 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
     }
   }
 
+  String _getFileExtension(String filename) {
+    return filename.split('.').last.toLowerCase();
+  }
+
+  bool _isViewable(String extension) {
+    return [
+      'pdf',
+      'jpg',
+      'jpeg',
+      'png',
+      'webp',
+      'doc',
+      'docx',
+      'xls',
+      'xlsx',
+      'ppt',
+      'pptx',
+      'csv',
+      'txt'
+    ].contains(extension);
+  }
+
+  String _getViewableType(String extension) {
+    if (extension == 'pdf') return 'pdf';
+    if (['jpg', 'jpeg', 'png', 'webp'].contains(extension)) return 'image';
+    return 'office';
+  }
+
+  Future<void> _viewDocument(LeadDocument doc) async {
+    final extension = _getFileExtension(doc.filename);
+    if (doc.downloadUrl == null || doc.downloadUrl!.isEmpty) return;
+    
+    // Construct full URL if relative
+    String fullUrl = doc.downloadUrl!;
+    if (!fullUrl.startsWith('http')) {
+      fullUrl = '${AppConfig.fullApiUrl}$fullUrl';
+    }
+
+    // Get headers with token
+    final storage = StorageService();
+    final token = await storage.read(key: 'access_token');
+    final headers = token != null ? {'Authorization': 'Bearer $token'} : <String, String>{};
+
+    if (kIsWeb) {
+      if (['pdf'].contains(extension)) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DocumentViewerScreen(
+              url: fullUrl,
+              fileName: doc.filename,
+              fileType: 'pdf',
+              headers: headers,
+            ),
+          ),
+        );
+      } else if (['jpg', 'jpeg', 'png', 'webp'].contains(extension)) {
+         Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DocumentViewerScreen(
+              url: fullUrl,
+              fileName: doc.filename,
+              fileType: 'image',
+              headers: headers,
+            ),
+          ),
+        );
+      } else {
+        // Fallback to download for unsupported web types with auth
+        _downloadDocument(doc);
+      }
+    } else {
+      // Mobile / Desktop: Download and open with native viewer
+      try {
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Opening document...')),
+          );
+        }
+        
+        final request = await HttpClient().getUrl(Uri.parse(fullUrl));
+        headers.forEach((key, value) {
+          request.headers.add(key, value);
+        });
+        final response = await request.close();
+        
+        if (response.statusCode != 200) {
+            throw Exception('Failed to download file: ${response.statusCode}');
+        }
+
+        final bytes = await makeConsolidatable(response).fold<BytesBuilder>(
+          BytesBuilder(),
+          (BytesBuilder builder, List<int> chunk) => builder..add(chunk),
+        ).then((builder) => builder.takeBytes());
+
+        final dir = await getTemporaryDirectory();
+        final file = File('${dir.path}/${doc.filename}');
+        await file.writeAsBytes(bytes);
+        
+        final result = await OpenFilex.open(file.path);
+        if (result.type != ResultType.done) {
+           if (mounted) {
+             ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Could not open file: ${result.message}')),
+            );
+           }
+        }
+
+      } catch (e) {
+         if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error viewing document: $e')),
+          );
+        }
+      }
+    }
+  }
+
+  Stream<List<int>> makeConsolidatable(Stream<List<int>> stream) {
+    return stream;
+  }
+
   Future<void> _downloadDocument(LeadDocument doc) async {
     try {
       if (doc.downloadUrl == null || doc.downloadUrl!.isEmpty) {
@@ -367,21 +494,26 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
                                 ),
                               ],
                             ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.download),
-                                  tooltip: 'Download',
-                                  onPressed: () => _downloadDocument(doc),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                  tooltip: 'Delete',
-                                  onPressed: () => _deleteDocument(doc),
-                                ),
-                              ],
-                            ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.visibility),
+                                    tooltip: 'View',
+                                    onPressed: () => _viewDocument(doc),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.download),
+                                    tooltip: 'Download',
+                                    onPressed: () => _downloadDocument(doc),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.red),
+                                    tooltip: 'Delete',
+                                    onPressed: () => _deleteDocument(doc),
+                                  ),
+                                ],
+                              ),
                           ),
                         );
                       },

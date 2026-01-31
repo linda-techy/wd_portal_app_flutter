@@ -65,6 +65,8 @@ dependencies:
 
   # Immersive 360 Viewer
   panorama: ^0.4.1
+  syncfusion_flutter_pdfviewer: ^24.2.8
+  open_filex: ^4.7.0
 
 dev_dependencies:
   flutter_test:

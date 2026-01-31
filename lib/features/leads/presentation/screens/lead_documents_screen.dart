@@ -1,11 +1,17 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:admin/config/app_config.dart';
+import 'package:admin/services/storage_service.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../data/models/lead.dart';
 import '../../data/models/lead_document.dart';
 import '../../data/services/lead_service.dart';
 import 'package:admin/utils/error_handler.dart';
+import 'document_viewer_screen.dart';
 
 class LeadDocumentsScreen extends StatefulWidget {
   final Lead lead;
@@ -50,6 +56,132 @@ class _LeadDocumentsScreenState extends State<LeadDocumentsScreen> {
     }
   }
 
+  String _getFileExtension(String filename) {
+    return filename.split('.').last.toLowerCase();
+  }
+
+  bool _isViewable(String extension) {
+    return [
+      'pdf',
+      'jpg',
+      'jpeg',
+      'png',
+      'webp',
+      'doc',
+      'docx',
+      'xls',
+      'xlsx',
+      'ppt',
+      'pptx',
+      'csv',
+      'txt'
+    ].contains(extension);
+  }
+
+  String _getViewableType(String extension) {
+    if (extension == 'pdf') return 'pdf';
+    if (['jpg', 'jpeg', 'png', 'webp'].contains(extension)) return 'image';
+    return 'office'; // generic type for office docs
+  }
+
+  String _getFullUrl(String url) {
+    if (url.startsWith('http')) {
+      return url;
+    }
+    return '${AppConfig.fullApiUrl}$url';
+  }
+
+  Future<void> _viewDocument(LeadDocument doc) async {
+    final extension = _getFileExtension(doc.filename);
+    if (doc.downloadUrl == null || doc.downloadUrl!.isEmpty) return;
+
+    final fullUrl = _getFullUrl(doc.downloadUrl!);
+    
+    // Get headers with token
+    final storage = StorageService(); // Make sure to import this
+    final token = await storage.read(key: 'access_token');
+    final headers = token != null ? {'Authorization': 'Bearer $token'} : <String, String>{};
+
+    if (kIsWeb) {
+      if (['pdf'].contains(extension)) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DocumentViewerScreen(
+              url: fullUrl,
+              fileName: doc.filename,
+              fileType: 'pdf',
+              headers: headers,
+            ),
+          ),
+        );
+      } else if (['jpg', 'jpeg', 'png', 'webp'].contains(extension)) {
+         Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DocumentViewerScreen(
+              url: fullUrl,
+              fileName: doc.filename,
+              fileType: 'image',
+              headers: headers,
+            ),
+          ),
+        );
+      } else {
+        // specific handling for office docs on web with auth is hard without backend support
+        // fallback to download
+        _downloadDocument(doc);
+      }
+    } else {
+      // Mobile / Desktop: Download and open with native viewer
+      try {
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Opening document...')),
+          );
+        }
+        
+        final request = await HttpClient().getUrl(Uri.parse(fullUrl));
+        headers.forEach((key, value) {
+          request.headers.add(key, value);
+        });
+        final response = await request.close();
+        
+        if (response.statusCode != 200) {
+            throw Exception('Failed to download file: ${response.statusCode}');
+        }
+
+        final bytes = await makeConsolidatable(response).fold<BytesBuilder>(
+          BytesBuilder(),
+          (BytesBuilder builder, List<int> chunk) => builder..add(chunk),
+        ).then((builder) => builder.takeBytes());
+
+        final dir = await getTemporaryDirectory();
+        final file = File('${dir.path}/${doc.filename}');
+        await file.writeAsBytes(bytes);
+        
+        final result = await OpenFilex.open(file.path);
+        if (result.type != ResultType.done) {
+           if (mounted) {
+             ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Could not open file: ${result.message}')),
+            );
+           }
+        }
+
+      } catch (e) {
+         if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error viewing document: $e')),
+          );
+        }
+      }
+    }
+  }
+
+  Stream<List<int>> makeConsolidatable(Stream<List<int>> stream) {
+    return stream;
+  }
 
   Future<void> _downloadDocument(LeadDocument doc) async {
     try {
@@ -66,11 +198,7 @@ class _LeadDocumentsScreenState extends State<LeadDocumentsScreen> {
       }
 
       // Construct full URL if relative
-      String fullUrl = doc.downloadUrl!;
-      if (!fullUrl.startsWith('http')) {
-        // Get base URL from API config
-        fullUrl = '${AppConfig.fullApiUrl}$fullUrl';
-      }
+      String fullUrl = _getFullUrl(doc.downloadUrl!);
 
       // Use url_launcher to open/download document
       final uri = Uri.parse(fullUrl);
@@ -106,19 +234,68 @@ class _LeadDocumentsScreenState extends State<LeadDocumentsScreen> {
                       itemCount: _documents.length,
                       itemBuilder: (context, index) {
                         final doc = _documents[index];
+                        final extension = _getFileExtension(doc.filename);
+                        final isViewable = _isViewable(extension);
+
                         return ListTile(
-                          leading: const Icon(Icons.description),
+                          leading: _buildFileIcon(extension),
                           title: Text(doc.filename),
                           subtitle: Text('${(doc.fileSize ?? 0) ~/ 1024} KB • ${DateFormat.yMMMd().format(doc.uploadedAt)}'),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.visibility),
-                            tooltip: 'View Document',
-                            onPressed: () => _downloadDocument(doc),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (isViewable)
+                                IconButton(
+                                  icon: const Icon(Icons.visibility),
+                                  tooltip: 'View',
+                                  onPressed: () => _viewDocument(doc),
+                                ),
+                              IconButton(
+                                icon: const Icon(Icons.download),
+                                tooltip: 'Download',
+                                onPressed: () => _downloadDocument(doc),
+                              ),
+                            ],
                           ),
                         );
                       },
                     ),
     );
+  }
+
+  Widget _buildFileIcon(String extension) {
+    IconData icon;
+    Color color;
+
+    switch (extension) {
+      case 'pdf':
+        icon = Icons.picture_as_pdf;
+        color = Colors.red;
+        break;
+      case 'doc':
+      case 'docx':
+        icon = Icons.description;
+        color = Colors.blue;
+        break;
+      case 'xls':
+      case 'xlsx':
+      case 'csv':
+        icon = Icons.grid_on;
+        color = Colors.green;
+        break;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'webp':
+        icon = Icons.image;
+        color = Colors.purple;
+        break;
+      default:
+        icon = Icons.insert_drive_file;
+        color = Colors.grey;
+    }
+
+    return Icon(icon, color: color);
   }
 }
 
