@@ -66,9 +66,19 @@ class CRMService {
   // =====================================================
 
   Future<List<Lead>> getAllLeads() async {
-    final response = await _apiService.get('/leads');
-    return _apiService.unwrapList<Lead>(
-        response, (json) => Lead.fromJson(json));
+    // Backend doesn't support /leads, use paginated with large size
+    final response = await _apiService.get('/leads/paginated?page=0&size=100');
+    
+    // Manually handle the PaginatedResponse structure to return just the list
+    return _apiService.unwrap<List<Lead>>(response, (json) {
+       // The 'json' here is the 'data' field of ApiResponse.
+       // For paginated response, 'data' contains 'content' which is the list.
+       if (json is Map<String, dynamic> && json.containsKey('content')) {
+         final content = json['content'] as List;
+         return content.map((item) => Lead.fromJson(item)).toList();
+       }
+       return [];
+    });
   }
 
   Future<PaginatedResponse<Lead>> getLeadsPaginated(
