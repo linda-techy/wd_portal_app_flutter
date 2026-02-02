@@ -155,7 +155,9 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
     if (_selectedCategory == null) {
       return _documents;
     }
-    return _documents.where((doc) => doc.categoryId == _selectedCategory!.id).toList();
+    return _documents
+        .where((doc) => doc.categoryId != null && doc.categoryId == _selectedCategory!.id)
+        .toList();
   }
 
   String _formatFileSize(int? fileSize) {
