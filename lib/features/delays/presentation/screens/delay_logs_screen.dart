@@ -10,10 +10,10 @@ import 'package:admin/providers/portal_auth_provider.dart';
 class DelayLogsScreen extends StatefulWidget {
   final int projectId;
 
-  const DelayLogsScreen({Key? key, required this.projectId}) : super(key: key);
+  const DelayLogsScreen({super.key, required this.projectId});
 
   @override
-  _DelayLogsScreenState createState() => _DelayLogsScreenState();
+  State<DelayLogsScreen> createState() => _DelayLogsScreenState();
 }
 
 class _DelayLogsScreenState extends State<DelayLogsScreen> {
@@ -30,10 +30,10 @@ class _DelayLogsScreenState extends State<DelayLogsScreen> {
   Future<void> _verifyAuthAndLoadData() async {
     final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
     if (!authProvider.isAuthenticated) {
-      if (mounted) {
-         await ErrorHandler.handleAuthError(context);
-         Navigator.of(context).pushReplacementNamed('/login');
-      }
+      if (!mounted) return;
+      await ErrorHandler.handleAuthError(context);
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/login');
       return;
     }
     await _loadData();
@@ -43,11 +43,11 @@ class _DelayLogsScreenState extends State<DelayLogsScreen> {
     setState(() => _isPageLoading = true);
     try {
       final data = await _service.getDelays(widget.projectId);
+      if (!mounted) return;
       setState(() {
         _delays = data;
         _isPageLoading = false;
       });
-    } catch (e) {
     } catch (e) {
       if (mounted) {
         setState(() => _isPageLoading = false);
@@ -181,10 +181,10 @@ class AddDelayDialog extends StatefulWidget {
   final int projectId;
   final VoidCallback onSave;
 
-  const AddDelayDialog({Key? key, required this.projectId, required this.onSave}) : super(key: key);
+  const AddDelayDialog({super.key, required this.projectId, required this.onSave});
 
   @override
-  _AddDelayDialogState createState() => _AddDelayDialogState();
+  State<AddDelayDialog> createState() => _AddDelayDialogState();
 }
 
 class _AddDelayDialogState extends State<AddDelayDialog> {

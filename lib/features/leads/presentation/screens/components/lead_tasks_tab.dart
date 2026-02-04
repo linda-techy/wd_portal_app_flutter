@@ -8,10 +8,10 @@ import '../../../../../../screens/tasks/task_detail_screen.dart';
 
 class LeadTasksTab extends StatefulWidget {
   final String leadId;
-  const LeadTasksTab({Key? key, required this.leadId}) : super(key: key);
+  const LeadTasksTab({super.key, required this.leadId});
 
   @override
-  _LeadTasksTabState createState() => _LeadTasksTabState();
+  State<LeadTasksTab> createState() => _LeadTasksTabState();
 }
 
 class _LeadTasksTabState extends State<LeadTasksTab> {
@@ -158,25 +158,16 @@ class _LeadTasksTabState extends State<LeadTasksTab> {
                                     ),
                                     trailing: const Icon(Icons.chevron_right),
                                     onTap: () {
-                                      if (task.id != null) {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                TaskDetailScreen(taskId: task.id!),
-                                          ),
-                                        ).then((_) {
-                                          // Refresh tasks when returning from detail screen
-                                          _fetchTasks();
-                                        });
-                                      } else {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Task ID is missing'),
-                                            backgroundColor: Colors.orange,
-                                          ),
-                                        );
-                                      }
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              TaskDetailScreen(taskId: task.id),
+                                        ),
+                                      ).then((_) {
+                                        // Refresh tasks when returning from detail screen
+                                        _fetchTasks();
+                                      });
                                     },
                                   ),
                                 );

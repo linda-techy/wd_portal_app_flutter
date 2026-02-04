@@ -186,7 +186,7 @@ class QualityChecksScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          check.checkType ?? 'Quality Check',
+                          check.checkType,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -205,8 +205,7 @@ class QualityChecksScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (check.status != null)
-                    _buildStatusBadge(check.status!),
+                  _buildStatusBadge(check.status),
                 ],
               ),
               if (check.remarks != null && check.remarks!.isNotEmpty) ...[

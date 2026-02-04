@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:admin/services/api_service.dart';
 import 'package:admin/models/paginated_response.dart';
 
@@ -50,6 +49,25 @@ class QualityCheck {
       'remarks': remarks,
     };
   }
+
+  /// Alias for title (used by quality_checks_screen).
+  String get checkType => title;
+
+  /// Project name when provided by API (e.g. from expanded project).
+  String? get projectName => null;
+
+  /// Inspector name from conductedBy map when present.
+  String? get inspectedByName {
+    if (conductedBy == null) return null;
+    final name = conductedBy!['name'];
+    return name?.toString();
+  }
+
+  /// Alias for checkDate (used by quality_checks_screen).
+  DateTime? get inspectionDate => checkDate;
+
+  /// Location when provided by API (optional).
+  String? get location => null;
 }
 
 class QualityCheckService {

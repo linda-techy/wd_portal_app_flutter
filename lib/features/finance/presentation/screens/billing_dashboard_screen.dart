@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:admin/features/finance/presentation/screens/milestone_list_screen.dart';
-import 'package:admin/screens/customer_projects/project_payments_screen.dart'; // Existing screen or new?
-// Assuming ProjectPaymentsScreen handles general payments, but Phase 4 might supersede it.
-// For now, let's create a dashboard that tabs between Milestones and Invoices/Receipts.
 
 class BillingDashboardScreen extends StatefulWidget {
   final int projectId;
 
-  const BillingDashboardScreen({Key? key, required this.projectId}) : super(key: key);
+  const BillingDashboardScreen({super.key, required this.projectId});
 
   @override
-  _BillingDashboardScreenState createState() => _BillingDashboardScreenState();
+  State<BillingDashboardScreen> createState() => _BillingDashboardScreenState();
 }
 
 class _BillingDashboardScreenState extends State<BillingDashboardScreen> with SingleTickerProviderStateMixin {
@@ -36,7 +33,7 @@ class _BillingDashboardScreenState extends State<BillingDashboardScreen> with Si
           controller: _tabController,
           labelColor: Theme.of(context).primaryColor,
           unselectedLabelColor: Colors.grey,
-          tabs: [
+          tabs: const [
             Tab(text: 'Milestones'),
             Tab(text: 'Invoices & Receipts'),
           ],
@@ -46,7 +43,7 @@ class _BillingDashboardScreenState extends State<BillingDashboardScreen> with Si
             controller: _tabController,
             children: [
               MilestoneListScreen(projectId: widget.projectId),
-              Center(child: Text("Invoices & Receipts List (Coming Soon)")), // To be implemented or linked to existing invoices
+              const Center(child: Text("Invoices & Receipts List (Coming Soon)")),
             ],
           ),
         ),

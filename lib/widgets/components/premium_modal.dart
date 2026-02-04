@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../theme/design_tokens.dart';
 import '../../theme/app_theme.dart';
-import '../../constants/app_motion.dart';
-import '../../utils/accessibility_utils.dart';
 import '../components/premium_button.dart';
 
 /// Premium Modal Dialog
@@ -45,7 +43,6 @@ class PremiumModal extends StatelessWidget {
       barrierDismissible: barrierDismissible,
       barrierColor: Colors.black.withOpacity(0.5),
       builder: (context) => PremiumModal(
-        child: child,
         title: title,
         showCloseButton: showCloseButton,
         onClose: () => Navigator.of(context).pop(),
@@ -53,6 +50,7 @@ class PremiumModal extends StatelessWidget {
         backgroundColor: backgroundColor,
         maxWidth: maxWidth,
         semanticLabel: semanticLabel,
+        child: child,
       ),
     );
   }
@@ -74,7 +72,6 @@ class PremiumModal extends StatelessWidget {
             }
           },
           child: Semantics(
-            dialog: true,
             label: semanticLabel ?? title ?? 'Dialog',
             child: Container(
               constraints: maxWidth != null
@@ -97,7 +94,7 @@ class PremiumModal extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 title!,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: DesignTokens.fontSizeHeadlineMedium,
                                   fontWeight: FontWeight.w700,
                                   color: AppTheme.textPrimary,
@@ -170,13 +167,13 @@ class PremiumBottomSheet extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => PremiumBottomSheet(
-        child: child,
         title: title,
         showCloseButton: showCloseButton,
         onClose: () => Navigator.of(context).pop(),
         isDismissible: isDismissible,
         backgroundColor: backgroundColor,
         semanticLabel: semanticLabel,
+        child: child,
       ),
     );
   }
@@ -221,7 +218,7 @@ class PremiumBottomSheet extends StatelessWidget {
                         Expanded(
                           child: Text(
                             title!,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: DesignTokens.fontSizeHeadlineMedium,
                               fontWeight: FontWeight.w700,
                               color: AppTheme.textPrimary,
@@ -294,7 +291,7 @@ class PremiumDrawer extends StatelessWidget {
                   Expanded(
                     child: Text(
                       title!,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: DesignTokens.fontSizeHeadlineMedium,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.textInverse,

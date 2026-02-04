@@ -4,7 +4,6 @@ import '../../data/models/customer.dart';
 import 'package:admin/models/customer_role.dart';
 import '../../data/services/customer_service.dart';
 import 'package:provider/provider.dart';
-import 'package:dio/dio.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
 import 'package:admin/utils/error_handler.dart';
 

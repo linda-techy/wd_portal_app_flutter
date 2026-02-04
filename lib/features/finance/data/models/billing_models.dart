@@ -1,5 +1,3 @@
-import 'package:admin/models/finance_models.dart';
-
 class ProjectMilestone {
   final int? id;
   final int projectId;

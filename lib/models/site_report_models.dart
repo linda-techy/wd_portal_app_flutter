@@ -96,5 +96,20 @@ class SiteReport {
   }
 
   String get formattedDate => DateFormat('dd MMM yyyy, hh:mm a').format(reportDate);
+
+  /// Project name when provided by API (e.g. from expanded project).
+  String? get projectName => null;
+
+  /// Alias for description (used by site_reports_screen).
+  String? get summary => description;
+
+  /// Alias for submittedByName (used by site_reports_screen).
+  String? get reportedByName => submittedByName;
+
+  /// Weather condition when provided by API (optional).
+  String? get weatherCondition => null;
+
+  /// Labour count when provided by API (optional).
+  int? get labourCount => null;
 }
 

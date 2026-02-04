@@ -47,11 +47,13 @@ class SemanticFormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveLabel = errorText != null && errorText!.isNotEmpty
+        ? '$label. Error: $errorText'
+        : label;
     return Semantics(
       textField: true,
-      label: label,
+      label: effectiveLabel,
       hint: hint,
-      errorText: errorText,
       enabled: enabled,
       child: child,
     );
@@ -116,20 +118,17 @@ class ErrorAnnouncement extends StatelessWidget {
 class LiveRegion extends StatelessWidget {
   final Widget child;
   final String? announcement;
-  final bool polite;
 
   const LiveRegion({
     super.key,
     required this.child,
     this.announcement,
-    this.polite = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       liveRegion: true,
-      polite: polite,
       child: announcement != null
           ? Semantics(
               label: announcement,

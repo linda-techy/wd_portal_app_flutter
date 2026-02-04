@@ -153,7 +153,7 @@ class _SubcontractMeasurementFormState extends State<SubcontractMeasurementForm>
 
             // Measurement Date
             ListTile(
-              leading: Icon(Icons.calendar_today, color: AppTheme.deepSlate),
+              leading: const Icon(Icons.calendar_today, color: AppTheme.deepSlate),
               title: const Text('Measurement Date'),
               subtitle: Text(DateFormat('dd MMM yyyy').format(_measurementDate)),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -250,10 +250,10 @@ class _SubcontractMeasurementFormState extends State<SubcontractMeasurementForm>
                 border: const OutlineInputBorder(),
                 filled: true,
                 fillColor: AppTheme.tealAccent.withOpacity(0.1),
-                suffixIcon: Icon(Icons.calculate, color: AppTheme.tealAccent),
+                suffixIcon: const Icon(Icons.calculate, color: AppTheme.tealAccent),
               ),
               readOnly: true,
-              style: TextStyle(
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
                 color: AppTheme.tealAccent,
@@ -277,13 +277,13 @@ class _SubcontractMeasurementFormState extends State<SubcontractMeasurementForm>
             // Info card
             Card(
               color: AppTheme.azure.withOpacity(0.1),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
+              child: const Padding(
+                padding: EdgeInsets.all(12),
                 child: Row(
                   children: [
                     Icon(Icons.info_outline, color: AppTheme.azure, size: 20),
-                    const SizedBox(width: 12),
-                    const Expanded(
+                    SizedBox(width: 12),
+                    Expanded(
                       child: Text(
                         'This measurement will be pending approval before payment can be processed.',
                         style: TextStyle(fontSize: 12),

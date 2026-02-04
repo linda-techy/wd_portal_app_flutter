@@ -184,7 +184,7 @@ class SiteReportsScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          report.reportType ?? 'Site Report',
+                          report.reportType.label,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -203,7 +203,7 @@ class SiteReportsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (report.reportType == 'INCIDENT')
+                  if (report.reportType == ReportType.SAFETY_INCIDENT)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
@@ -240,11 +240,10 @@ class SiteReportsScreen extends StatelessWidget {
                       icon: Icons.person,
                       label: report.reportedByName!,
                     ),
-                  if (report.reportDate != null)
-                    _buildInfoChip(
-                      icon: Icons.calendar_today,
-                      label: _formatDate(report.reportDate!),
-                    ),
+                  _buildInfoChip(
+                    icon: Icons.calendar_today,
+                    label: _formatDate(report.reportDate),
+                  ),
                   if (report.weatherCondition != null)
                     _buildInfoChip(
                       icon: Icons.wb_sunny,

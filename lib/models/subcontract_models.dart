@@ -87,6 +87,15 @@ class SubcontractWorkOrder {
   String get measurementBasisDisplay {
     return measurementBasis == 'LUMPSUM' ? 'Lump Sum' : 'Unit Rate';
   }
+
+  /// Alias for scopeDescription (used by subcontracts_screen).
+  String get workDescription => scopeDescription;
+
+  /// Alias for negotiatedAmount (used by subcontracts_screen).
+  double get contractAmount => negotiatedAmount;
+
+  /// Completion date: actual if set, otherwise target (used by subcontracts_screen).
+  DateTime? get completionDate => actualCompletionDate ?? targetCompletionDate;
 }
 
 /// Subcontract Measurement Model

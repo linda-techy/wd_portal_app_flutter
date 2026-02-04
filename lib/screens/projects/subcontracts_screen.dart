@@ -197,7 +197,7 @@ class SubcontractsScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          subcontract.workOrderNumber ?? 'WO-N/A',
+                          subcontract.workOrderNumber,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -216,15 +216,13 @@ class SubcontractsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (subcontract.status != null)
-                    _buildStatusBadge(subcontract.status!),
+                  _buildStatusBadge(subcontract.status),
                 ],
               ),
-              if (subcontract.workDescription != null &&
-                  subcontract.workDescription!.isNotEmpty) ...[
+              if (subcontract.workDescription.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(
-                  subcontract.workDescription!,
+                  subcontract.workDescription,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: Colors.grey[600]),
@@ -240,13 +238,12 @@ class SubcontractsScreen extends StatelessWidget {
                       icon: Icons.business,
                       label: subcontract.projectName!,
                     ),
-                  if (subcontract.contractAmount != null)
-                    _buildInfoChip(
-                      icon: Icons.currency_rupee,
-                      label:
-                          '₹${subcontract.contractAmount!.toStringAsFixed(2)}',
-                      color: AppTheme.statusSuccess,
-                    ),
+                  _buildInfoChip(
+                    icon: Icons.currency_rupee,
+                    label:
+                        '₹${subcontract.contractAmount.toStringAsFixed(2)}',
+                    color: AppTheme.statusSuccess,
+                  ),
                   if (subcontract.startDate != null)
                     _buildInfoChip(
                       icon: Icons.calendar_today,

@@ -2,15 +2,14 @@ import 'package:admin/features/finance/data/models/billing_models.dart';
 import 'package:admin/services/finance_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
 class MilestoneListScreen extends StatefulWidget {
   final int projectId;
 
-  const MilestoneListScreen({Key? key, required this.projectId}) : super(key: key);
+  const MilestoneListScreen({super.key, required this.projectId});
 
   @override
-  _MilestoneListScreenState createState() => _MilestoneListScreenState();
+  State<MilestoneListScreen> createState() => _MilestoneListScreenState();
 }
 
 class _MilestoneListScreenState extends State<MilestoneListScreen> {
@@ -32,10 +31,10 @@ class _MilestoneListScreenState extends State<MilestoneListScreen> {
       final milestones = await _financeService.getProjectMilestones(widget.projectId);
       setState(() {
         _milestones = milestones;
-        _milestones = milestones;
         _isPageLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isPageLoading = false;
       });
@@ -44,7 +43,7 @@ class _MilestoneListScreenState extends State<MilestoneListScreen> {
   }
 
   Future<void> _showMilestoneDialog({ProjectMilestone? milestone}) async {
-    final _formKey = GlobalKey<FormState>();
+    final formKey = GlobalKey<FormState>();
     String name = milestone?.name ?? '';
     double amount = milestone?.amount ?? 0.0;
     double? percentage = milestone?.milestonePercentage;
@@ -56,33 +55,33 @@ class _MilestoneListScreenState extends State<MilestoneListScreen> {
         return AlertDialog(
           title: Text(milestone == null ? 'Add Milestone' : 'Edit Milestone'),
           content: Form(
-            key: _formKey,
+            key: formKey,
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextFormField(
                     initialValue: name,
-                    decoration: InputDecoration(labelText: 'Name'),
+                    decoration: const InputDecoration(labelText: 'Name'),
                     validator: (value) => value!.isEmpty ? 'Required' : null,
                     onSaved: (value) => name = value!,
                   ),
                   TextFormField(
                     initialValue: amount.toString(),
-                    decoration: InputDecoration(labelText: 'Amount'),
+                    decoration: const InputDecoration(labelText: 'Amount'),
                     keyboardType: TextInputType.number,
                     validator: (value) => value!.isEmpty ? 'Required' : null,
                     onSaved: (value) => amount = double.parse(value!),
                   ),
                   TextFormField(
                     initialValue: percentage?.toString() ?? '',
-                    decoration: InputDecoration(labelText: 'Percentage (%)'),
+                    decoration: const InputDecoration(labelText: 'Percentage (%)'),
                     keyboardType: TextInputType.number,
                     onSaved: (value) => percentage = value!.isNotEmpty ? double.parse(value) : null,
                   ),
                    TextFormField(
                     initialValue: description ?? '',
-                    decoration: InputDecoration(labelText: 'Description'),
+                    decoration: const InputDecoration(labelText: 'Description'),
                     onSaved: (value) => description = value,
                   ),
                 ],
@@ -90,20 +89,12 @@ class _MilestoneListScreenState extends State<MilestoneListScreen> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel')),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
             ElevatedButton(
               onPressed: () async {
-                if (_formKey.currentState!.validate()) {
-                  _formKey.currentState!.save();
+                if (formKey.currentState!.validate()) {
+                  formKey.currentState!.save();
                   try {
-                    Map<String, dynamic> data = {
-                      'projectId': widget.projectId,
-                      'name': name,
-                      'amount': amount,
-                      'milestonePercentage': percentage,
-                      'description': description,
-                    };
-                    
                     if (milestone != null) {
                          // Update
                          await _financeService.updateMilestone(ProjectMilestone(
@@ -127,14 +118,16 @@ class _MilestoneListScreenState extends State<MilestoneListScreen> {
                         ));
                     }
                     
+                    if (!context.mounted) return;
                     Navigator.pop(context);
                     _loadMilestones();
                   } catch (e) {
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
                   }
                 }
               },
-              child: Text('Save'),
+              child: const Text('Save'),
             ),
           ],
         );
@@ -145,9 +138,11 @@ class _MilestoneListScreenState extends State<MilestoneListScreen> {
   Future<void> _generateInvoice(ProjectMilestone milestone) async {
       try {
           await _financeService.generateInvoiceForMilestone(milestone.id!);
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Invoice generated successfully')));
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invoice generated successfully')));
           _loadMilestones();
       } catch (e) {
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error generating invoice: $e')));
       }
   }
@@ -167,8 +162,10 @@ class _MilestoneListScreenState extends State<MilestoneListScreen> {
                invoiceId: milestone.invoiceId
            );
            await _financeService.updateMilestone(updatedMilestone);
+           if (!mounted) return;
             _loadMilestones();
        } catch (e) {
+           if (!mounted) return;
            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
        }
   }
@@ -177,7 +174,7 @@ class _MilestoneListScreenState extends State<MilestoneListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _isPageLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : Column(
             children: [
                 Padding(
@@ -187,8 +184,8 @@ class _MilestoneListScreenState extends State<MilestoneListScreen> {
                     children: [
                       Text('Project Milestones', style: Theme.of(context).textTheme.titleLarge),
                       ElevatedButton.icon(
-                        icon: Icon(Icons.add),
-                        label: Text('Add Milestone'),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Milestone'),
                         onPressed: () => _showMilestoneDialog(),
                       ),
                     ],
@@ -200,7 +197,7 @@ class _MilestoneListScreenState extends State<MilestoneListScreen> {
                       itemBuilder: (context, index) {
                         final milestone = _milestones[index];
                         return Card(
-                          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           child: ListTile(
                             title: Text(milestone.name),
                             subtitle: Text('${NumberFormat.currency(symbol: '₹').format(milestone.amount)} - ${milestone.status}'),
@@ -209,20 +206,20 @@ class _MilestoneListScreenState extends State<MilestoneListScreen> {
                               children: [
                                 if (milestone.status == 'PENDING')
                                     IconButton(
-                                        icon: Icon(Icons.check_circle_outline, color: Colors.green),
+                                        icon: const Icon(Icons.check_circle_outline, color: Colors.green),
                                         tooltip: 'Mark Completed',
                                         onPressed: () => _markCompleted(milestone),
                                     ),
                                 if (milestone.status == 'COMPLETED' && milestone.invoiceId == null)
                                     IconButton(
-                                      icon: Icon(Icons.receipt_long, color: Colors.blue),
+                                      icon: const Icon(Icons.receipt_long, color: Colors.blue),
                                       tooltip: 'Generate Invoice',
                                       onPressed: () => _generateInvoice(milestone),
                                     ),
                                 if (milestone.invoiceId != null)
-                                    Chip(label: Text('Invoiced')),
+                                    const Chip(label: Text('Invoiced')),
                                 IconButton(
-                                  icon: Icon(Icons.edit),
+                                  icon: const Icon(Icons.edit),
                                   onPressed: () => _showMilestoneDialog(milestone: milestone),
                                 ),
                               ],
