@@ -209,15 +209,14 @@ class VendorQuotationsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (quotation.status != null)
-                    _buildStatusBadge(quotation.status!),
+                  if (quotation.status.isNotEmpty)
+                    _buildStatusBadge(quotation.status),
                 ],
               ),
-              if (quotation.description != null &&
-                  quotation.description!.isNotEmpty) ...[
+              if (quotation.notes != null && quotation.notes!.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(
-                  quotation.description!,
+                  quotation.notes!,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: Colors.grey[600]),
@@ -233,17 +232,15 @@ class VendorQuotationsScreen extends StatelessWidget {
                       icon: Icons.business,
                       label: quotation.projectName!,
                     ),
-                  if (quotation.totalAmount != null)
-                    _buildInfoChip(
-                      icon: Icons.currency_rupee,
-                      label: '₹${quotation.totalAmount!.toStringAsFixed(2)}',
-                      color: AppTheme.statusSuccess,
-                    ),
-                  if (quotation.quotationDate != null)
-                    _buildInfoChip(
-                      icon: Icons.calendar_today,
-                      label: _formatDate(quotation.quotationDate!),
-                    ),
+                  _buildInfoChip(
+                    icon: Icons.currency_rupee,
+                    label: '₹${quotation.totalAmount.toStringAsFixed(2)}',
+                    color: AppTheme.statusSuccess,
+                  ),
+                  _buildInfoChip(
+                    icon: Icons.calendar_today,
+                    label: _formatDate(quotation.quotationDate),
+                  ),
                   if (quotation.validUntil != null)
                     _buildInfoChip(
                       icon: Icons.event_available,

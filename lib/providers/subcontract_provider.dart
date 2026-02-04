@@ -26,6 +26,14 @@ class SubcontractProvider extends BasePaginatedProvider<SubcontractWorkOrder> {
     );
   }
 
+  /// Record a measurement for a work order (delegates to [SubcontractService]).
+  Future<SubcontractMeasurement> recordMeasurement(
+    int workOrderId,
+    SubcontractMeasurement measurement,
+  ) async {
+    return await _service.recordMeasurement(workOrderId, measurement);
+  }
+
   // Subcontract-specific convenience methods
 
   void filterByProjectId(int? projectId) {

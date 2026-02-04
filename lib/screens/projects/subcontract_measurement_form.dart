@@ -14,12 +14,12 @@ class SubcontractMeasurementForm extends StatefulWidget {
   final double rate;
 
   const SubcontractMeasurementForm({
-    Key? key,
+    super.key,
     required this.workOrderId,
     required this.workOrderNumber,
     required this.unit,
     required this.rate,
-  }) : super(key: key);
+  });
 
   @override
   State<SubcontractMeasurementForm> createState() => _SubcontractMeasurementFormState();

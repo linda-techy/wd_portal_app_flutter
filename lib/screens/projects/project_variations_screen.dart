@@ -71,28 +71,28 @@ class ProjectVariationsScreen extends StatelessWidget {
         _buildFilterChip(
           context,
           label: 'All',
-          isSelected: provider.filters['approvalStatus'] == null,
+          isSelected: provider.filters['status'] == null,
           onTap: () => provider.clearFilters(),
         ),
         _buildFilterChip(
           context,
           label: 'Pending',
-          isSelected: provider.filters['approvalStatus'] == 'PENDING',
-          onTap: () => provider.updateFilter('approvalStatus', 'PENDING'),
+          isSelected: provider.filters['status'] == 'PENDING',
+          onTap: () => provider.updateFilter('status', 'PENDING'),
           color: AppTheme.statusWarning,
         ),
         _buildFilterChip(
           context,
           label: 'Approved',
-          isSelected: provider.filters['approvalStatus'] == 'APPROVED',
-          onTap: () => provider.updateFilter('approvalStatus', 'APPROVED'),
+          isSelected: provider.filters['status'] == 'APPROVED',
+          onTap: () => provider.updateFilter('status', 'APPROVED'),
           color: AppTheme.statusSuccess,
         ),
         _buildFilterChip(
           context,
           label: 'Rejected',
-          isSelected: provider.filters['approvalStatus'] == 'REJECTED',
-          onTap: () => provider.updateFilter('approvalStatus', 'REJECTED'),
+          isSelected: provider.filters['status'] == 'REJECTED',
+          onTap: () => provider.updateFilter('status', 'REJECTED'),
           color: AppTheme.statusError,
         ),
       ],
@@ -186,33 +186,30 @@ class ProjectVariationsScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          variation.variationType ?? 'Variation',
+                          'Variation #${variation.id}',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        if (variation.projectName != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            variation.projectName!,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Project #${variation.projectId}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
                           ),
-                        ],
+                        ),
                       ],
                     ),
                   ),
-                  if (variation.approvalStatus != null)
-                    _buildStatusBadge(variation.approvalStatus!),
+                  _buildStatusBadge(variation.status),
                 ],
               ),
-              if (variation.description != null && variation.description!.isNotEmpty) ...[
+              if (variation.description.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(
-                  variation.description!,
+                  variation.description,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: Colors.grey[600]),
@@ -223,26 +220,20 @@ class ProjectVariationsScreen extends StatelessWidget {
                 spacing: 12,
                 runSpacing: 8,
                 children: [
-                  if (variation.requestedByName != null)
-                    _buildInfoChip(
-                      icon: Icons.person,
-                      label: variation.requestedByName!,
-                    ),
-                  if (variation.estimatedCost != null)
-                    _buildInfoChip(
-                      icon: Icons.currency_rupee,
-                      label: '₹${variation.estimatedCost!.toStringAsFixed(2)}',
-                      color: _getCostColor(variation.estimatedCost!),
-                    ),
-                  if (variation.requestDate != null)
+                  _buildInfoChip(
+                        icon: Icons.currency_rupee,
+                        label: '₹${variation.estimatedAmount.toStringAsFixed(2)}',
+                        color: _getCostColor(variation.estimatedAmount),
+                      ),
+                  if (variation.createdAt != null)
                     _buildInfoChip(
                       icon: Icons.calendar_today,
-                      label: _formatDate(variation.requestDate!),
+                      label: _formatDate(variation.createdAt!),
                     ),
-                  if (variation.approvedDate != null)
+                  if (variation.approvedAt != null)
                     _buildInfoChip(
                       icon: Icons.check_circle,
-                      label: 'Approved: ${_formatDate(variation.approvedDate!)}',
+                      label: 'Approved: ${_formatDate(variation.approvedAt!)}',
                       color: AppTheme.statusSuccess,
                     ),
                 ],

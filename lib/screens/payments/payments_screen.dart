@@ -233,11 +233,10 @@ class PaymentsScreen extends StatelessWidget {
                       icon: Icons.payment,
                       label: payment.paymentMethod!,
                     ),
-                  if (payment.transactionDate != null)
-                    _buildInfoChip(
-                      icon: Icons.calendar_today,
-                      label: _formatDate(payment.transactionDate!),
-                    ),
+                  _buildInfoChip(
+                    icon: Icons.calendar_today,
+                    label: _formatDate(payment.transactionDate),
+                  ),
                   if (payment.projectName != null)
                     _buildInfoChip(
                       icon: Icons.business,
