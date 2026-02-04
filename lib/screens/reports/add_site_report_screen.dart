@@ -103,6 +103,15 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
     }
 
     if (!_formKey.currentState!.validate()) return;
+    
+    // Validate photo is required
+    if (_photos.isEmpty) {
+      MotionToast.warning(
+        description: const Text('At least one photo is required'),
+        toastDuration: const Duration(seconds: 3),
+      ).show(context);
+      return;
+    }
 
     setState(() => _isSaving = true);
 
@@ -249,7 +258,13 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Photos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Row(
+              children: [
+                const Text('Photos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(width: 4),
+                const Text('*', style: TextStyle(color: Colors.red, fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
             Row(
               children: [
                 IconButton(
@@ -269,11 +284,16 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
             height: 100,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Colors.red.shade50,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+              border: Border.all(color: Colors.red.shade300, width: 2, style: BorderStyle.solid),
             ),
-            child: const Center(child: Text('No photos added yet', style: TextStyle(color: Colors.grey))),
+            child: const Center(
+              child: Text(
+                'Please add at least one photo (Required)',
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+              ),
+            ),
           )
         else
           GridView.builder(
