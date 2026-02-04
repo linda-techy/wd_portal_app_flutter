@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../../../theme/app_theme.dart';
-import '../../../../models/procurement_models.dart'; // For Vendor if needed general
-import '../../data/models/material_indent.dart';
-import '../../data/models/vendor_quotation.dart';
-import '../../data/services/material_indent_service.dart';
+import 'package:admin/features/procurement/data/models/material_indent.dart';
+import 'package:admin/features/procurement/data/models/vendor_quotation.dart';
+import 'package:admin/features/procurement/data/services/material_indent_service.dart';
 import 'package:admin/providers/procurement_provider.dart';
 
 class QuotationManagementScreen extends StatefulWidget {
   final MaterialIndent indent;
 
-  const QuotationManagementScreen({Key? key, required this.indent}) : super(key: key);
+  const QuotationManagementScreen({super.key, required this.indent});
 
   @override
-  _QuotationManagementScreenState createState() => _QuotationManagementScreenState();
+  State<QuotationManagementScreen> createState() => _QuotationManagementScreenState();
 }
 
 class _QuotationManagementScreenState extends State<QuotationManagementScreen> {
@@ -43,10 +41,9 @@ class _QuotationManagementScreenState extends State<QuotationManagementScreen> {
         });
       }
     } catch (e) {
-      if (mounted) {
-        setState(() => _isPageLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-      }
+      if (!mounted) return;
+      setState(() => _isPageLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -63,9 +60,11 @@ class _QuotationManagementScreenState extends State<QuotationManagementScreen> {
   Future<void> _selectQuotation(VendorQuotation quote) async {
     try {
       await _service.selectQuotation(quote.id!);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Quotation Selected. PO Draft Created.')));
       _loadQuotations();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
@@ -145,13 +144,13 @@ class _AddQuoteDialog extends StatefulWidget {
   final int indentId;
   final VoidCallback onSuccess;
 
-  const _AddQuoteDialog({Key? key, required this.indentId, required this.onSuccess}) : super(key: key);
+  const _AddQuoteDialog({super.key, required this.indentId, required this.onSuccess});
 
   @override
-  __AddQuoteDialogState createState() => __AddQuoteDialogState();
+  State<_AddQuoteDialog> createState() => _AddQuoteDialogState();
 }
 
-class __AddQuoteDialogState extends State<_AddQuoteDialog> {
+class _AddQuoteDialogState extends State<_AddQuoteDialog> {
   final _formKey = GlobalKey<FormState>();
   final _service = MaterialIndentService();
   int? _selectedVendorId;
@@ -231,12 +230,12 @@ class __AddQuoteDialogState extends State<_AddQuoteDialog> {
 
       await _service.createQuotation(widget.indentId, _selectedVendorId!, quote);
       widget.onSuccess();
+      if (!mounted) return;
       Navigator.pop(context);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-        setState(() => _submitting = false);
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      setState(() => _submitting = false);
     }
   }
 }

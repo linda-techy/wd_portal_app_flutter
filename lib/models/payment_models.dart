@@ -186,6 +186,18 @@ class PaymentTransactionItem {
           : DateTime.now(),
     );
   }
+
+  /// Alias for referenceNumber (used by payments_screen).
+  String? get transactionReference => referenceNumber;
+
+  /// Alias for paymentCategory (used by payments_screen).
+  String? get paymentType => paymentCategory;
+
+  /// Alias for notes (used by payments_screen).
+  String? get description => notes;
+
+  /// Alias for paymentDate (used by payments_screen).
+  DateTime get transactionDate => paymentDate;
 }
 
 class ChallanItem {

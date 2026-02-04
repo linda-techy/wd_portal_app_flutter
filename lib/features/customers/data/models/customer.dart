@@ -41,6 +41,21 @@ class Customer {
 
   String get fullName => '$firstName $lastName'.trim();
 
+  /// Customer type / lead source for display.
+  String? get customerType => leadSource;
+
+  /// Whether the customer account is active (alias for enabled).
+  bool get isActive => enabled;
+
+  /// Primary contact phone (phone or whatsapp).
+  String? get primaryPhone => phone ?? whatsappNumber;
+
+  /// City when available from address or API.
+  String? get city => null;
+
+  /// State when available from address or API.
+  String? get state => null;
+
   factory Customer.fromJson(Map<String, dynamic> json) {
     return Customer(
       id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),

@@ -223,12 +223,11 @@ class PaymentsScreen extends StatelessWidget {
                 spacing: 12,
                 runSpacing: 8,
                 children: [
-                  if (payment.amount != null)
-                    _buildInfoChip(
-                      icon: Icons.currency_rupee,
-                      label: '₹${payment.amount!.toStringAsFixed(2)}',
-                      color: AppTheme.statusSuccess,
-                    ),
+                  _buildInfoChip(
+                    icon: Icons.currency_rupee,
+                    label: '₹${payment.amount.toStringAsFixed(2)}',
+                    color: AppTheme.statusSuccess,
+                  ),
                   if (payment.paymentMethod != null)
                     _buildInfoChip(
                       icon: Icons.payment,

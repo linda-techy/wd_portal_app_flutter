@@ -67,6 +67,18 @@ class InventoryStock {
       lastUpdated: json['lastUpdated'],
     );
   }
+
+  /// Current stock quantity (alias for currentQuantity).
+  double get currentStock => currentQuantity;
+
+  /// Minimum stock level when provided by API (optional).
+  double? get minStockLevel => null;
+
+  /// Warehouse name when provided by API (optional).
+  String? get warehouseName => null;
+
+  /// Last updated parsed as DateTime for formatting.
+  DateTime? get lastUpdatedDate => DateTime.tryParse(lastUpdated);
 }
 
 class StockAdjustment {

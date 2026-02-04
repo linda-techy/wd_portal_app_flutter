@@ -43,4 +43,22 @@ class DelayLog {
       'reasonText': reasonText,
     };
   }
+
+  /// Project name when provided by API.
+  String? get projectName => null;
+
+  /// True when toDate is set (delay period ended).
+  bool get isResolved => toDate != null;
+
+  /// Description / reason for delay (alias for reasonText).
+  String? get description => reasonText;
+
+  /// Start date of delay (alias for fromDate).
+  DateTime get startDate => fromDate;
+
+  /// Number of days delayed.
+  int get durationDays => (toDate ?? DateTime.now()).difference(fromDate).inDays;
+
+  /// Severity / type for display (alias for delayType).
+  String get severity => delayType;
 }

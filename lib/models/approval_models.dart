@@ -55,4 +55,16 @@ class ApprovalRequest {
       if (comments != null) 'comments': comments,
     };
   }
+
+  /// Display label for request type (alias for targetType).
+  String? get requestType => targetType;
+
+  /// Entity type for display (targetName or targetType).
+  String get entityType => targetName ?? targetType;
+
+  /// Request date parsed from requestedAt string.
+  DateTime? get requestDate => DateTime.tryParse(requestedAt);
+
+  /// Priority when provided by API (optional).
+  String? get priority => null;
 }

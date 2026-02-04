@@ -168,7 +168,7 @@ class CustomersScreen extends StatelessWidget {
   }
 
   Widget _buildCustomerCard(BuildContext context, Customer customer) {
-    final fullName = '${customer.firstName ?? ''} ${customer.lastName ?? ''}'.trim();
+    final fullName = '${customer.firstName} ${customer.lastName}'.trim();
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
@@ -214,15 +214,14 @@ class CustomersScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (customer.isActive != null)
-                    Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: customer.isActive! ? AppTheme.statusSuccess : Colors.grey,
-                        shape: BoxShape.circle,
-                      ),
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: customer.isActive ? AppTheme.statusSuccess : Colors.grey,
+                      shape: BoxShape.circle,
                     ),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -230,11 +229,10 @@ class CustomersScreen extends StatelessWidget {
                 spacing: 12,
                 runSpacing: 8,
                 children: [
-                  if (customer.email != null)
-                    _buildInfoChip(
-                      icon: Icons.email,
-                      label: customer.email!,
-                    ),
+                  _buildInfoChip(
+                    icon: Icons.email,
+                    label: customer.email,
+                  ),
                   if (customer.primaryPhone != null)
                     _buildInfoChip(
                       icon: Icons.phone,

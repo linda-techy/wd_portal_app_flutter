@@ -165,9 +165,8 @@ class InventoryStockScreen extends StatelessWidget {
   }
 
   Widget _buildStockCard(BuildContext context, InventoryStock stock) {
-    final isLowStock = stock.currentStock != null &&
-        stock.minStockLevel != null &&
-        stock.currentStock! <= stock.minStockLevel!;
+    final minLevel = stock.minStockLevel ?? 0.0;
+    final isLowStock = minLevel > 0 && stock.currentStock <= minLevel;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -229,14 +228,13 @@ class InventoryStockScreen extends StatelessWidget {
                 spacing: 12,
                 runSpacing: 8,
                 children: [
-                  if (stock.currentStock != null && stock.unit != null)
-                    _buildInfoChip(
-                      icon: Icons.inventory_2,
-                      label: '${stock.currentStock} ${stock.unit}',
-                      color: isLowStock
-                          ? AppTheme.statusError
-                          : AppTheme.statusSuccess,
-                    ),
+                  _buildInfoChip(
+                    icon: Icons.inventory_2,
+                    label: '${stock.currentStock} ${stock.unit ?? ''}',
+                    color: isLowStock
+                        ? AppTheme.statusError
+                        : AppTheme.statusSuccess,
+                  ),
                   if (stock.minStockLevel != null)
                     _buildInfoChip(
                       icon: Icons.warning,
@@ -247,10 +245,10 @@ class InventoryStockScreen extends StatelessWidget {
                       icon: Icons.business,
                       label: stock.projectName!,
                     ),
-                  if (stock.lastUpdated != null)
+                  if (stock.lastUpdatedDate != null)
                     _buildInfoChip(
                       icon: Icons.update,
-                      label: _formatDate(stock.lastUpdated!),
+                      label: _formatDate(stock.lastUpdatedDate!),
                     ),
                 ],
               ),

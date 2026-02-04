@@ -20,6 +20,10 @@ rootProject.ext {
     minSdkVersion = 21
     targetSdkVersion = 35
 }
+// Expose SDK versions at root so plugins (e.g. geolocator_android) can read them
+rootProject.compileSdkVersion = rootProject.ext.compileSdkVersion
+rootProject.minSdkVersion = rootProject.ext.minSdkVersion
+rootProject.targetSdkVersion = rootProject.ext.targetSdkVersion
 
 rootProject.buildDir = "../build"
 subprojects {
@@ -27,6 +31,16 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+}
+// Provide 'flutter' extension for plugin projects that expect flutter.compileSdkVersion (e.g. geolocator_android)
+subprojects { subproject ->
+    if (subproject.name != "app") {
+        subproject.ext.flutter = [
+            compileSdkVersion: rootProject.ext.compileSdkVersion,
+            minSdkVersion    : rootProject.ext.minSdkVersion,
+            targetSdkVersion: rootProject.ext.targetSdkVersion
+        ]
+    }
 }
 
 tasks.register("clean", Delete) {

@@ -48,4 +48,19 @@ class ProjectWarranty {
       'coverage_details': coverageDetails,
     };
   }
+
+  /// Display label for warranty type (alias for componentName).
+  String? get warrantyType => componentName;
+
+  /// Project name when provided by API (optional; override if API returns it).
+  String? get projectName => null;
+
+  /// Duration in months between start and end date.
+  int? get durationMonths {
+    if (startDate == null || endDate == null) return null;
+    return (endDate!.difference(startDate!).inDays / 30).round();
+  }
+
+  /// Provider name (alias for providerName).
+  String? get provider => providerName;
 }

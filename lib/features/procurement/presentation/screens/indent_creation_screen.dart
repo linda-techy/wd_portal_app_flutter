@@ -8,10 +8,10 @@ import '../../data/services/material_indent_service.dart';
 class IndentCreationScreen extends StatefulWidget {
   final int projectId;
 
-  const IndentCreationScreen({Key? key, required this.projectId}) : super(key: key);
+  const IndentCreationScreen({super.key, required this.projectId});
 
   @override
-  _IndentCreationScreenState createState() => _IndentCreationScreenState();
+  State<IndentCreationScreen> createState() => _IndentCreationScreenState();
 }
 
 class _IndentCreationScreenState extends State<IndentCreationScreen> {
@@ -23,10 +23,9 @@ class _IndentCreationScreenState extends State<IndentCreationScreen> {
   final _requiredDateController = TextEditingController();
   final _notesController = TextEditingController();
   String _priority = 'MEDIUM';
-  DateTime? _selectedRequiredDate;
 
   // Items List
-  List<MaterialIndentItem> _items = [];
+  final List<MaterialIndentItem> _items = [];
   
   // Item Form Controllers
   final _itemNameController = TextEditingController();
@@ -43,7 +42,6 @@ class _IndentCreationScreenState extends State<IndentCreationScreen> {
     );
     if (picked != null) {
       setState(() {
-        _selectedRequiredDate = picked;
         _requiredDateController.text = DateFormat('yyyy-MM-dd').format(picked);
       });
     }

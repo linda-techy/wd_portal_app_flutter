@@ -517,45 +517,47 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
       title: 'Project Progress',
       subtitle: 'Projects by status',
       height: isMobile ? 250 : 300,
-      chart: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: projectProgress.map((item) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingSM),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      item['name'],
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    Text(
-                      '${item['count']} (${item['percentage'].toStringAsFixed(1)}%)',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppTheme.spacingXS),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSM),
-                  child: LinearProgressIndicator(
-                    value: (item['percentage'] as double) / 100,
-                    backgroundColor: AppTheme.borderLight,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      _getProgressColor(item['percentage'] as double),
-                    ),
-                    minHeight: 8,
+      chart: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: projectProgress.map((item) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingSM),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        item['name'],
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      Text(
+                        '${item['count']} (${item['percentage'].toStringAsFixed(1)}%)',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
+                  const SizedBox(height: AppTheme.spacingXS),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                    child: LinearProgressIndicator(
+                      value: (item['percentage'] as double) / 100,
+                      backgroundColor: AppTheme.borderLight,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        _getProgressColor(item['percentage'] as double),
+                      ),
+                      minHeight: 8,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
       ),
     );
   }

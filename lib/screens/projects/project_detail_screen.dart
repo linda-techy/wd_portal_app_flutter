@@ -200,6 +200,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                       ),
                     Text(
                       _project!.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -700,11 +702,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   }
   
   Widget _buildPhotosGrid() {
+    final isMobile = ResponsiveUtils.isMobile(context);
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isMobile ? 2 : 4,
         crossAxisSpacing: AppTheme.spacingMD,
         mainAxisSpacing: AppTheme.spacingMD,
         childAspectRatio: 1.2,

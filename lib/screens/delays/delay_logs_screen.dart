@@ -197,7 +197,7 @@ class DelayLogsScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          delay.delayType ?? 'Delay',
+                          delay.delayType,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -216,15 +216,14 @@ class DelayLogsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (delay.isResolved != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: delay.isResolved! ? AppTheme.statusSuccess : AppTheme.statusError,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        delay.isResolved! ? 'Resolved' : 'Open',
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: delay.isResolved ? AppTheme.statusSuccess : AppTheme.statusError,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      delay.isResolved ? 'Resolved' : 'Open',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -237,7 +236,7 @@ class DelayLogsScreen extends StatelessWidget {
               if (delay.description != null && delay.description!.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(
-                  delay.description!,
+                  delay.description ?? '',
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: Colors.grey[600]),
@@ -248,23 +247,20 @@ class DelayLogsScreen extends StatelessWidget {
                 spacing: 12,
                 runSpacing: 8,
                 children: [
-                  if (delay.startDate != null)
-                    _buildInfoChip(
-                      icon: Icons.play_arrow,
-                      label: 'Start: ${_formatDate(delay.startDate!)}',
-                    ),
-                  if (delay.durationDays != null)
-                    _buildInfoChip(
-                      icon: Icons.timer,
-                      label: '${delay.durationDays} days',
-                      color: AppTheme.statusWarning,
-                    ),
-                  if (delay.severity != null)
-                    _buildInfoChip(
-                      icon: Icons.warning,
-                      label: delay.severity!,
-                      color: _getSeverityColor(delay.severity!),
-                    ),
+                  _buildInfoChip(
+                    icon: Icons.play_arrow,
+                    label: 'Start: ${_formatDate(delay.startDate)}',
+                  ),
+                  _buildInfoChip(
+                    icon: Icons.timer,
+                    label: '${delay.durationDays} days',
+                    color: AppTheme.statusWarning,
+                  ),
+                  _buildInfoChip(
+                    icon: Icons.warning,
+                    label: delay.severity,
+                    color: _getSeverityColor(delay.severity),
+                  ),
                 ],
               ),
             ],

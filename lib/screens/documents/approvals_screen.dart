@@ -192,21 +192,18 @@ class ApprovalsScreen extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        if (approval.entityType != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            approval.entityType!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
+                        const SizedBox(height: 4),
+                        Text(
+                          approval.entityType,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
                           ),
-                        ],
+                        ),
                       ],
                     ),
                   ),
-                  if (approval.status != null)
-                    _buildStatusBadge(approval.status!),
+                  _buildStatusBadge(approval.status),
                 ],
               ),
               if (approval.comments != null && approval.comments!.isNotEmpty) ...[

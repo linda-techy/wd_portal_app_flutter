@@ -214,8 +214,7 @@ class ProjectWarrantiesScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (warranty.status != null)
-                    _buildStatusBadge(warranty.status!),
+                  _buildStatusBadge(warranty.status),
                 ],
               ),
               if (warranty.description != null && warranty.description!.isNotEmpty) ...[
