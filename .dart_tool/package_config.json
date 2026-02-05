@@ -81,7 +81,7 @@
     },
     {
       "name": "built_value",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/built_value-8.12.1",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/built_value-8.12.3",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },
@@ -129,7 +129,7 @@
     },
     {
       "name": "crypto",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/crypto-3.0.6",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/crypto-3.0.7",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
@@ -144,12 +144,6 @@
       "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/dart_style-2.3.7",
       "packageUri": "lib/",
       "languageVersion": "3.0"
-    },
-    {
-      "name": "dbus",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/dbus-0.7.11",
-      "packageUri": "lib/",
-      "languageVersion": "2.17"
     },
     {
       "name": "decimal",
@@ -171,7 +165,7 @@
     },
     {
       "name": "dio",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/dio-5.8.0+1",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/dio-5.9.1",
       "packageUri": "lib/",
       "languageVersion": "2.18"
     },
@@ -183,7 +177,7 @@
     },
     {
       "name": "equatable",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/equatable-2.0.7",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/equatable-2.0.8",
       "packageUri": "lib/",
       "languageVersion": "2.12"
     },
@@ -332,32 +326,20 @@
       "languageVersion": "3.0"
     },
     {
-      "name": "geoclue",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/geoclue-0.1.1",
-      "packageUri": "lib/",
-      "languageVersion": "2.16"
-    },
-    {
       "name": "geolocator",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/geolocator-14.0.2",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/geolocator-13.0.4",
       "packageUri": "lib/",
       "languageVersion": "3.5"
     },
     {
       "name": "geolocator_android",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/geolocator_android-5.0.2",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/geolocator_android-5.0.0",
       "packageUri": "lib/",
       "languageVersion": "3.5"
     },
     {
       "name": "geolocator_apple",
       "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/geolocator_apple-2.3.13",
-      "packageUri": "lib/",
-      "languageVersion": "3.5"
-    },
-    {
-      "name": "geolocator_linux",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/geolocator_linux-0.2.4",
       "packageUri": "lib/",
       "languageVersion": "3.5"
     },
@@ -381,7 +363,7 @@
     },
     {
       "name": "get",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/get-4.7.2",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/get-4.7.3",
       "packageUri": "lib/",
       "languageVersion": "2.15"
     },
@@ -404,14 +386,8 @@
       "languageVersion": "3.4"
     },
     {
-      "name": "gsettings",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/gsettings-0.2.8",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
       "name": "http",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/http-1.4.0",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/http-1.6.0",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
@@ -596,18 +572,6 @@
       "languageVersion": "3.4"
     },
     {
-      "name": "package_info_plus",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/package_info_plus-9.0.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.3"
-    },
-    {
-      "name": "package_info_plus_platform_interface",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/package_info_plus_platform_interface-3.2.1",
-      "packageUri": "lib/",
-      "languageVersion": "2.18"
-    },
-    {
       "name": "panorama",
       "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/panorama-0.4.1",
       "packageUri": "lib/",
@@ -687,7 +651,7 @@
     },
     {
       "name": "provider",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/provider-6.1.5",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/provider-6.1.5+1",
       "packageUri": "lib/",
       "languageVersion": "2.12"
     },
@@ -798,12 +762,6 @@
       "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/source_span-1.10.0",
       "packageUri": "lib/",
       "languageVersion": "2.18"
-    },
-    {
-      "name": "sprintf",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/sprintf-7.0.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
     },
     {
       "name": "stack_trace",
@@ -975,7 +933,7 @@
     },
     {
       "name": "uuid",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/uuid-4.5.1",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/uuid-4.5.2",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },
@@ -1011,7 +969,7 @@
     },
     {
       "name": "watcher",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/watcher-1.2.0",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/watcher-1.2.1",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
@@ -1070,7 +1028,7 @@
       "languageVersion": "3.5"
     }
   ],
-  "generated": "2026-02-04T21:11:19.559774Z",
+  "generated": "2026-02-05T16:05:04.378577Z",
   "generator": "pub",
   "generatorVersion": "3.5.4",
   "flutterRoot": "file:///C:/src/flutter",

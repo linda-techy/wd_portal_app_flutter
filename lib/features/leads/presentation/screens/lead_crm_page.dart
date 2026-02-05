@@ -82,6 +82,9 @@ class _LeadCRMPageState extends State<LeadCRMPage> {
                    setState(() => leads.removeWhere((l) => l.leadId == lead.leadId));
                 },
                 onConvert: (lead) async {
+                  // Capture ScaffoldMessenger before async gap
+                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+                  
                   // Show conversion dialog
                   final result = await showDialog<Map<String, dynamic>>(
                     context: context,
@@ -102,7 +105,7 @@ class _LeadCRMPageState extends State<LeadCRMPage> {
                       );
                       
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        scaffoldMessenger.showSnackBar(
                           const SnackBar(
                             content: Text('Lead converted to project successfully'),
                             backgroundColor: Colors.green,
@@ -113,7 +116,7 @@ class _LeadCRMPageState extends State<LeadCRMPage> {
                       }
                     } catch (e) {
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        scaffoldMessenger.showSnackBar(
                           SnackBar(
                             content: Text('Conversion failed: ${e.toString()}'),
                             backgroundColor: Colors.red,
@@ -152,7 +155,7 @@ class _LeadConversionDialogState extends State<_LeadConversionDialog> {
   void initState() {
     super.initState();
     _projectNameController.text = '${widget.lead.name} Project';
-    _locationController.text = widget.lead.location ?? '';
+    _locationController.text = widget.lead.location;
     _projectType = widget.lead.projectType;
     _startDate = DateTime.now();
   }

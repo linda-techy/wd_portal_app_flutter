@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:admin/config/app_config.dart';
+import 'config/app_config.dart';
 
 // Modern Professional Theme Colors - 2024 (Aligned with AppTheme)
 const Color primaryColor = Color(0xFF2A2A3A); // Deep Slate (was Blue)

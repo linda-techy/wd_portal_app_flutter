@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data'; // Added for BytesBuilder
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -78,11 +79,7 @@ class _LeadDocumentsScreenState extends State<LeadDocumentsScreen> {
     ].contains(extension);
   }
 
-  String _getViewableType(String extension) {
-    if (extension == 'pdf') return 'pdf';
-    if (['jpg', 'jpeg', 'png', 'webp'].contains(extension)) return 'image';
-    return 'office'; // generic type for office docs
-  }
+
 
   String _getFullUrl(String url) {
     if (url.startsWith('http')) {
@@ -104,6 +101,7 @@ class _LeadDocumentsScreenState extends State<LeadDocumentsScreen> {
 
     if (kIsWeb) {
       if (['pdf'].contains(extension)) {
+        if (!mounted) return;
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -116,6 +114,7 @@ class _LeadDocumentsScreenState extends State<LeadDocumentsScreen> {
           ),
         );
       } else if (['jpg', 'jpeg', 'png', 'webp'].contains(extension)) {
+        if (!mounted) return;
          Navigator.push(
           context,
           MaterialPageRoute(
