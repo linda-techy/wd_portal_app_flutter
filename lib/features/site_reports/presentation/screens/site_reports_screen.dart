@@ -157,7 +157,7 @@ class _CreateSiteReportDialogState extends State<CreateSiteReportDialog> {
   final SiteReportService _service = SiteReportService();
   final ImagePicker _picker = ImagePicker();
   
-  ReportType _type = ReportType.DAILY_PROGRESS;
+  ReportType _type = ReportType.dailyProgress;
   List<XFile> _selectedPhotos = [];
   bool _isSaving = false;
 

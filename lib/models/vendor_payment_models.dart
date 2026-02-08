@@ -47,8 +47,10 @@ class VendorPayment {
 @JsonSerializable()
 class AccountsPayableAging {
   final double totalOutstanding;
-  final double due_0_30_days;
-  final double due_31_60_days;
+  @JsonKey(name: 'due_0_30_days')
+  final double due0To30Days;
+  @JsonKey(name: 'due_31_60_days')
+  final double due31To60Days;
   final double overdue;
   final int? totalVendors;
   final int? totalInvoices;
@@ -57,8 +59,8 @@ class AccountsPayableAging {
 
   AccountsPayableAging({
     required this.totalOutstanding,
-    required this.due_0_30_days,
-    required this.due_31_60_days,
+    required this.due0To30Days,
+    required this.due31To60Days,
     required this.overdue,
     this.totalVendors,
     this.totalInvoices,
@@ -87,8 +89,10 @@ class VendorAgingDetail {
   final String vendorName;
   final int? invoiceCount;
   final double totalOutstanding;
-  final double due_0_30_days;
-  final double due_31_60_days;
+  @JsonKey(name: 'due_0_30_days')
+  final double due0To30Days;
+  @JsonKey(name: 'due_31_60_days')
+  final double due31To60Days;
   final double overdue;
   final int? overdueInvoiceCount;
 
@@ -97,8 +101,8 @@ class VendorAgingDetail {
     required this.vendorName,
     this.invoiceCount,
     required this.totalOutstanding,
-    required this.due_0_30_days,
-    required this.due_31_60_days,
+    required this.due0To30Days,
+    required this.due31To60Days,
     required this.overdue,
     this.overdueInvoiceCount,
   });

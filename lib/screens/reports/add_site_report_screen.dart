@@ -32,7 +32,7 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
 
   CustomerProject? _selectedProject;
   List<CustomerProject> _projects = [];
-  ReportType _selectedType = ReportType.DAILY_PROGRESS;
+  ReportType _selectedType = ReportType.dailyProgress;
   List<XFile> _photos = [];
   bool _isSaving = false;
 

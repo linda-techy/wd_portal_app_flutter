@@ -32,8 +32,8 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
   int _pageSize = 10;
   int _totalPages = 0;
   int _totalElements = 0;
-  String _sortBy = 'id';
-  String _sortDirection = 'asc';
+  final String _sortBy = 'id';
+  final String _sortDirection = 'asc';
   String _searchQuery = '';
 
   @override
@@ -282,7 +282,7 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
                         horizontal: AppTheme.spacingLG,
                         vertical: AppTheme.spacingMD,
                       ),
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: AppTheme.surface,
                         border: Border(
                           top: BorderSide(color: AppTheme.borderLight, width: 1),
@@ -297,7 +297,7 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
                           // Page size selector
                           Row(
                             children: [
-                              Text(
+                              const Text(
                                 'Show',
                                 style: TextStyle(
                                   fontSize: 14,
@@ -335,7 +335,7 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
                                 ),
                               ),
                               const SizedBox(width: AppTheme.spacingSM),
-                              Text(
+                              const Text(
                                 'entries',
                                 style: TextStyle(
                                   fontSize: 14,
@@ -372,7 +372,7 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
                                         onTap: _currentPage > 0
                                             ? () => _goToPage(_currentPage - 1)
                                             : null,
-                                        borderRadius: BorderRadius.only(
+                                        borderRadius: const BorderRadius.only(
                                           topLeft: Radius.circular(AppTheme.radiusSM),
                                           bottomLeft: Radius.circular(AppTheme.radiusSM),
                                         ),
@@ -424,7 +424,7 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
                                         onTap: _currentPage < _totalPages - 1
                                             ? () => _goToPage(_currentPage + 1)
                                             : null,
-                                        borderRadius: BorderRadius.only(
+                                        borderRadius: const BorderRadius.only(
                                           topRight: Radius.circular(AppTheme.radiusSM),
                                           bottomRight: Radius.circular(AppTheme.radiusSM),
                                         ),
@@ -464,16 +464,16 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
     return Column(
       children: List.generate(
         8,
-        (index) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        (index) => const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
               ShimmerLoading(width: 200, height: 40, borderRadius: AppTheme.radiusSM),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               ShimmerLoading(width: 250, height: 40, borderRadius: AppTheme.radiusSM),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               ShimmerLoading(width: 150, height: 40, borderRadius: AppTheme.radiusSM),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               ShimmerLoading(width: 100, height: 40, borderRadius: AppTheme.radiusSM),
             ],
           ),
@@ -536,7 +536,7 @@ class _PortalUsersTableState extends State<_PortalUsersTable> {
                           // Header Row (Left part)
                           Container(
                             height: 56,
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: AppTheme.background,
                               border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
                             ),
@@ -606,7 +606,7 @@ class _PortalUsersTableState extends State<_PortalUsersTable> {
                 // Right Side: Fixed Actions
                 Container(
                   width: 90,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     border: Border(left: BorderSide(color: AppTheme.borderLight)),
                     color: AppTheme.surface,
                   ),
@@ -616,11 +616,11 @@ class _PortalUsersTableState extends State<_PortalUsersTable> {
                       Container(
                         height: 56,
                         alignment: Alignment.center,
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: AppTheme.background,
                           border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
                         ),
-                        child: Text(
+                        child: const Text(
                           'Actions',
                           style: TextStyle(
                             fontWeight: FontWeight.w600, 
@@ -699,7 +699,7 @@ class _PortalUsersTableState extends State<_PortalUsersTable> {
       alignment: Alignment.centerLeft,
       child: Text(
         text,
-        style: TextStyle(
+        style: const TextStyle(
           fontWeight: FontWeight.w600,
           fontSize: 14,
           color: AppTheme.textPrimary,

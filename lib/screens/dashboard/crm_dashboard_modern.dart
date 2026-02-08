@@ -16,7 +16,7 @@ class CRMDashboardModern extends StatefulWidget {
   const CRMDashboardModern({super.key});
 
   @override
-  _CRMDashboardModernState createState() => _CRMDashboardModernState();
+  State<CRMDashboardModern> createState() => _CRMDashboardModernState();
 }
 
 class _CRMDashboardModernState extends State<CRMDashboardModern> {
@@ -47,14 +47,13 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
         leads = leadsData;
         customers = customersData;
         customerProjects = projectsData;
-        customerProjects = projectsData;
         _isPageLoading = false;
       });
 
       _calculateRealMetrics();
+
     } catch (e) {
-      print('Error fetching API data: $e');
-      print('Error fetching API data: $e');
+      debugPrint('Error fetching API data: $e');
       setState(() {
         _isPageLoading = false;
       });
@@ -275,11 +274,11 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
             ),
           ),
           const SizedBox(height: AppTheme.spacingLG),
-          Row(
+          const Row(
             children: [
-              Expanded(child: const ShimmerLoading(width: double.infinity, height: 300)),
-              const SizedBox(width: AppTheme.spacingLG),
-              Expanded(child: const ShimmerLoading(width: double.infinity, height: 300)),
+              Expanded(child: ShimmerLoading(width: double.infinity, height: 300)),
+              SizedBox(width: AppTheme.spacingLG),
+              Expanded(child: ShimmerLoading(width: double.infinity, height: 300)),
             ],
           ),
           const SizedBox(height: AppTheme.spacingLG),
@@ -578,7 +577,7 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
             drawVerticalLine: false,
             horizontalInterval: 50000,
             getDrawingHorizontalLine: (value) {
-              return FlLine(
+              return const FlLine(
                 color: AppTheme.borderLight,
                 strokeWidth: 1,
               );

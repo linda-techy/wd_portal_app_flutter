@@ -11,7 +11,7 @@ class CRMDashboard extends StatefulWidget {
   const CRMDashboard({super.key});
 
   @override
-  _CRMDashboardState createState() => _CRMDashboardState();
+  State<CRMDashboard> createState() => _CRMDashboardState();
 }
 
 class _CRMDashboardState extends State<CRMDashboard> {
@@ -40,14 +40,9 @@ class _CRMDashboardState extends State<CRMDashboard> {
       final projectsData = await _crmService.getAllProjects();
 
       // Debug: Print the actual data being fetched
-      print('=== API Data Debug ===');
-      print('Leads fetched: ${leadsData.length}');
-      print('Clients fetched: ${clientsData.length}');
-      print('Projects fetched: ${projectsData.length}');
-
-      if (leadsData.isNotEmpty) {
-        print('Sample lead: ${leadsData.first.toJson()}');
-      }
+      debugPrint('Leads fetched: ${leadsData.length}');
+      debugPrint('Clients fetched: ${clientsData.length}');
+      debugPrint('Projects fetched: ${projectsData.length}');
 
       setState(() {
         leads = leadsData;
@@ -59,13 +54,12 @@ class _CRMDashboardState extends State<CRMDashboard> {
       // Calculate real metrics based on API data
       _calculateRealMetrics();
     } catch (e) {
-      print('Error fetching API data: $e');
+      debugPrint('Error fetching API data: $e');
       setState(() {
         isLoading = false;
       });
-      // Only use mock data if absolutely no API data could be fetched
       // If we have some data, calculate metrics from what we have
-      print('Using partial API data, calculating metrics from available data');
+      debugPrint('Using partial API data, calculating metrics from available data');
       _calculateRealMetrics();
     }
   }
@@ -86,13 +80,12 @@ class _CRMDashboardState extends State<CRMDashboard> {
         .where((l) => l.status == 'Won')
         .fold<double>(0, (sum, l) => sum + (l.budget ?? 0));
 
-    // Debug: Print calculated metrics
-    print('=== Calculated Metrics ===');
-    print('Total Leads: $totalLeads');
-    print('Leads by Status: $leadsByStatus');
-    print('Total Revenue: $totalRevenue');
-    print('Total Clients: ${clients.length}');
-    print('Total Projects: ${projects.length}');
+    // Debug metrics
+    debugPrint('Total Leads: $totalLeads');
+    debugPrint('Leads by Status: $leadsByStatus');
+    debugPrint('Total Revenue: $totalRevenue');
+    debugPrint('Total Clients: ${clients.length}');
+    debugPrint('Total Projects: ${projects.length}');
 
     // Calculate project progress
     final projectProgress = <Map<String, dynamic>>[];
@@ -188,8 +181,9 @@ class _CRMDashboardState extends State<CRMDashboard> {
       };
     });
 
-    print('=== Final Dashboard Metrics ===');
-    print('Dashboard Metrics: $dashboardMetrics');
+    // Calculate metrics
+    debugPrint('Dashboard Metrics calculated');
+  }
   }
 
 

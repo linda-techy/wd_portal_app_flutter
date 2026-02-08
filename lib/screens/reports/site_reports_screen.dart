@@ -203,7 +203,7 @@ class SiteReportsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (report.reportType == ReportType.SAFETY_INCIDENT)
+                  if (report.reportType == ReportType.safetyIncident)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(

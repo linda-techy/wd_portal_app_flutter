@@ -1,21 +1,21 @@
 import 'package:intl/intl.dart';
 
 enum ReportType {
-  DAILY_PROGRESS,
-  QUALITY_CHECK,
-  SAFETY_INCIDENT,
-  MATERIAL_DELIVERY,
-  SITE_VISIT_SUMMARY,
-  OTHER;
+  dailyProgress,
+  qualityCheck,
+  safetyIncident,
+  materialDelivery,
+  siteVisitSummary,
+  other;
 
   String get label {
     switch (this) {
-      case ReportType.DAILY_PROGRESS: return 'Daily Progress';
-      case ReportType.QUALITY_CHECK: return 'Quality Check';
-      case ReportType.SAFETY_INCIDENT: return 'Safety Incident';
-      case ReportType.MATERIAL_DELIVERY: return 'Material Delivery';
-      case ReportType.SITE_VISIT_SUMMARY: return 'Site Visit Summary';
-      case ReportType.OTHER: return 'Other';
+      case ReportType.dailyProgress: return 'Daily Progress';
+      case ReportType.qualityCheck: return 'Quality Check';
+      case ReportType.safetyIncident: return 'Safety Incident';
+      case ReportType.materialDelivery: return 'Material Delivery';
+      case ReportType.siteVisitSummary: return 'Site Visit Summary';
+      case ReportType.other: return 'Other';
     }
   }
 }
@@ -83,7 +83,7 @@ class SiteReport {
       status: json['status'] as String? ?? 'SUBMITTED',
       reportType: ReportType.values.firstWhere(
         (e) => e.name == json['reportType'],
-        orElse: () => ReportType.DAILY_PROGRESS,
+        orElse: () => ReportType.dailyProgress,
       ),
       siteVisitId: json['siteVisit'] != null ? (json['siteVisit']['id'] as int?) : null,
       photos: (json['photos'] as List? ?? [])
