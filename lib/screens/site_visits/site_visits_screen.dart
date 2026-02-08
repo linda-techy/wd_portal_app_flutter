@@ -2,12 +2,76 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/models/site_visit_models.dart';
 import 'package:admin/providers/site_visit_provider.dart';
+import 'package:admin/services/site_visit_service.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
+import 'package:admin/screens/site_visits/site_visit_check_in_dialog.dart';
+import 'package:admin/screens/site_visits/site_visit_check_out_dialog.dart';
+import 'package:admin/screens/site_visits/site_visit_detail_screen.dart';
 
-class SiteVisitsScreen extends StatelessWidget {
+class SiteVisitsScreen extends StatefulWidget {
   const SiteVisitsScreen({super.key});
+
+  @override
+  State<SiteVisitsScreen> createState() => _SiteVisitsScreenState();
+}
+
+class _SiteVisitsScreenState extends State<SiteVisitsScreen> {
+  final _visitService = SiteVisitService();
+  SiteVisit? _activeVisit;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadActiveVisit();
+  }
+
+  Future<void> _loadActiveVisit() async {
+    try {
+      final visit = await _visitService.getMyActiveVisit();
+      if (mounted) {
+        setState(() {
+          _activeVisit = visit;
+        });
+      }
+    } catch (_) {
+      // silently fail - active visit loading is optional
+    }
+  }
+
+  Future<void> _handleCheckIn(BuildContext context, SiteVisitProvider provider) async {
+    final visit = await SiteVisitCheckInDialog.show(context);
+    if (visit != null && mounted) {
+      setState(() => _activeVisit = visit);
+      provider.fetch();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Checked in at ${visit.projectName}'),
+            backgroundColor: AppTheme.successGreen,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleCheckOut(BuildContext context, SiteVisitProvider provider) async {
+    if (_activeVisit == null) return;
+    final visit = await SiteVisitCheckOutDialog.show(context, _activeVisit!);
+    if (visit != null && mounted) {
+      setState(() => _activeVisit = null);
+      provider.fetch();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Checked out from ${visit.projectName}'),
+            backgroundColor: AppTheme.successGreen,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,21 +83,38 @@ class SiteVisitsScreen extends StatelessWidget {
             appBar: AppBar(
               title: const Text('Site Visits'),
               actions: [
-                Consumer<PermissionProvider>(
-                  builder: (context, permissionProvider, _) {
-                    if (permissionProvider.hasPermission('site_visit:create')) {
-                      return IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: () => _navigateToCreate(context),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
+                // Check-in / Check-out button
+                if (_activeVisit != null)
+                  TextButton.icon(
+                    onPressed: () => _handleCheckOut(context, provider),
+                    icon: const Icon(Icons.logout, color: AppTheme.coralRed, size: 20),
+                    label: const Text(
+                      'Check Out',
+                      style: TextStyle(color: AppTheme.coralRed, fontWeight: FontWeight.bold),
+                    ),
+                  )
+                else
+                  Consumer<PermissionProvider>(
+                    builder: (context, permissionProvider, _) {
+                      if (permissionProvider.hasPermission('site_visit:create')) {
+                        return TextButton.icon(
+                          onPressed: () => _handleCheckIn(context, provider),
+                          icon: const Icon(Icons.login, color: AppTheme.successGreen, size: 20),
+                          label: const Text(
+                            'Check In',
+                            style: TextStyle(color: AppTheme.successGreen, fontWeight: FontWeight.bold),
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
               ],
             ),
             body: Column(
               children: [
+                // Active visit banner
+                if (_activeVisit != null) _buildActiveVisitBanner(context, provider),
                 _buildSearchAndFilters(context, provider),
                 Expanded(child: _buildVisitList(context, provider)),
                 if (provider.totalPages > 1)
@@ -42,6 +123,61 @@ class SiteVisitsScreen extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildActiveVisitBanner(BuildContext context, SiteVisitProvider provider) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.constructionOrange.withOpacity(0.1),
+        border: Border(bottom: BorderSide(color: AppTheme.constructionOrange.withOpacity(0.3))),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: AppTheme.constructionOrange,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Active: ${_activeVisit!.projectName}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                if (_activeVisit!.checkInTime != null)
+                  Text(
+                    'Since ${_activeVisit!.checkInTime!.hour.toString().padLeft(2, '0')}:${_activeVisit!.checkInTime!.minute.toString().padLeft(2, '0')}',
+                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                  ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () => _handleCheckOut(context, provider),
+            child: const Text(
+              'CHECK OUT',
+              style: TextStyle(
+                color: AppTheme.coralRed,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -203,7 +339,7 @@ class SiteVisitsScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          visit.projectName ?? 'Unnamed Project',
+                          visit.projectName,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -257,9 +393,30 @@ class SiteVisitsScreen extends StatelessWidget {
                     ),
                 ],
               ),
+              // GPS distance info
+              if (visit.formattedCheckInDistance != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.gps_fixed, size: 14, color: Colors.grey[500]),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Check-in: ${visit.formattedCheckInDistance} from site',
+                      style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                    ),
+                    if (visit.formattedCheckOutDistance != null) ...[
+                      const SizedBox(width: 10),
+                      Text(
+                        '| Check-out: ${visit.formattedCheckOutDistance}',
+                        style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
               if (visit.checkOutNotes != null &&
                   visit.checkOutNotes!.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -366,10 +523,14 @@ class SiteVisitsScreen extends StatelessWidget {
 
   Color _getStatusColor(String status) {
     switch (status.toUpperCase()) {
+      case 'CHECKED_OUT':
       case 'COMPLETED':
         return AppTheme.statusSuccess;
+      case 'CHECKED_IN':
+        return AppTheme.constructionOrange;
+      case 'PENDING':
       case 'PLANNED':
-        return Colors.blue;
+        return AppTheme.skyBlue;
       case 'CANCELLED':
         return AppTheme.statusError;
       default:
@@ -382,17 +543,13 @@ class SiteVisitsScreen extends StatelessWidget {
   }
 
   void _navigateToDetail(BuildContext context, SiteVisit visit) {
-    // Navigate to detail screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('View details for visit ${visit.id}')),
-    );
-  }
-
-  void _navigateToCreate(BuildContext context) {
-    // Navigate to create screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text('Create site visit screen - to be implemented')),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SiteVisitDetailScreen(
+          visitId: visit.id,
+          initialVisit: visit,
+        ),
+      ),
     );
   }
 }
