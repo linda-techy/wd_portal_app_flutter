@@ -18,6 +18,8 @@ class SiteVisit {
   final String? formattedDuration;
   final String? checkOutNotes;
   final DateTime? createdAt;
+  final double? distanceFromProjectCheckIn;
+  final double? distanceFromProjectCheckOut;
 
   SiteVisit({
     required this.id,
@@ -39,6 +41,8 @@ class SiteVisit {
     this.formattedDuration,
     this.checkOutNotes,
     this.createdAt,
+    this.distanceFromProjectCheckIn,
+    this.distanceFromProjectCheckOut,
   });
 
   factory SiteVisit.fromJson(Map<String, dynamic> json) {
@@ -62,6 +66,8 @@ class SiteVisit {
       formattedDuration: json['formattedDuration'] as String?,
       checkOutNotes: json['checkOutNotes'] as String?,
       createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'].toString()) : null,
+      distanceFromProjectCheckIn: (json['distanceFromProjectCheckIn'] as num?)?.toDouble(),
+      distanceFromProjectCheckOut: (json['distanceFromProjectCheckOut'] as num?)?.toDouble(),
     );
   }
 
@@ -86,7 +92,26 @@ class SiteVisit {
       'formattedDuration': formattedDuration,
       'checkOutNotes': checkOutNotes,
       'createdAt': createdAt?.toIso8601String(),
+      'distanceFromProjectCheckIn': distanceFromProjectCheckIn,
+      'distanceFromProjectCheckOut': distanceFromProjectCheckOut,
     };
+  }
+
+  /// Format distance for display (e.g., "1.5 km" or "350 m")
+  String? get formattedCheckInDistance {
+    if (distanceFromProjectCheckIn == null) return null;
+    if (distanceFromProjectCheckIn! < 1.0) {
+      return '${(distanceFromProjectCheckIn! * 1000).round()} m';
+    }
+    return '${distanceFromProjectCheckIn!.toStringAsFixed(1)} km';
+  }
+
+  String? get formattedCheckOutDistance {
+    if (distanceFromProjectCheckOut == null) return null;
+    if (distanceFromProjectCheckOut! < 1.0) {
+      return '${(distanceFromProjectCheckOut! * 1000).round()} m';
+    }
+    return '${distanceFromProjectCheckOut!.toStringAsFixed(1)} km';
   }
 
   bool get isActive => visitStatus == 'CHECKED_IN';

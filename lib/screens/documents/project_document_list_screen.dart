@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:admin/constants.dart';
+
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/document_provider.dart';
 import 'package:admin/models/document_models.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math';
-import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import '../../utils/file_upload_helper.dart';
 
@@ -105,7 +105,7 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
         return Container(
           height: 60,
           padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
             border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
           ),
@@ -184,7 +184,7 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppTheme.borderLight),
+        side: const BorderSide(color: AppTheme.borderLight),
       ),
       child: InkWell(
         onTap: isImage ? () => _showPreview(doc) : () => _downloadFile(doc.downloadUrl),
@@ -354,7 +354,7 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
     if (confirmed == true) {
       try {
         await context.read<DocumentProvider>().deleteDocument(widget.projectId, doc.id);
-        if (mounted) {
+        if (mounted && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Document deleted successfully")),
           );
@@ -389,7 +389,7 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
     if (bytes <= 0) return "0 B";
     const suffixes = ["B", "KB", "MB", "GB"];
     var i = (log(bytes) / log(1024)).floor();
-    return ((bytes / pow(1024, i)).toStringAsFixed(1)) + " " + suffixes[i];
+    return '${(bytes / pow(1024, i)).toStringAsFixed(1)} ${suffixes[i]}';
   }
 
   Future<void> _downloadFile(String url) async {
@@ -397,9 +397,12 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Could not launch download URL")),
-      );
+      if (mounted && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Could not launch download URL")),
+        );
+      }
+      }
     }
   }
 }

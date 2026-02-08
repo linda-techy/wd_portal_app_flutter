@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'dart:io';
+
 import '../../../../services/site_report_service.dart';
 import '../../../../models/site_report_models.dart';
 import '../../../../theme/app_theme.dart';
@@ -12,10 +12,10 @@ import '../../../../providers/portal_auth_provider.dart';
 class SiteReportsScreen extends StatefulWidget {
   final int projectId;
 
-  const SiteReportsScreen({Key? key, required this.projectId}) : super(key: key);
+  const SiteReportsScreen({super.key, required this.projectId});
 
   @override
-  _SiteReportsScreenState createState() => _SiteReportsScreenState();
+  State<SiteReportsScreen> createState() => _SiteReportsScreenState();
 }
 
 class _SiteReportsScreenState extends State<SiteReportsScreen> {
@@ -34,7 +34,9 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
     if (!authProvider.isAuthenticated) {
       if (mounted) {
          await ErrorHandler.handleAuthError(context);
-         Navigator.of(context).pushReplacementNamed('/login');
+         if (mounted) {
+           Navigator.of(context).pushReplacementNamed('/login');
+         }
       }
       return;
     }
@@ -141,13 +143,13 @@ class CreateSiteReportDialog extends StatefulWidget {
   final VoidCallback onSave;
 
   const CreateSiteReportDialog({
-    Key? key, 
+    super.key, 
     required this.projectId, 
     required this.onSave
-  }) : super(key: key);
+  });
 
   @override
-  _CreateSiteReportDialogState createState() => _CreateSiteReportDialogState();
+  State<CreateSiteReportDialog> createState() => _CreateSiteReportDialogState();
 }
 
 class _CreateSiteReportDialogState extends State<CreateSiteReportDialog> {
@@ -158,7 +160,7 @@ class _CreateSiteReportDialogState extends State<CreateSiteReportDialog> {
   final ImagePicker _picker = ImagePicker();
   
   ReportType _type = ReportType.dailyProgress;
-  List<XFile> _selectedPhotos = [];
+  final List<XFile> _selectedPhotos = [];
   bool _isSaving = false;
 
   Future<void> _pickPhotos() async {

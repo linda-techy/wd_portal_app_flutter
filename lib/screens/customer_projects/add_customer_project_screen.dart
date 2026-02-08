@@ -5,14 +5,11 @@ import 'package:admin/theme/responsive_utils.dart';
 import 'package:admin/models/customer_project.dart';
 import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/models/team_member.dart';
-import 'package:admin/models/portal_user.dart';
 import 'package:admin/features/customers/data/models/customer.dart';
-import 'package:admin/models/role.dart';
 import 'package:admin/services/crm_service.dart';
 import 'package:admin/utils/india_location_data.dart';
 import 'package:admin/constants/project_type_constants.dart';
 import 'package:provider/provider.dart';
-import 'package:dio/dio.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
 import 'package:admin/utils/error_handler.dart';
 import '../../widgets/animations/entrance_animation.dart';
@@ -45,7 +42,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   bool _shouldShake = false;
 
   DateTime? _endDate;
-  String? _projectPhase = 'Design'; // Default to Design
+  final String _projectPhase = 'Design'; // Default to Design
   String? _projectType; // Default to null to force selection
   String? _contractType = 'TURNKEY'; // New Contract Type
   final List<Map<String, String>> _contractTypeOptions = [
@@ -59,7 +56,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   Lead? _selectedLead;
   List<Lead> _leads = [];
   List<Lead> _filteredLeads = [];
-  bool _isLoadingLeads = false;
+  final bool _isLoadingLeads = false;
   bool _isPageLoading = true;
   bool _isLoading = false;
   bool _showLeadDropdown = false;
@@ -67,7 +64,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   
   // Project Manager
   TeamMember? _selectedProjectManager;
-  List<TeamMember> _potentialProjectManagers = [];
+  final List<TeamMember> _potentialProjectManagers = [];
 
   Customer? _selectedCustomer;
   List<Customer> _customers = [];
@@ -75,8 +72,8 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   // Team Members
   List<TeamMember> _teamMembers = [];
   List<TeamMember> _selectedTeamMembers = [];
-  Set<String> _adminIds = {}; // Track admin IDs to prevent deselection
-  bool _isLoadingTeamMembers = false;
+  final Set<String> _adminIds = {}; // Track admin IDs to prevent deselection
+  final bool _isLoadingTeamMembers = false;
 
   final List<String> _projectPhases = [
     'Design',
@@ -167,7 +164,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
 
       // Get current position
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
 
       setState(() {
@@ -231,22 +228,14 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
       
       // Create Role Maps
       final Map<int, String> portalRoleMap = {
-        for (var role in roles) if (role.id != null) role.id!: role.name
+        for (var role in roles) role.id: role.name
       };
       final Map<int, String> customerRoleMap = {
-        for (var role in customerRoles) if (role.id != null) role.id!: role.name
+        for (var role in customerRoles) role.id: role.name
       };
 
       // Filter for Project Managers (Portal Users) - Assuming Role "Project Manager" or similar exists, or just all Portal Users for now
       // This logic can be refined to filter by role name or code
-      final allPortalUsersMember = portalUsers.map((user) => TeamMember(
-        id: user.id.toString(),
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        type: 'PORTAL',
-        designation: portalRoleMap[user.roleId] ?? '',
-      )).toList();
 
       int? adminRoleId;
       try {
@@ -609,11 +598,11 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                                   color: AppTheme.coralRed.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(AppTheme.radiusSM),
                                 ),
-                                child: Row(
+                                child: const Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.my_location, size: 14, color: AppTheme.coralRed),
-                                    const SizedBox(width: 4),
+                                    Icon(Icons.my_location, size: 14, color: AppTheme.coralRed),
+                                    SizedBox(width: 4),
                                     Text(
                                       'Capture',
                                       style: TextStyle(
@@ -1340,7 +1329,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                                   color: isSelected
                                       ? AppTheme.primaryBlue.withOpacity(0.1)
                                       : Colors.transparent,
-                                  border: Border(
+                                  border: const Border(
                                     bottom: BorderSide(
                                       color: AppTheme.borderLight,
                                       width: 0.5,
@@ -1385,15 +1374,15 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                                                 .withOpacity(0.3),
                                           ),
                                         ),
-                                        child: Row(
+                                        child: const Row(
                                           children: [
                                             Icon(Icons.check_circle,
                                                 size: 16,
                                                 color:
                                                     AppTheme.statusSuccess),
-                                            const SizedBox(
+                                            SizedBox(
                                                 width: AppTheme.spacingSM),
-                                            const Text(
+                                            Text(
                                               'Selected',
                                               style: TextStyle(
                                                 color:
@@ -1438,7 +1427,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
               children: [
                 Expanded(
                   child: _selectedTeamMembers.isEmpty
-                      ? Text(
+                      ? const Text(
                           'Select Team Members',
                           style: TextStyle(color: AppTheme.textTertiary),
                         )
@@ -1517,7 +1506,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                             controlAffinity: ListTileControlAffinity.leading,
                             secondary: Text(
                               member.designation ?? '',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: AppTheme.textSecondary,
                               ),

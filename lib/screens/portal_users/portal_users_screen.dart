@@ -350,7 +350,7 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
                               Flexible(
                                 child: Text(
                                   'Showing ${_users.isEmpty ? 0 : _currentPage * _pageSize + 1}-${(_currentPage + 1) * _pageSize > _totalElements ? _totalElements : (_currentPage + 1) * _pageSize} of $_totalElements',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     color: AppTheme.textSecondary,
                                     fontWeight: FontWeight.w500,
@@ -404,7 +404,7 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
                                       child: Flexible(
                                         child: Text(
                                           'Page ${_currentPage + 1} of $_totalPages',
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w500,
                                             color: AppTheme.textPrimary,

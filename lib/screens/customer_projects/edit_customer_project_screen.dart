@@ -15,7 +15,7 @@ import '../../widgets/animations/shake_widget.dart';
 import '../../utils/motion_toast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
-import 'package:dio/dio.dart';
+
 import 'package:admin/providers/portal_auth_provider.dart';
 import 'package:admin/utils/error_handler.dart';
 
@@ -75,7 +75,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
 
   // Project Manager
   TeamMember? _selectedProjectManager;
-  List<TeamMember> _potentialProjectManagers = [];
+
 
 
   // Customer Selection
@@ -245,10 +245,10 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
 
       // Create Role Maps
       final Map<int, String> portalRoleMap = {
-        for (var role in roles) if (role.id != null) role.id!: role.name
+        for (var role in roles) role.id: role.name
       };
       final Map<int, String> customerRoleMap = {
-        for (var role in customerRoles) if (role.id != null) role.id!: role.name
+        for (var role in customerRoles) role.id: role.name
       };
 
 
@@ -364,7 +364,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
           _customers = customers;
           
           // Pre-select Project Manager
-          _potentialProjectManagers = allPortalUsersMember;
+          // _potentialProjectManagers removed as it was unused
           if (widget.project.projectManagerId != null) {
             try {
               _selectedProjectManager = allPortalUsersMember.firstWhere((m) => m.id == widget.project.projectManagerId.toString() && m.type == 'PORTAL');
@@ -493,7 +493,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
         return;
       }
 
-      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      Position position = await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
 
       setState(() {
         _latitudeController.text = position.latitude.toStringAsFixed(6);
@@ -748,11 +748,11 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                                     color: AppTheme.coralRed.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(AppTheme.radiusSM),
                                   ),
-                                  child: Row(
+                                  child: const Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.my_location, size: 14, color: AppTheme.coralRed),
-                                      const SizedBox(width: 4),
+                                      Icon(Icons.my_location, size: 14, color: AppTheme.coralRed),
+                                      SizedBox(width: 4),
                                       Text(
                                         'Capture',
                                         style: TextStyle(
@@ -1281,7 +1281,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.person,
+                          const Icon(Icons.person,
                               size: 20, color: AppTheme.textSecondary),
                           const SizedBox(width: AppTheme.spacingSM),
                           Expanded(
@@ -1470,7 +1470,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                                 color: isSelected
                                     ? AppTheme.primaryBlue.withOpacity(0.1)
                                     : Colors.transparent,
-                                border: Border(
+                                border: const Border(
                                   bottom: BorderSide(
                                     color: AppTheme.borderLight,
                                     width: 0.5,
@@ -1506,7 +1506,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                                     ),
                                   ),
                                   if (isSelected)
-                                    Icon(
+                                    const Icon(
                                       Icons.check_circle,
                                       color: AppTheme.primaryBlue,
                                       size: 20,
@@ -1533,7 +1533,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.check_circle,
+                const Icon(Icons.check_circle,
                     size: 16, color: AppTheme.statusSuccess),
                 const SizedBox(width: AppTheme.spacingSM),
                 Expanded(
@@ -1587,7 +1587,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
               children: [
                 Expanded(
                   child: _selectedTeamMembers.isEmpty
-                      ? Text(
+                      ? const Text(
                           'Select Team Members',
                           style: TextStyle(color: AppTheme.textTertiary),
                         )

@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../../services/quality_check_service.dart';
-import '../../../../theme/app_theme.dart';
+
 import '../../../../utils/error_handler.dart';
 import '../../../../providers/portal_auth_provider.dart';
 
 class QualityChecksScreen extends StatefulWidget {
   final int projectId;
 
-  const QualityChecksScreen({Key? key, required this.projectId}) : super(key: key);
+  const QualityChecksScreen({super.key, required this.projectId});
 
   @override
-  _QualityChecksScreenState createState() => _QualityChecksScreenState();
+  State<QualityChecksScreen> createState() => _QualityChecksScreenState();
 }
 
 class _QualityChecksScreenState extends State<QualityChecksScreen> {
@@ -31,7 +31,9 @@ class _QualityChecksScreenState extends State<QualityChecksScreen> {
     if (!authProvider.isAuthenticated) {
       if (mounted) {
          await ErrorHandler.handleAuthError(context);
-         Navigator.of(context).pushReplacementNamed('/login');
+         if (mounted) {
+           Navigator.of(context).pushReplacementNamed('/login');
+         }
       }
       return;
     }
@@ -153,13 +155,13 @@ class CreateQualityCheckDialog extends StatefulWidget {
   final VoidCallback onSave;
 
   const CreateQualityCheckDialog({
-    Key? key, 
+    super.key, 
     required this.projectId, 
     required this.onSave
-  }) : super(key: key);
+  });
 
   @override
-  _CreateQualityCheckDialogState createState() => _CreateQualityCheckDialogState();
+  State<CreateQualityCheckDialog> createState() => _CreateQualityCheckDialogState();
 }
 
 class _CreateQualityCheckDialogState extends State<CreateQualityCheckDialog> {

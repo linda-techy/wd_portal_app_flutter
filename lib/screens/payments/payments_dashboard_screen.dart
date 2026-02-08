@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:admin/models/payment_models.dart';
 import 'package:admin/services/payment_service.dart';
 import 'package:admin/theme/app_theme.dart';
-import 'package:admin/utils/motion_toast.dart';
+
 import 'package:admin/screens/payments/payment_history_screen.dart';
 
 class PaymentsDashboardScreen extends StatefulWidget {
@@ -22,7 +22,7 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   bool _showPendingOnly = true;
-  int _pageSize = 10;
+  final int _pageSize = 10;
 
   int _currentPage = 0;
   int _totalPages = 0;
@@ -107,7 +107,7 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppTheme.surface,
         border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
       ),
@@ -116,7 +116,7 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.payments_outlined, color: AppTheme.primaryBlue, size: 28),
+              const Icon(Icons.payments_outlined, color: AppTheme.primaryBlue, size: 28),
               const SizedBox(width: 12),
               Text(
                 'Payments Dashboard',
@@ -140,7 +140,7 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
                     prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppTheme.borderLight),
+                      borderSide: const BorderSide(color: AppTheme.borderLight),
                     ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     filled: true,
@@ -210,7 +210,7 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: AppTheme.statusError),
+            const Icon(Icons.error_outline, size: 64, color: AppTheme.statusError),
             const SizedBox(height: 16),
             Text('Error: $_errorMessage'),
             const SizedBox(height: 16),
@@ -225,7 +225,7 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.check_circle_outline, size: 64, color: AppTheme.statusSuccess),
+            const Icon(Icons.check_circle_outline, size: 64, color: AppTheme.statusSuccess),
             const SizedBox(height: 16),
             Text(
               _showPendingOnly ? 'No pending payments!' : 'No payments found',
@@ -252,7 +252,7 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
   Widget _buildPaginationControls() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppTheme.surface,
         border: Border(top: BorderSide(color: AppTheme.borderLight)),
       ),
@@ -326,7 +326,7 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
             ),
             Text(
               payment.projectName ?? 'Project #${payment.projectId}',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
             ),
           ],
         )),
@@ -335,7 +335,7 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
         DataCell(Text(_currencyFormat.format(payment.totalAmount))),
         DataCell(Text(
           _currencyFormat.format(payment.totalPaid),
-          style: TextStyle(color: AppTheme.statusSuccess),
+          style: const TextStyle(color: AppTheme.statusSuccess),
         )),
         DataCell(Text(
           _currencyFormat.format(payment.balanceDue),
@@ -456,7 +456,7 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: AppTheme.textSecondary)),
+          Text(label, style: const TextStyle(color: AppTheme.textSecondary)),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
       ),
@@ -510,7 +510,7 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
                 ),
                 Text(
                   '${payment.customerName} - ${payment.projectName}',
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                  style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                 ),
                 const Divider(),
                 const SizedBox(height: 16),
@@ -629,14 +629,16 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
                           ),
                         );
                         if (mounted) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Payment recorded successfully')),
-                          );
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Payment recorded successfully')),
+                            );
+                          }
                           _loadPayments();
                         }
                       } catch (e) {
-                        if (mounted) {
+                        if (mounted && context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('Error: ${e.toString()}')),
                           );

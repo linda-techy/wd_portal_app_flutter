@@ -44,8 +44,12 @@ class _AddPurchaseOrderScreenState extends State<AddPurchaseOrderScreen> {
       setState(() {
         _projects = projectsResponse.data;
       });
-      await context.read<ProcurementProvider>().fetchVendors();
-      await context.read<InventoryProvider>().fetchMaterials();
+      if (mounted) {
+        await context.read<ProcurementProvider>().fetchVendors();
+      }
+      if (mounted) {
+        await context.read<InventoryProvider>().fetchMaterials();
+      }
 
       // Populate if editing
       if (widget.existingPO != null) {
@@ -58,17 +62,17 @@ class _AddPurchaseOrderScreenState extends State<AddPurchaseOrderScreen> {
           } catch (e) {
             // Vendor might not be in loaded list if paginated or inactive
           }
-           _poDate = po.poDate ?? DateTime.now();
+           _poDate = po.poDate;
            _expectedDeliveryDate = po.expectedDeliveryDate;
            _notesController.text = po.notes ?? '';
            
-           if (po.items != null && po.items!.isNotEmpty) {
-             _items = po.items!.map((item) {
+           if (po.items.isNotEmpty) {
+             _items = po.items.map((item) {
                final row = PORow();
-               row.description = item.description ?? '';
-               row.quantity = item.quantity ?? 0;
-               row.rate = item.rate ?? 0;
-               row.gstPercentage = item.gstPercentage ?? 18;
+               row.description = item.description;
+               row.quantity = item.quantity;
+               row.rate = item.rate;
+               row.gstPercentage = item.gstPercentage;
                // Material linking is tricky without full object, we skip pre-selecting material dropdown for now
                return row;
              }).toList();
@@ -144,7 +148,7 @@ class _AddPurchaseOrderScreenState extends State<AddPurchaseOrderScreen> {
               // Items Section
               Text("Line Items", style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
-              ..._items.asMap().entries.map((entry) => _buildItemRow(entry.key, entry.value)).toList(),
+              ..._items.asMap().entries.map((entry) => _buildItemRow(entry.key, entry.value)),
               const SizedBox(height: 16),
               OutlinedButton.icon(
                 onPressed: () => setState(() => _items.add(PORow())),
@@ -287,7 +291,7 @@ class _AddPurchaseOrderScreenState extends State<AddPurchaseOrderScreen> {
       final userId = context.read<PortalAuthProvider>().currentUser?.id;
       final po = PurchaseOrder(
         id: widget.existingPO?.id, // ID required for update
-        createdById: userId != null ? (userId is int ? userId : int.parse(userId.toString())) : null,
+        createdById: userId,
         projectId: _selectedProject!.id ?? 0,
         projectName: _selectedProject!.name,
         vendorId: _selectedVendor!.id,

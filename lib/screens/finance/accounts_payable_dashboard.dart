@@ -7,7 +7,7 @@ import '../../theme/app_theme.dart';
 /// Accounts Payable Dashboard
 /// Shows AP aging, vendor outstanding, and overdue invoices
 class AccountsPayableDashboard extends StatefulWidget {
-  const AccountsPayableDashboard({Key? key}) : super(key: key);
+  const AccountsPayableDashboard({super.key});
 
   @override
   State<AccountsPayableDashboard> createState() => _AccountsPayableDashboardState();
@@ -97,7 +97,7 @@ class _AccountsPayableDashboardState extends State<AccountsPayableDashboard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'AP Aging Summary',
           style: TextStyle(
             fontSize: 20,
@@ -133,7 +133,7 @@ class _AccountsPayableDashboardState extends State<AccountsPayableDashboard> {
             Expanded(
               child: _buildSummaryCard(
                 '0-30 Days',
-                _currencyFormat.format(aging.due_0_30_days),
+                _currencyFormat.format(aging.due0To30Days),
                 AppTheme.tealAccent,
                 Icons.schedule,
               ),
@@ -142,7 +142,7 @@ class _AccountsPayableDashboardState extends State<AccountsPayableDashboard> {
             Expanded(
               child: _buildSummaryCard(
                 '31-60 Days',
-                _currencyFormat.format(aging.due_31_60_days),
+                _currencyFormat.format(aging.due31To60Days),
                 AppTheme.amber,
                 Icons.access_time,
               ),
@@ -198,8 +198,8 @@ class _AccountsPayableDashboardState extends State<AccountsPayableDashboard> {
     final total = aging.totalOutstanding;
     if (total == 0) return const SizedBox.shrink();
 
-    final current = (aging.due_0_30_days / total) * 100;
-    final due = (aging.due_31_60_days / total) * 100;
+    final current = (aging.due0To30Days / total) * 100;
+    final due = (aging.due31To60Days / total) * 100;
     final overdue = (aging.overdue / total) * 100;
 
     return Card(
@@ -279,7 +279,7 @@ class _AccountsPayableDashboardState extends State<AccountsPayableDashboard> {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(Icons.warning, color: AppTheme.coralRed),
+            const Icon(Icons.warning, color: AppTheme.coralRed),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -287,7 +287,7 @@ class _AccountsPayableDashboardState extends State<AccountsPayableDashboard> {
                 children: [
                   Text(
                     '${provider.overdueInvoiceCount} Overdue Invoices',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: AppTheme.coralRed,
                     ),
@@ -323,7 +323,7 @@ class _AccountsPayableDashboardState extends State<AccountsPayableDashboard> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
+            const Text(
               'Vendor Outstanding',
               style: TextStyle(
                 fontSize: 18,
@@ -377,7 +377,7 @@ class _AccountsPayableDashboardState extends State<AccountsPayableDashboard> {
             if (isOverdue)
               Text(
                 '${vendor.overdueInvoiceCount} overdue',
-                style: TextStyle(color: AppTheme.coralRed, fontSize: 12),
+                style: const TextStyle(color: AppTheme.coralRed, fontSize: 12),
               ),
           ],
         ),
@@ -395,7 +395,7 @@ class _AccountsPayableDashboardState extends State<AccountsPayableDashboard> {
             if (isOverdue)
               Text(
                 _currencyFormat.format(vendor.overdueAmount ?? 0),
-                style: TextStyle(fontSize: 12, color: AppTheme.coralRed),
+                style: const TextStyle(fontSize: 12, color: AppTheme.coralRed),
               ),
           ],
         ),

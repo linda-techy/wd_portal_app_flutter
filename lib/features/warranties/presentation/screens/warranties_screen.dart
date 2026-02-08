@@ -10,10 +10,10 @@ import 'package:admin/providers/portal_auth_provider.dart';
 class WarrantiesScreen extends StatefulWidget {
   final int projectId;
 
-  const WarrantiesScreen({Key? key, required this.projectId}) : super(key: key);
+  const WarrantiesScreen({super.key, required this.projectId});
 
   @override
-  _WarrantiesScreenState createState() => _WarrantiesScreenState();
+  State<WarrantiesScreen> createState() => _WarrantiesScreenState();
 }
 
 class _WarrantiesScreenState extends State<WarrantiesScreen> {
@@ -32,7 +32,9 @@ class _WarrantiesScreenState extends State<WarrantiesScreen> {
     if (!authProvider.isAuthenticated) {
       if (mounted) {
          await ErrorHandler.handleAuthError(context);
-         Navigator.of(context).pushReplacementNamed('/login');
+         if (mounted) {
+           Navigator.of(context).pushReplacementNamed('/login');
+         }
       }
       return;
     }
@@ -47,7 +49,6 @@ class _WarrantiesScreenState extends State<WarrantiesScreen> {
         _warranties = data;
         _isLoading = false;
       });
-    } catch (e) {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -176,10 +177,10 @@ class AddWarrantyDialog extends StatefulWidget {
   final int projectId;
   final VoidCallback onSave;
 
-  const AddWarrantyDialog({Key? key, required this.projectId, required this.onSave}) : super(key: key);
+  const AddWarrantyDialog({super.key, required this.projectId, required this.onSave});
 
   @override
-  _AddWarrantyDialogState createState() => _AddWarrantyDialogState();
+  State<AddWarrantyDialog> createState() => _AddWarrantyDialogState();
 }
 
 class _AddWarrantyDialogState extends State<AddWarrantyDialog> {
@@ -212,7 +213,6 @@ class _AddWarrantyDialogState extends State<AddWarrantyDialog> {
 
       widget.onSave();
       if (mounted) Navigator.pop(context);
-    } catch (e) {
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);

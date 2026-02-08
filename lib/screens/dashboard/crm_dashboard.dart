@@ -184,7 +184,6 @@ class _CRMDashboardState extends State<CRMDashboard> {
     // Calculate metrics
     debugPrint('Dashboard Metrics calculated');
   }
-  }
 
 
 
