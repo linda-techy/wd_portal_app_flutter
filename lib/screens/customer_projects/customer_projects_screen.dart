@@ -455,6 +455,7 @@ class CustomerProjectsScreen extends StatelessWidget {
         builder: (context) => ProjectDetailsScreen(project: project),
       ),
     ).then((_) {
+      if (!context.mounted) return;
       // Refresh the list when returning from detail screen
       final provider = Provider.of<CustomerProjectProviderPaginated>(context, listen: false);
       provider.fetch();
@@ -468,6 +469,7 @@ class CustomerProjectsScreen extends StatelessWidget {
         builder: (context) => const AddCustomerProjectScreen(),
       ),
     ).then((_) {
+      if (!context.mounted) return;
       // Refresh the list when returning from create screen
       final provider = Provider.of<CustomerProjectProviderPaginated>(context, listen: false);
       provider.fetch();
@@ -481,6 +483,7 @@ class CustomerProjectsScreen extends StatelessWidget {
         builder: (context) => EditCustomerProjectScreen(project: project),
       ),
     ).then((_) {
+      if (!context.mounted) return;
       // Refresh the list when returning from edit screen
       final provider = Provider.of<CustomerProjectProviderPaginated>(context, listen: false);
       provider.fetch();

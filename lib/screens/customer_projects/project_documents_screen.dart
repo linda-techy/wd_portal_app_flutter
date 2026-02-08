@@ -7,7 +7,7 @@ import 'package:admin/services/project_module_service.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/utils/error_handler.dart';
 import 'package:admin/utils/file_upload_helper.dart';
-import 'dart:io';
+
 
 class ProjectDocumentsScreen extends StatefulWidget {
   final CustomerProject project;
@@ -163,7 +163,7 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
   String _formatFileSize(int? fileSize) {
     if (fileSize == null) return '';
     if (fileSize < 1024) {
-      return '${fileSize} B';
+      return '$fileSize B';
     } else if (fileSize < 1024 * 1024) {
       return '${(fileSize / 1024).toStringAsFixed(1)} KB';
     } else {
@@ -223,7 +223,7 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
                 // Filter and Upload Section
                 Container(
                   padding: const EdgeInsets.all(AppTheme.spacingMD),
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: AppTheme.surface,
                     border: Border(
                       bottom: BorderSide(color: AppTheme.borderLight),
@@ -282,13 +282,13 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.description_outlined,
                                 size: 64,
                                 color: AppTheme.textSecondary,
                               ),
                               const SizedBox(height: AppTheme.spacingMD),
-                              Text(
+                              const Text(
                                 'No documents found',
                                 style: TextStyle(
                                   color: AppTheme.textSecondary,

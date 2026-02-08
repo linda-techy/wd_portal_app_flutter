@@ -15,7 +15,6 @@ import '../../features/site_reports/presentation/screens/site_reports_screen.dar
 
 import 'package:admin/screens/projects/subcontract_work_orders_screen.dart';
 import 'package:admin/features/finance/presentation/screens/billing_dashboard_screen.dart';
-import 'package:admin/models/project_summary.dart';
 import 'package:admin/features/change_orders/presentation/screens/change_orders_screen.dart';
 import 'package:admin/features/delays/presentation/screens/delay_logs_screen.dart';
 import 'package:admin/models/team_member.dart';
@@ -46,12 +45,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
 
   Future<void> _loadCustomerLead() async {
     if (widget.project.leadId == null) {
-    if (widget.project.leadId == null) {
       setState(() {
         _isPageLoading = false;
       });
       return;
-    }
     }
 
     try {
@@ -260,7 +257,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
              if (customerLead != null)
               Row(
                 children: [
-                  Icon(Icons.person_outline, 
+                  const Icon(Icons.person_outline, 
                     size: 20, 
                     color: AppTheme.primaryBlue,
                   ),
@@ -290,7 +287,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.manage_accounts_outlined, 
+                          const Icon(Icons.manage_accounts_outlined, 
                             size: 20, 
                             color: AppTheme.primaryBlue,
                           ),
@@ -314,7 +311,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             // Location
             Row(
               children: [
-                Icon(Icons.location_on_outlined,
+                const Icon(Icons.location_on_outlined,
                   size: 20,
                   color: AppTheme.textSecondary,
                 ),
@@ -335,7 +332,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             if (widget.project.latitude != null && widget.project.longitude != null)
               Row(
                 children: [
-                  Icon(Icons.gps_fixed_outlined,
+                  const Icon(Icons.gps_fixed_outlined,
                     size: 20,
                     color: AppTheme.textSecondary,
                   ),
@@ -355,7 +352,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             if (widget.project.code != null && widget.project.code!.isNotEmpty)
               Row(
                 children: [
-                  Icon(Icons.tag_outlined,
+                  const Icon(Icons.tag_outlined,
                     size: 20,
                     color: AppTheme.textSecondary,
                   ),
@@ -375,7 +372,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             if (widget.project.contractType != null)
               Row(
                 children: [
-                  Icon(Icons.handshake_outlined,
+                  const Icon(Icons.handshake_outlined,
                     size: 20,
                     color: AppTheme.textSecondary,
                   ),
@@ -398,7 +395,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   Expanded(
                     child: Row(
                       children: [
-                        Icon(Icons.square_foot,
+                        const Icon(Icons.square_foot,
                           size: 20,
                           color: AppTheme.textSecondary,
                         ),
@@ -416,7 +413,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     Expanded(
                       child: Row(
                         children: [
-                          Icon(Icons.layers,
+                          const Icon(Icons.layers,
                             size: 20,
                             color: AppTheme.textSecondary,
                           ),
@@ -442,7 +439,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     Expanded(
                       child: Row(
                         children: [
-                          Icon(Icons.compass_calibration,
+                          const Icon(Icons.compass_calibration,
                             size: 20,
                             color: AppTheme.textSecondary,
                           ),
@@ -460,7 +457,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     Expanded(
                       child: Row(
                         children: [
-                          Icon(Icons.approval,
+                          const Icon(Icons.approval,
                             size: 20,
                             color: AppTheme.textSecondary,
                           ),
@@ -669,7 +666,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 padding: const EdgeInsets.only(top: AppTheme.spacingMD),
                 child: Row(
                   children: [
-                    Icon(Icons.construction_outlined,
+                    const Icon(Icons.construction_outlined,
                       size: 20,
                       color: AppTheme.textSecondary,
                     ),
@@ -903,7 +900,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => Scaffold(
-            appBar: AppBar(title: Text('Billing Dashboard')),
+            appBar: AppBar(title: const Text('Billing Dashboard')),
             body: BillingDashboardScreen(projectId: widget.project.id!),
           ),
         ),
@@ -913,7 +910,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => Scaffold(
-             appBar: AppBar(title: Text('Warranties')),
+             appBar: AppBar(title: const Text('Warranties')),
              body: WarrantiesScreen(projectId: widget.project.id!),
           ),
         ),
@@ -923,7 +920,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => Scaffold(
-             appBar: AppBar(title: Text('Delay Logs')),
+             appBar: AppBar(title: const Text('Delay Logs')),
              body: DelayLogsScreen(projectId: widget.project.id!),
           ),
         ),
@@ -933,7 +930,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => Scaffold(
-             appBar: AppBar(title: Text('Change Orders')),
+             appBar: AppBar(title: const Text('Change Orders')),
              body: ChangeOrdersScreen(projectId: widget.project.id!),
           ),
         ),
@@ -975,7 +972,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         context: context,
         builder: (context) => AlertDialog(
           title: Text(moduleName),
-          content: Text('${moduleName} module for "${project.name}" will be implemented soon.'),
+          content: Text('$moduleName module for "${project.name}" will be implemented soon.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),

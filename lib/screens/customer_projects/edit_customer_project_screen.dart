@@ -505,7 +505,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MotionToast.show(context, message: 'Failed to get location: ${e.toString()}', isError: true);
+        MotionToast.show(context, message: 'Failed to get location: $e', isError: true);
       }
     }
   }
@@ -730,7 +730,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.location_on, size: 20, color: AppTheme.coralRed),
+                              const Icon(Icons.location_on, size: 20, color: AppTheme.coralRed),
                               const SizedBox(width: AppTheme.spacingSM),
                               Text(
                                 'GPS Coordinates',
@@ -751,7 +751,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.my_location, size: 14, color: AppTheme.coralRed),
+                                      const Icon(Icons.my_location, size: 14, color: AppTheme.coralRed),
                                       const SizedBox(width: 4),
                                       Text(
                                         'Capture',
@@ -1650,7 +1650,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                             controlAffinity: ListTileControlAffinity.leading,
                             secondary: Text(
                               member.designation ?? '',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: AppTheme.textSecondary,
                               ),

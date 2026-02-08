@@ -186,7 +186,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
       if (mounted) {
         MotionToast.show(
           context,
-          message: 'Failed to get location: ${e.toString()}',
+          message: 'Failed to get location: $e',
           isError: true,
         );
       }
@@ -467,7 +467,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
       if (mounted) {
         MotionToast.show(
           context,
-          message: 'Failed to create project: ${e.toString()}',
+          message: 'Failed to create project: $e',
           isError: true,
         );
       }
@@ -591,7 +591,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.location_on, size: 20, color: AppTheme.coralRed),
+                            const Icon(Icons.location_on, size: 20, color: AppTheme.coralRed),
                             const SizedBox(width: AppTheme.spacingSM),
                             Text(
                               'GPS Coordinates',
@@ -612,7 +612,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.my_location, size: 14, color: AppTheme.coralRed),
+                                    const Icon(Icons.my_location, size: 14, color: AppTheme.coralRed),
                                     const SizedBox(width: 4),
                                     Text(
                                       'Capture',
@@ -754,7 +754,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline,
+                      const Icon(Icons.info_outline,
                           size: 20, color: AppTheme.statusInfo),
                       const SizedBox(width: AppTheme.spacingSM),
                       Expanded(

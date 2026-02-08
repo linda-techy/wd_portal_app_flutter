@@ -79,9 +79,9 @@ class _ProjectPaymentsScreenState extends State<ProjectPaymentsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: AppTheme.statusError),
+            const Icon(Icons.error_outline, size: 64, color: AppTheme.statusError),
             const SizedBox(height: 16),
-            Text('Error loading payments', style: TextStyle(color: AppTheme.textSecondary)),
+            const Text('Error loading payments', style: TextStyle(color: AppTheme.textSecondary)),
             const SizedBox(height: 8),
             ElevatedButton(onPressed: _loadPaymentData, child: const Text('Retry')),
           ],
@@ -94,7 +94,7 @@ class _ProjectPaymentsScreenState extends State<ProjectPaymentsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.payment_outlined, size: 64, color: AppTheme.textSecondary),
+            const Icon(Icons.payment_outlined, size: 64, color: AppTheme.textSecondary),
             const SizedBox(height: 16),
             Text(
               'No payment record found',
@@ -149,7 +149,7 @@ class _ProjectPaymentsScreenState extends State<ProjectPaymentsScreen> {
                     color: AppTheme.primaryBlue.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(AppTheme.radiusMD),
                   ),
-                  child: Icon(Icons.design_services, color: AppTheme.primaryBlue, size: 28),
+                  child: const Icon(Icons.design_services, color: AppTheme.primaryBlue, size: 28),
                 ),
                 const SizedBox(width: AppTheme.spacingMD),
                 Expanded(
@@ -399,7 +399,7 @@ class _ProjectPaymentsScreenState extends State<ProjectPaymentsScreen> {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(Icons.check_circle, size: 14, color: AppTheme.statusSuccess),
+          const Icon(Icons.check_circle, size: 14, color: AppTheme.statusSuccess),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -435,7 +435,7 @@ class _ProjectPaymentsScreenState extends State<ProjectPaymentsScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Record Payment'),
         content: SingleChildScrollView(
           child: Column(
@@ -478,7 +478,7 @@ class _ProjectPaymentsScreenState extends State<ProjectPaymentsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
@@ -490,7 +490,7 @@ class _ProjectPaymentsScreenState extends State<ProjectPaymentsScreen> {
                 return;
               }
 
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               
               try {
                 await _paymentService.recordTransaction(
