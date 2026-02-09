@@ -115,9 +115,9 @@ class _InvoicesReceiptsTabState extends State<_InvoicesReceiptsTab> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: errorColor),
+            const Icon(Icons.error_outline, size: 48, color: errorColor),
             const SizedBox(height: 8),
-            Text('Failed to load data', style: TextStyle(color: errorColor)),
+            const Text('Failed to load data', style: TextStyle(color: errorColor)),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: _loadData, child: const Text('Retry')),
           ],

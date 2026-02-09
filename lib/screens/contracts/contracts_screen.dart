@@ -10,10 +10,10 @@ class ContractsScreen extends StatefulWidget {
   const ContractsScreen({super.key});
 
   @override
-  _ContractsScreenState createState() => _ContractsScreenState();
+  ContractsScreenState createState() => ContractsScreenState();
 }
 
-class _ContractsScreenState extends State<ContractsScreen> {
+class ContractsScreenState extends State<ContractsScreen> {
   final SubcontractService _subcontractService = SubcontractService();
   final CRMService _crmService = CRMService();
   final _currencyFormat = NumberFormat.currency(locale: 'en_IN', symbol: '\u20B9');
@@ -207,9 +207,9 @@ class _ContractsScreenState extends State<ContractsScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.error_outline, size: 48, color: errorColor),
+                              const Icon(Icons.error_outline, size: 48, color: errorColor),
                               const SizedBox(height: 8),
-                              Text('Failed to load contracts', style: TextStyle(color: errorColor)),
+                              const Text('Failed to load contracts', style: TextStyle(color: errorColor)),
                               const SizedBox(height: 16),
                               ElevatedButton(onPressed: _loadWorkOrders, child: const Text('Retry')),
                             ],
@@ -290,7 +290,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
                                               ],
                                             ),
                                             const SizedBox(height: 8),
-                                            Text('Scope:', style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
+                                            const Text('Scope:', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
                                             const SizedBox(height: 4),
                                             Text(wo.scopeDescription, style: const TextStyle(fontSize: 13, color: textSecondary), maxLines: 3, overflow: TextOverflow.ellipsis),
                                           ],
