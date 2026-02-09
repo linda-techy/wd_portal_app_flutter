@@ -10,7 +10,7 @@ import 'package:admin/providers/portal_auth_provider.dart';
 class ChangeOrdersScreen extends StatefulWidget {
   final int projectId;
 
-  const ChangeOrdersScreen({Key? key, required this.projectId}) : super(key: key);
+  const ChangeOrdersScreen({super.key, required this.projectId});
 
   @override
   _ChangeOrdersScreenState createState() => _ChangeOrdersScreenState();
@@ -168,9 +168,112 @@ class _ChangeOrdersScreenState extends State<ChangeOrdersScreen> {
             ),
           ],
         ),
-        onTap: () {
-            // TODO: Navigate to Detail Screen
-        },
+        onTap: () => _showDetailDialog(order),
+      ),
+    );
+  }
+}
+
+  void _showDetailDialog(ChangeOrder order) {
+    final currencyFormatter = NumberFormat.currency(symbol: '\u20B9', decimalDigits: 2);
+    Color statusColor;
+    switch (order.status) {
+      case 'APPROVED':
+        statusColor = Colors.green;
+        break;
+      case 'REJECTED':
+        statusColor = Colors.red;
+        break;
+      case 'PENDING_APPROVAL':
+        statusColor = Colors.orange;
+        break;
+      default:
+        statusColor = Colors.grey;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Expanded(child: Text('Change Order #${order.id ?? '-'}', style: const TextStyle(fontSize: 18))),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.1),
+                border: Border.all(color: statusColor),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(order.status, style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: 450,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Description', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                const SizedBox(height: 4),
+                Text(order.description),
+                const Divider(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Estimated Amount', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          const SizedBox(height: 4),
+                          Text(currencyFormatter.format(order.estimatedAmount), style: const TextStyle(fontSize: 16)),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Client Approved', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                order.clientApproved ? Icons.check_circle : Icons.cancel,
+                                color: order.clientApproved ? Colors.green : Colors.red,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(order.clientApproved ? 'Yes' : 'No'),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (order.notes != null && order.notes!.isNotEmpty) ...[
+                  const Divider(height: 24),
+                  const Text('Notes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(height: 4),
+                  Text(order.notes!),
+                ],
+                if (order.createdAt != null) ...[
+                  const Divider(height: 24),
+                  Text('Created: ${DateFormat('dd MMM yyyy, hh:mm a').format(order.createdAt!)}',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                ],
+                if (order.approvedAt != null)
+                  Text('Approved: ${DateFormat('dd MMM yyyy, hh:mm a').format(order.approvedAt!)}',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+        ],
       ),
     );
   }
@@ -180,7 +283,7 @@ class AddChangeOrderDialog extends StatefulWidget {
   final int projectId;
   final VoidCallback onSave;
 
-  const AddChangeOrderDialog({Key? key, required this.projectId, required this.onSave}) : super(key: key);
+  const AddChangeOrderDialog({super.key, required this.projectId, required this.onSave});
 
   @override
   _AddChangeOrderDialogState createState() => _AddChangeOrderDialogState();

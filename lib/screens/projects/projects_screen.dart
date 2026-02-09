@@ -55,6 +55,23 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     projectProvider.clearSearch();
   }
 
+  void _applyFilters() {
+    final projectProvider = context.read<CustomerProjectProvider>();
+    // Use search with filter keywords for phase/type
+    final filterParts = <String>[];
+    if (_selectedPhase != null && _selectedPhase!.isNotEmpty) {
+      filterParts.add(_selectedPhase!);
+    }
+    if (_selectedType != null && _selectedType!.isNotEmpty) {
+      filterParts.add(_selectedType!);
+    }
+    if (filterParts.isNotEmpty) {
+      projectProvider.search(filterParts.join(' '));
+    } else {
+      projectProvider.clearSearch();
+    }
+  }
+
   void _showCreateDialog() {
     showDialog(
       context: context,
@@ -307,18 +324,18 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                 selectedType: _selectedType,
                 onPhaseChanged: (value) {
                   setState(() => _selectedPhase = value);
-                  // TODO: Implement filtering
+                  _applyFilters();
                 },
                 onTypeChanged: (value) {
                   setState(() => _selectedType = value);
-                  // TODO: Implement filtering
+                  _applyFilters();
                 },
                 onClear: () {
                   setState(() {
                     _selectedPhase = null;
                     _selectedType = null;
                   });
-                  // TODO: Clear filters
+                  _applyFilters();
                 },
               ),
               const SizedBox(height: AppTheme.spacingMD),
@@ -351,7 +368,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       ),
       child: SingleChildScrollView(
         child: DataTable(
-          headingRowColor: MaterialStateProperty.all(AppTheme.surfaceElevated),
+          headingRowColor: WidgetStateProperty.all(AppTheme.surfaceElevated),
           columns: const [
             DataColumn(label: Text('Code')),
             DataColumn(label: Text('Name')),

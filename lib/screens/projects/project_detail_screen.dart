@@ -14,6 +14,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import '../../utils/file_upload_helper.dart';
+import '../../services/finance_service.dart';
 import 'project_tracking_screen.dart';
 import 'view_360_list_screen.dart';
 import '../../models/customer_project.dart';
@@ -171,7 +172,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       padding: const EdgeInsets.all(AppTheme.spacingLG),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        border: Border(
+        border: const Border(
           bottom: BorderSide(color: AppTheme.borderLight, width: 1),
         ),
         boxShadow: AppTheme.shadowSM,
@@ -212,7 +213,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                         if (_project!.projectPhase != null)
                           ProjectPhaseBadge(phase: _project!.projectPhase!),
                         const SizedBox(width: AppTheme.spacingMD),
-                        Icon(Icons.location_on, size: 16, color: AppTheme.textSecondary),
+                        const Icon(Icons.location_on, size: 16, color: AppTheme.textSecondary),
                         const SizedBox(width: 4),
                         Text(
                           _project!.location,
@@ -329,7 +330,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   
   List<Widget> _buildTaskStats(BuildContext context) {
     return [
-      Expanded(
+      const Expanded(
         child: MetricCard(
           label: 'Total Tasks',
           value: '42',
@@ -339,7 +340,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         ),
       ),
       const SizedBox(width: AppTheme.spacingMD),
-      Expanded(
+      const Expanded(
         child: MetricCard(
           label: 'Completed',
           value: '28',
@@ -350,7 +351,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         ),
       ),
       const SizedBox(width: AppTheme.spacingMD),
-      Expanded(
+      const Expanded(
         child: MetricCard(
           label: 'In Progress',
           value: '10',
@@ -361,7 +362,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         ),
       ),
       const SizedBox(width: AppTheme.spacingMD),
-      Expanded(
+      const Expanded(
         child: MetricCard(
           label: 'Delayed',
           value: '4',
@@ -379,7 +380,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     // In production, use syncfusion_flutter_charts or fl_chart
     return Container(
       color: AppTheme.surfaceElevated,
-      child: Center(
+      child: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -388,12 +389,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
               size: 64,
               color: AppTheme.textTertiary,
             ),
-            const SizedBox(height: AppTheme.spacingMD),
+            SizedBox(height: AppTheme.spacingMD),
             Text(
               'Gantt Chart View',
               style: TextStyle(color: AppTheme.textSecondary),
             ),
-            const SizedBox(height: AppTheme.spacingSM),
+            SizedBox(height: AppTheme.spacingSM),
             Text(
               'Integrate with syncfusion_flutter_charts or fl_chart',
               style: TextStyle(
@@ -483,7 +484,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   
   List<Widget> _buildFinancialCards(BuildContext context) {
     return [
-      Expanded(
+      const Expanded(
         child: DataCard(
           title: 'Total Budget',
           valueText: '₹12,500,000',
@@ -492,7 +493,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         ),
       ),
       const SizedBox(width: AppTheme.spacingMD),
-      Expanded(
+      const Expanded(
         child: DataCard(
           title: 'Spent',
           valueText: '₹9,062,500',
@@ -501,7 +502,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         ),
       ),
       const SizedBox(width: AppTheme.spacingMD),
-      Expanded(
+      const Expanded(
         child: DataCard(
           title: 'Remaining',
           valueText: '₹3,437,500',
@@ -516,7 +517,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     // Placeholder for pie/bar chart
     return Container(
       color: AppTheme.surfaceElevated,
-      child: Center(
+      child: const Center(
         child: Text(
           'Budget Chart - Use fl_chart or syncfusion_flutter_charts',
           style: TextStyle(color: AppTheme.textSecondary),
@@ -526,36 +527,62 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   }
   
   Widget _buildFinancialTable() {
-    return EnhancedDataTable(
-      columns: const [
-        DataColumn(label: Text('Date')),
-        DataColumn(label: Text('Type')),
-        DataColumn(label: Text('Amount')),
-        DataColumn(label: Text('Status')),
-      ],
-      rows: List.generate(5, (index) {
+    return FutureBuilder<List<DataRow>>(
+      future: _fetchFinancialRows(),
+      builder: (context, snapshot) {
+        final rows = snapshot.data ?? [];
+        return EnhancedDataTable(
+          columns: const [
+            DataColumn(label: Text('Date')),
+            DataColumn(label: Text('Type')),
+            DataColumn(label: Text('Amount')),
+            DataColumn(label: Text('Status')),
+          ],
+          rows: rows.isEmpty
+              ? [
+                  const DataRow(cells: [
+                    DataCell(Text('No invoices found', style: TextStyle(color: Colors.grey))),
+                    DataCell(Text('-')),
+                    DataCell(Text('-')),
+                    DataCell(Text('-')),
+                  ]),
+                ]
+              : rows,
+          showSearch: true,
+          showFilters: true,
+          filterOptions: [
+            FilterOption(key: 'type', label: 'Type'),
+            FilterOption(key: 'status', label: 'Status'),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<List<DataRow>> _fetchFinancialRows() async {
+    try {
+      final financeService = FinanceService();
+      final invoices = await financeService.getProjectInvoices(widget.projectId);
+      final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '\u20B9');
+      return invoices.map((inv) {
         return DataRow(
           cells: [
-            DataCell(Text('2024-01-${15 + index}')),
-            DataCell(Text(index % 2 == 0 ? 'Invoice' : 'PO')),
-            DataCell(Text('₹${(index + 1) * 50000}')),
+            DataCell(Text(inv.invoiceDate)),
+            DataCell(Text(inv.invoiceNumber ?? 'Invoice')),
+            DataCell(Text(formatter.format(inv.totalAmount))),
             DataCell(
               StatusIndicator(
-                label: index % 3 == 0 ? 'Paid' : 'Pending',
-                type: index % 3 == 0 ? StatusType.success : StatusType.warning,
+                label: inv.status,
+                type: inv.status == 'PAID' ? StatusType.success : StatusType.warning,
                 compact: true,
               ),
             ),
           ],
         );
-      }),
-      showSearch: true,
-      showFilters: true,
-      filterOptions: [
-        FilterOption(key: 'type', label: 'Type'),
-        FilterOption(key: 'status', label: 'Status'),
-      ],
-    );
+      }).toList();
+    } catch (_) {
+      return [];
+    }
   }
   
   Widget _buildReportsTab(BuildContext context) {
@@ -723,11 +750,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.image, size: 48, color: AppTheme.textTertiary),
+              const Icon(Icons.image, size: 48, color: AppTheme.textTertiary),
               const SizedBox(height: AppTheme.spacingSM),
               Text(
                 'Photo ${index + 1}',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
               ),
             ],
           ),
@@ -874,7 +901,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   Widget _buildDocumentActionRow(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingLG),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppTheme.surface,
         border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
       ),
