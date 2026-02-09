@@ -1062,7 +1062,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           ElevatedButton.icon(
-            onPressed: () => _uploadDocument(context),
+            onPressed: () => _uploadDocument(),
             icon: const Icon(Icons.upload, size: 18),
             label: const Text('Upload Document'),
           ),
@@ -1146,7 +1146,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     }
   }
 
-  Future<void> _uploadDocument(BuildContext context) async {
+  Future<void> _uploadDocument() async {
     final result = await FilePicker.platform.pickFiles();
     if (result == null) return;
 
@@ -1157,14 +1157,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
     if (provider.categories.isEmpty) {
       await provider.fetchCategories(widget.projectId);
+      if (!mounted) return;
     }
-
-    if (!mounted) return;
 
     // Show simple category selection dialog
     final categoryId = await showDialog<int>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text("Select Category"),
         content: SizedBox(
           width: double.maxFinite,
@@ -1175,7 +1174,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
               final cat = provider.categories[index];
               return ListTile(
                 title: Text(cat.name),
-                onTap: () => Navigator.pop(context, cat.id),
+                onTap: () => Navigator.pop(dialogContext, cat.id),
               );
             },
           ),

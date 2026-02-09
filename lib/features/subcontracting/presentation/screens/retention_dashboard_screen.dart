@@ -9,11 +9,11 @@ class RetentionDashboardScreen extends StatefulWidget {
   const RetentionDashboardScreen({super.key, required this.projectId});
 
   @override
-  _RetentionDashboardScreenState createState() =>
-      _RetentionDashboardScreenState();
+  RetentionDashboardScreenState createState() =>
+      RetentionDashboardScreenState();
 }
 
-class _RetentionDashboardScreenState extends State<RetentionDashboardScreen> {
+class RetentionDashboardScreenState extends State<RetentionDashboardScreen> {
   final _service = SubcontractService();
   bool _isLoading = true;
   List<SubcontractWorkOrder> _workOrders = [];
@@ -73,8 +73,10 @@ class _RetentionDashboardScreenState extends State<RetentionDashboardScreen> {
               try {
                 final amount = double.parse(amountController.text);
                 if (amount > workOrder.totalRetentionAccumulated) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text('Cannot release more than accumulated')));
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Cannot release more than accumulated')));
+                  }
                   return;
                 }
 
@@ -89,7 +91,9 @@ class _RetentionDashboardScreenState extends State<RetentionDashboardScreen> {
                 Navigator.pop(ctx);
                 _loadData(); // Refresh
               } catch (e) {
-                ErrorHandler.handleApiError(context, e);
+                if (mounted) {
+                  ErrorHandler.handleApiError(context, e);
+                }
               }
             },
             child: const Text('Release'),

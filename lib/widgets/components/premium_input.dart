@@ -91,7 +91,6 @@ class _PremiumTextInputState extends State<PremiumTextInput>
   }
 
   void _onFocusChange() {
-    final wasFocused = _isFocused;
     setState(() {
       _isFocused = _focusNode.hasFocus;
     });
@@ -101,21 +100,6 @@ class _PremiumTextInputState extends State<PremiumTextInput>
       setState(() {
         _hasBeenTouched = true;
       });
-    }
-  }
-
-  void _validate(String? value, {bool force = false}) {
-    // Only validate if field has been interacted with (has focus or has been blurred)
-    if (widget.validator != null && (_isFocused || force)) {
-      final error = widget.validator!(value);
-      if (mounted) {
-        setState(() {
-          _hasError = error != null;
-        });
-      }
-      if (_hasError && error != null) {
-        AccessibilityUtils.announceError(context, error);
-      }
     }
   }
 

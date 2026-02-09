@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:admin/models/inventory_models.dart';
 import 'package:admin/providers/material_provider.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
-import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
 import 'add_material_screen.dart';
 

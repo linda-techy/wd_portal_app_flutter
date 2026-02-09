@@ -8,31 +8,31 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF1A1B2E), // Dark professional background
+    return const Scaffold(
+      backgroundColor: Color(0xFF1A1B2E), // Dark professional background
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Company Logo/Name
-            const Icon(
+            Icon(
               Icons.business,
               size: 80,
               color: Colors.white,
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Text(
               AppConfig.appName,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
                 letterSpacing: 1.2,
               ),
             ),
-            const SizedBox(height: 48),
+            SizedBox(height: 48),
             // Loading indicator
-            const SizedBox(
+            SizedBox(
               width: 40,
               height: 40,
               child: CircularProgressIndicator(
@@ -40,8 +40,8 @@ class SplashScreen extends StatelessWidget {
                 valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4CAF50)),
               ),
             ),
-            const SizedBox(height: 16),
-            const Text(
+            SizedBox(height: 16),
+            Text(
               'Loading...',
               style: TextStyle(
                 fontSize: 16,

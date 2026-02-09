@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:admin/providers/base_paginated_provider.dart';
-import 'package:provider/provider.dart';
 
 /// Reusable paginated data table widget
 /// Works with any BasePaginatedProvider

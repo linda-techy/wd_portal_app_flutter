@@ -229,24 +229,6 @@ class LabourListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTypeBadge(String type) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: _getTypeColor(type),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        type,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
   Widget _buildStatusBadge(bool active) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

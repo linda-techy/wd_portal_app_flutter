@@ -209,8 +209,9 @@ class _VendorPaymentFormState extends State<VendorPaymentForm> {
                 if (value == null || value.isEmpty) return 'Required';
                 final amount = double.tryParse(value);
                 if (amount == null || amount <= 0) return 'Invalid amount';
-                if (amount > widget.invoiceAmount)
+                if (amount > widget.invoiceAmount) {
                   return 'Exceeds invoice amount';
+                }
                 return null;
               },
             ),

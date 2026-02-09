@@ -47,8 +47,10 @@ class LeadQuotationsScreen extends StatelessWidget {
           mimeType: 'application/pdf',
           shareText: 'Quotation - ${quotation.quotationNumber}',
         );
-        MotionToast.showSuccess(context,
-            message: 'PDF downloaded successfully');
+        if (context.mounted) {
+          MotionToast.showSuccess(context,
+              message: 'PDF downloaded successfully');
+        }
       }
     } catch (e) {
       // Close loading dialog if still open
@@ -293,7 +295,7 @@ class LeadQuotationsScreen extends StatelessWidget {
                               ),
                             ),
                           ).then((result) {
-                            if (result == true) {
+                            if (result == true && context.mounted) {
                               final provider =
                                   Provider.of<LeadQuotationProvider>(context,
                                       listen: false);
@@ -503,9 +505,11 @@ class LeadQuotationsScreen extends StatelessWidget {
       ),
     ).then((_) {
       // Refresh the list when returning from detail screen
-      final provider =
-          Provider.of<LeadQuotationProvider>(context, listen: false);
-      provider.fetch();
+      if (context.mounted) {
+        final provider =
+            Provider.of<LeadQuotationProvider>(context, listen: false);
+        provider.fetch();
+      }
     });
   }
 
@@ -523,7 +527,7 @@ class LeadQuotationsScreen extends StatelessWidget {
       ),
     ).then((result) {
       // Refresh the list when returning from create screen
-      if (result == true) {
+      if (result == true && context.mounted) {
         final provider =
             Provider.of<LeadQuotationProvider>(context, listen: false);
         provider.fetch();

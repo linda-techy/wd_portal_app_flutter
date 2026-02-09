@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:admin/config/app_config.dart';
 import 'package:admin/models/portal_user.dart';
 import 'package:admin/services/api_service.dart';
@@ -34,21 +35,21 @@ class UserService {
       'roleCodes': roleCodes, // Dio will automatically handle List as multiple query params
     };
     try {
-      print('Fetching portal users by role codes: $roleCodes');
+      debugPrint('Fetching portal users by role codes: $roleCodes');
       final response = await _apiService.get('/portal-users/by-role-codes',
           queryParams: queryParams);
-      print('Response status: ${response.statusCode}');
-      print('Response data type: ${response.data.runtimeType}');
-      print('Response data: ${response.data}');
+      debugPrint('Response status: ${response.statusCode}');
+      debugPrint('Response data type: ${response.data.runtimeType}');
+      debugPrint('Response data: ${response.data}');
       
       final users = _apiService.unwrapList<PortalUser>(
           response, (json) => PortalUser.fromJson(json));
-      print('Parsed ${users.length} users');
+      debugPrint('Parsed ${users.length} users');
       return users;
     } catch (e, stackTrace) {
-      print('Error in getPortalUsersByRoleCodes: $e');
-      print('Stack trace: $stackTrace');
-      print('Role codes requested: $roleCodes');
+      debugPrint('Error in getPortalUsersByRoleCodes: $e');
+      debugPrint('Stack trace: $stackTrace');
+      debugPrint('Role codes requested: $roleCodes');
       rethrow;
     }
   }

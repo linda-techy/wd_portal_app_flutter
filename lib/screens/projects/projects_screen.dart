@@ -16,10 +16,10 @@ class ProjectsScreen extends StatefulWidget {
   const ProjectsScreen({super.key});
 
   @override
-  _ProjectsScreenState createState() => _ProjectsScreenState();
+  ProjectsScreenState createState() => ProjectsScreenState();
 }
 
-class _ProjectsScreenState extends State<ProjectsScreen> {
+class ProjectsScreenState extends State<ProjectsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String? _selectedPhase;
   String? _selectedType;
