@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:admin/constants.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'material_list_screen.dart';
 import 'stock_report_screen.dart';
@@ -8,10 +7,12 @@ class InventoryDashboardScreen extends StatefulWidget {
   const InventoryDashboardScreen({super.key});
 
   @override
-  State<InventoryDashboardScreen> createState() => _InventoryDashboardScreenState();
+  State<InventoryDashboardScreen> createState() =>
+      _InventoryDashboardScreenState();
 }
 
-class _InventoryDashboardScreenState extends State<InventoryDashboardScreen> with SingleTickerProviderStateMixin {
+class _InventoryDashboardScreenState extends State<InventoryDashboardScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -49,4 +50,3 @@ class _InventoryDashboardScreenState extends State<InventoryDashboardScreen> wit
     );
   }
 }
-

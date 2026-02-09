@@ -43,7 +43,8 @@ class _AddVendorScreenState extends State<AddVendorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.existingVendor == null ? "Add New Vendor" : "Edit Vendor"),
+        title: Text(
+            widget.existingVendor == null ? "Add New Vendor" : "Edit Vendor"),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: AppTheme.deepSlate,
@@ -55,24 +56,29 @@ class _AddVendorScreenState extends State<AddVendorScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTextField(_nameController, "Vendor Name", Icons.business, required: true),
+              _buildTextField(_nameController, "Vendor Name", Icons.business,
+                  required: true),
               const SizedBox(height: 16),
-              _buildTextField(_contactPersonController, "Contact Person", Icons.person),
+              _buildTextField(
+                  _contactPersonController, "Contact Person", Icons.person),
               const SizedBox(height: 16),
-              _buildTextField(_phoneController, "Phone", Icons.phone, required: true),
+              _buildTextField(_phoneController, "Phone", Icons.phone,
+                  required: true),
               const SizedBox(height: 16),
               _buildTextField(_emailController, "Email", Icons.email),
               const SizedBox(height: 16),
               _buildTextField(_gstinController, "GSTIN", Icons.receipt_long),
               const SizedBox(height: 16),
-              _buildTextField(_addressController, "Address", Icons.location_on, maxLines: 3),
+              _buildTextField(_addressController, "Address", Icons.location_on,
+                  maxLines: 3),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _vendorType,
                 decoration: InputDecoration(
                   labelText: "Vendor Type",
                   prefixIcon: const Icon(Icons.category),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 items: ['MATERIAL', 'LABOUR', 'SERVICES'].map((String type) {
                   return DropdownMenuItem(value: type, child: Text(type));
@@ -87,9 +93,15 @@ class _AddVendorScreenState extends State<AddVendorScreen> {
                   onPressed: _saveVendor,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryBlue,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: Text(widget.existingVendor == null ? "Save Vendor" : "Update Vendor", style: const TextStyle(color: Colors.white, fontSize: 16)),
+                  child: Text(
+                      widget.existingVendor == null
+                          ? "Save Vendor"
+                          : "Update Vendor",
+                      style:
+                          const TextStyle(color: Colors.white, fontSize: 16)),
                 ),
               ),
             ],
@@ -99,7 +111,9 @@ class _AddVendorScreenState extends State<AddVendorScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool required = false, int maxLines = 1}) {
+  Widget _buildTextField(
+      TextEditingController controller, String label, IconData icon,
+      {bool required = false, int maxLines = 1}) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
@@ -133,9 +147,12 @@ class _AddVendorScreenState extends State<AddVendorScreen> {
 
       bool success;
       if (widget.existingVendor != null) {
-        success = await context.read<ProcurementProvider>().updateVendor(widget.existingVendor!.id!, vendor);
+        success = await context
+            .read<ProcurementProvider>()
+            .updateVendor(widget.existingVendor!.id, vendor);
       } else {
-        success = await context.read<ProcurementProvider>().createVendor(vendor);
+        success =
+            await context.read<ProcurementProvider>().createVendor(vendor);
       }
       if (success) {
         if (mounted) {
@@ -147,11 +164,12 @@ class _AddVendorScreenState extends State<AddVendorScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Error: ${context.read<ProcurementProvider>().error}")),
+            SnackBar(
+                content: Text(
+                    "Error: ${context.read<ProcurementProvider>().error}")),
           );
         }
       }
     }
   }
 }
-

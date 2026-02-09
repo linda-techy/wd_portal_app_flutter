@@ -15,7 +15,7 @@ class SubcontractService {
       }
       return [];
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 
@@ -31,7 +31,7 @@ class SubcontractService {
         throw Exception(response.data['message']);
       }
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 }

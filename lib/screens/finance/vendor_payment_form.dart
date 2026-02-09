@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../providers/vendor_payment_provider.dart';
 import '../../models/vendor_payment_models.dart';
 import '../../theme/app_theme.dart';
+import '../../config/app_config.dart';
 
 /// Vendor Payment Recording Form
 /// Form to record a payment against a vendor invoice
@@ -13,11 +14,11 @@ class VendorPaymentForm extends StatefulWidget {
   final String vendorName;
 
   const VendorPaymentForm({
-    Key? key,
+    super.key,
     required this.invoiceId,
     required this.invoiceAmount,
     required this.vendorName,
-  }) : super(key: key);
+  });
 
   @override
   State<VendorPaymentForm> createState() => _VendorPaymentFormState();
@@ -39,7 +40,8 @@ class _VendorPaymentFormState extends State<VendorPaymentForm> {
   String _paymentMode = 'NEFT';
   bool _isCalculating = false;
 
-  final _currencyFormat = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2);
+  final _currencyFormat =
+      NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2);
 
   @override
   void initState() {
@@ -70,7 +72,8 @@ class _VendorPaymentFormState extends State<VendorPaymentForm> {
     try {
       final amount = double.tryParse(_amountController.text) ?? 0;
       final tdsPercentage = double.tryParse(_tdsPercentageController.text) ?? 0;
-      final otherDeductions = double.tryParse(_otherDeductionsController.text) ?? 0;
+      final otherDeductions =
+          double.tryParse(_otherDeductionsController.text) ?? 0;
 
       final tdsAmount = (amount * tdsPercentage / 100);
       final netAmount = amount - tdsAmount - otherDeductions;
@@ -95,15 +98,20 @@ class _VendorPaymentFormState extends State<VendorPaymentForm> {
       otherDeductions: double.tryParse(_otherDeductionsController.text),
       netPaid: double.parse(_netAmountController.text),
       paymentMode: _paymentMode,
-      transactionReference: _transactionRefController.text.isEmpty ? null : _transactionRefController.text,
-      chequeNumber: _chequeNumberController.text.isEmpty ? null : _chequeNumberController.text,
-      bankName: _bankNameController.text.isEmpty ? null : _bankNameController.text,
+      transactionReference: _transactionRefController.text.isEmpty
+          ? null
+          : _transactionRefController.text,
+      chequeNumber: _chequeNumberController.text.isEmpty
+          ? null
+          : _chequeNumberController.text,
+      bankName:
+          _bankNameController.text.isEmpty ? null : _bankNameController.text,
       notes: _notesController.text.isEmpty ? null : _notesController.text,
     );
 
     try {
       await context.read<VendorPaymentProvider>().recordPayment(payment);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -129,7 +137,8 @@ class _VendorPaymentFormState extends State<VendorPaymentForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Record Payment', style: TextStyle(color: Colors.white)),
+        title:
+            const Text('Record Payment', style: TextStyle(color: Colors.white)),
         backgroundColor: AppTheme.deepSlate,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -148,7 +157,8 @@ class _VendorPaymentFormState extends State<VendorPaymentForm> {
                   children: [
                     Text(
                       widget.vendorName,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -164,7 +174,8 @@ class _VendorPaymentFormState extends State<VendorPaymentForm> {
 
             // Payment Date
             ListTile(
-              leading: Icon(Icons.calendar_today, color: AppTheme.deepSlate),
+              leading:
+                  const Icon(Icons.calendar_today, color: AppTheme.deepSlate),
               title: const Text('Payment Date'),
               subtitle: Text(DateFormat('dd MMM yyyy').format(_paymentDate)),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -172,7 +183,7 @@ class _VendorPaymentFormState extends State<VendorPaymentForm> {
                 final date = await showDatePicker(
                   context: context,
                   initialDate: _paymentDate,
-                  firstDate: DateTime(2020),
+                  firstDate: AppConfig.datePickerFirstDate,
                   lastDate: DateTime.now(),
                 );
                 if (date != null) {
@@ -186,18 +197,20 @@ class _VendorPaymentFormState extends State<VendorPaymentForm> {
             // Amount Paid
             TextFormField(
               controller: _amountController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Amount Paid *',
                 prefixText: '₹ ',
-                border: const OutlineInputBorder(),
-                suffixIcon: Icon(Icons.currency_rupee, color: AppTheme.deepSlate),
+                border: OutlineInputBorder(),
+                suffixIcon:
+                    Icon(Icons.currency_rupee, color: AppTheme.deepSlate),
               ),
               keyboardType: TextInputType.number,
               validator: (value) {
                 if (value == null || value.isEmpty) return 'Required';
                 final amount = double.tryParse(value);
                 if (amount == null || amount <= 0) return 'Invalid amount';
-                if (amount > widget.invoiceAmount) return 'Exceeds invoice amount';
+                if (amount > widget.invoiceAmount)
+                  return 'Exceeds invoice amount';
                 return null;
               },
             ),
@@ -228,7 +241,7 @@ class _VendorPaymentFormState extends State<VendorPaymentForm> {
                       border: OutlineInputBorder(),
                     ),
                     readOnly: true,
-                    style: TextStyle(color: AppTheme.coralRed),
+                    style: const TextStyle(color: AppTheme.coralRed),
                   ),
                 ),
               ],
@@ -260,7 +273,7 @@ class _VendorPaymentFormState extends State<VendorPaymentForm> {
                 fillColor: AppTheme.tealAccent.withOpacity(0.1),
               ),
               readOnly: true,
-              style: TextStyle(
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
                 color: AppTheme.tealAccent,

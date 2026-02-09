@@ -19,7 +19,7 @@ class PaginatedDataTable<T> extends StatelessWidget {
   final bool showPagination;
   final bool showPageSizeSelector;
   final List<int> pageSizeOptions;
-  
+
   const PaginatedDataTable({
     super.key,
     required this.provider,
@@ -44,23 +44,23 @@ class PaginatedDataTable<T> extends StatelessWidget {
       children: [
         // Header with actions
         if (header != null || actions != null) _buildHeader(),
-        
+
         // Search and filters
         if (showSearch || filterPanel != null) _buildSearchAndFilters(),
-        
+
         const SizedBox(height: 16),
-        
+
         // Table
         Expanded(
           child: _buildTable(),
         ),
-        
+
         // Pagination controls
         if (showPagination) _buildPagination(),
       ],
     );
   }
-  
+
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -73,13 +73,13 @@ class PaginatedDataTable<T> extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildSearchAndFilters() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         children: [
-          if (showSearch) 
+          if (showSearch)
             Expanded(
               child: TextField(
                 decoration: InputDecoration(
@@ -98,68 +98,68 @@ class PaginatedDataTable<T> extends StatelessWidget {
                 onChanged: (value) => provider.search(value),
               ),
             ),
-          
           if (showSearch && filterPanel != null) const SizedBox(width: 16),
-          
           if (filterPanel != null) filterPanel!,
         ],
       ),
     );
   }
-  
+
   Widget _buildTable() {
     if (provider.isLoading && !provider.hasData) {
       return const Center(child: CircularProgressIndicator());
     }
-    
+
     if (provider.error != null) {
-      return errorBuilder?.call() ?? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: 16),
-            Text(
-              'Error: ${provider.error}',
-              textAlign: TextAlign.center,
+      return errorBuilder?.call() ??
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Error: ${provider.error}',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () => provider.refresh(),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry'),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () => provider.refresh(),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
+          );
     }
-    
+
     if (provider.isEmpty) {
-      return emptyBuilder?.call() ?? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.inbox_outlined, size: 48, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              provider.hasActiveFilters
-                  ? 'No results found'
-                  : 'No data available',
-              style: TextStyle(color: Colors.grey[600]),
+      return emptyBuilder?.call() ??
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.inbox_outlined, size: 48, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text(
+                  provider.hasActiveFilters
+                      ? 'No results found'
+                      : 'No data available',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+                if (provider.hasActiveFilters) ...[
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () => provider.clearAll(),
+                    icon: const Icon(Icons.clear_all),
+                    label: const Text('Clear Filters'),
+                  ),
+                ],
+              ],
             ),
-            if (provider.hasActiveFilters) ...[
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () => provider.clearAll(),
-                icon: const Icon(Icons.clear_all),
-                label: const Text('Clear Filters'),
-              ),
-            ],
-          ],
-        ),
-      );
+          );
     }
-    
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
@@ -172,13 +172,13 @@ class PaginatedDataTable<T> extends StatelessWidget {
       ),
     );
   }
-  
+
   int? _getSortColumnIndex() {
     // Try to find column index by matching sortBy field
     // This is a simple implementation; you might need to enhance it
     return null;
   }
-  
+
   Widget _buildPagination() {
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -212,14 +212,14 @@ class PaginatedDataTable<T> extends StatelessWidget {
                 ),
               ],
             ),
-          
+
           // Page info
           Text(
             'Page ${provider.currentPage + 1} of ${provider.totalPages} '
             '(${provider.totalElements} total)',
             style: const TextStyle(fontSize: 14),
           ),
-          
+
           // Navigation buttons
           Row(
             children: [
@@ -265,13 +265,11 @@ class SortableColumn extends DataColumn {
     required String label,
     required String field,
     required BasePaginatedProvider provider,
-    bool numeric = false,
+    super.numeric,
   }) : super(
-    label: Text(label),
-    numeric: numeric,
-    onSort: (columnIndex, ascending) {
-      provider.changeSort(field);
-    },
-  );
+          label: Text(label),
+          onSort: (columnIndex, ascending) {
+            provider.changeSort(field);
+          },
+        );
 }
-

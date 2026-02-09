@@ -34,6 +34,14 @@ class SubcontractProvider extends BasePaginatedProvider<SubcontractWorkOrder> {
     return await _service.recordMeasurement(workOrderId, measurement);
   }
 
+  /// Record a payment for a work order (delegates to [SubcontractService]).
+  Future<SubcontractPayment> recordPayment(SubcontractPayment payment) async {
+    final result = await _service.recordPayment(payment);
+    // Refresh the list to reflect updated payment totals
+    await refresh();
+    return result;
+  }
+
   // Subcontract-specific convenience methods
 
   void filterByProjectId(int? projectId) {

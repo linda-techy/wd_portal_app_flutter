@@ -6,8 +6,8 @@ class FinanceProvider with ChangeNotifier {
   final FinanceService _financeService = FinanceService();
 
   List<ProjectInvoice> _projectInvoices = [];
-  List<PurchaseInvoice> _purchaseInvoices = [];
-  List<LabourPayment> _labourPayments = [];
+  final List<PurchaseInvoice> _purchaseInvoices = [];
+  final List<LabourPayment> _labourPayments = [];
   bool _isLoading = false;
 
   List<ProjectInvoice> get projectInvoices => _projectInvoices;

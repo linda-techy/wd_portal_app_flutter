@@ -22,27 +22,27 @@ class SideMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: isDrawer ? null : 250,
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            border: Border(
-              right: BorderSide(color: AppTheme.borderLight, width: 1),
+      decoration: const BoxDecoration(
+        color: AppTheme.surface,
+        border: Border(
+          right: BorderSide(color: AppTheme.borderLight, width: 1),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Header - Cleaner, more professional look
+          Container(
+            padding: const EdgeInsets.symmetric(
+              vertical: defaultPadding * 2,
+              horizontal: defaultPadding,
             ),
-          ),
-          child: Column(
-            children: [
-              // Header - Cleaner, more professional look
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: defaultPadding * 2,
-                  horizontal: defaultPadding,
-                ),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppTheme.surface,
-                  border: const Border(
-                    bottom: BorderSide(color: AppTheme.divider, width: 1),
-                  ),
-                ),
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              color: AppTheme.surface,
+              border: Border(
+                bottom: BorderSide(color: AppTheme.divider, width: 1),
+              ),
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -63,7 +63,7 @@ class SideMenu extends StatelessWidget {
                     color: AppTheme.surfaceElevated,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Walldot Builders',
                     style: TextStyle(
                       fontSize: 11,
@@ -113,7 +113,8 @@ class SideMenu extends StatelessWidget {
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () => onMenuItemClick(17), // Navigate to Profile (Index 17)
+                    onTap: () =>
+                        onMenuItemClick(17), // Navigate to Profile (Index 17)
                     borderRadius: BorderRadius.circular(12),
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -122,12 +123,13 @@ class SideMenu extends StatelessWidget {
                           // Avatar
                           CircleAvatar(
                             radius: 20,
-                            backgroundColor: AppTheme.primaryBlue.withOpacity(0.1),
+                            backgroundColor:
+                                AppTheme.primaryBlue.withOpacity(0.1),
                             child: Text(
-                              (user.firstName?.isNotEmpty == true) 
-                                  ? user.firstName![0].toUpperCase() 
+                              (user.firstName.isNotEmpty == true)
+                                  ? user.firstName[0].toUpperCase()
                                   : 'U',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: AppTheme.primaryBlue,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -151,7 +153,7 @@ class SideMenu extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  user.role ?? 'User',
+                                  user.role,
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: Colors.grey[600],
@@ -265,7 +267,7 @@ class SideMenu extends StatelessWidget {
     menuItems.add(_buildMenuItem(
       context,
       title: 'Payments',
-      svgSrc: "assets/icons/menu_task.svg", // Using task icon as placeholder
+      svgSrc: "assets/icons/menu_task.svg",
       index: 15, // Matches MainScreen index
     ));
 
@@ -334,7 +336,7 @@ class SideMenu extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: isSelected ? AppTheme.coralRed : Colors.transparent,
-        borderRadius:BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
         onTap: () {

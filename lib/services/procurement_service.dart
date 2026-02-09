@@ -71,8 +71,8 @@ class ProcurementService {
   /// Fetch all GRNs (Goods Received Notes) - Enterprise centralized list view
   Future<List<GoodsReceivedNote>> fetchAllGRNs() async {
     final response = await _apiService.get('/api/procurement/grns');
-    return _apiService.unwrapList(response,
-        (json) => GoodsReceivedNote.fromJson(json as Map<String, dynamic>));
+    return _apiService.unwrapList(
+        response, (json) => GoodsReceivedNote.fromJson(json));
   }
 
   /// NEW: Standardized search endpoint for purchase orders

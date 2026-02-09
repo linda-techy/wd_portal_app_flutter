@@ -68,18 +68,23 @@ class _PremiumCardState extends State<PremiumCard>
         setState(() => _isHovered = false);
         _elevationController.reverse();
       },
-      cursor: widget.onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      cursor: widget.onTap != null
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
       child: AnimatedBuilder(
         animation: _elevationAnimation,
         builder: (context, child) {
           return Container(
-            margin: widget.margin ?? const EdgeInsets.all(DesignTokens.spacingMD),
+            margin:
+                widget.margin ?? const EdgeInsets.all(DesignTokens.spacingMD),
             decoration: BoxDecoration(
               color: widget.backgroundColor ?? AppTheme.surface,
               borderRadius: widget.borderRadius ??
                   BorderRadius.circular(DesignTokens.radiusLG),
               boxShadow: DesignTokens.getShadowForElevation(
-                _isHovered ? _elevationAnimation.value : (widget.elevation ?? DesignTokens.elevation1),
+                _isHovered
+                    ? _elevationAnimation.value
+                    : (widget.elevation ?? DesignTokens.elevation1),
               ),
             ),
             child: Material(
@@ -122,12 +127,12 @@ class ElevatedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PremiumCard(
-      child: child,
       padding: padding,
       margin: margin,
       onTap: onTap,
       elevation: DesignTokens.elevation2,
       backgroundColor: backgroundColor,
+      child: child,
     );
   }
 }
@@ -156,7 +161,8 @@ class Surface extends StatelessWidget {
       padding: padding ?? const EdgeInsets.all(DesignTokens.spacingLG),
       decoration: BoxDecoration(
         color: backgroundColor ?? AppTheme.surface,
-        borderRadius: borderRadius ?? BorderRadius.circular(DesignTokens.radiusMD),
+        borderRadius:
+            borderRadius ?? BorderRadius.circular(DesignTokens.radiusMD),
       ),
       child: child,
     );

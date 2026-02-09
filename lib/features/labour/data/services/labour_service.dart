@@ -38,7 +38,7 @@ class LabourService {
     }
   }
   
-  // Placeholder for fetching all labour if needed for dropdowns
+  /// Fetches all labour records.
   Future<List<Labour>> getAllLabour() async {
     final response = await _apiService.get('/labour');
      if (response.statusCode == 200) {

@@ -187,8 +187,7 @@ class ApprovalCenterScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (approval.status != null)
-                    _buildStatusBadge(approval.status!),
+                  _buildStatusBadge(approval.status!),
                 ],
               ),
               if (approval.comments != null) ...[

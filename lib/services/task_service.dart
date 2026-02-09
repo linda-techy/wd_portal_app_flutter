@@ -1,4 +1,3 @@
-import 'package:http/http.dart' as http;
 import '../models/task_models.dart';
 import '../models/paginated_response.dart';
 import 'api_service.dart';
@@ -42,14 +41,16 @@ class TaskService {
   /// Get assignment history for a task
   Future<List<TaskAssignmentHistoryModel>> getAssignmentHistory(
       int taskId) async {
-    final response = await _apiService.get('/api/tasks/$taskId/assignment-history');
+    final response =
+        await _apiService.get('/api/tasks/$taskId/assignment-history');
     return _apiService.unwrapList(
         response, (json) => TaskAssignmentHistoryModel.fromJson(json));
   }
 
   /// Create new task
   Future<TaskModel> createTask(CreateTaskRequest request) async {
-    final response = await _apiService.post('/api/tasks', data: request.toJson());
+    final response =
+        await _apiService.post('/api/tasks', data: request.toJson());
     return _apiService.unwrap(
         response, (json) => TaskModel.fromJson(json as Map<String, dynamic>));
   }
@@ -97,7 +98,8 @@ class TaskService {
 
   /// Trigger manual alerts (Admin only)
   Future<void> triggerAlerts() async {
-    final response = await _apiService.post('/api/tasks/alerts/trigger', data: {});
+    final response =
+        await _apiService.post('/api/tasks/alerts/trigger', data: {});
     _apiService.unwrap(response, (_) {});
   }
 

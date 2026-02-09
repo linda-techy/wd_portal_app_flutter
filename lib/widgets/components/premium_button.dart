@@ -72,53 +72,69 @@ class _PrimaryButtonState extends State<PrimaryButton>
         onExit: (_) => setState(() => _isHovered = false),
         cursor: isEnabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
         child: GestureDetector(
-          onTapDown: isEnabled ? (_) {
-            setState(() => _isPressed = true);
-            _scaleController.forward();
-          } : null,
-          onTapUp: isEnabled ? (_) {
-            setState(() => _isPressed = false);
-            _scaleController.reverse();
-          } : null,
-          onTapCancel: isEnabled ? () {
-            setState(() => _isPressed = false);
-            _scaleController.reverse();
-          } : null,
+          onTapDown: isEnabled
+              ? (_) {
+                  setState(() => _isPressed = true);
+                  _scaleController.forward();
+                }
+              : null,
+          onTapUp: isEnabled
+              ? (_) {
+                  setState(() => _isPressed = false);
+                  _scaleController.reverse();
+                }
+              : null,
+          onTapCancel: isEnabled
+              ? () {
+                  setState(() => _isPressed = false);
+                  _scaleController.reverse();
+                }
+              : null,
           child: AnimatedBuilder(
             animation: _scaleAnimation,
             builder: (context, child) {
               return Transform.scale(
-                scale: _isPressed ? _scaleAnimation.value : (_isHovered ? 1.02 : 1.0),
+                scale: _isPressed
+                    ? _scaleAnimation.value
+                    : (_isHovered ? 1.02 : 1.0),
                 child: Container(
                   constraints: BoxConstraints(
-                    minWidth: widget.minWidth ?? (widget.fullWidth ? double.infinity : 0),
+                    minWidth: widget.minWidth ??
+                        (widget.fullWidth ? double.infinity : 0),
                     minHeight: DesignTokens.touchTargetMin,
                   ),
                   decoration: BoxDecoration(
                     color: isEnabled
-                        ? (_isHovered ? AppTheme.coralRedDark : AppTheme.coralRed)
+                        ? (_isHovered
+                            ? AppTheme.coralRedDark
+                            : AppTheme.coralRed)
                         : DesignTokens.colorDisabled,
                     borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
                     boxShadow: _isHovered && isEnabled
-                        ? DesignTokens.getShadowForElevation(DesignTokens.elevation2)
-                        : DesignTokens.getShadowForElevation(DesignTokens.elevation0),
+                        ? DesignTokens.getShadowForElevation(
+                            DesignTokens.elevation2)
+                        : DesignTokens.getShadowForElevation(
+                            DesignTokens.elevation0),
                   ),
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: isEnabled ? widget.onPressed : null,
-                      borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusMD),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: DesignTokens.spacingLG,
                           vertical: DesignTokens.spacingMD,
                         ),
                         child: Row(
-                          mainAxisSize: widget.fullWidth ? MainAxisSize.max : MainAxisSize.min,
+                          mainAxisSize: widget.fullWidth
+                              ? MainAxisSize.max
+                              : MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             if (widget.isLoading)
-                              SizedBox(
+                              const SizedBox(
                                 width: 16,
                                 height: 16,
                                 child: CircularProgressIndicator(
@@ -138,7 +154,7 @@ class _PrimaryButtonState extends State<PrimaryButton>
                             ],
                             Text(
                               widget.label,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: AppTheme.textInverse,
                                 fontSize: DesignTokens.fontSizeLabelLarge,
                                 fontWeight: FontWeight.w600,
@@ -227,26 +243,35 @@ class _SecondaryButtonState extends State<SecondaryButton>
         onExit: (_) => setState(() => _isHovered = false),
         cursor: isEnabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
         child: GestureDetector(
-          onTapDown: isEnabled ? (_) {
-            setState(() => _isPressed = true);
-            _scaleController.forward();
-          } : null,
-          onTapUp: isEnabled ? (_) {
-            setState(() => _isPressed = false);
-            _scaleController.reverse();
-          } : null,
-          onTapCancel: isEnabled ? () {
-            setState(() => _isPressed = false);
-            _scaleController.reverse();
-          } : null,
+          onTapDown: isEnabled
+              ? (_) {
+                  setState(() => _isPressed = true);
+                  _scaleController.forward();
+                }
+              : null,
+          onTapUp: isEnabled
+              ? (_) {
+                  setState(() => _isPressed = false);
+                  _scaleController.reverse();
+                }
+              : null,
+          onTapCancel: isEnabled
+              ? () {
+                  setState(() => _isPressed = false);
+                  _scaleController.reverse();
+                }
+              : null,
           child: AnimatedBuilder(
             animation: _scaleAnimation,
             builder: (context, child) {
               return Transform.scale(
-                scale: _isPressed ? _scaleAnimation.value : (_isHovered ? 1.02 : 1.0),
+                scale: _isPressed
+                    ? _scaleAnimation.value
+                    : (_isHovered ? 1.02 : 1.0),
                 child: Container(
                   constraints: BoxConstraints(
-                    minWidth: widget.minWidth ?? (widget.fullWidth ? double.infinity : 0),
+                    minWidth: widget.minWidth ??
+                        (widget.fullWidth ? double.infinity : 0),
                     minHeight: DesignTokens.touchTargetMin,
                   ),
                   decoration: BoxDecoration(
@@ -265,18 +290,21 @@ class _SecondaryButtonState extends State<SecondaryButton>
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: isEnabled ? widget.onPressed : null,
-                      borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusMD),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: DesignTokens.spacingLG,
                           vertical: DesignTokens.spacingMD,
                         ),
                         child: Row(
-                          mainAxisSize: widget.fullWidth ? MainAxisSize.max : MainAxisSize.min,
+                          mainAxisSize: widget.fullWidth
+                              ? MainAxisSize.max
+                              : MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             if (widget.isLoading)
-                              SizedBox(
+                              const SizedBox(
                                 width: 16,
                                 height: 16,
                                 child: CircularProgressIndicator(
@@ -290,14 +318,18 @@ class _SecondaryButtonState extends State<SecondaryButton>
                               Icon(
                                 widget.icon,
                                 size: 18,
-                                color: isEnabled ? AppTheme.deepSlate : DesignTokens.colorDisabled,
+                                color: isEnabled
+                                    ? AppTheme.deepSlate
+                                    : DesignTokens.colorDisabled,
                               ),
                               const SizedBox(width: DesignTokens.spacingSM),
                             ],
                             Text(
                               widget.label,
                               style: TextStyle(
-                                color: isEnabled ? AppTheme.deepSlate : DesignTokens.colorDisabled,
+                                color: isEnabled
+                                    ? AppTheme.deepSlate
+                                    : DesignTokens.colorDisabled,
                                 fontSize: DesignTokens.fontSizeLabelLarge,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -364,7 +396,7 @@ class _GhostButtonState extends State<GhostButton> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (widget.isLoading)
-                    SizedBox(
+                    const SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
@@ -378,14 +410,18 @@ class _GhostButtonState extends State<GhostButton> {
                     Icon(
                       widget.icon,
                       size: 18,
-                      color: isEnabled ? AppTheme.deepSlate : DesignTokens.colorDisabled,
+                      color: isEnabled
+                          ? AppTheme.deepSlate
+                          : DesignTokens.colorDisabled,
                     ),
                     const SizedBox(width: DesignTokens.spacingSM),
                   ],
                   Text(
                     widget.label,
                     style: TextStyle(
-                      color: isEnabled ? AppTheme.deepSlate : DesignTokens.colorDisabled,
+                      color: isEnabled
+                          ? AppTheme.deepSlate
+                          : DesignTokens.colorDisabled,
                       fontSize: DesignTokens.fontSizeLabelLarge,
                       fontWeight: FontWeight.w600,
                     ),
@@ -465,23 +501,31 @@ class _DangerButtonState extends State<DangerButton>
         onExit: (_) => setState(() => _isHovered = false),
         cursor: isEnabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
         child: GestureDetector(
-          onTapDown: isEnabled ? (_) {
-            setState(() => _isPressed = true);
-            _scaleController.forward();
-          } : null,
-          onTapUp: isEnabled ? (_) {
-            setState(() => _isPressed = false);
-            _scaleController.reverse();
-          } : null,
-          onTapCancel: isEnabled ? () {
-            setState(() => _isPressed = false);
-            _scaleController.reverse();
-          } : null,
+          onTapDown: isEnabled
+              ? (_) {
+                  setState(() => _isPressed = true);
+                  _scaleController.forward();
+                }
+              : null,
+          onTapUp: isEnabled
+              ? (_) {
+                  setState(() => _isPressed = false);
+                  _scaleController.reverse();
+                }
+              : null,
+          onTapCancel: isEnabled
+              ? () {
+                  setState(() => _isPressed = false);
+                  _scaleController.reverse();
+                }
+              : null,
           child: AnimatedBuilder(
             animation: _scaleAnimation,
             builder: (context, child) {
               return Transform.scale(
-                scale: _isPressed ? _scaleAnimation.value : (_isHovered ? 1.02 : 1.0),
+                scale: _isPressed
+                    ? _scaleAnimation.value
+                    : (_isHovered ? 1.02 : 1.0),
                 child: Container(
                   constraints: BoxConstraints(
                     minWidth: widget.fullWidth ? double.infinity : 0,
@@ -489,29 +533,36 @@ class _DangerButtonState extends State<DangerButton>
                   ),
                   decoration: BoxDecoration(
                     color: isEnabled
-                        ? (_isHovered ? AppTheme.errorRed.withOpacity(0.9) : AppTheme.errorRed)
+                        ? (_isHovered
+                            ? AppTheme.errorRed.withOpacity(0.9)
+                            : AppTheme.errorRed)
                         : DesignTokens.colorDisabled,
                     borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
                     boxShadow: _isHovered && isEnabled
-                        ? DesignTokens.getShadowForElevation(DesignTokens.elevation2)
-                        : DesignTokens.getShadowForElevation(DesignTokens.elevation0),
+                        ? DesignTokens.getShadowForElevation(
+                            DesignTokens.elevation2)
+                        : DesignTokens.getShadowForElevation(
+                            DesignTokens.elevation0),
                   ),
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: isEnabled ? widget.onPressed : null,
-                      borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusMD),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: DesignTokens.spacingLG,
                           vertical: DesignTokens.spacingMD,
                         ),
                         child: Row(
-                          mainAxisSize: widget.fullWidth ? MainAxisSize.max : MainAxisSize.min,
+                          mainAxisSize: widget.fullWidth
+                              ? MainAxisSize.max
+                              : MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             if (widget.isLoading)
-                              SizedBox(
+                              const SizedBox(
                                 width: 16,
                                 height: 16,
                                 child: CircularProgressIndicator(
@@ -531,7 +582,7 @@ class _DangerButtonState extends State<DangerButton>
                             ],
                             Text(
                               widget.label,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: AppTheme.textInverse,
                                 fontSize: DesignTokens.fontSizeLabelLarge,
                                 fontWeight: FontWeight.w600,
@@ -584,7 +635,8 @@ class _PremiumIconButtonState extends State<PremiumIconButton> {
   Widget build(BuildContext context) {
     final isEnabled = widget.onPressed != null;
     final effectiveLabel = widget.semanticLabel ??
-        AccessibilityUtils.getIconButtonLabel(widget.icon, label: widget.tooltip);
+        AccessibilityUtils.getIconButtonLabel(widget.icon,
+            label: widget.tooltip);
     final iconColor = widget.color ?? AppTheme.textPrimary;
 
     return Semantics(
@@ -597,9 +649,11 @@ class _PremiumIconButtonState extends State<PremiumIconButton> {
         onExit: (_) => setState(() => _isHovered = false),
         cursor: isEnabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
         child: GestureDetector(
-          onTapDown: isEnabled ? (_) => setState(() => _isPressed = true) : null,
+          onTapDown:
+              isEnabled ? (_) => setState(() => _isPressed = true) : null,
           onTapUp: isEnabled ? (_) => setState(() => _isPressed = false) : null,
-          onTapCancel: isEnabled ? () => setState(() => _isPressed = false) : null,
+          onTapCancel:
+              isEnabled ? () => setState(() => _isPressed = false) : null,
           child: Transform.scale(
             scale: _isPressed ? 0.95 : (_isHovered ? 1.05 : 1.0),
             child: Container(

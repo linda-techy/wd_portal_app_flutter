@@ -9,7 +9,7 @@ class ProgressRing extends StatelessWidget {
   final Color? color;
   final double size;
   final double strokeWidth;
-  
+
   const ProgressRing({
     super.key,
     required this.value,
@@ -19,12 +19,12 @@ class ProgressRing extends StatelessWidget {
     this.size = 120,
     this.strokeWidth = 12,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     final effectiveColor = color ?? AppTheme.primaryBlue;
     final percentage = (value * 100).toStringAsFixed(1);
-    
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -42,7 +42,8 @@ class ProgressRing extends StatelessWidget {
                   value: 1.0,
                   strokeWidth: strokeWidth,
                   backgroundColor: AppTheme.borderLight,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.borderLight),
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(AppTheme.borderLight),
                 ),
               ),
               // Progress circle
@@ -92,7 +93,7 @@ class BudgetUtilization extends StatelessWidget {
   final double total;
   final String label;
   final Color? color;
-  
+
   const BudgetUtilization({
     super.key,
     required this.used,
@@ -100,15 +101,17 @@ class BudgetUtilization extends StatelessWidget {
     required this.label,
     this.color,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     final percentage = total > 0 ? (used / total).clamp(0.0, 1.0) : 0.0;
-    final effectiveColor = color ?? 
-        (percentage > 0.9 ? AppTheme.statusError :
-         percentage > 0.75 ? AppTheme.statusWarning :
-         AppTheme.statusSuccess);
-    
+    final effectiveColor = color ??
+        (percentage > 0.9
+            ? AppTheme.statusError
+            : percentage > 0.75
+                ? AppTheme.statusWarning
+                : AppTheme.statusSuccess);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -155,7 +158,7 @@ class BudgetUtilization extends StatelessWidget {
       ],
     );
   }
-  
+
   String _formatCurrency(double amount) {
     if (amount >= 1000000) {
       return '₹${(amount / 1000000).toStringAsFixed(2)}M';
@@ -165,4 +168,3 @@ class BudgetUtilization extends StatelessWidget {
     return '₹${amount.toStringAsFixed(2)}';
   }
 }
-

@@ -27,9 +27,9 @@ class ProfileScreen extends StatelessWidget {
             Container(
               width: double.infinity,
               padding: ResponsiveUtils.responsivePadding(context),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppTheme.primaryBlue,
-                borderRadius: const BorderRadius.only(
+                borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(24),
                   bottomRight: Radius.circular(24),
                 ),
@@ -44,7 +44,7 @@ class ProfileScreen extends StatelessWidget {
                       backgroundColor: Colors.white,
                       child: Text(
                         user.firstName[0].toUpperCase(),
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 40,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.primaryBlue,
@@ -103,7 +103,8 @@ class ProfileScreen extends StatelessWidget {
                   // Email
                   Card(
                     child: ListTile(
-                      leading: Icon(Icons.email, color: AppTheme.primaryBlue),
+                      leading:
+                          const Icon(Icons.email, color: AppTheme.primaryBlue),
                       title: const Text('Email'),
                       subtitle: Text(user.email),
                     ),
@@ -112,7 +113,8 @@ class ProfileScreen extends StatelessWidget {
                   // Role
                   Card(
                     child: ListTile(
-                      leading: Icon(Icons.work, color: AppTheme.primaryBlue),
+                      leading:
+                          const Icon(Icons.work, color: AppTheme.primaryBlue),
                       title: const Text('Role'),
                       subtitle: Text(user.role.toUpperCase()),
                     ),
@@ -121,7 +123,8 @@ class ProfileScreen extends StatelessWidget {
                   // User ID
                   Card(
                     child: ListTile(
-                      leading: Icon(Icons.badge, color: AppTheme.primaryBlue),
+                      leading:
+                          const Icon(Icons.badge, color: AppTheme.primaryBlue),
                       title: const Text('User ID'),
                       subtitle: Text('#${user.id}'),
                     ),
@@ -139,7 +142,8 @@ class ProfileScreen extends StatelessWidget {
                   // Change Password
                   Card(
                     child: ListTile(
-                      leading: Icon(Icons.lock, color: AppTheme.safetyOrange),
+                      leading:
+                          const Icon(Icons.lock, color: AppTheme.safetyOrange),
                       title: const Text('Change Password'),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
@@ -151,7 +155,8 @@ class ProfileScreen extends StatelessWidget {
                   // Logout
                   Card(
                     child: ListTile(
-                      leading: Icon(Icons.logout, color: AppTheme.statusError),
+                      leading:
+                          const Icon(Icons.logout, color: AppTheme.statusError),
                       title: const Text('Logout'),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () async {
@@ -159,7 +164,8 @@ class ProfileScreen extends StatelessWidget {
                           context: context,
                           builder: (context) => AlertDialog(
                             title: const Text('Logout'),
-                            content: const Text('Are you sure you want to logout?'),
+                            content:
+                                const Text('Are you sure you want to logout?'),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context, false),
@@ -191,7 +197,8 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void _showChangePasswordDialog(BuildContext context, PortalAuthProvider authProvider) {
+  void _showChangePasswordDialog(
+      BuildContext context, PortalAuthProvider authProvider) {
     final currentPasswordController = TextEditingController();
     final newPasswordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
@@ -282,7 +289,8 @@ class ProfileScreen extends StatelessWidget {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Password changed successfully'),
+                                  content:
+                                      Text('Password changed successfully'),
                                   backgroundColor: Colors.green,
                                 ),
                               );
@@ -291,7 +299,9 @@ class ProfileScreen extends StatelessWidget {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text(e.toString().replaceAll('Exception: ', '')),
+                                  content: Text(e
+                                      .toString()
+                                      .replaceAll('Exception: ', '')),
                                   backgroundColor: Colors.red,
                                 ),
                               );
@@ -318,4 +328,3 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 }
-

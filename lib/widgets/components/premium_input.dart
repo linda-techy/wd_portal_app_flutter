@@ -64,7 +64,7 @@ class _PremiumTextInputState extends State<PremiumTextInput>
     super.initState();
     _focusNode = widget.focusNode ?? FocusNode();
     _focusNode.addListener(_onFocusChange);
-    
+
     _helperController = AnimationController(
       vsync: this,
       duration: AppMotion.getDuration(AppMotion.durationMedium),
@@ -73,7 +73,7 @@ class _PremiumTextInputState extends State<PremiumTextInput>
       parent: _helperController,
       curve: AppMotion.getCurve(AppMotion.curveEaseOut),
     );
-    
+
     if (widget.helperText != null || widget.errorText != null) {
       _helperController.forward();
     }
@@ -95,7 +95,7 @@ class _PremiumTextInputState extends State<PremiumTextInput>
     setState(() {
       _isFocused = _focusNode.hasFocus;
     });
-    
+
     // Mark as touched when field gains focus
     if (!_hasBeenTouched && _isFocused) {
       setState(() {
@@ -123,12 +123,13 @@ class _PremiumTextInputState extends State<PremiumTextInput>
   Widget build(BuildContext context) {
     // Only show helper text if explicitly provided or if errorText is explicitly provided
     // We rely on TextFormField's built-in error display for validation errors
-    final effectiveError = widget.errorText; 
+    final effectiveError = widget.errorText;
     final showHelper = widget.helperText != null || effectiveError != null;
-    
+
     if (showHelper && _helperController.status != AnimationStatus.forward) {
       _helperController.forward();
-    } else if (!showHelper && _helperController.status != AnimationStatus.reverse) {
+    } else if (!showHelper &&
+        _helperController.status != AnimationStatus.reverse) {
       _helperController.reverse();
     }
 
@@ -154,17 +155,17 @@ class _PremiumTextInputState extends State<PremiumTextInput>
               }
               // Only validate while field is focused (user is typing) AND has an existing error
               if (_isFocused && _hasError) {
-                 // Trigger a form re-validation for this field only
-                 // Since we can't easily trigger standardFormField validation without form key,
-                 // we rely on the parent form or manual validation call. 
-                 // However, we can manually check and update internal state for lazy clear.
-                 final error = widget.validator!(value);
-                 setState(() {
-                   _hasError = error != null;
-                 });
-                 // If error is resolved, we want the TextFormField to clear its visual error.
-                 // The best way to do this in TextFormField is via form autovalidation or manual validate.
-                 // For now, let's at least update our internal state.
+                // Trigger a form re-validation for this field only
+                // Since we can't easily trigger standardFormField validation without form key,
+                // we rely on the parent form or manual validation call.
+                // However, we can manually check and update internal state for lazy clear.
+                final error = widget.validator!(value);
+                setState(() {
+                  _hasError = error != null;
+                });
+                // If error is resolved, we want the TextFormField to clear its visual error.
+                // The best way to do this in TextFormField is via form autovalidation or manual validate.
+                // For now, let's at least update our internal state.
               }
             },
             onTap: () {
@@ -190,18 +191,18 @@ class _PremiumTextInputState extends State<PremiumTextInput>
             onFieldSubmitted: widget.onFieldSubmitted,
             // Only validate when form is explicitly validated (on submit)
             // Don't validate on initial load - autovalidateMode is disabled
-            validator: widget.validator != null 
+            validator: widget.validator != null
                 ? (value) {
                     final error = widget.validator!(value);
                     // Sync internal state with framework validation result
                     if (mounted && _hasError != (error != null)) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                           if (mounted) {
-                               setState(() {
-                                   _hasError = error != null;
-                               });
-                           }
-                        });
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          setState(() {
+                            _hasError = error != null;
+                          });
+                        }
+                      });
                     }
                     if (error != null) {
                       // Mark as touched when validation fails
@@ -227,10 +228,10 @@ class _PremiumTextInputState extends State<PremiumTextInput>
             // - Desktop/Web: Tab key moves to next field
             // - Mobile: Shows "Next" button on keyboard that moves to next field
             // - Last field: Shows "Done" button
-            textInputAction: widget.onFieldSubmitted != null 
-                ? TextInputAction.done 
+            textInputAction: widget.onFieldSubmitted != null
+                ? TextInputAction.done
                 : TextInputAction.next,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: DesignTokens.fontSizeBodyMedium,
               color: AppTheme.textPrimary,
             ),
@@ -242,42 +243,43 @@ class _PremiumTextInputState extends State<PremiumTextInput>
                   : null,
               suffixIcon: widget.suffixIcon,
               filled: true,
-              fillColor: widget.enabled ? AppTheme.surface : AppTheme.surfaceElevated,
+              fillColor:
+                  widget.enabled ? AppTheme.surface : AppTheme.surfaceElevated,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: DesignTokens.spacingMD,
                 vertical: DesignTokens.spacingMD,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: AppTheme.borderLight,
                   width: 1,
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: AppTheme.borderLight,
                   width: 1,
                 ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: AppTheme.coralRed,
                   width: 2,
                 ),
               ),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: AppTheme.errorRed,
                   width: 1,
                 ),
               ),
               focusedErrorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: AppTheme.errorRed,
                   width: 2,
                 ),
@@ -376,7 +378,9 @@ class _PremiumPasswordInputState extends State<PremiumPasswordInput> {
       onFieldSubmitted: widget.onFieldSubmitted,
       suffixIcon: IconButton(
         icon: Icon(
-          _obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+          _obscureText
+              ? Icons.visibility_outlined
+              : Icons.visibility_off_outlined,
           color: AppTheme.textSecondary,
         ),
         onPressed: () {
@@ -510,7 +514,8 @@ class PremiumDropdownInput<T> extends StatefulWidget {
   });
 
   @override
-  State<PremiumDropdownInput<T>> createState() => _PremiumDropdownInputState<T>();
+  State<PremiumDropdownInput<T>> createState() =>
+      _PremiumDropdownInputState<T>();
 }
 
 class _PremiumDropdownInputState<T> extends State<PremiumDropdownInput<T>>
@@ -530,7 +535,7 @@ class _PremiumDropdownInputState<T> extends State<PremiumDropdownInput<T>>
       parent: _helperController,
       curve: AppMotion.getCurve(AppMotion.curveEaseOut),
     );
-    
+
     if (widget.helperText != null || widget.errorText != null) {
       _helperController.forward();
     }
@@ -544,12 +549,14 @@ class _PremiumDropdownInputState<T> extends State<PremiumDropdownInput<T>>
 
   @override
   Widget build(BuildContext context) {
-    final effectiveError = widget.errorText ?? (_hasError ? 'Please select an option' : null);
+    final effectiveError =
+        widget.errorText ?? (_hasError ? 'Please select an option' : null);
     final showHelper = widget.helperText != null || effectiveError != null;
-    
+
     if (showHelper && _helperController.status != AnimationStatus.forward) {
       _helperController.forward();
-    } else if (!showHelper && _helperController.status != AnimationStatus.reverse) {
+    } else if (!showHelper &&
+        _helperController.status != AnimationStatus.reverse) {
       _helperController.reverse();
     }
 
@@ -565,18 +572,20 @@ class _PremiumDropdownInputState<T> extends State<PremiumDropdownInput<T>>
           DropdownButtonFormField<T>(
             value: widget.value,
             items: widget.items,
-            onChanged: widget.enabled ? (value) {
-              widget.onChanged?.call(value);
-              if (widget.validator != null) {
-                final error = widget.validator!(value);
-                setState(() {
-                  _hasError = error != null;
-                });
-                if (_hasError && error != null) {
-                  AccessibilityUtils.announceError(context, error);
-                }
-              }
-            } : null,
+            onChanged: widget.enabled
+                ? (value) {
+                    widget.onChanged?.call(value);
+                    if (widget.validator != null) {
+                      final error = widget.validator!(value);
+                      setState(() {
+                        _hasError = error != null;
+                      });
+                      if (_hasError && error != null) {
+                        AccessibilityUtils.announceError(context, error);
+                      }
+                    }
+                  }
+                : null,
             validator: widget.validator,
             decoration: InputDecoration(
               labelText: widget.label,
@@ -585,42 +594,43 @@ class _PremiumDropdownInputState<T> extends State<PremiumDropdownInput<T>>
                   ? Icon(widget.prefixIcon, color: AppTheme.coralRed)
                   : null,
               filled: true,
-              fillColor: widget.enabled ? AppTheme.surface : AppTheme.surfaceElevated,
+              fillColor:
+                  widget.enabled ? AppTheme.surface : AppTheme.surfaceElevated,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: DesignTokens.spacingMD,
                 vertical: DesignTokens.spacingMD,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: AppTheme.borderLight,
                   width: 1,
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: AppTheme.borderLight,
                   width: 1,
                 ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: AppTheme.coralRed,
                   width: 2,
                 ),
               ),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: AppTheme.errorRed,
                   width: 1,
                 ),
               ),
               focusedErrorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: AppTheme.errorRed,
                   width: 2,
                 ),
@@ -633,7 +643,7 @@ class _PremiumDropdownInputState<T> extends State<PremiumDropdownInput<T>>
                 ),
               ),
             ),
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: DesignTokens.fontSizeBodyMedium,
               color: AppTheme.textPrimary,
             ),

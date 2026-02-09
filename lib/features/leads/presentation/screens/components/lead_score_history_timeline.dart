@@ -4,17 +4,16 @@ import '../../../data/services/lead_service.dart';
 import 'package:intl/intl.dart';
 import 'package:admin/utils/error_handler.dart';
 
-/**
- * Widget displaying timeline of lead score changes
- * Shows audit trail of how lead scores changed over time
- */
+/// Widget displaying timeline of lead score changes
+/// Shows audit trail of how lead scores changed over time
 class LeadScoreHistoryTimeline extends StatefulWidget {
   final String leadId;
 
   const LeadScoreHistoryTimeline({super.key, required this.leadId});
 
   @override
-  State<LeadScoreHistoryTimeline> createState() => _LeadScoreHistoryTimelineState();
+  State<LeadScoreHistoryTimeline> createState() =>
+      _LeadScoreHistoryTimelineState();
 }
 
 class _LeadScoreHistoryTimelineState extends State<LeadScoreHistoryTimeline> {
@@ -46,7 +45,8 @@ class _LeadScoreHistoryTimelineState extends State<LeadScoreHistoryTimeline> {
           _isLoading = false;
           _errorMessage = e.toString();
         });
-        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load score history');
+        await ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'Failed to load score history');
       }
     }
   }
@@ -97,7 +97,7 @@ class _LeadScoreHistoryTimelineState extends State<LeadScoreHistoryTimeline> {
   Widget _buildTimelineItem(LeadScoreHistory history, bool isLast) {
     final Color scoreColor = _getScoreColor(history.newScore);
     final Color categoryColor = _getCategoryColor(history.newCategory);
-    
+
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,7 +153,8 @@ class _LeadScoreHistoryTimelineState extends State<LeadScoreHistoryTimeline> {
                                 Row(
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
                                         color: categoryColor.withOpacity(0.2),
                                         borderRadius: BorderRadius.circular(4),
@@ -183,10 +184,10 @@ class _LeadScoreHistoryTimelineState extends State<LeadScoreHistoryTimeline> {
                                     history.scoreChangeText,
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: history.scoreChange > 0 
-                                          ? Colors.green 
-                                          : history.scoreChange < 0 
-                                              ? Colors.red 
+                                      color: history.scoreChange > 0
+                                          ? Colors.green
+                                          : history.scoreChange < 0
+                                              ? Colors.red
                                               : Colors.grey,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -196,7 +197,8 @@ class _LeadScoreHistoryTimelineState extends State<LeadScoreHistoryTimeline> {
                             ),
                           ),
                           Text(
-                            DateFormat('MMM d, y HH:mm').format(history.scoredAt),
+                            DateFormat('MMM d, y HH:mm')
+                                .format(history.scoredAt),
                             style: TextStyle(
                               color: Colors.grey.shade600,
                               fontSize: 12,
@@ -204,12 +206,13 @@ class _LeadScoreHistoryTimelineState extends State<LeadScoreHistoryTimeline> {
                           ),
                         ],
                       ),
-                      if (history.previousCategory != null && 
+                      if (history.previousCategory != null &&
                           history.previousCategory != history.newCategory) ...[
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            const Text('Category: ', style: TextStyle(fontSize: 12)),
+                            const Text('Category: ',
+                                style: TextStyle(fontSize: 12)),
                             Text(
                               history.categoryChangeText,
                               style: TextStyle(
@@ -221,7 +224,8 @@ class _LeadScoreHistoryTimelineState extends State<LeadScoreHistoryTimeline> {
                           ],
                         ),
                       ],
-                      if (history.reason != null && history.reason!.isNotEmpty) ...[
+                      if (history.reason != null &&
+                          history.reason!.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Text(
                           history.reason!,

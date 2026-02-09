@@ -9,6 +9,7 @@ import 'package:admin/constants/lead_source_constants.dart';
 import 'package:admin/constants/project_type_constants.dart';
 import 'package:admin/utils/india_location_data.dart';
 import 'package:admin/responsive.dart';
+import 'package:admin/config/app_config.dart';
 
 class FormSections {
   /// Helper method to validate dropdown value exists in items list
@@ -28,7 +29,6 @@ class FormSections {
     }
 
     // Value not found in items - return null to avoid Flutter error
-    print('Warning: Dropdown value $value not found in items list');
     return null;
   }
 
@@ -41,8 +41,8 @@ class FormSections {
   }) {
     // Show loading indicator while team members are being fetched
     if (isLoading) {
-      return InputDecorator(
-        decoration: const InputDecoration(
+      return const InputDecorator(
+        decoration: InputDecoration(
           labelText: 'Assigned To',
           border: OutlineInputBorder(),
           prefixIcon: Padding(
@@ -54,7 +54,7 @@ class FormSections {
             ),
           ),
         ),
-        child: const Text('Loading team members...'),
+        child: Text('Loading team members...'),
       );
     }
 
@@ -64,46 +64,28 @@ class FormSections {
       int? selectedValue;
       final assignedToIdValue = formData['assignedToId'];
 
-      print(
-          '_buildAssignedToField - formData assignedToId: $assignedToIdValue (type: ${assignedToIdValue.runtimeType})');
-      print('_buildAssignedToField - teamMembers count: ${teamMembers.length}');
-      print(
-          '_buildAssignedToField - teamMembers IDs: ${teamMembers.map((m) => m.id).toList()}');
-
       if (assignedToIdValue is int) {
         selectedValue = assignedToIdValue;
       } else if (assignedToIdValue != null) {
         selectedValue = int.tryParse(assignedToIdValue.toString());
       }
 
-      print('_buildAssignedToField - parsed selectedValue: $selectedValue');
-
       // Verify the selected value exists in the team members list
       if (selectedValue != null) {
         final exists =
             teamMembers.any((m) => m.id != null && m.id == selectedValue);
-        print('_buildAssignedToField - selectedValue exists in list: $exists');
         if (!exists) {
-          print(
-              'Warning: Assigned user ID $selectedValue not found in team members list');
-          print(
-              'Available IDs: ${teamMembers.where((m) => m.id != null).map((m) => m.id).toList()}');
           // Try to find by comparing as strings as well
           final existsAsString = teamMembers
               .any((m) => m.id?.toString() == selectedValue.toString());
           if (existsAsString) {
-            print(
-                'Found match when comparing as strings - fixing type mismatch');
             // Find the actual user and use their ID
             final matchingUser = teamMembers.firstWhere(
               (m) => m.id?.toString() == selectedValue.toString(),
               orElse: () => teamMembers.first,
             );
             selectedValue = matchingUser.id;
-            print('Updated selectedValue to: $selectedValue');
           }
-        } else {
-          print('Selected value $selectedValue found in team members list');
         }
       }
 
@@ -114,14 +96,9 @@ class FormSections {
         final hasMatchingItem =
             teamMembers.any((m) => m.id != null && m.id == selectedValue);
         if (!hasMatchingItem) {
-          print(
-              'Warning: selectedValue $selectedValue does not match any dropdown item. Setting to null.');
           finalSelectedValue = null;
         }
       }
-
-      print(
-          '_buildAssignedToField - finalSelectedValue for dropdown: $finalSelectedValue');
 
       return DropdownButtonFormField<int>(
         decoration: const InputDecoration(
@@ -136,10 +113,6 @@ class FormSections {
           ),
           ...teamMembers.where((m) => m.id != null).map((member) {
             final isSelected = member.id == finalSelectedValue;
-            if (isSelected) {
-              print(
-                  'Dropdown item SELECTED: ID=${member.id}, Name=${member.fullName}');
-            }
             return DropdownMenuItem<int>(
               value: member.id,
               child: Text(member.fullName),
@@ -147,11 +120,9 @@ class FormSections {
           }),
         ],
         onChanged: (value) {
-          print('Dropdown onChanged: $value');
           onChanged('assignedToId', value);
         },
         onSaved: (value) {
-          print('Dropdown onSaved: $value');
           onChanged('assignedToId', value);
         },
       );
@@ -545,7 +516,7 @@ class FormSections {
                         context: context,
                         initialDate:
                             formData['dateOfEnquiry'] ?? DateTime.now(),
-                        firstDate: DateTime(2020),
+                        firstDate: AppConfig.datePickerFirstDate,
                         lastDate: DateTime.now(),
                       );
                       if (picked != null) onDateOfEnquiryChanged(picked);
@@ -845,7 +816,7 @@ class FormSections {
                         context: context,
                         initialDate:
                             formData['lastContactDate'] ?? DateTime.now(),
-                        firstDate: DateTime(2020),
+                        firstDate: AppConfig.datePickerFirstDate,
                         lastDate: DateTime.now(),
                       );
                       if (picked != null) onLastContactDateChanged(picked);

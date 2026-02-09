@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_motion.dart';
-import '../../theme/design_tokens.dart';
 
 /// Premium Page Transition
 /// Custom page route transitions with consistent easing
@@ -14,7 +13,8 @@ class PremiumPageTransition<T> extends PageRouteBuilder<T> {
   }) : super(
           pageBuilder: (context, animation, secondaryAnimation) => child,
           transitionDuration: AppMotion.getDuration(AppMotion.durationSlow),
-          reverseTransitionDuration: AppMotion.getDuration(AppMotion.durationMedium),
+          reverseTransitionDuration:
+              AppMotion.getDuration(AppMotion.durationMedium),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             if (AppMotion.shouldDisableAnimations()) {
               return child;

@@ -5,6 +5,7 @@ import 'package:admin/models/payment_models.dart';
 import 'package:admin/services/challan_service.dart';
 import 'package:admin/utils/motion_toast.dart';
 import 'package:admin/utils/file_download_helper.dart';
+import 'package:admin/config/app_config.dart';
 
 class ChallanManagementScreen extends StatefulWidget {
   const ChallanManagementScreen({super.key});
@@ -147,7 +148,7 @@ class _ChallanManagementScreenState extends State<ChallanManagementScreen> {
               onTap: () async {
                 final range = await showDateRangePicker(
                   context: context,
-                  firstDate: DateTime(2020),
+                  firstDate: AppConfig.datePickerFirstDate,
                   lastDate: DateTime.now(),
                   initialDateRange: _dateRange,
                 );

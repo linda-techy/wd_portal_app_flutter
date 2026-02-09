@@ -2,7 +2,6 @@ import 'package:admin/services/api_service.dart';
 import 'package:admin/models/inventory_models.dart';
 import 'package:admin/models/consumption_report_models.dart';
 import 'package:admin/models/paginated_response.dart';
-import 'package:dio/dio.dart';
 
 class InventoryService {
   final ApiService _apiService = ApiService();

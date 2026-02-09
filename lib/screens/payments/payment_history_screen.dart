@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:admin/models/payment_models.dart';
 import 'package:admin/providers/payment_provider.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
@@ -22,7 +21,8 @@ class PaymentHistoryScreen extends StatelessWidget {
               children: [
                 _buildSearchAndFilters(context, provider),
                 Expanded(child: _buildPaymentList(context, provider)),
-                if (provider.totalPages > 1) _buildPagination(context, provider),
+                if (provider.totalPages > 1)
+                  _buildPagination(context, provider),
               ],
             ),
           );
@@ -31,7 +31,8 @@ class PaymentHistoryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchAndFilters(BuildContext context, PaymentProvider provider) {
+  Widget _buildSearchAndFilters(
+      BuildContext context, PaymentProvider provider) {
     return Container(
       padding: const EdgeInsets.all(16),
       color: Colors.grey[100],
@@ -315,4 +316,3 @@ class PaymentHistoryScreen extends StatelessWidget {
     );
   }
 }
-

@@ -44,7 +44,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     });
 
     try {
-      final customer = await _customerService.getCustomerById(widget.customerId);
+      final customer =
+          await _customerService.getCustomerById(widget.customerId);
       if (mounted) {
         setState(() {
           _customer = customer;
@@ -57,14 +58,15 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           _isLoading = false;
           _error = e.toString();
         });
-        await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load customer details');
+        await ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'Failed to load customer details');
       }
     }
   }
 
   Future<void> _navigateToEdit() async {
     if (_customer == null) return;
-    
+
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -159,7 +161,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                      const Icon(Icons.error_outline,
+                          size: 48, color: Colors.red),
                       const SizedBox(height: 16),
                       Text('Error: $_error'),
                       const SizedBox(height: 16),
@@ -209,7 +212,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 _customer!.fullName.isNotEmpty
                     ? _customer!.fullName[0].toUpperCase()
                     : 'C',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                   color: primaryColor,
@@ -277,8 +280,10 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             const SizedBox(height: defaultPadding),
             _buildInfoRow('Email', _customer!.email, Icons.email),
             if (_customer!.roleId != null)
-              _buildInfoRow('Role ID', _customer!.roleId.toString(), Icons.badge),
-            _buildInfoRow('Projects', _customer!.projectCount.toString(), Icons.folder),
+              _buildInfoRow(
+                  'Role ID', _customer!.roleId.toString(), Icons.badge),
+            _buildInfoRow(
+                'Projects', _customer!.projectCount.toString(), Icons.folder),
           ],
         ),
       ),
@@ -306,7 +311,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             if (_customer!.phone != null)
               _buildInfoRow('Phone', _customer!.phone!, Icons.phone),
             if (_customer!.whatsappNumber != null)
-              _buildInfoRow('WhatsApp', _customer!.whatsappNumber!, Icons.message),
+              _buildInfoRow(
+                  'WhatsApp', _customer!.whatsappNumber!, Icons.message),
             if (_customer!.address != null)
               _buildInfoRow('Address', _customer!.address!, Icons.location_on),
           ],
@@ -335,13 +341,16 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             const Divider(),
             const SizedBox(height: defaultPadding),
             if (_customer!.companyName != null)
-              _buildInfoRow('Company Name', _customer!.companyName!, Icons.business),
+              _buildInfoRow(
+                  'Company Name', _customer!.companyName!, Icons.business),
             if (_customer!.gstNumber != null)
               _buildInfoRow('GST Number', _customer!.gstNumber!, Icons.receipt),
             if (_customer!.leadSource != null)
-              _buildInfoRow('Lead Source', _customer!.leadSource!, Icons.source),
+              _buildInfoRow(
+                  'Lead Source', _customer!.leadSource!, Icons.source),
             if (_customer!.notes != null)
-              _buildInfoRow('Notes', _customer!.notes!, Icons.note, maxLines: 3),
+              _buildInfoRow('Notes', _customer!.notes!, Icons.note,
+                  maxLines: 3),
           ],
         ),
       ),
@@ -386,7 +395,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, IconData icon, {int maxLines = 1}) {
+  Widget _buildInfoRow(String label, String value, IconData icon,
+      {int maxLines = 1}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: defaultPadding),
       child: Row(

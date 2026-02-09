@@ -6,43 +6,46 @@ import 'design_tokens.dart';
 /// Professional construction company theme with brand identity colors
 class AppTheme {
   // ========== Walldot Builders Color Palette ==========
-  
+
   // Primary Brand Colors
-  static const Color deepSlate = Color(0xFF2A2A3A); // Primary brand color - headers, nav
+  static const Color deepSlate =
+      Color(0xFF2A2A3A); // Primary brand color - headers, nav
   static const Color deepSlateDark = Color(0xFF1F1F2E); // Darker variant
   static const Color deepSlateLight = Color(0xFF3A3A4A); // Lighter variant
-  
+
   // Accent Colors - Walldot Signature
-  static const Color coralRed = Color(0xFFF36F72); // Primary accent - CTAs, highlights
+  static const Color coralRed =
+      Color(0xFFF36F72); // Primary accent - CTAs, highlights
   static const Color coralRedDark = Color(0xFFE15F62); // Hover/pressed state
   static const Color coralRedLight = Color(0xFFF58B8D); // Light variant
-  
+
   // Secondary Accent
-  static const Color constructionOrange = Color(0xFFFF8C42); // Secondary actions, warnings
-  static const Color constructionOrangeDark = Color(0xFFE67D38); // Darker variant
-  
+  static const Color constructionOrange =
+      Color(0xFFFF8C42); // Secondary actions, warnings
+  static const Color constructionOrangeDark =
+      Color(0xFFE67D38); // Darker variant
+
   // Supporting Colors
   static const Color skyBlue = Color(0xFF56CCF2); // Info, links
   static const Color successGreen = Color(0xFF4CAF50); // Success states
   static const Color warningAmber = Color(0xFFFFC107); // Warnings
   static const Color errorRed = Color(0xFFDC3545); // Errors
-  
+
   // Neutral Colors
   static const Color background = Color(0xFFF7F7F7); // Main background
   static const Color surface = Color(0xFFFFFFFF); // Cards/containers
   static const Color surfaceElevated = Color(0xFFF1F5F9); // Elevated surfaces
-  
+
   // Border & Divider
   static const Color borderLight = Color(0xFFCED4DA);
   static const Color borderMedium = Color(0xFFADB5BD);
   static const Color divider = Color(0xFFE2E8F0);
-  
+
   // Text Colors
   static const Color textPrimary = Color(0xFF333333); // Primary text
   static const Color textSecondary = Color(0xFF6C757D); // Secondary text
   static const Color textTertiary = Color(0xFF94A3B8); // Tertiary text
   static const Color textInverse = Color(0xFFFFFFFF); // White text on dark
-  
 
   // Missing colors required by legacy code
   static const Color tealAccent = Color(0xFF1DE9B6);
@@ -61,19 +64,19 @@ class AppTheme {
   static const Color safetyYellow = warningAmber;
   static const Color safetyGreen = successGreen;
   static const Color safetyRed = errorRed;
-  
+
   // Status Colors
   static const Color statusSuccess = successGreen;
   static const Color statusWarning = warningAmber;
   static const Color statusError = errorRed;
   static const Color statusInfo = skyBlue;
-  
+
   // Status Backgrounds (Light variants)
   static const Color statusSuccessBg = Color(0xFFD1FAE5);
   static const Color statusWarningBg = Color(0xFFFEF3C7);
   static const Color statusErrorBg = Color(0xFFFEE2E2);
   static const Color statusInfoBg = Color(0xFFDBEAFE);
-  
+
   // Chart Colors - Walldot Brand Palette
   static const List<Color> chartColors = [
     coralRed,
@@ -84,13 +87,13 @@ class AppTheme {
     Color(0xFF8B5CF6), // Purple
     Color(0xFFEC4899), // Pink
   ];
-  
+
   // Additional color aliases for backward compatibility
   static const Color backgroundWhite = surface; // White background
   static const Color walldotGold = Color(0xFFF9A825); // Gold accent color
-  
+
   // ========== Typography ==========
-  
+
   // Static text style getters for convenience
   static TextStyle get bodyLarge => getTextTheme().bodyLarge!;
   static TextStyle get bodyMedium => getTextTheme().bodyMedium!;
@@ -189,14 +192,14 @@ class AppTheme {
   static const double spacingLG = 24.0;
   static const double spacingXL = 32.0;
   static const double spacingXXL = 48.0;
-  
+
   // ========== Border Radius ==========
   // Use DesignTokens for radius (backward compatibility maintained)
   static const double radiusSM = 6.0;
   static const double radiusMD = 12.0;
   static const double radiusLG = 16.0;
   static const double radiusXL = 24.0;
-  
+
   // ========== Shadows ==========
   // Use DesignTokens for shadows (backward compatibility maintained)
   static List<BoxShadow> get shadowSM => DesignTokens.shadowSM;
@@ -208,22 +211,20 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.light(
+      colorScheme: const ColorScheme.light(
         primary: coralRed, // Walldot accent color for primary actions
         secondary: deepSlate, // Walldot brand color for secondary elements
         surface: surface,
-        background: background,
         error: errorRed,
         onPrimary: textInverse,
         onSecondary: textInverse,
         onSurface: textPrimary,
-        onBackground: textPrimary,
         onError: textInverse,
       ),
       scaffoldBackgroundColor: background,
       textTheme: getTextTheme(),
       fontFamily: GoogleFonts.manrope().fontFamily,
-      
+
       // AppBar Theme
       appBarTheme: AppBarTheme(
         backgroundColor: surface,
@@ -237,7 +238,7 @@ class AppTheme {
         ),
         iconTheme: const IconThemeData(color: textPrimary),
       ),
-      
+
       // Card Theme
       cardTheme: CardTheme(
         color: surface,
@@ -249,7 +250,7 @@ class AppTheme {
         ),
         margin: EdgeInsets.zero,
       ),
-      
+
       // Elevated Button Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -272,11 +273,12 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Outlined Button Theme
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: deepSlate, // Walldot brand color for outlined buttons
+          foregroundColor:
+              deepSlate, // Walldot brand color for outlined buttons
           side: const BorderSide(color: deepSlate, width: 1.5),
           minimumSize: const Size(0, DesignTokens.touchTargetMin),
           padding: const EdgeInsets.symmetric(
@@ -292,7 +294,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -331,14 +333,14 @@ class AppTheme {
           color: textTertiary,
         ),
       ),
-      
+
       // Divider Theme
       dividerTheme: const DividerThemeData(
         color: divider,
         thickness: 1,
         space: 1,
       ),
-      
+
       // Page Transitions Theme
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
@@ -375,7 +377,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(DesignTokens.radiusSM),
         ),
       ),
-      
+
       // Text Button Theme
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
@@ -391,18 +393,18 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Icon Button Theme
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
           foregroundColor: textPrimary,
-          minimumSize: const Size(DesignTokens.touchTargetMin, DesignTokens.touchTargetMin),
+          minimumSize: const Size(
+              DesignTokens.touchTargetMin, DesignTokens.touchTargetMin),
         ),
       ),
     );
   }
 }
-
 
 class WalldotColors {
   static const Color primary = AppTheme.deepSlate;

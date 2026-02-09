@@ -22,7 +22,7 @@ class EnhancedDataTable<T> extends StatefulWidget {
   final Function(int)? onPageChanged;
   final bool loading;
   final String? emptyMessage;
-  
+
   const EnhancedDataTable({
     super.key,
     required this.columns,
@@ -43,7 +43,7 @@ class EnhancedDataTable<T> extends StatefulWidget {
     this.loading = false,
     this.emptyMessage,
   });
-  
+
   @override
   State<EnhancedDataTable<T>> createState() => _EnhancedDataTableState<T>();
 }
@@ -53,7 +53,7 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
   final Map<String, dynamic> _activeFilters = {};
   int? _sortColumnIndex;
   bool _sortAscending = true;
-  
+
   final ScrollController _horizontalScrollController = ScrollController();
   final ScrollController _verticalScrollController = ScrollController();
 
@@ -64,7 +64,7 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
     _verticalScrollController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -74,7 +74,7 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
         if (widget.title != null || widget.showSearch || widget.showFilters)
           Container(
             padding: const EdgeInsets.all(AppTheme.spacingLG),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppTheme.surface,
               border: Border(
                 bottom: BorderSide(color: AppTheme.borderLight, width: 1),
@@ -96,7 +96,7 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
                       if (widget.headerActions != null) widget.headerActions!,
                     ],
                   ),
-                
+
                 // Search and Filters
                 if (widget.showSearch || widget.showFilters) ...[
                   if (widget.title != null || widget.headerActions != null)
@@ -132,29 +132,34 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
                             },
                           ),
                         ),
-                      
+
                       // Filter Chips
-                      if (widget.showFilters && widget.filterOptions != null) ...[
+                      if (widget.showFilters &&
+                          widget.filterOptions != null) ...[
                         const SizedBox(width: AppTheme.spacingMD),
                         Expanded(
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
                               children: widget.filterOptions!.map((filter) {
-                                final isActive = _activeFilters.containsKey(filter.key);
+                                final isActive =
+                                    _activeFilters.containsKey(filter.key);
                                 return Padding(
-                                  padding: const EdgeInsets.only(right: AppTheme.spacingSM),
+                                  padding: const EdgeInsets.only(
+                                      right: AppTheme.spacingSM),
                                   child: FilterChip(
                                     label: Text(filter.label),
                                     selected: isActive,
                                     onSelected: (selected) {
                                       setState(() {
                                         if (selected) {
-                                          _activeFilters[filter.key] = filter.defaultValue;
+                                          _activeFilters[filter.key] =
+                                              filter.defaultValue;
                                         } else {
                                           _activeFilters.remove(filter.key);
                                         }
-                                        widget.onFilter?.call(filter.key, _activeFilters[filter.key]);
+                                        widget.onFilter?.call(filter.key,
+                                            _activeFilters[filter.key]);
                                       });
                                     },
                                   ),
@@ -170,7 +175,7 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
               ],
             ),
           ),
-        
+
         // Table Section
         Expanded(
           child: widget.loading
@@ -182,7 +187,7 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.inbox_outlined,
                               size: 64,
                               color: AppTheme.textTertiary,
@@ -190,7 +195,10 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
                             const SizedBox(height: AppTheme.spacingMD),
                             Text(
                               widget.emptyMessage ?? 'No data available',
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.copyWith(
                                     color: AppTheme.textSecondary,
                                   ),
                             ),
@@ -200,12 +208,12 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
                     )
                   : EntranceAnimation(child: _buildTable(context)),
         ),
-        
+
         // Pagination
         if (widget.paginated && widget.totalPages > 1)
           Container(
             padding: const EdgeInsets.all(AppTheme.spacingMD),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppTheme.surface,
               border: Border(
                 top: BorderSide(color: AppTheme.borderLight, width: 1),
@@ -216,7 +224,7 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
       ],
     );
   }
-  
+
   Widget _buildTable(BuildContext context) {
     // Create sortable columns if sorting is enabled
     final columns = widget.sortable
@@ -237,7 +245,7 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
             );
           }).toList()
         : widget.columns;
-    
+
     return Scrollbar(
       controller: _horizontalScrollController,
       thumbVisibility: true,
@@ -259,7 +267,8 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
               headingRowHeight: 56,
               dataRowMinHeight: 52,
               dataRowMaxHeight: 72,
-              headingRowColor: WidgetStateProperty.all(AppTheme.surfaceElevated),
+              headingRowColor:
+                  WidgetStateProperty.all(AppTheme.surfaceElevated),
               decoration: BoxDecoration(
                 color: AppTheme.surface,
                 border: Border.all(color: AppTheme.borderLight, width: 1),
@@ -272,7 +281,7 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
       ),
     );
   }
-  
+
   Widget _buildPagination() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -305,8 +314,8 @@ class _EnhancedDataTableState<T> extends State<EnhancedDataTable<T>> {
       child: Column(
         children: List.generate(
           5,
-          (index) => Padding(
-            padding: const EdgeInsets.only(bottom: AppTheme.spacingMD),
+          (index) => const Padding(
+            padding: EdgeInsets.only(bottom: AppTheme.spacingMD),
             child: ShimmerLoading(width: double.infinity, height: 50),
           ),
         ),
@@ -319,11 +328,10 @@ class FilterOption {
   final String key;
   final String label;
   final dynamic defaultValue;
-  
+
   FilterOption({
     required this.key,
     required this.label,
     this.defaultValue,
   });
 }
-

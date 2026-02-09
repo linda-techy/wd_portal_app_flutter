@@ -21,7 +21,7 @@ class PortalRoleBasedNavigation extends StatelessWidget {
                 padding: const EdgeInsets.all(AppTheme.spacingMD),
                 margin: const EdgeInsets.all(AppTheme.spacingSM),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     colors: [AppTheme.deepSlate, AppTheme.deepSlateDark],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -89,13 +89,14 @@ class PortalRoleBasedNavigation extends StatelessWidget {
                   ],
                 ),
               ),
-              Divider(color: AppTheme.borderLight, height: 1),
+              const Divider(color: AppTheme.borderLight, height: 1),
             ],
 
             // Navigation Menu Items
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingSM),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: AppTheme.spacingSM),
                 children: [
                   // Dashboard - Available to all authenticated users
                   if (authProvider.hasPermission('DASHBOARD_VIEW'))
@@ -163,19 +164,19 @@ class PortalRoleBasedNavigation extends StatelessWidget {
 
                   // Documents - Available to all authenticated users
                   // if (authProvider.hasPermission('VIEW_DOCUMENTS'))
-                    _buildMenuItem(
-                      icon: Icons.folder,
-                      title: 'Documents',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const DocumentManagementScreen(),
-                          ),
-                        );
-                      },
-                    ),
+                  _buildMenuItem(
+                    icon: Icons.folder,
+                    title: 'Documents',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const DocumentManagementScreen(),
+                        ),
+                      );
+                    },
+                  ),
 
                   // Invoices - Available to Admin and Sales
                   if (authProvider

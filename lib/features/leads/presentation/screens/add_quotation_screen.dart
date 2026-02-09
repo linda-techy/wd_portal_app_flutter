@@ -7,7 +7,8 @@ class AddQuotationScreen extends StatefulWidget {
   final Lead lead;
   final LeadQuotation? quotationToEdit;
 
-  const AddQuotationScreen({Key? key, required this.lead, this.quotationToEdit}) : super(key: key);
+  const AddQuotationScreen(
+      {super.key, required this.lead, this.quotationToEdit});
 
   @override
   _AddQuotationScreenState createState() => _AddQuotationScreenState();
@@ -20,14 +21,17 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _validityController = TextEditingController(text: '30');
-  
+  final TextEditingController _validityController =
+      TextEditingController(text: '30');
+
   List<LeadQuotationItem> _items = [];
 
   // Controllers for the item being added
   final TextEditingController _itemDescController = TextEditingController();
-  final TextEditingController _itemQtyController = TextEditingController(text: '1');
-  final TextEditingController _itemPriceController = TextEditingController(text: '0');
+  final TextEditingController _itemQtyController =
+      TextEditingController(text: '1');
+  final TextEditingController _itemPriceController =
+      TextEditingController(text: '0');
 
   @override
   void initState() {
@@ -35,9 +39,10 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
     if (widget.quotationToEdit != null) {
       _titleController.text = widget.quotationToEdit!.title;
       _descriptionController.text = widget.quotationToEdit!.description ?? '';
-      _validityController.text = widget.quotationToEdit!.validityDays.toString();
+      _validityController.text =
+          widget.quotationToEdit!.validityDays.toString();
       // clone items
-      _items = List.from(widget.quotationToEdit!.items); 
+      _items = List.from(widget.quotationToEdit!.items);
     }
   }
 
@@ -67,7 +72,7 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
         unitPrice: price,
         totalPrice: qty * price,
       ));
-      
+
       // Clear inputs
       _itemDescController.clear();
       _itemQtyController.text = '1';
@@ -99,7 +104,7 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
 
     try {
       final leadIdInt = int.parse(widget.lead.leadId);
-      
+
       final quotation = LeadQuotation(
         id: widget.quotationToEdit?.id,
         leadId: leadIdInt,
@@ -107,7 +112,8 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
         description: _descriptionController.text,
         validityDays: int.tryParse(_validityController.text) ?? 30,
         totalAmount: _currentTotal,
-        finalAmount: _currentTotal, // Assuming no tax/discount logic yet for simplicity
+        finalAmount:
+            _currentTotal, // Assuming no tax/discount logic yet for simplicity
         items: _items,
         status: widget.quotationToEdit?.status ?? 'DRAFT',
       );
@@ -127,7 +133,8 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('Error saving: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -139,7 +146,9 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.quotationToEdit != null ? 'Edit Quotation' : 'New Quotation'),
+        title: Text(widget.quotationToEdit != null
+            ? 'Edit Quotation'
+            : 'New Quotation'),
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
@@ -164,7 +173,8 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                         labelText: 'Quotation Title',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                      validator: (v) =>
+                          v == null || v.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -185,11 +195,13 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 24),
-                    
+
                     // Items Section
-                    const Text('Line Items', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text('Line Items',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    
+
                     // Add Item Form
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -206,7 +218,9 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                                 flex: 3,
                                 child: TextField(
                                   controller: _itemDescController,
-                                  decoration: const InputDecoration(labelText: 'Item Description', isDense: true),
+                                  decoration: const InputDecoration(
+                                      labelText: 'Item Description',
+                                      isDense: true),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -214,7 +228,8 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                                 flex: 1,
                                 child: TextField(
                                   controller: _itemQtyController,
-                                  decoration: const InputDecoration(labelText: 'Qty', isDense: true),
+                                  decoration: const InputDecoration(
+                                      labelText: 'Qty', isDense: true),
                                   keyboardType: TextInputType.number,
                                 ),
                               ),
@@ -227,7 +242,8 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                                 flex: 2,
                                 child: TextField(
                                   controller: _itemPriceController,
-                                  decoration: const InputDecoration(labelText: 'Unit Price', isDense: true),
+                                  decoration: const InputDecoration(
+                                      labelText: 'Unit Price', isDense: true),
                                   keyboardType: TextInputType.number,
                                 ),
                               ),
@@ -241,14 +257,16 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Items List
                     if (_items.isEmpty)
-                      const Center(child: Padding(
+                      const Center(
+                          child: Padding(
                         padding: EdgeInsets.all(16.0),
-                        child: Text('No items added', style: TextStyle(color: Colors.grey)),
+                        child: Text('No items added',
+                            style: TextStyle(color: Colors.grey)),
                       ))
                     else
                       ListView.builder(
@@ -261,16 +279,19 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                             margin: const EdgeInsets.only(bottom: 8),
                             child: ListTile(
                               title: Text(item.description),
-                              subtitle: Text('${item.quantity} x ₹${item.unitPrice}'),
+                              subtitle:
+                                  Text('${item.quantity} x ₹${item.unitPrice}'),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
                                     '₹${item.totalPrice}',
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.delete, color: Colors.red),
+                                    icon: const Icon(Icons.delete,
+                                        color: Colors.red),
                                     onPressed: () => _removeItem(index),
                                   ),
                                 ],
@@ -283,7 +304,7 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                 ),
               ),
             ),
-            
+
             // Footer (Total)
             Container(
               padding: const EdgeInsets.all(16),
@@ -297,7 +318,10 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                   const Text('Total Amount:', style: TextStyle(fontSize: 18)),
                   Text(
                     '₹$_currentTotal',
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue),
+                    style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue),
                   ),
                 ],
               ),
@@ -308,4 +332,3 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
     );
   }
 }
-

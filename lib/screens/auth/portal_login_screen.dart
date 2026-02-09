@@ -140,7 +140,7 @@ class _PortalLoginScreenState extends State<PortalLoginScreen>
   Widget _buildBrandedSection({required bool isMobile}) {
     return Container(
       height: isMobile ? 200 : double.infinity,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -252,7 +252,7 @@ class _PortalLoginScreenState extends State<PortalLoginScreen>
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
+                  const Text(
                     'Welcome back! Please login to your account.',
                     style: TextStyle(
                       fontSize: 14,
@@ -289,7 +289,7 @@ class _PortalLoginScreenState extends State<PortalLoginScreen>
                       },
                     ),
                   ),
-                  SizedBox(height: DesignTokens.spacingMD),
+                  const SizedBox(height: DesignTokens.spacingMD),
 
                   // Password Field
                   EntranceAnimation(
@@ -355,9 +355,9 @@ class _GeometricPatternPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
-    final brickWidth = 80.0;
-    final brickHeight = 40.0;
-    final mortarGap = 2.0;
+    const brickWidth = 80.0;
+    const brickHeight = 40.0;
+    const mortarGap = 2.0;
 
     // Draw brick pattern
     for (double y = 0;

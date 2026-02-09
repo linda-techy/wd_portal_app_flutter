@@ -6,10 +6,11 @@ import '../../data/services/subcontract_service.dart';
 class RetentionDashboardScreen extends StatefulWidget {
   final int projectId;
 
-  const RetentionDashboardScreen({Key? key, required this.projectId}) : super(key: key);
+  const RetentionDashboardScreen({super.key, required this.projectId});
 
   @override
-  _RetentionDashboardScreenState createState() => _RetentionDashboardScreenState();
+  _RetentionDashboardScreenState createState() =>
+      _RetentionDashboardScreenState();
 }
 
 class _RetentionDashboardScreenState extends State<RetentionDashboardScreen> {
@@ -42,9 +43,9 @@ class _RetentionDashboardScreenState extends State<RetentionDashboardScreen> {
   }
 
   void _showReleaseDialog(SubcontractWorkOrder workOrder) {
-    final _amountController = TextEditingController();
-    final _notesController = TextEditingController();
-    
+    final amountController = TextEditingController();
+    final notesController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -54,40 +55,42 @@ class _RetentionDashboardScreenState extends State<RetentionDashboardScreen> {
           children: [
             Text('Accumulated: ${workOrder.totalRetentionAccumulated}'),
             TextField(
-              controller: _amountController,
+              controller: amountController,
               decoration: const InputDecoration(labelText: 'Amount to Release'),
               keyboardType: TextInputType.number,
             ),
             TextField(
-              controller: _notesController,
+              controller: notesController,
               decoration: const InputDecoration(labelText: 'Notes'),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
-               try {
-                 final amount = double.parse(_amountController.text);
-                 if (amount > workOrder.totalRetentionAccumulated) {
-                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot release more than accumulated')));
-                   return;
-                 }
-                 
-                 final release = RetentionRelease(
-                   workOrderId: workOrder.id!,
-                   amountReleased: amount,
-                   releaseDate: DateTime.now().toIso8601String().split('T')[0],
-                   notes: _notesController.text,
-                 );
-                 
-                 await _service.releaseRetention(release);
-                 Navigator.pop(ctx);
-                 _loadData(); // Refresh
-               } catch (e) {
-                 ErrorHandler.handleApiError(context, e);
-               }
+              try {
+                final amount = double.parse(amountController.text);
+                if (amount > workOrder.totalRetentionAccumulated) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Cannot release more than accumulated')));
+                  return;
+                }
+
+                final release = RetentionRelease(
+                  workOrderId: workOrder.id!,
+                  amountReleased: amount,
+                  releaseDate: DateTime.now().toIso8601String().split('T')[0],
+                  notes: notesController.text,
+                );
+
+                await _service.releaseRetention(release);
+                Navigator.pop(ctx);
+                _loadData(); // Refresh
+              } catch (e) {
+                ErrorHandler.handleApiError(context, e);
+              }
             },
             child: const Text('Release'),
           ),
@@ -114,8 +117,11 @@ class _RetentionDashboardScreenState extends State<RetentionDashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Scope: ${wo.scopeDescription}'),
-                        Text('Total Retention Held: ${wo.totalRetentionAccumulated}',
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                        Text(
+                            'Total Retention Held: ${wo.totalRetentionAccumulated}',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange)),
                       ],
                     ),
                     trailing: ElevatedButton(
@@ -129,4 +135,3 @@ class _RetentionDashboardScreenState extends State<RetentionDashboardScreen> {
     );
   }
 }
-

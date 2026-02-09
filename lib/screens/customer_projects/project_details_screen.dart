@@ -1039,7 +1039,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         context: context,
         builder: (context) => AlertDialog(
           title: Text(moduleName),
-          content: Text('$moduleName module for "${project.name}" will be implemented soon.'),
+          content: Text('The $moduleName module is not yet available for this project.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),

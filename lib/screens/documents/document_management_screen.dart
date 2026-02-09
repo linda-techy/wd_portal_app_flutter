@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/responsive_utils.dart';
+import 'create_document_screen.dart';
 import 'design_agreement_screen.dart';
 import 'approval_center_screen.dart';
 import 'package:provider/provider.dart';
@@ -89,7 +90,7 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.radiusMD),
-            side: BorderSide(color: AppTheme.borderLight),
+            side: const BorderSide(color: AppTheme.borderLight),
           ),
           child: InkWell(
             onTap: () {
@@ -106,11 +107,11 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(AppTheme.spacingMD),
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppTheme.statusWarningBg,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.pending_actions_outlined,
                       color: AppTheme.statusWarning,
                       size: 32,
@@ -139,7 +140,7 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
                       ],
                     ),
                   ),
-                  Icon(
+                  const Icon(
                     Icons.arrow_forward_ios,
                     color: AppTheme.textTertiary,
                     size: 16,
@@ -191,7 +192,7 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.radiusMD),
-        side: BorderSide(color: AppTheme.borderLight),
+        side: const BorderSide(color: AppTheme.borderLight),
       ),
       child: InkWell(
         onTap: () {
@@ -203,9 +204,13 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
               ),
             );
           } else {
-            // TODO: Navigate to specific document creation screen
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Create ${docType['title']}')),
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CreateDocumentScreen(
+                  documentType: docType['title'] as String,
+                ),
+              ),
             );
           }
         },

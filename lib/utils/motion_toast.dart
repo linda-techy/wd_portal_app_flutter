@@ -41,7 +41,7 @@ class MotionToast {
     );
 
     overlay.insert(entry);
-    
+
     // Announce to screen readers
     AccessibilityUtils.announceToScreenReader(context, message);
   }
@@ -53,7 +53,11 @@ class MotionToast {
     ToastPosition position = ToastPosition.bottom,
     Duration duration = const Duration(seconds: 3),
   }) {
-    show(context, message: message, variant: ToastVariant.success, position: position, duration: duration);
+    show(context,
+        message: message,
+        variant: ToastVariant.success,
+        position: position,
+        duration: duration);
   }
 
   static void showError(
@@ -62,7 +66,11 @@ class MotionToast {
     ToastPosition position = ToastPosition.bottom,
     Duration duration = const Duration(seconds: 4),
   }) {
-    show(context, message: message, variant: ToastVariant.error, position: position, duration: duration);
+    show(context,
+        message: message,
+        variant: ToastVariant.error,
+        position: position,
+        duration: duration);
   }
 
   static void showWarning(
@@ -71,7 +79,11 @@ class MotionToast {
     ToastPosition position = ToastPosition.bottom,
     Duration duration = const Duration(seconds: 3),
   }) {
-    show(context, message: message, variant: ToastVariant.warning, position: position, duration: duration);
+    show(context,
+        message: message,
+        variant: ToastVariant.warning,
+        position: position,
+        duration: duration);
   }
 
   static void showInfo(
@@ -80,7 +92,11 @@ class MotionToast {
     ToastPosition position = ToastPosition.bottom,
     Duration duration = const Duration(seconds: 3),
   }) {
-    show(context, message: message, variant: ToastVariant.info, position: position, duration: duration);
+    show(context,
+        message: message,
+        variant: ToastVariant.info,
+        position: position,
+        duration: duration);
   }
 }
 
@@ -107,7 +123,8 @@ class _ToastWidget extends StatefulWidget {
   State<_ToastWidget> createState() => _ToastWidgetState();
 }
 
-class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderStateMixin {
+class _ToastWidgetState extends State<_ToastWidget>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<Offset> _offsetAnimation;
   late Animation<double> _fadeAnimation;
@@ -230,7 +247,8 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
               decoration: BoxDecoration(
                 color: _backgroundColor,
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
-                boxShadow: DesignTokens.getShadowForElevation(DesignTokens.elevation4),
+                boxShadow:
+                    DesignTokens.getShadowForElevation(DesignTokens.elevation4),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -244,14 +262,15 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
                   Flexible(
                     child: Text(
                       widget.message,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: DesignTokens.fontSizeBodyMedium,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
-                  if (widget.actionLabel != null && widget.onAction != null) ...[
+                  if (widget.actionLabel != null &&
+                      widget.onAction != null) ...[
                     const SizedBox(width: DesignTokens.spacingMD),
                     TextButton(
                       onPressed: () {
@@ -269,7 +288,7 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
                       ),
                       child: Text(
                         widget.actionLabel!,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: DesignTokens.fontSizeBodySmall,
                           fontWeight: FontWeight.w600,

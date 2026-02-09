@@ -4,25 +4,29 @@ import 'package:intl/intl.dart';
 import '../../providers/subcontract_provider.dart';
 import '../../models/subcontract_models.dart';
 import '../../theme/app_theme.dart';
+import '../../config/app_config.dart';
 
 class RecordSubcontractPaymentScreen extends StatefulWidget {
   final int workOrderId;
   final double balanceDue;
 
   const RecordSubcontractPaymentScreen({
-    Key? key,
+    super.key,
     required this.workOrderId,
     required this.balanceDue,
-  }) : super(key: key);
+  });
 
   @override
-  State<RecordSubcontractPaymentScreen> createState() => _RecordSubcontractPaymentScreenState();
+  State<RecordSubcontractPaymentScreen> createState() =>
+      _RecordSubcontractPaymentScreenState();
 }
 
-class _RecordSubcontractPaymentScreenState extends State<RecordSubcontractPaymentScreen> {
+class _RecordSubcontractPaymentScreenState
+    extends State<RecordSubcontractPaymentScreen> {
   final _formKey = GlobalKey<FormState>();
   final _grossAmountController = TextEditingController();
-  final _tdsRateController = TextEditingController(text: '1.0'); // Default 1% for Individual/HUF, 2% otherwise
+  final _tdsRateController = TextEditingController(
+      text: '1.0'); // Default 1% for Individual/HUF, 2% otherwise
   final _otherDeductionsController = TextEditingController(text: '0');
   final _referenceController = TextEditingController();
   final _notesController = TextEditingController();
@@ -32,7 +36,13 @@ class _RecordSubcontractPaymentScreenState extends State<RecordSubcontractPaymen
   double _calculatedNet = 0;
   double _calculatedTds = 0;
 
-  final List<String> _paymentModes = ['BANK_TRANSFER', 'CHEQUE', 'CASH', 'UPI', 'DEMAND_DRAFT'];
+  final List<String> _paymentModes = [
+    'BANK_TRANSFER',
+    'CHEQUE',
+    'CASH',
+    'UPI',
+    'DEMAND_DRAFT'
+  ];
 
   @override
   void initState() {
@@ -70,7 +80,7 @@ class _RecordSubcontractPaymentScreenState extends State<RecordSubcontractPaymen
     final picked = await showDatePicker(
       context: context,
       initialDate: _paymentDate,
-      firstDate: DateTime(2020),
+      firstDate: AppConfig.datePickerFirstDate,
       lastDate: DateTime.now(),
     );
     if (picked != null && picked != _paymentDate) {
@@ -83,11 +93,13 @@ class _RecordSubcontractPaymentScreenState extends State<RecordSubcontractPaymen
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<SubcontractProvider>();
-    final currencyFormat = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+    final currencyFormat =
+        NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Record Payment', style: TextStyle(color: Colors.white)),
+        title:
+            const Text('Record Payment', style: TextStyle(color: Colors.white)),
         backgroundColor: AppTheme.deepSlate,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -108,15 +120,20 @@ class _RecordSubcontractPaymentScreenState extends State<RecordSubcontractPaymen
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.account_balance_wallet, color: Colors.blue),
+                    const Icon(Icons.account_balance_wallet,
+                        color: Colors.blue),
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Current Balance Due', style: TextStyle(color: Colors.blue, fontSize: 12)),
+                        const Text('Current Balance Due',
+                            style: TextStyle(color: Colors.blue, fontSize: 12)),
                         Text(
                           currencyFormat.format(widget.balanceDue),
-                          style: const TextStyle(color: Colors.blue, fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              color: Colors.blue,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -182,10 +199,16 @@ class _RecordSubcontractPaymentScreenState extends State<RecordSubcontractPaymen
                 child: Column(
                   children: [
                     _buildCalcRow('Gross Amount', _grossAmountController.text),
-                    _buildCalcRow('Less: TDS (${_tdsRateController.text}%)', '- ${currencyFormat.format(_calculatedTds)}', color: Colors.red),
-                    _buildCalcRow('Less: Deductions', '- ${currencyFormat.format(double.tryParse(_otherDeductionsController.text) ?? 0)}', color: Colors.red),
+                    _buildCalcRow('Less: TDS (${_tdsRateController.text}%)',
+                        '- ${currencyFormat.format(_calculatedTds)}',
+                        color: Colors.red),
+                    _buildCalcRow('Less: Deductions',
+                        '- ${currencyFormat.format(double.tryParse(_otherDeductionsController.text) ?? 0)}',
+                        color: Colors.red),
                     const Divider(),
-                    _buildCalcRow('Net Payable', currencyFormat.format(_calculatedNet), isBold: true, color: Colors.green),
+                    _buildCalcRow(
+                        'Net Payable', currencyFormat.format(_calculatedNet),
+                        isBold: true, color: Colors.green),
                   ],
                 ),
               ),
@@ -199,7 +222,9 @@ class _RecordSubcontractPaymentScreenState extends State<RecordSubcontractPaymen
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.category),
                 ),
-                items: _paymentModes.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+                items: _paymentModes
+                    .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                    .toList(),
                 onChanged: (val) => setState(() => _paymentMode = val!),
               ),
               const SizedBox(height: 16),
@@ -245,11 +270,13 @@ class _RecordSubcontractPaymentScreenState extends State<RecordSubcontractPaymen
                   onPressed: provider.isLoading ? null : _submitPayment,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.coralRed,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                   child: provider.isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Record Payment', style: TextStyle(fontSize: 16, color: Colors.white)),
+                      : const Text('Record Payment',
+                          style: TextStyle(fontSize: 16, color: Colors.white)),
                 ),
               ),
             ],
@@ -259,13 +286,16 @@ class _RecordSubcontractPaymentScreenState extends State<RecordSubcontractPaymen
     );
   }
 
-  Widget _buildCalcRow(String label, String value, {bool isBold = false, Color? color}) {
+  Widget _buildCalcRow(String label, String value,
+      {bool isBold = false, Color? color}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
+          Text(label,
+              style: TextStyle(
+                  fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
           Text(
             value,
             style: TextStyle(
@@ -283,7 +313,8 @@ class _RecordSubcontractPaymentScreenState extends State<RecordSubcontractPaymen
     if (_formKey.currentState!.validate()) {
       if (_calculatedNet <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Net payable amount must be greater than zero')),
+          const SnackBar(
+              content: Text('Net payable amount must be greater than zero')),
         );
         return;
       }
@@ -302,9 +333,7 @@ class _RecordSubcontractPaymentScreenState extends State<RecordSubcontractPaymen
       );
 
       try {
-        // TODO: Implement recordPayment method in SubcontractProvider
-        // await context.read<SubcontractProvider>().recordPayment(payment);
-        throw Exception('recordPayment method not yet implemented in SubcontractProvider');
+        await context.read<SubcontractProvider>().recordPayment(payment);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Payment recorded successfully')),
@@ -314,11 +343,10 @@ class _RecordSubcontractPaymentScreenState extends State<RecordSubcontractPaymen
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e')),
+            SnackBar(content: Text('Error recording payment: $e')),
           );
         }
       }
     }
   }
 }
-

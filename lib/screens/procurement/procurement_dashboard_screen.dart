@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:admin/constants.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/screens/procurement/vendor_list_screen.dart';
 import 'package:admin/screens/procurement/po_list_screen.dart';

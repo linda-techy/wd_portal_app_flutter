@@ -3,12 +3,12 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/features/leads/data/models/lead_quotation.dart';
 import 'package:admin/features/leads/data/services/lead_quotation_service.dart';
-import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/utils/motion_toast.dart';
 import 'package:admin/utils/error_handler.dart';
 import 'package:admin/utils/file_download_helper.dart';
+import 'package:admin/features/leads/data/services/lead_service.dart';
 import 'add_quotation_screen.dart';
 
 class LeadQuotationDetailScreen extends StatefulWidget {
@@ -271,45 +271,51 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
     }
   }
 
-  void _editQuotation() {
+  Future<void> _editQuotation() async {
     if (_quotation == null) return;
 
-    // Create a minimal Lead object from quotation data
-    // In a real scenario, you might want to fetch the full lead
-    final lead = Lead(
-      leadId: _quotation!.leadId.toString(),
-      name:
-          'Lead ${_quotation!.leadId}', // Placeholder - ideally fetch from API
-      email: '',
-      phone: '',
-      source: LeadSource.website,
-      createdAt: DateTime.now(),
-      status: '',
-      priority: LeadPriority.medium,
-      customerType: '',
-      projectType: '',
-      assignedTeam: '',
-      state: '',
-      district: '',
-      location: '',
-      address: '',
-      projectDescription: '',
-      requirements: '',
-    );
+    // Show loading indicator while fetching lead
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => const Center(child: CircularProgressIndicator()),
+      );
+    }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddQuotationScreen(
-          lead: lead,
-          quotationToEdit: _quotation,
-        ),
-      ),
-    ).then((result) {
-      if (result == true) {
-        _loadQuotation();
+    try {
+      final leadService = LeadService();
+      final lead = await leadService.getLeadById(_quotation!.leadId.toString());
+
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
       }
-    });
+
+      // Navigate to edit screen with fetched lead
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AddQuotationScreen(
+              lead: lead,
+              quotationToEdit: _quotation,
+            ),
+          ),
+        ).then((result) {
+          if (result == true) {
+            _loadQuotation();
+          }
+        });
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (mounted) {
+        Navigator.of(context).pop();
+        await ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'Failed to load lead details');
+      }
+    }
   }
 
   Color _getStatusColor(String status) {

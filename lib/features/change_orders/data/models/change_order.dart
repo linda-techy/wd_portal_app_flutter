@@ -1,4 +1,3 @@
-
 class ChangeOrder {
   final int? id;
   final int projectId;
@@ -25,21 +24,29 @@ class ChangeOrder {
   factory ChangeOrder.fromJson(Map<String, dynamic> json) {
     return ChangeOrder(
       id: json['id'],
-      projectId: json['project'] != null ? json['project']['id'] : 0, // Handle nested project object if needed
+      projectId: json['project'] != null
+          ? json['project']['id']
+          : 0, // Handle nested project object if needed
       description: json['description'],
       estimatedAmount: (json['estimatedAmount'] as num).toDouble(),
       clientApproved: json['clientApproved'] ?? false,
       status: json['status'] ?? 'DRAFT',
       notes: json['notes'],
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
-      approvedAt: json['approved_at'] != null ? DateTime.parse(json['approved_at']) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
+      approvedAt: json['approved_at'] != null
+          ? DateTime.parse(json['approved_at'])
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'project': {'id': projectId}, // Send as object reference usually expected by JPA
+      'project': {
+        'id': projectId
+      }, // Send as object reference usually expected by JPA
       'description': description,
       'estimatedAmount': estimatedAmount,
       'clientApproved': clientApproved,
@@ -65,8 +72,8 @@ class ChangeOrder {
       clientApproved: clientApproved ?? this.clientApproved,
       status: status ?? this.status,
       notes: notes ?? this.notes,
-      createdAt: this.createdAt,
-      approvedAt: this.approvedAt,
+      createdAt: createdAt,
+      approvedAt: approvedAt,
     );
   }
 }

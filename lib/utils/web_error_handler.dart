@@ -29,9 +29,7 @@ class WebErrorHandler {
 
   /// Add web-specific error handlers
   static void _addWebErrorHandlers() {
-    // Note: This is a placeholder for web-specific error handling
-    // In a real implementation, you might use dart:html or js interop
-    // to add JavaScript event listeners for unhandled promise rejections
+    // Web error handlers are a no-op until a web error monitoring service is configured.
 
     if (kDebugMode) {
       debugPrint('Web error handlers initialized');
@@ -54,10 +52,9 @@ class WebErrorHandler {
     }
   }
 
-  /// Report error to external service (placeholder)
+  /// Report error to external service. Currently a no-op; implement when a service is configured.
   static void _reportError(dynamic error, StackTrace? stackTrace) {
-    // Implement error reporting logic here
-    // For example, send to Sentry, Crashlytics, etc.
+    // Error reporting is a no-op. Implement when integrating with an error reporting service (e.g., Sentry, Crashlytics).
   }
 
   /// Safe async operation wrapper

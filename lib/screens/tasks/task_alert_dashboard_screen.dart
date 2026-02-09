@@ -2,13 +2,13 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../../models/task_models.dart';
 import '../../services/task_service.dart';
-import '../../theme/app_theme.dart';
 
 class TaskAlertDashboardScreen extends StatefulWidget {
   const TaskAlertDashboardScreen({super.key});
 
   @override
-  State<TaskAlertDashboardScreen> createState() => _TaskAlertDashboardScreenState();
+  State<TaskAlertDashboardScreen> createState() =>
+      _TaskAlertDashboardScreenState();
 }
 
 class _TaskAlertDashboardScreenState extends State<TaskAlertDashboardScreen> {
@@ -80,7 +80,8 @@ class _TaskAlertDashboardScreenState extends State<TaskAlertDashboardScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Error loading dashboard: $_error', style: const TextStyle(color: Colors.red)),
+            Text('Error loading dashboard: $_error',
+                style: const TextStyle(color: Colors.red)),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadData,
@@ -146,16 +147,20 @@ class _TaskAlertDashboardScreenState extends State<TaskAlertDashboardScreen> {
 
     return Row(
       children: [
-        _buildStatCard('Critical Alerts', critical.toString(), Colors.red, Icons.warning_amber),
+        _buildStatCard('Critical Alerts', critical.toString(), Colors.red,
+            Icons.warning_amber),
         const SizedBox(width: 16),
-        _buildStatCard('High Priority', high.toString(), Colors.orange, Icons.priority_high),
+        _buildStatCard('High Priority', high.toString(), Colors.orange,
+            Icons.priority_high),
         const SizedBox(width: 16),
-        _buildStatCard('Medium Priority', medium.toString(), Colors.blue, Icons.notifications_none),
+        _buildStatCard('Medium Priority', medium.toString(), Colors.blue,
+            Icons.notifications_none),
       ],
     );
   }
 
-  Widget _buildStatCard(String title, String value, Color color, IconData icon) {
+  Widget _buildStatCard(
+      String title, String value, Color color, IconData icon) {
     return Expanded(
       child: Card(
         elevation: 2,
@@ -222,23 +227,31 @@ class _TaskAlertDashboardScreenState extends State<TaskAlertDashboardScreen> {
                       PieChartSectionData(
                           color: Colors.red,
                           value: critical,
-                          title: '${(critical / total * 100).toStringAsFixed(0)}%',
+                          title:
+                              '${(critical / total * 100).toStringAsFixed(0)}%',
                           radius: 50,
-                          titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          titleStyle: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold)),
                     if (high > 0)
                       PieChartSectionData(
                           color: Colors.orange,
                           value: high,
                           title: '${(high / total * 100).toStringAsFixed(0)}%',
                           radius: 50,
-                          titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          titleStyle: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold)),
                     if (medium > 0)
                       PieChartSectionData(
                           color: Colors.blue,
                           value: medium,
-                          title: '${(medium / total * 100).toStringAsFixed(0)}%',
+                          title:
+                              '${(medium / total * 100).toStringAsFixed(0)}%',
                           radius: 50,
-                          titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          titleStyle: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -279,7 +292,8 @@ class _TaskAlertDashboardScreenState extends State<TaskAlertDashboardScreen> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             if (_recentAlerts.isEmpty)
-              const Center(child: Padding(
+              const Center(
+                  child: Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Text('No recent alerts'),
               ))
@@ -293,14 +307,16 @@ class _TaskAlertDashboardScreenState extends State<TaskAlertDashboardScreen> {
                   final alert = _recentAlerts[index];
                   return ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: _getSeverityColor(alert.severity).withOpacity(0.1),
+                      backgroundColor:
+                          _getSeverityColor(alert.severity).withOpacity(0.1),
                       child: Icon(
                         _getSeverityIcon(alert.severity),
                         color: _getSeverityColor(alert.severity),
                         size: 20,
                       ),
                     ),
-                    title: Text(alert.taskTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    title: Text(alert.taskTitle,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -309,7 +325,8 @@ class _TaskAlertDashboardScreenState extends State<TaskAlertDashboardScreen> {
                         const SizedBox(height: 4),
                         Text(
                           '${alert.alertType} • ${alert.sentAt.toString().substring(0, 16)}', // Simple format
-                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                          style:
+                              TextStyle(fontSize: 12, color: Colors.grey[600]),
                         ),
                       ],
                     ),
@@ -348,4 +365,3 @@ class _TaskAlertDashboardScreenState extends State<TaskAlertDashboardScreen> {
     }
   }
 }
-

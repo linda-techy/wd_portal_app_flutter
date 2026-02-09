@@ -20,7 +20,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   List<CustomerProject> _projects = [];
   CustomerProject? _selectedProject;
   DateTime _attendanceDate = DateTime.now();
-  Map<int, String> _attendanceMap = {}; // labourId -> status
+  final Map<int, String> _attendanceMap = {}; // labourId -> status
 
   @override
   void initState() {
@@ -81,8 +81,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                               DateTime.now().subtract(const Duration(days: 30)),
                           lastDate: DateTime.now(),
                         );
-                        if (picked != null)
+                        if (picked != null) {
                           setState(() => _attendanceDate = picked);
+                        }
                       },
                     ),
                   ],

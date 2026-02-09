@@ -4,6 +4,7 @@ import 'package:admin/features/labour/data/models/labour_models.dart';
 import 'package:admin/features/labour/data/services/labour_service.dart';
 import 'package:admin/services/crm_service.dart';
 import 'package:admin/models/customer_project.dart';
+import 'package:admin/config/app_config.dart';
 
 class WageSheetScreen extends StatefulWidget {
   final int? projectId;
@@ -70,7 +71,6 @@ class _WageSheetScreenState extends State<WageSheetScreen> {
       });
     } catch (e) {
       // Show more descriptive error
-      print('Wage sheet error: $e'); // For debugging
       setState(() {
         _isLoading = false;
       });
@@ -84,7 +84,7 @@ class _WageSheetScreenState extends State<WageSheetScreen> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: isStart ? _startDate : _endDate,
-      firstDate: DateTime(2020),
+      firstDate: AppConfig.datePickerFirstDate,
       lastDate: DateTime(2030),
     );
     if (picked != null) {

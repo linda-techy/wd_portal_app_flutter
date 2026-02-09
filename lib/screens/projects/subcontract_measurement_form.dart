@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../providers/subcontract_provider.dart';
 import '../../models/subcontract_models.dart';
 import '../../theme/app_theme.dart';
+import '../../config/app_config.dart';
 
 /// Measurement Entry Form
 /// Form to record a new measurement for unit-rate subcontracts
@@ -161,7 +162,7 @@ class _SubcontractMeasurementFormState extends State<SubcontractMeasurementForm>
                 final date = await showDatePicker(
                   context: context,
                   initialDate: _measurementDate,
-                  firstDate: DateTime(2020),
+                  firstDate: AppConfig.datePickerFirstDate,
                   lastDate: DateTime.now(),
                 );
                 if (date != null) {

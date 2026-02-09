@@ -13,7 +13,7 @@ class DesignAgreementScreen extends StatefulWidget {
 
 class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Form Controllers
   final _clientNameController = TextEditingController();
   final _projectAreaController = TextEditingController();
@@ -65,7 +65,6 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
                   icon: Icons.square_foot_outlined,
                   keyboardType: TextInputType.number,
                 ),
-                
                 const SizedBox(height: AppTheme.spacingXL),
                 _buildSectionTitle('Fee Structure'),
                 const SizedBox(height: AppTheme.spacingMD),
@@ -75,7 +74,6 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
                   icon: Icons.currency_rupee,
                   keyboardType: TextInputType.number,
                 ),
-
                 const SizedBox(height: AppTheme.spacingXL),
                 _buildSectionTitle('Payment Schedule Rates'),
                 const SizedBox(height: AppTheme.spacingMD),
@@ -99,7 +97,6 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
                   icon: Icons.payments_outlined,
                   keyboardType: TextInputType.number,
                 ),
-
                 const SizedBox(height: AppTheme.spacingXL),
                 SizedBox(
                   width: double.infinity,
@@ -157,11 +154,11 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppTheme.radiusMD),
-          borderSide: BorderSide(color: AppTheme.borderLight),
+          borderSide: const BorderSide(color: AppTheme.borderLight),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppTheme.radiusMD),
-          borderSide: BorderSide(color: AppTheme.primaryBlue, width: 2),
+          borderSide: const BorderSide(color: AppTheme.primaryBlue, width: 2),
         ),
         filled: true,
         fillColor: AppTheme.surface,
@@ -179,14 +176,20 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
     if (_formKey.currentState!.validate()) {
       // Get values from controllers
       String content = DesignAgreementTemplate.htmlContent;
-      
+
       // Replace placeholders
-      content = content.replaceAll('{{CLIENT_NAME}}', _clientNameController.text);
-      content = content.replaceAll('{{TOTAL_PROJECT_AREA}}', _projectAreaController.text);
-      content = content.replaceAll('{{DESIGN_FEE_PER_SFT}}', _designFeeController.text);
-      content = content.replaceAll('{{ADVANCE_PAYMENT_RATE}}', _advanceRateController.text);
-      content = content.replaceAll('{{PRELIMINARY_DESIGN_PAYMENT_RATE}}', _preliminaryRateController.text);
-      content = content.replaceAll('{{INTERIOR_DESIGN_PAYMENT_RATE}}', _interiorRateController.text);
+      content =
+          content.replaceAll('{{CLIENT_NAME}}', _clientNameController.text);
+      content = content.replaceAll(
+          '{{TOTAL_PROJECT_AREA}}', _projectAreaController.text);
+      content = content.replaceAll(
+          '{{DESIGN_FEE_PER_SFT}}', _designFeeController.text);
+      content = content.replaceAll(
+          '{{ADVANCE_PAYMENT_RATE}}', _advanceRateController.text);
+      content = content.replaceAll('{{PRELIMINARY_DESIGN_PAYMENT_RATE}}',
+          _preliminaryRateController.text);
+      content = content.replaceAll(
+          '{{INTERIOR_DESIGN_PAYMENT_RATE}}', _interiorRateController.text);
 
       // Download functionality - web only
       if (kIsWeb) {
@@ -195,7 +198,8 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
         // For now, we'll show the content in a dialog or copy to clipboard
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Agreement generated! Content ready for download.'),
+            content:
+                const Text('Agreement generated! Content ready for download.'),
             backgroundColor: AppTheme.statusSuccess,
             action: SnackBarAction(
               label: 'Copy',
@@ -217,4 +221,3 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
     }
   }
 }
-

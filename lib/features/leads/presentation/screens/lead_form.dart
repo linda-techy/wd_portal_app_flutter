@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/models/lead.dart';
 import 'package:admin/utils/india_location_data.dart';
+import 'package:admin/config/app_config.dart';
 
 class LeadForm extends StatefulWidget {
   final Lead? lead;
@@ -153,7 +154,7 @@ class _LeadFormState extends State<LeadForm> {
                 final picked = await showDatePicker(
                   context: context,
                   initialDate: dateOfEnquiry ?? DateTime.now(),
-                  firstDate: DateTime(2020),
+                  firstDate: AppConfig.datePickerFirstDate,
                   lastDate: DateTime.now(),
                 );
                 if (picked != null) setState(() => dateOfEnquiry = picked);

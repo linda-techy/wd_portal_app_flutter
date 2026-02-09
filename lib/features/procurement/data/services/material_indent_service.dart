@@ -18,7 +18,7 @@ class MaterialIndentService {
         throw Exception(response.data['message']);
       }
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 
@@ -35,7 +35,7 @@ class MaterialIndentService {
         throw Exception(response.data['message']);
       }
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
   // Quotation Management

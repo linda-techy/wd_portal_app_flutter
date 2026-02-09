@@ -224,7 +224,7 @@ class TaskListScreen extends StatelessWidget {
                   _buildPriorityBadge(task.priority.toApiString()),
                 ],
               ),
-              if (task.description != null) ...[
+              ...[
                 const SizedBox(height: 8),
                 Text(
                   task.description!,
@@ -393,7 +393,7 @@ class TaskListScreen extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => TaskDetailScreen(taskId: task.id!),
+        builder: (context) => TaskDetailScreen(taskId: task.id),
       ),
     );
   }

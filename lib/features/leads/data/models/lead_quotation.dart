@@ -51,21 +51,45 @@ class LeadQuotation {
       version: json['version'] ?? 1,
       title: json['title'],
       description: json['description'],
-      totalAmount: (json['totalAmount'] ?? json['total_amount'] as num?)?.toDouble(),
+      totalAmount:
+          (json['totalAmount'] ?? json['total_amount'] as num?)?.toDouble(),
       taxAmount: (json['taxAmount'] ?? json['tax_amount'] as num?)?.toDouble(),
-      discountAmount: (json['discountAmount'] ?? json['discount_amount'] as num?)?.toDouble(),
-      finalAmount: (json['finalAmount'] ?? json['final_amount'] as num?)?.toDouble(),
+      discountAmount:
+          (json['discountAmount'] ?? json['discount_amount'] as num?)
+              ?.toDouble(),
+      finalAmount:
+          (json['finalAmount'] ?? json['final_amount'] as num?)?.toDouble(),
       validityDays: json['validityDays'] ?? json['validity_days'] ?? 30,
       status: json['status'] ?? 'DRAFT',
-      sentAt: json['sentAt'] != null ? DateTime.parse(json['sentAt']) : (json['sent_at'] != null ? DateTime.parse(json['sent_at']) : null),
-      viewedAt: json['viewedAt'] != null ? DateTime.parse(json['viewedAt']) : (json['viewed_at'] != null ? DateTime.parse(json['viewed_at']) : null),
-      respondedAt: json['respondedAt'] != null ? DateTime.parse(json['respondedAt']) : (json['responded_at'] != null ? DateTime.parse(json['responded_at']) : null),
+      sentAt: json['sentAt'] != null
+          ? DateTime.parse(json['sentAt'])
+          : (json['sent_at'] != null ? DateTime.parse(json['sent_at']) : null),
+      viewedAt: json['viewedAt'] != null
+          ? DateTime.parse(json['viewedAt'])
+          : (json['viewed_at'] != null
+              ? DateTime.parse(json['viewed_at'])
+              : null),
+      respondedAt: json['respondedAt'] != null
+          ? DateTime.parse(json['respondedAt'])
+          : (json['responded_at'] != null
+              ? DateTime.parse(json['responded_at'])
+              : null),
       createdById: json['createdById'] ?? json['created_by_id'],
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : (json['created_at'] != null ? DateTime.parse(json['created_at']) : null),
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : (json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null),
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : (json['created_at'] != null
+              ? DateTime.parse(json['created_at'])
+              : null),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'])
+          : (json['updated_at'] != null
+              ? DateTime.parse(json['updated_at'])
+              : null),
       notes: json['notes'],
       items: json['items'] != null
-          ? (json['items'] as List).map((i) => LeadQuotationItem.fromJson(i)).toList()
+          ? (json['items'] as List)
+              .map((i) => LeadQuotationItem.fromJson(i))
+              .toList()
           : [],
     );
   }
@@ -133,13 +157,13 @@ class LeadQuotation {
       validityDays: validityDays ?? this.validityDays,
       status: status ?? this.status,
       items: items ?? this.items,
-      sentAt: this.sentAt,
-      viewedAt: this.viewedAt,
-      respondedAt: this.respondedAt,
-      createdById: this.createdById,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-      notes: this.notes,
+      sentAt: sentAt,
+      viewedAt: viewedAt,
+      respondedAt: respondedAt,
+      createdById: createdById,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      notes: notes,
     );
   }
 }

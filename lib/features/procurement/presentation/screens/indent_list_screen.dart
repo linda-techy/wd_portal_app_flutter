@@ -8,7 +8,7 @@ import 'quotation_management_screen.dart';
 class IndentListScreen extends StatefulWidget {
   final int projectId;
 
-  const IndentListScreen({Key? key, required this.projectId}) : super(key: key);
+  const IndentListScreen({super.key, required this.projectId});
 
   @override
   _IndentListScreenState createState() => _IndentListScreenState();
@@ -46,7 +46,8 @@ class _IndentListScreenState extends State<IndentListScreen> {
   void _navigateToCreate() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => IndentCreationScreen(projectId: widget.projectId)),
+      MaterialPageRoute(
+          builder: (_) => IndentCreationScreen(projectId: widget.projectId)),
     );
     if (result == true) {
       _loadIndents();
@@ -55,10 +56,14 @@ class _IndentListScreenState extends State<IndentListScreen> {
 
   Color _getStatusColor(String status) {
     switch (status) {
-      case 'APPROVED': return Colors.green;
-      case 'REJECTED': return Colors.red;
-      case 'SUBMITTED': return Colors.blue;
-      default: return Colors.grey;
+      case 'APPROVED':
+        return Colors.green;
+      case 'REJECTED':
+        return Colors.red;
+      case 'SUBMITTED':
+        return Colors.blue;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -81,23 +86,30 @@ class _IndentListScreenState extends State<IndentListScreen> {
                     itemBuilder: (context, index) {
                       final indent = _indents[index];
                       return Card(
-                        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
                         child: ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: _getStatusColor(indent.status).withOpacity(0.2),
-                            child: Icon(Icons.assignment, color: _getStatusColor(indent.status)),
+                            backgroundColor:
+                                _getStatusColor(indent.status).withOpacity(0.2),
+                            child: Icon(Icons.assignment,
+                                color: _getStatusColor(indent.status)),
                           ),
                           title: Text(indent.indentNumber ?? 'Draft'),
-                          subtitle: Text('Items: ${indent.items.length} | Date: ${indent.requestDate}'),
+                          subtitle: Text(
+                              'Items: ${indent.items.length} | Date: ${indent.requestDate}'),
                           trailing: Chip(
-                            label: Text(indent.status, style: const TextStyle(fontSize: 10)),
-                            backgroundColor: _getStatusColor(indent.status).withOpacity(0.1),
+                            label: Text(indent.status,
+                                style: const TextStyle(fontSize: 10)),
+                            backgroundColor:
+                                _getStatusColor(indent.status).withOpacity(0.1),
                           ),
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => QuotationManagementScreen(indent: indent),
+                                builder: (_) =>
+                                    QuotationManagementScreen(indent: indent),
                               ),
                             );
                           },
@@ -109,4 +121,3 @@ class _IndentListScreenState extends State<IndentListScreen> {
     );
   }
 }
-

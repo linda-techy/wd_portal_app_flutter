@@ -1,5 +1,3 @@
-import 'material_indent.dart';
-
 class VendorQuotation {
   final int? id;
   final int indentId;
@@ -15,7 +13,7 @@ class VendorQuotation {
   final String status; // PENDING, SELECTED, REJECTED, EXPIRED
   final DateTime? selectedAt;
   final DateTime? createdAt;
-  
+
   // Transient/UI fields
   final String? vendorName;
 
@@ -44,15 +42,26 @@ class VendorQuotation {
       vendorId: json['vendorId'] ?? json['vendor']?['id'],
       quotedAmount: (json['quotedAmount'] as num).toDouble(),
       itemsIncluded: json['itemsIncluded'],
-      deliveryCharges: json['deliveryCharges'] != null ? (json['deliveryCharges'] as num).toDouble() : null,
-      taxAmount: json['taxAmount'] != null ? (json['taxAmount'] as num).toDouble() : null,
-      expectedDeliveryDate: json['expectedDeliveryDate'] != null ? DateTime.parse(json['expectedDeliveryDate']) : null,
-      validUntil: json['validUntil'] != null ? DateTime.parse(json['validUntil']) : null,
+      deliveryCharges: json['deliveryCharges'] != null
+          ? (json['deliveryCharges'] as num).toDouble()
+          : null,
+      taxAmount: json['taxAmount'] != null
+          ? (json['taxAmount'] as num).toDouble()
+          : null,
+      expectedDeliveryDate: json['expectedDeliveryDate'] != null
+          ? DateTime.parse(json['expectedDeliveryDate'])
+          : null,
+      validUntil: json['validUntil'] != null
+          ? DateTime.parse(json['validUntil'])
+          : null,
       documentUrl: json['documentUrl'],
       notes: json['notes'],
       status: json['status'] ?? 'PENDING',
-      selectedAt: json['selectedAt'] != null ? DateTime.parse(json['selectedAt']) : null,
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      selectedAt: json['selectedAt'] != null
+          ? DateTime.parse(json['selectedAt'])
+          : null,
+      createdAt:
+          json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       vendorName: json['vendor']?['name'],
     );
   }
@@ -66,7 +75,8 @@ class VendorQuotation {
       'itemsIncluded': itemsIncluded,
       'deliveryCharges': deliveryCharges,
       'taxAmount': taxAmount,
-      'expectedDeliveryDate': expectedDeliveryDate?.toIso8601String().split('T')[0],
+      'expectedDeliveryDate':
+          expectedDeliveryDate?.toIso8601String().split('T')[0],
       'validUntil': validUntil?.toIso8601String().split('T')[0],
       'documentUrl': documentUrl,
       'notes': notes,

@@ -108,9 +108,11 @@ class _SiteVisitDetailScreenState extends State<SiteVisitDetailScreen> {
           // Notes
           if (visit.notes != null && visit.notes!.isNotEmpty)
             _buildNotesCard('Visit Notes', visit.notes!, Icons.notes),
-          if (visit.checkOutNotes != null && visit.checkOutNotes!.isNotEmpty) ...[
+          if (visit.checkOutNotes != null &&
+              visit.checkOutNotes!.isNotEmpty) ...[
             const SizedBox(height: 12),
-            _buildNotesCard('Check-out Notes', visit.checkOutNotes!, Icons.logout),
+            _buildNotesCard(
+                'Check-out Notes', visit.checkOutNotes!, Icons.logout),
           ],
         ],
       ),
@@ -129,7 +131,8 @@ class _SiteVisitDetailScreenState extends State<SiteVisitDetailScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: _getStatusColor(visit.visitStatus ?? '').withOpacity(0.1),
+                color:
+                    _getStatusColor(visit.visitStatus ?? '').withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
@@ -206,8 +209,10 @@ class _SiteVisitDetailScreenState extends State<SiteVisitDetailScreen> {
               ),
             if (visit.formattedDuration != null)
               _buildInfoRow(Icons.timer, 'Duration', visit.formattedDuration!),
-            if (visit.durationMinutes != null && visit.formattedDuration == null)
-              _buildInfoRow(Icons.timer, 'Duration', '${visit.durationMinutes} min'),
+            if (visit.durationMinutes != null &&
+                visit.formattedDuration == null)
+              _buildInfoRow(
+                  Icons.timer, 'Duration', '${visit.durationMinutes} min'),
           ],
         ),
       ),
@@ -248,7 +253,8 @@ class _SiteVisitDetailScreenState extends State<SiteVisitDetailScreen> {
                         color: AppTheme.successGreen.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.login, size: 16, color: AppTheme.successGreen),
+                      child: const Icon(Icons.login,
+                          size: 16, color: AppTheme.successGreen),
                     ),
                     Container(
                       width: 2,
@@ -266,23 +272,28 @@ class _SiteVisitDetailScreenState extends State<SiteVisitDetailScreen> {
                     children: [
                       const Text(
                         'Check-In',
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 14),
                       ),
                       if (visit.checkInTime != null)
                         Text(
-                          DateFormat('MMM d, yyyy • h:mm a').format(visit.checkInTime!),
-                          style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                          DateFormat('MMM d, yyyy • h:mm a')
+                              .format(visit.checkInTime!),
+                          style: const TextStyle(
+                              fontSize: 13, color: AppTheme.textSecondary),
                         ),
                       if (visit.formattedCheckInDistance != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 2),
                           child: Row(
                             children: [
-                              const Icon(Icons.gps_fixed, size: 12, color: AppTheme.successGreen),
+                              const Icon(Icons.gps_fixed,
+                                  size: 12, color: AppTheme.successGreen),
                               const SizedBox(width: 4),
                               Text(
                                 '${visit.formattedCheckInDistance} from site',
-                                style: const TextStyle(fontSize: 12, color: AppTheme.successGreen),
+                                style: const TextStyle(
+                                    fontSize: 12, color: AppTheme.successGreen),
                               ),
                             ],
                           ),
@@ -308,7 +319,9 @@ class _SiteVisitDetailScreenState extends State<SiteVisitDetailScreen> {
                   child: Icon(
                     Icons.logout,
                     size: 16,
-                    color: visit.checkOutTime != null ? AppTheme.coralRed : AppTheme.textTertiary,
+                    color: visit.checkOutTime != null
+                        ? AppTheme.coralRed
+                        : AppTheme.textTertiary,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -328,8 +341,10 @@ class _SiteVisitDetailScreenState extends State<SiteVisitDetailScreen> {
                       ),
                       if (visit.checkOutTime != null)
                         Text(
-                          DateFormat('MMM d, yyyy • h:mm a').format(visit.checkOutTime!),
-                          style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                          DateFormat('MMM d, yyyy • h:mm a')
+                              .format(visit.checkOutTime!),
+                          style: const TextStyle(
+                              fontSize: 13, color: AppTheme.textSecondary),
                         )
                       else
                         const Text(
@@ -345,11 +360,13 @@ class _SiteVisitDetailScreenState extends State<SiteVisitDetailScreen> {
                           padding: const EdgeInsets.only(top: 2),
                           child: Row(
                             children: [
-                              const Icon(Icons.gps_fixed, size: 12, color: AppTheme.successGreen),
+                              const Icon(Icons.gps_fixed,
+                                  size: 12, color: AppTheme.successGreen),
                               const SizedBox(width: 4),
                               Text(
                                 '${visit.formattedCheckOutDistance} from site',
-                                style: const TextStyle(fontSize: 12, color: AppTheme.successGreen),
+                                style: const TextStyle(
+                                    fontSize: 12, color: AppTheme.successGreen),
                               ),
                             ],
                           ),
@@ -377,11 +394,11 @@ class _SiteVisitDetailScreenState extends State<SiteVisitDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            const Row(
               children: [
-                const Icon(Icons.gps_fixed, size: 18, color: AppTheme.textSecondary),
-                const SizedBox(width: 8),
-                const Text(
+                Icon(Icons.gps_fixed, size: 18, color: AppTheme.textSecondary),
+                SizedBox(width: 8),
+                Text(
                   'GPS Location Data',
                   style: TextStyle(
                     fontSize: 15,
@@ -399,7 +416,8 @@ class _SiteVisitDetailScreenState extends State<SiteVisitDetailScreen> {
                 visit.checkInLongitude!,
                 visit.formattedCheckInDistance,
               ),
-            if (visit.checkOutLatitude != null && visit.checkOutLongitude != null) ...[
+            if (visit.checkOutLatitude != null &&
+                visit.checkOutLongitude != null) ...[
               const SizedBox(height: 8),
               _buildGpsRow(
                 'Check-out',
@@ -502,7 +520,8 @@ class _SiteVisitDetailScreenState extends State<SiteVisitDetailScreen> {
             width: 90,
             child: Text(
               label,
-              style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+              style:
+                  const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
             ),
           ),
           Expanded(

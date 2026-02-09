@@ -14,7 +14,7 @@ class AddSiteReportScreen extends StatefulWidget {
   final int? siteVisitId;
 
   const AddSiteReportScreen({
-    super.key, 
+    super.key,
     this.initialProject,
     this.siteVisitId,
   });
@@ -33,7 +33,7 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
   CustomerProject? _selectedProject;
   List<CustomerProject> _projects = [];
   ReportType _selectedType = ReportType.dailyProgress;
-  List<XFile> _photos = [];
+  final List<XFile> _photos = [];
   bool _isSaving = false;
 
   @override
@@ -53,7 +53,8 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MotionToast.error(description: Text('Error loading projects: $e')).show(context);
+        MotionToast.error(description: Text('Error loading projects: $e'))
+            .show(context);
       }
     }
   }
@@ -67,9 +68,9 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final pickedFiles = source == ImageSource.camera 
-        ? [await _imagePicker.pickImage(imageQuality: 70, source: source)]
-        : await _imagePicker.pickMultiImage(imageQuality: 70);
+      final pickedFiles = source == ImageSource.camera
+          ? [await _imagePicker.pickImage(imageQuality: 70, source: source)]
+          : await _imagePicker.pickMultiImage(imageQuality: 70);
 
       if (pickedFiles.isNotEmpty) {
         setState(() {
@@ -81,7 +82,8 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
         });
       }
     } catch (e) {
-      MotionToast.error(description: Text('Error picking image: $e')).show(context);
+      MotionToast.error(description: Text('Error picking image: $e'))
+          .show(context);
     }
   }
 
@@ -93,17 +95,19 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
 
   Future<void> _saveReport() async {
     if (_selectedProject == null) {
-      MotionToast.warning(description: const Text('Please select a project')).show(context);
+      MotionToast.warning(description: const Text('Please select a project'))
+          .show(context);
       return;
     }
-    
+
     if (_selectedProject!.id == null) {
-       MotionToast.error(description: const Text('Invalid project selected')).show(context);
-       return;
+      MotionToast.error(description: const Text('Invalid project selected'))
+          .show(context);
+      return;
     }
 
     if (!_formKey.currentState!.validate()) return;
-    
+
     // Validate photo is required
     if (_photos.isEmpty) {
       MotionToast.warning(
@@ -125,10 +129,13 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
         photos: _photos,
       );
 
-      MotionToast.success(description: const Text('Report submitted successfully')).show(context);
+      MotionToast.success(
+              description: const Text('Report submitted successfully'))
+          .show(context);
       Navigator.pop(context, true);
     } catch (e) {
-      MotionToast.error(description: Text('Error submitting report: $e')).show(context);
+      MotionToast.error(description: Text('Error submitting report: $e'))
+          .show(context);
     } finally {
       setState(() => _isSaving = false);
     }
@@ -147,13 +154,16 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
               child: SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.coralRed),
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: AppTheme.coralRed),
               ),
             )
           else
             TextButton(
               onPressed: _saveReport,
-              child: const Text('SUBMIT', style: TextStyle(color: AppTheme.coralRed, fontWeight: FontWeight.bold)),
+              child: const Text('SUBMIT',
+                  style: TextStyle(
+                      color: AppTheme.coralRed, fontWeight: FontWeight.bold)),
             ),
         ],
       ),
@@ -168,9 +178,12 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
               const SizedBox(height: defaultPadding),
               _buildReportTypeSelector(),
               const SizedBox(height: defaultPadding),
-              _buildTextField('Title', _titleController, 'e.g., Progress on Foundation'),
+              _buildTextField(
+                  'Title', _titleController, 'e.g., Progress on Foundation'),
               const SizedBox(height: defaultPadding),
-              _buildTextField('Description', _descriptionController, 'Detail the observations...', maxLines: 5),
+              _buildTextField('Description', _descriptionController,
+                  'Detail the observations...',
+                  maxLines: 5),
               const SizedBox(height: defaultPadding * 1.5),
               _buildPhotoSection(),
               const SizedBox(height: defaultPadding * 2),
@@ -194,8 +207,13 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
             fillColor: Colors.white,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
-          items: _projects.map((p) => DropdownMenuItem(value: p, child: Text(p.projectName))).toList(),
-          onChanged: widget.initialProject != null ? null : (val) => setState(() => _selectedProject = val),
+          items: _projects
+              .map(
+                  (p) => DropdownMenuItem(value: p, child: Text(p.projectName)))
+              .toList(),
+          onChanged: widget.initialProject != null
+              ? null
+              : (val) => setState(() => _selectedProject = val),
           validator: (val) => val == null ? 'Project is required' : null,
         ),
       ],
@@ -206,7 +224,8 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Report Category', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text('Report Category',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -230,7 +249,9 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, String hint, {int maxLines = 1}) {
+  Widget _buildTextField(
+      String label, TextEditingController controller, String hint,
+      {int maxLines = 1}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -245,7 +266,8 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
             fillColor: Colors.white,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
-          validator: (val) => val == null || val.isEmpty ? '$label is required' : null,
+          validator: (val) =>
+              val == null || val.isEmpty ? '$label is required' : null,
         ),
       ],
     );
@@ -258,11 +280,17 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
+            const Row(
               children: [
-                const Text('Photos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                const SizedBox(width: 4),
-                const Text('*', style: TextStyle(color: Colors.red, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text('Photos',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                SizedBox(width: 4),
+                Text('*',
+                    style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold)),
               ],
             ),
             Row(
@@ -272,7 +300,8 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
                   onPressed: () => _pickImage(ImageSource.camera),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.photo_library, color: AppTheme.coralRed),
+                  icon:
+                      const Icon(Icons.photo_library, color: AppTheme.coralRed),
                   onPressed: () => _pickImage(ImageSource.gallery),
                 ),
               ],
@@ -286,12 +315,16 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
             decoration: BoxDecoration(
               color: Colors.red.shade50,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.red.shade300, width: 2, style: BorderStyle.solid),
+              border: Border.all(
+                  color: Colors.red.shade300,
+                  width: 2,
+                  style: BorderStyle.solid),
             ),
             child: const Center(
               child: Text(
                 'Please add at least one photo (Required)',
-                style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                style:
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
               ),
             ),
           )
@@ -310,7 +343,10 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.network(_photos[index].path, width: double.infinity, height: double.infinity, fit: BoxFit.cover),
+                    child: Image.network(_photos[index].path,
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.cover),
                   ),
                   Positioned(
                     top: 2,
@@ -319,8 +355,10 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
                       onTap: () => _removePhoto(index),
                       child: Container(
                         padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                        child: const Icon(Icons.close, size: 16, color: Colors.red),
+                        decoration: const BoxDecoration(
+                            color: Colors.white, shape: BoxShape.circle),
+                        child: const Icon(Icons.close,
+                            size: 16, color: Colors.red),
                       ),
                     ),
                   ),
@@ -332,4 +370,3 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
     );
   }
 }
-

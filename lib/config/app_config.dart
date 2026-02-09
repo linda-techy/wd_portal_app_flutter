@@ -62,6 +62,9 @@ class AppConfig {
   // Development Tools
   static bool get enableDevTools => isDevelopment;
 
+  // Date Picker Configuration
+  static final DateTime datePickerFirstDate = DateTime(2020);
+
   // Print current configuration for debugging
   static void printConfig() {
     if (isDevelopment) {

@@ -9,7 +9,7 @@ class CommonDataProvider with ChangeNotifier {
   List<EnumValue> _projectPhases = [];
   List<EnumValue> _contractTypes = [];
   List<String> _states = [];
-  Map<String, List<String>> _districtsByState = {};
+  final Map<String, List<String>> _districtsByState = {};
   List<String> _projectTypes = [];
   List<String> _designPackages = [];
   List<String> _facingOptions = [];
@@ -39,14 +39,14 @@ class CommonDataProvider with ChangeNotifier {
   List<String> get projectTypes => _projectTypes;
   List<String> get designPackages => _designPackages;
   List<String> get facingOptions => _facingOptions;
-  
+
   bool get isPhasesLoading => _isPhasesLoading;
   bool get isContractTypesLoading => _isContractTypesLoading;
   bool get isStatesLoading => _isStatesLoading;
   bool get isProjectTypesLoading => _isProjectTypesLoading;
   bool get isDesignPackagesLoading => _isDesignPackagesLoading;
   bool get isFacingOptionsLoading => _isFacingOptionsLoading;
-  
+
   bool get isAnyLoading =>
       _isPhasesLoading ||
       _isContractTypesLoading ||
@@ -54,11 +54,12 @@ class CommonDataProvider with ChangeNotifier {
       _isProjectTypesLoading ||
       _isDesignPackagesLoading ||
       _isFacingOptionsLoading;
-  
+
   String? get error => _error;
 
   /// Fetch project phases (cached)
-  Future<List<EnumValue>> fetchProjectPhases({bool forceRefresh = false}) async {
+  Future<List<EnumValue>> fetchProjectPhases(
+      {bool forceRefresh = false}) async {
     if (_phasesLoaded && !forceRefresh) {
       return _projectPhases;
     }
@@ -84,7 +85,8 @@ class CommonDataProvider with ChangeNotifier {
   }
 
   /// Fetch contract types (cached)
-  Future<List<EnumValue>> fetchContractTypes({bool forceRefresh = false}) async {
+  Future<List<EnumValue>> fetchContractTypes(
+      {bool forceRefresh = false}) async {
     if (_contractTypesLoaded && !forceRefresh) {
       return _contractTypes;
     }
@@ -136,7 +138,8 @@ class CommonDataProvider with ChangeNotifier {
   }
 
   /// Fetch districts for a state (cached per state)
-  Future<List<String>> fetchDistricts(String state, {bool forceRefresh = false}) async {
+  Future<List<String>> fetchDistricts(String state,
+      {bool forceRefresh = false}) async {
     if (_districtsByState.containsKey(state) && !forceRefresh) {
       return _districtsByState[state]!;
     }
@@ -257,14 +260,14 @@ class CommonDataProvider with ChangeNotifier {
     _projectTypes = [];
     _designPackages = [];
     _facingOptions = [];
-    
+
     _phasesLoaded = false;
     _contractTypesLoaded = false;
     _statesLoaded = false;
     _projectTypesLoaded = false;
     _designPackagesLoaded = false;
     _facingOptionsLoaded = false;
-    
+
     notifyListeners();
   }
 
@@ -274,4 +277,3 @@ class CommonDataProvider with ChangeNotifier {
     notifyListeners();
   }
 }
-

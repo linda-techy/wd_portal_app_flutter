@@ -37,15 +37,16 @@ class _VendorListScreenState extends State<VendorListScreen> {
                 Text(
                   "Vendor Directory",
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.deepSlate,
-                  ),
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.deepSlate,
+                      ),
                 ),
                 ElevatedButton.icon(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const AddVendorScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const AddVendorScreen()),
                     );
                   },
                   icon: const Icon(Icons.add),
@@ -87,43 +88,60 @@ class _VendorListScreenState extends State<VendorListScreen> {
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
                         child: ListTile(
-                          title: Text(vendor.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text("${vendor.vendorType} | ${vendor.phone}"),
+                          title: Text(vendor.name,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle:
+                              Text("${vendor.vendorType} | ${vendor.phone}"),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.orange),
+                                icon: const Icon(Icons.edit,
+                                    color: Colors.orange),
                                 onPressed: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => AddVendorScreen(existingVendor: vendor)),
+                                    MaterialPageRoute(
+                                        builder: (context) => AddVendorScreen(
+                                            existingVendor: vendor)),
                                   );
                                 },
                                 tooltip: "Edit Vendor",
                               ),
                               IconButton(
-                                icon: const Icon(Icons.block, color: Colors.red),
+                                icon:
+                                    const Icon(Icons.block, color: Colors.red),
                                 onPressed: () {
                                   showDialog(
                                     context: context,
                                     builder: (context) => AlertDialog(
                                       title: const Text("Deactivate Vendor"),
-                                      content: Text("Are you sure you want to deactivate '${vendor.name}'? "
+                                      content: Text(
+                                          "Are you sure you want to deactivate '${vendor.name}'? "
                                           "This vendor will no longer appear in selection lists."),
                                       actions: [
-                                        TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+                                        TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context),
+                                            child: const Text("Cancel")),
                                         TextButton(
                                           onPressed: () async {
                                             Navigator.pop(context);
-                                            final success = await provider.deactivateVendor(vendor.id!);
+                                            final success = await provider
+                                                .deactivateVendor(vendor.id);
                                             if (context.mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                                content: Text(success ? "Vendor deactivated" : "Error: ${provider.error}"),
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(SnackBar(
+                                                content: Text(success
+                                                    ? "Vendor deactivated"
+                                                    : "Error: ${provider.error}"),
                                               ));
                                             }
                                           },
-                                          child: const Text("Deactivate", style: TextStyle(color: Colors.red)),
+                                          child: const Text("Deactivate",
+                                              style:
+                                                  TextStyle(color: Colors.red)),
                                         ),
                                       ],
                                     ),
@@ -136,7 +154,9 @@ class _VendorListScreenState extends State<VendorListScreen> {
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => AddVendorScreen(existingVendor: vendor)),
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      AddVendorScreen(existingVendor: vendor)),
                             );
                           },
                         ),
@@ -152,4 +172,3 @@ class _VendorListScreenState extends State<VendorListScreen> {
     );
   }
 }
-

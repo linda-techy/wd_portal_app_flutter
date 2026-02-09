@@ -18,7 +18,7 @@ class ProjectFormDialog extends StatefulWidget {
 
 class _ProjectFormDialogState extends State<ProjectFormDialog> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Controllers
   final _nameController = TextEditingController();
   final _locationController = TextEditingController();
@@ -28,7 +28,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
   final _latitudeController = TextEditingController();
   final _longitudeController = TextEditingController();
   final _descriptionController = TextEditingController();
-  
+
   // Form values
   DateTime? _startDate;
   DateTime? _endDate;
@@ -42,7 +42,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
   bool _isDesignAgreementSigned = false;
   int? _selectedCustomerId;
   int? _selectedProjectManagerId;
-  
+
   bool _isLoading = false;
   bool _isLoadingProject = false;
 
@@ -77,11 +77,11 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
 
   Future<void> _loadProject() async {
     setState(() => _isLoadingProject = true);
-    
+
     try {
       final projectProvider = context.read<CustomerProjectProvider>();
       await projectProvider.fetchProjectById(widget.projectId!);
-      
+
       final project = projectProvider.selectedProject;
       if (project != null && mounted) {
         setState(() {
@@ -93,7 +93,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
           _latitudeController.text = project.latitude?.toString() ?? '';
           _longitudeController.text = project.longitude?.toString() ?? '';
           _descriptionController.text = project.projectDescription ?? '';
-          
+
           _startDate = project.startDate;
           _endDate = project.endDate;
           _selectedPhase = project.projectPhase;
@@ -107,7 +107,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
           _selectedCustomerId = project.customerId;
           _selectedProjectManagerId = project.projectManagerId;
         });
-        
+
         // Load districts for selected state
         if (_selectedState != null) {
           final commonDataProvider = context.read<CommonDataProvider>();
@@ -142,7 +142,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
       _selectedState = state;
       _selectedDistrict = null; // Reset district when state changes
     });
-    
+
     if (state != null) {
       final commonDataProvider = context.read<CommonDataProvider>();
       await commonDataProvider.fetchDistricts(state);
@@ -155,7 +155,9 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
     }
 
     // Additional validation
-    if (_startDate != null && _endDate != null && _endDate!.isBefore(_startDate!)) {
+    if (_startDate != null &&
+        _endDate != null &&
+        _endDate!.isBefore(_startDate!)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('End date must be after start date'),
@@ -212,7 +214,8 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
         success = await projectProvider.createProject(project);
       } else {
         // Update
-        success = await projectProvider.updateProject(widget.projectId!, project);
+        success =
+            await projectProvider.updateProject(widget.projectId!, project);
       }
 
       if (mounted) {
@@ -255,13 +258,16 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
               padding: const EdgeInsets.all(AppTheme.spacingLG),
               decoration: const BoxDecoration(
                 color: AppTheme.primaryColor,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusMD)),
+                borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(AppTheme.radiusMD)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    widget.projectId == null ? 'Create New Project' : 'Edit Project',
+                    widget.projectId == null
+                        ? 'Create New Project'
+                        : 'Edit Project',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -306,7 +312,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
             // Footer Actions
             Container(
               padding: const EdgeInsets.all(AppTheme.spacingLG),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppTheme.surfaceElevated,
                 border: Border(top: BorderSide(color: AppTheme.borderLight)),
               ),
@@ -508,7 +514,8 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
                   child: Text(type.displayName),
                 );
               }).toList(),
-              onChanged: (value) => setState(() => _selectedContractType = value),
+              onChanged: (value) =>
+                  setState(() => _selectedContractType = value),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Contract type is required';
@@ -562,13 +569,16 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
                       labelText: 'District *',
                       border: OutlineInputBorder(),
                     ),
-                    items: provider.getDistricts(_selectedState ?? '').map((String district) {
+                    items: provider
+                        .getDistricts(_selectedState ?? '')
+                        .map((String district) {
                       return DropdownMenuItem<String>(
                         value: district,
                         child: Text(district),
                       );
                     }).toList(),
-                    onChanged: (value) => setState(() => _selectedDistrict = value),
+                    onChanged: (value) =>
+                        setState(() => _selectedDistrict = value),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'District is required';
@@ -671,7 +681,8 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
                         child: Text(facing),
                       );
                     }).toList(),
-                    onChanged: (value) => setState(() => _selectedFacing = value),
+                    onChanged: (value) =>
+                        setState(() => _selectedFacing = value),
                   ),
                 ),
               ],
@@ -702,7 +713,8 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
                   child: Text(package),
                 );
               }).toList(),
-              onChanged: (value) => setState(() => _selectedDesignPackage = value),
+              onChanged: (value) =>
+                  setState(() => _selectedDesignPackage = value),
             ),
             const SizedBox(height: AppTheme.spacingMD),
             CheckboxListTile(
@@ -720,4 +732,3 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
     );
   }
 }
-

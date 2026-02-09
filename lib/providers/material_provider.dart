@@ -79,8 +79,9 @@ class MaterialProvider extends BasePaginatedProvider<MaterialModel> {
 
     if (materialName != null) filters['materialName'] = materialName;
     if (materialCode != null) filters['materialCode'] = materialCode;
-    if (materialCategory != null)
+    if (materialCategory != null) {
       filters['materialCategory'] = materialCategory;
+    }
     if (projectId != null) filters['projectId'] = projectId;
     if (lowStock != null) filters['lowStock'] = lowStock;
     if (minQuantity != null) filters['minQuantity'] = minQuantity;

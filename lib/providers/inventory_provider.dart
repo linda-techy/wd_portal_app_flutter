@@ -6,19 +6,21 @@ import 'package:admin/models/consumption_report_models.dart';
 
 class InventoryProvider extends ChangeNotifier {
   final InventoryService _service = InventoryService();
-  
+
   List<MaterialModel> _materials = [];
-  Map<int, List<InventoryStock>> _projectStock = {};
+  final Map<int, List<InventoryStock>> _projectStock = {};
   List<MaterialConsumptionReport>? _consumptionReports;
   bool _isLoading = false;
   String? _error;
 
   List<MaterialModel> get materials => _materials;
-  List<MaterialConsumptionReport>? get consumptionReports => _consumptionReports;
+  List<MaterialConsumptionReport>? get consumptionReports =>
+      _consumptionReports;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  List<InventoryStock> getStock(int projectId) => _projectStock[projectId] ?? [];
+  List<InventoryStock> getStock(int projectId) =>
+      _projectStock[projectId] ?? [];
 
   Future<void> fetchMaterials() async {
     _isLoading = true;

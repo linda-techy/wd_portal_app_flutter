@@ -200,8 +200,7 @@ class MaterialListScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (material.category != null)
-                    _buildCategoryBadge(material.category!),
+                  _buildCategoryBadge(material.category!),
                 ],
               ),
               const SizedBox(height: 12),

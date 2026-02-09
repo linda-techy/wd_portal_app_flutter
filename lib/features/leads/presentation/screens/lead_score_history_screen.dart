@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import '../../data/models/lead.dart';
 import 'components/lead_score_history_timeline.dart';
 
-/**
- * Screen displaying lead score history
- * Shows complete audit trail of lead score changes over time
- */
+/// Screen displaying lead score history
+/// Shows complete audit trail of lead score changes over time
 class LeadScoreHistoryScreen extends StatelessWidget {
   final Lead lead;
 

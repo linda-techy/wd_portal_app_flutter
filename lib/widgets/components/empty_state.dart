@@ -42,7 +42,7 @@ class EmptyState extends StatelessWidget {
             const SizedBox(height: DesignTokens.spacingLG),
             Text(
               title,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: DesignTokens.fontSizeHeadlineMedium,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textPrimary,
@@ -53,7 +53,7 @@ class EmptyState extends StatelessWidget {
               const SizedBox(height: DesignTokens.spacingSM),
               Text(
                 message!,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: DesignTokens.fontSizeBodyMedium,
                   color: AppTheme.textSecondary,
                 ),

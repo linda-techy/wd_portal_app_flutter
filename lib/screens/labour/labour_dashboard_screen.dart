@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:admin/constants.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/features/labour/presentation/screens/wage_sheet_screen.dart';
 import 'labour_list_screen.dart';
@@ -13,7 +12,8 @@ class LabourDashboardScreen extends StatefulWidget {
   State<LabourDashboardScreen> createState() => _LabourDashboardScreenState();
 }
 
-class _LabourDashboardScreenState extends State<LabourDashboardScreen> with SingleTickerProviderStateMixin {
+class _LabourDashboardScreenState extends State<LabourDashboardScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -55,4 +55,3 @@ class _LabourDashboardScreenState extends State<LabourDashboardScreen> with Sing
     );
   }
 }
-

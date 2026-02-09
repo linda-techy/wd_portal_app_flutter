@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../utils/accessibility_utils.dart';
 
 /// Keyboard Navigation Wrapper
@@ -21,7 +20,8 @@ class KeyboardNavigationWrapper extends StatelessWidget {
     // Use FocusTraversalPolicy instead of custom shortcuts to preserve native tab behavior
     // This ensures proper tab navigation while still providing accessibility support
     return FocusTraversalGroup(
-      policy: ReadingOrderTraversalPolicy(), // Use standard reading order for tab navigation
+      policy:
+          ReadingOrderTraversalPolicy(), // Use standard reading order for tab navigation
       child: child,
     );
   }

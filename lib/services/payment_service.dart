@@ -137,8 +137,9 @@ class PaymentService {
     if (search != null && search.isNotEmpty) queryParams['search'] = search;
     if (method != null && method.isNotEmpty) queryParams['method'] = method;
     if (status != null && status.isNotEmpty) queryParams['status'] = status;
-    if (startDate != null)
+    if (startDate != null) {
       queryParams['startDate'] = startDate.toIso8601String();
+    }
     if (endDate != null) queryParams['endDate'] = endDate.toIso8601String();
 
     final response =

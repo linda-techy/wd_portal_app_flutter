@@ -4,6 +4,7 @@ import '../../services/subcontract_service.dart';
 import '../../services/api_service.dart';
 import '../../models/subcontract_models.dart';
 import '../../theme/app_theme.dart';
+import '../../config/app_config.dart';
 import 'record_subcontract_payment_screen.dart';
 
 /// Subcontract Work Order Detail Screen
@@ -102,7 +103,7 @@ class _SubcontractWorkOrderDetailScreenState
     final date = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
+      firstDate: AppConfig.datePickerFirstDate,
       lastDate: DateTime(2100),
     );
     if (date == null) return;

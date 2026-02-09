@@ -105,7 +105,6 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
       isInitializing = false;
       if (mounted) setState(() {});
     } catch (e) {
-      print('Error initializing add lead screen: $e');
       // Still allow form to be shown even if team members fail to load
       isInitializing = false;
       if (mounted) setState(() {});
@@ -126,7 +125,6 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
         });
       }
     } catch (e) {
-      print('Error loading team members: $e');
       if (mounted) {
         setState(() {
           teamMembers = [];
@@ -364,10 +362,6 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
         return;
       }
 
-      print('=== Add Lead - Creating Lead Object ===');
-      print('formData[\'assignedToId\']: ${formData['assignedToId']}');
-      print('formData[\'assignedTeam\']: ${formData['assignedTeam']}');
-
       final lead = Lead(
         leadId: '', // Let the API generate UUID
         name: name,
@@ -403,16 +397,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
             : null,
       );
 
-      print('Lead object assignedToId: ${lead.assignedToId}');
-      print('Lead object assignedTeam: ${lead.assignedTeam}');
-      
-      final createJson = lead.toCreateJson();
-      print('Create JSON payload: $createJson');
-      print('Create JSON assigned_to_id: ${createJson['assigned_to_id']}');
-
       await _leadService.createLead(lead);
-
-      print('Lead created successfully');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -424,10 +409,6 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
         Navigator.pop(context, true); // Return true to indicate success
       }
     } catch (e, stackTrace) {
-      print('=== Error creating lead ===');
-      print('Error: $e');
-      print('Stack trace: $stackTrace');
-      
       if (mounted) {
         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error creating lead');
       }

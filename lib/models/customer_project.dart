@@ -32,7 +32,6 @@ class CustomerProject {
   final double? latitude;
   final double? longitude;
 
-
   CustomerProject({
     this.id,
     required this.name,
@@ -67,7 +66,6 @@ class CustomerProject {
   });
 
   String get projectName => name;
-
 
   factory CustomerProject.fromJson(Map<String, dynamic> json) {
     return CustomerProject(
@@ -114,7 +112,6 @@ class CustomerProject {
               : int.tryParse(json['customer_id']?.toString() ??
                   json['customerId']?.toString() ??
                   ''),
-
       code: json['code'],
       projectType: json['project_type'] ?? json['projectType'],
       createdAt: json['created_at'] != null
@@ -133,7 +130,9 @@ class CustomerProject {
               .toList()
           : null,
       designPackage: json['design_package'] ?? json['designPackage'],
-      isDesignAgreementSigned: json['is_design_agreement_signed'] ?? json['isDesignAgreementSigned'] ?? false,
+      isDesignAgreementSigned: json['is_design_agreement_signed'] ??
+          json['isDesignAgreementSigned'] ??
+          false,
       contractType: json['contract_type'] ?? json['contractType'],
       plotArea: json['plot_area'] != null
           ? (json['plot_area'] is double
@@ -143,7 +142,8 @@ class CustomerProject {
       floors: json['floors'],
       facing: json['facing'],
       permitStatus: json['permit_status'] ?? json['permitStatus'],
-      projectDescription: json['project_description'] ?? json['projectDescription'],
+      projectDescription:
+          json['project_description'] ?? json['projectDescription'],
       projectManagerId: json['project_manager_id'] is int
           ? json['project_manager_id']
           : json['projectManagerId'] is int
@@ -162,7 +162,6 @@ class CustomerProject {
               : double.tryParse(json['longitude'].toString()))
           : null,
     );
-
   }
 
   Map<String, dynamic> toJson() {
@@ -182,23 +181,24 @@ class CustomerProject {
       if (leadId != null) 'lead_id': leadId,
       if (customerId != null) 'customer_id': customerId,
       if (code != null && code!.isNotEmpty) 'code': code,
-      if (projectType != null && projectType!.isNotEmpty) 'project_type': projectType,
+      if (projectType != null && projectType!.isNotEmpty)
+        'project_type': projectType,
       if (teamMembers != null)
         'team_members': teamMembers!
             .map((m) {
-                  var idVal = int.tryParse(m.id ?? '');
-                  // If parsing fails but we have a valid ID string (e.g. UUID), use the string
-                  if (idVal == null && m.id != null && m.id!.isNotEmpty) {
-                    return {
-                      'id': m.id,
-                      'type': m.type,
-                    };
-                  }
-                  return {
-                    'id': idVal,
-                    'type': m.type,
-                  };
-                })
+              var idVal = int.tryParse(m.id ?? '');
+              // If parsing fails but we have a valid ID string (e.g. UUID), use the string
+              if (idVal == null && m.id != null && m.id!.isNotEmpty) {
+                return {
+                  'id': m.id,
+                  'type': m.type,
+                };
+              }
+              return {
+                'id': idVal,
+                'type': m.type,
+              };
+            })
             .where((m) => m['id'] != null && m['type'] != null)
             .toList(),
       if (designPackage != null) 'design_package': designPackage,
@@ -213,7 +213,6 @@ class CustomerProject {
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
     };
-
   }
 
   Map<String, dynamic> toCreateJson() {
@@ -276,17 +275,17 @@ class CustomerProject {
       teamMembers: teamMembers ?? this.teamMembers,
       teamMemberIds: teamMemberIds ?? this.teamMemberIds,
       designPackage: designPackage ?? this.designPackage,
-      isDesignAgreementSigned: isDesignAgreementSigned ?? this.isDesignAgreementSigned,
+      isDesignAgreementSigned:
+          isDesignAgreementSigned ?? this.isDesignAgreementSigned,
       contractType: contractType ?? this.contractType,
       plotArea: plotArea ?? this.plotArea,
       floors: floors ?? this.floors,
       facing: facing ?? this.facing,
       permitStatus: permitStatus ?? this.permitStatus,
       projectDescription: projectDescription ?? this.projectDescription,
-      projectManagerId: projectManagerId ?? this.projectManagerId,
+      projectManagerId: projectManagerId ?? projectManagerId,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
     );
-
   }
 }

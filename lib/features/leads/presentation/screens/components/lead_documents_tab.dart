@@ -51,7 +51,6 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
       }
     } catch (e) {
       // Categories are optional, don't show error if they fail to load
-      print('Failed to load document categories: $e');
     }
   }
 
@@ -91,7 +90,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
       }
 
       final platformFile = pickerResult.files.single;
-      
+
       // Handle all platforms: Web, Android, iOS, Windows, macOS, Linux
       // Priority: bytes (web) > path (mobile/desktop)
       Uint8List? fileBytes;
@@ -115,7 +114,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
           return;
         }
         fileBytes = platformFile.bytes;
-      } 
+      }
       // Desktop and Mobile platforms: path is available
       // This includes: Android, iOS, Windows, macOS, Linux
       else {
@@ -159,7 +158,8 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
             file, // null on web, File on mobile/desktop (Android/iOS/Windows/macOS/Linux)
             categoryId,
             description,
-            bytes: fileBytes, // Uint8List on web, null on mobile/desktop (unless fallback)
+            bytes:
+                fileBytes, // Uint8List on web, null on mobile/desktop (unless fallback)
             fileName: fileName, // Required on all platforms
           );
 
@@ -230,7 +230,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
   Future<void> _viewDocument(LeadDocument doc) async {
     final extension = _getFileExtension(doc.filename);
     if (doc.downloadUrl == null || doc.downloadUrl!.isEmpty) return;
-    
+
     // Construct full URL if relative
     String fullUrl = doc.downloadUrl!;
     if (!fullUrl.startsWith('http')) {
@@ -240,7 +240,8 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
     // Get headers with token
     final storage = StorageService();
     final token = await storage.read(key: 'access_token');
-    final headers = token != null ? {'Authorization': 'Bearer $token'} : <String, String>{};
+    final headers =
+        token != null ? {'Authorization': 'Bearer $token'} : <String, String>{};
 
     if (kIsWeb) {
       if (['pdf'].contains(extension)) {
@@ -256,7 +257,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
           ),
         );
       } else if (['jpg', 'jpeg', 'png', 'webp'].contains(extension)) {
-         Navigator.push(
+        Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => DocumentViewerScreen(
@@ -275,41 +276,42 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
       // Mobile / Desktop: Download and open with native viewer
       try {
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Opening document...')),
           );
         }
-        
+
         final request = await HttpClient().getUrl(Uri.parse(fullUrl));
         headers.forEach((key, value) {
           request.headers.add(key, value);
         });
         final response = await request.close();
-        
+
         if (response.statusCode != 200) {
-            throw Exception('Failed to download file: ${response.statusCode}');
+          throw Exception('Failed to download file: ${response.statusCode}');
         }
 
-        final bytes = await makeConsolidatable(response).fold<BytesBuilder>(
-          BytesBuilder(),
-          (BytesBuilder builder, List<int> chunk) => builder..add(chunk),
-        ).then((builder) => builder.takeBytes());
+        final bytes = await makeConsolidatable(response)
+            .fold<BytesBuilder>(
+              BytesBuilder(),
+              (BytesBuilder builder, List<int> chunk) => builder..add(chunk),
+            )
+            .then((builder) => builder.takeBytes());
 
         final dir = await getTemporaryDirectory();
         final file = File('${dir.path}/${doc.filename}');
         await file.writeAsBytes(bytes);
-        
+
         final result = await OpenFilex.open(file.path);
         if (result.type != ResultType.done) {
-           if (mounted) {
-             ScaffoldMessenger.of(context).showSnackBar(
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Could not open file: ${result.message}')),
             );
-           }
+          }
         }
-
       } catch (e) {
-         if (mounted) {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error viewing document: $e')),
           );
@@ -416,8 +418,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Documents",
-                  style: Theme.of(context).textTheme.titleLarge),
+              Text("Documents", style: Theme.of(context).textTheme.titleLarge),
               ElevatedButton.icon(
                 onPressed: _isUploading ? null : _pickAndUploadFile,
                 icon: _isUploading
@@ -428,8 +429,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
                       )
                     : const Icon(Icons.upload_file, size: 16),
                 label: Text(_isUploading ? 'Uploading...' : 'Upload File'),
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor),
+                style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
               )
             ],
           ),
@@ -443,8 +443,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
                       Icon(Icons.error_outline,
                           size: 48, color: Colors.red[300]),
                       const SizedBox(height: 16),
-                      Text(_error!,
-                          style: TextStyle(color: Colors.red[600])),
+                      Text(_error!, style: TextStyle(color: Colors.red[600])),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchDocuments,
@@ -476,24 +475,24 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
                             margin: const EdgeInsets.symmetric(
                                 horizontal: defaultPadding, vertical: 4),
                             child: ListTile(
-                            leading: Icon(Icons.insert_drive_file,
-                                color: primaryColor),
-                            title: Text(doc.filename),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 4),
-                                Text(
-                                  "${doc.categoryName ?? 'Uncategorized'} • ${_ResultUtils.formatBytes(doc.fileSize ?? 0)}",
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                                Text(
-                                  "Uploaded ${DateFormat.yMMMd().format(doc.uploadedAt)}",
-                                  style: TextStyle(
-                                      fontSize: 11, color: Colors.grey[600]),
-                                ),
-                              ],
-                            ),
+                              leading: const Icon(Icons.insert_drive_file,
+                                  color: primaryColor),
+                              title: Text(doc.filename),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "${doc.categoryName ?? 'Uncategorized'} • ${_ResultUtils.formatBytes(doc.fileSize ?? 0)}",
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  Text(
+                                    "Uploaded ${DateFormat.yMMMd().format(doc.uploadedAt)}",
+                                    style: TextStyle(
+                                        fontSize: 11, color: Colors.grey[600]),
+                                  ),
+                                ],
+                              ),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -508,17 +507,18 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
                                     onPressed: () => _downloadDocument(doc),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.delete, color: Colors.red),
+                                    icon: const Icon(Icons.delete,
+                                        color: Colors.red),
                                     tooltip: 'Delete',
                                     onPressed: () => _deleteDocument(doc),
                                   ),
                                 ],
                               ),
-                          ),
-                        );
-                      },
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
         ),
       ],
     );
@@ -554,7 +554,8 @@ class _UploadDocumentDialogState extends State<_UploadDocumentDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (widget.categories.isNotEmpty) ...[
-              const Text('Category:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text('Category:',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               DropdownButtonFormField<int>(
                 value: _selectedCategoryId,
@@ -582,7 +583,8 @@ class _UploadDocumentDialogState extends State<_UploadDocumentDialog> {
               ),
               const SizedBox(height: 16),
             ],
-            const Text('Description:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Description:',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             TextField(
               controller: _descriptionController,

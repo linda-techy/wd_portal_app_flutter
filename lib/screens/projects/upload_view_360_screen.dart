@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:motion_toast/motion_toast.dart';
@@ -48,13 +46,16 @@ class _UploadView360ScreenState extends State<UploadView360Screen> {
         });
       }
     } catch (e) {
-      MotionToast.error(description: Text('Error picking image: $e')).show(context);
+      MotionToast.error(description: Text('Error picking image: $e'))
+          .show(context);
     }
   }
 
   Future<void> _handleUpload() async {
     if (_selectedFileData == null) {
-      MotionToast.warning(description: const Text('Please select a 360 panorama image')).show(context);
+      MotionToast.warning(
+              description: const Text('Please select a 360 panorama image'))
+          .show(context);
       return;
     }
 
@@ -73,10 +74,13 @@ class _UploadView360ScreenState extends State<UploadView360Screen> {
         fileName: _selectedFileData!.fileName,
       );
 
-      MotionToast.success(description: const Text('Virtual tour uploaded successfully')).show(context);
+      MotionToast.success(
+              description: const Text('Virtual tour uploaded successfully'))
+          .show(context);
       Navigator.pop(context, true);
     } catch (e) {
-      MotionToast.error(description: Text('Error uploading tour: $e')).show(context);
+      MotionToast.error(description: Text('Error uploading tour: $e'))
+          .show(context);
     } finally {
       setState(() => _isSaving = false);
     }
@@ -95,13 +99,16 @@ class _UploadView360ScreenState extends State<UploadView360Screen> {
               child: SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.coralRed),
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: AppTheme.coralRed),
               ),
             )
           else
             TextButton(
               onPressed: _handleUpload,
-              child: const Text('UPLOAD', style: TextStyle(color: AppTheme.coralRed, fontWeight: FontWeight.bold)),
+              child: const Text('UPLOAD',
+                  style: TextStyle(
+                      color: AppTheme.coralRed, fontWeight: FontWeight.bold)),
             ),
         ],
       ),
@@ -114,11 +121,15 @@ class _UploadView360ScreenState extends State<UploadView360Screen> {
             children: [
               _buildImagePicker(),
               const SizedBox(height: defaultPadding * 2),
-              _buildTextField('Title', _titleController, 'e.g., Living Room View'),
+              _buildTextField(
+                  'Title', _titleController, 'e.g., Living Room View'),
               const SizedBox(height: defaultPadding),
-              _buildTextField('Location/Room', _locationController, 'e.g., First Floor'),
+              _buildTextField(
+                  'Location/Room', _locationController, 'e.g., First Floor'),
               const SizedBox(height: defaultPadding),
-              _buildTextField('Description (Optional)', _descriptionController, 'Add some details...', maxLines: 3),
+              _buildTextField('Description (Optional)', _descriptionController,
+                  'Add some details...',
+                  maxLines: 3),
               const SizedBox(height: defaultPadding * 2),
             ],
           ),
@@ -131,7 +142,8 @@ class _UploadView360ScreenState extends State<UploadView360Screen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Panorama Image', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text('Panorama Image',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         InkWell(
           onTap: _pickImage,
@@ -141,7 +153,8 @@ class _UploadView360ScreenState extends State<UploadView360Screen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+              border: Border.all(
+                  color: Colors.grey.shade300, style: BorderStyle.solid),
             ),
             child: _selectedFileData != null
                 ? ClipRRect(
@@ -151,26 +164,33 @@ class _UploadView360ScreenState extends State<UploadView360Screen> {
                       children: [
                         // Display image - use file if available, otherwise show placeholder
                         _selectedFileData!.file != null
-                            ? Image.file(_selectedFileData!.file!, fit: BoxFit.cover)
+                            ? Image.file(_selectedFileData!.file!,
+                                fit: BoxFit.cover)
                             : Container(
                                 color: Colors.grey.shade200,
                                 child: const Center(
-                                  child: Icon(Icons.image, size: 48, color: Colors.grey),
+                                  child: Icon(Icons.image,
+                                      size: 48, color: Colors.grey),
                                 ),
                               ),
                         Container(color: Colors.black26),
-                        const Center(child: Icon(Icons.panorama, color: Colors.white, size: 48)),
+                        const Center(
+                            child: Icon(Icons.panorama,
+                                color: Colors.white, size: 48)),
                       ],
                     ),
                   )
                 : const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.add_photo_alternate, size: 48, color: Colors.grey),
+                      Icon(Icons.add_photo_alternate,
+                          size: 48, color: Colors.grey),
                       SizedBox(height: 8),
-                      Text('Tap to select panorama from gallery', style: TextStyle(color: Colors.grey)),
+                      Text('Tap to select panorama from gallery',
+                          style: TextStyle(color: Colors.grey)),
                       SizedBox(height: 4),
-                      Text('(Should be a 2:1 equirectangular image)', style: TextStyle(color: Colors.grey, fontSize: 10)),
+                      Text('(Should be a 2:1 equirectangular image)',
+                          style: TextStyle(color: Colors.grey, fontSize: 10)),
                     ],
                   ),
           ),
@@ -179,7 +199,9 @@ class _UploadView360ScreenState extends State<UploadView360Screen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, String hint, {int maxLines = 1}) {
+  Widget _buildTextField(
+      String label, TextEditingController controller, String hint,
+      {int maxLines = 1}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -194,10 +216,11 @@ class _UploadView360ScreenState extends State<UploadView360Screen> {
             fillColor: Colors.white,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
-          validator: (val) => label.contains('Optional') ? null : (val == null || val.isEmpty ? '$label is required' : null),
+          validator: (val) => label.contains('Optional')
+              ? null
+              : (val == null || val.isEmpty ? '$label is required' : null),
         ),
       ],
     );
   }
 }
-

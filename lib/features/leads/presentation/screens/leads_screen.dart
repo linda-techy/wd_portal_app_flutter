@@ -18,6 +18,7 @@ import 'package:admin/providers/portal_auth_provider.dart';
 import 'package:admin/utils/error_handler.dart';
 import 'package:admin/utils/motion_toast.dart';
 import 'package:admin/utils/file_download_helper.dart';
+import 'package:admin/config/app_config.dart';
 import 'add_lead_screen.dart';
 import 'edit_lead_screen.dart';
 import 'lead_quotations_screen.dart';
@@ -121,7 +122,6 @@ class _LeadsScreenState extends State<LeadsScreen> {
       }
     } catch (e) {
       // Silent failure for filters is acceptable, or log it
-      print('Error loading team members: $e');
     }
   }
 
@@ -784,7 +784,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                   onPressed: () async {
                     final picked = await showDateRangePicker(
                       context: context,
-                      firstDate: DateTime(2020),
+                      firstDate: AppConfig.datePickerFirstDate,
                       lastDate: DateTime.now().add(const Duration(days: 365)),
                     );
                     if (picked != null) {
@@ -890,7 +890,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
         onPressed: () async {
           final picked = await showDateRangePicker(
             context: context,
-            firstDate: DateTime(2020),
+            firstDate: AppConfig.datePickerFirstDate,
             lastDate: DateTime.now().add(const Duration(days: 365)),
           );
           if (picked != null) {

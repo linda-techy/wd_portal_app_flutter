@@ -8,13 +8,12 @@ import '../../widgets/charts/chart_card.dart';
 import 'package:provider/provider.dart';
 import '../../providers/document_provider.dart';
 import '../../providers/customer_project_provider.dart';
-import '../../models/document_models.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import '../../utils/file_upload_helper.dart';
 import '../../services/finance_service.dart';
+import '../../models/finance_models.dart';
 import 'project_tracking_screen.dart';
 import 'view_360_list_screen.dart';
 import '../../models/customer_project.dart';
@@ -376,54 +375,159 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   }
   
   Widget _buildTimelineChart() {
-    // Placeholder for Gantt chart
-    // In production, use syncfusion_flutter_charts or fl_chart
+    final phases = [
+      {'name': 'Planning', 'icon': Icons.draw},
+      {'name': 'Foundation', 'icon': Icons.foundation},
+      {'name': 'Structure', 'icon': Icons.apartment},
+      {'name': 'MEP', 'icon': Icons.electrical_services},
+      {'name': 'Finishing', 'icon': Icons.format_paint},
+      {'name': 'Handover', 'icon': Icons.handshake},
+    ];
+    
+    final currentPhase = _project?.projectPhase?.toLowerCase() ?? '';
+    int activeIndex = phases.indexWhere(
+      (p) => currentPhase.contains((p['name'] as String).toLowerCase()),
+    );
+    if (activeIndex < 0) activeIndex = 0;
+    
     return Container(
-      color: AppTheme.surfaceElevated,
-      child: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.timeline,
-              size: 64,
-              color: AppTheme.textTertiary,
-            ),
-            SizedBox(height: AppTheme.spacingMD),
-            Text(
-              'Gantt Chart View',
-              style: TextStyle(color: AppTheme.textSecondary),
-            ),
-            SizedBox(height: AppTheme.spacingSM),
-            Text(
-              'Integrate with syncfusion_flutter_charts or fl_chart',
-              style: TextStyle(
-                color: AppTheme.textTertiary,
-                fontSize: 12,
+      padding: const EdgeInsets.all(AppTheme.spacingMD),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.timeline, size: 20, color: AppTheme.primaryBlue),
+              const SizedBox(width: AppTheme.spacingSM),
+              Text(
+                'Project Timeline',
+                style: Theme.of(context).textTheme.titleMedium,
               ),
+              const Spacer(),
+              if (_project?.startDate != null)
+                Text(
+                  '${DateFormat('MMM yyyy').format(_project!.startDate!)} - ${_project?.endDate != null ? DateFormat('MMM yyyy').format(_project!.endDate!) : 'Ongoing'}',
+                  style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.spacingLG),
+          SizedBox(
+            height: 80,
+            child: Row(
+              children: List.generate(phases.length, (index) {
+                final isActive = index <= activeIndex;
+                final isCurrent = index == activeIndex;
+                return Expanded(
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          if (index > 0)
+                            Expanded(
+                              child: Container(
+                                height: 3,
+                                color: isActive ? AppTheme.primaryBlue : AppTheme.borderLight,
+                              ),
+                            ),
+                          Container(
+                            width: isCurrent ? 36 : 28,
+                            height: isCurrent ? 36 : 28,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isActive ? AppTheme.primaryBlue : AppTheme.borderLight,
+                              border: isCurrent
+                                  ? Border.all(color: AppTheme.primaryBlue.withOpacity(0.3), width: 3)
+                                  : null,
+                            ),
+                            child: Icon(
+                              phases[index]['icon'] as IconData,
+                              size: isCurrent ? 18 : 14,
+                              color: isActive ? Colors.white : AppTheme.textTertiary,
+                            ),
+                          ),
+                          if (index < phases.length - 1)
+                            Expanded(
+                              child: Container(
+                                height: 3,
+                                color: index < activeIndex ? AppTheme.primaryBlue : AppTheme.borderLight,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: AppTheme.spacingSM),
+                      Text(
+                        phases[index]['name'] as String,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                          color: isActive ? AppTheme.textPrimary : AppTheme.textTertiary,
+                        ),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                );
+              }),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
   
   Widget _buildTaskList() {
-    // Placeholder for task list
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: 5,
-      itemBuilder: (context, index) {
-        return ListTile(
-          leading: const Icon(Icons.circle_outlined),
-          title: Text('Task ${index + 1}'),
-          subtitle: Text('Due: ${DateTime.now().add(Duration(days: index)).toString().split(' ')[0]}'),
-          trailing: StatusIndicator(
-            label: index % 3 == 0 ? 'Completed' : 'In Progress',
-            type: index % 3 == 0 ? StatusType.success : StatusType.info,
-            compact: true,
-          ),
+    return FutureBuilder<List<ProjectInvoice>>(
+      future: FinanceService().getProjectInvoices(widget.projectId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final invoices = snapshot.data ?? [];
+        if (invoices.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(AppTheme.spacingLG),
+            child: Center(
+              child: Text(
+                'No activities recorded yet',
+                style: TextStyle(color: AppTheme.textTertiary),
+              ),
+            ),
+          );
+        }
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: invoices.length > 10 ? 10 : invoices.length,
+          itemBuilder: (context, index) {
+            final inv = invoices[index];
+            final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+            return ListTile(
+              leading: Icon(
+                inv.status == 'PAID' ? Icons.check_circle : Icons.pending,
+                color: inv.status == 'PAID' ? AppTheme.statusSuccess : AppTheme.statusWarning,
+              ),
+              title: Text(inv.invoiceNumber ?? 'Invoice #${inv.id}'),
+              subtitle: Text(inv.invoiceDate),
+              trailing: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(formatter.format(inv.totalAmount), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  StatusIndicator(
+                    label: inv.status,
+                    type: inv.status == 'PAID' ? StatusType.success : StatusType.warning,
+                    compact: true,
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
@@ -484,45 +588,90 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   
   List<Widget> _buildFinancialCards(BuildContext context) {
     return [
-      const Expanded(
-        child: DataCard(
-          title: 'Total Budget',
-          valueText: '₹12,500,000',
-          icon: Icons.account_balance_wallet,
-          iconColor: AppTheme.primaryBlue,
-        ),
-      ),
-      const SizedBox(width: AppTheme.spacingMD),
-      const Expanded(
-        child: DataCard(
-          title: 'Spent',
-          valueText: '₹9,062,500',
-          icon: Icons.payments,
-          iconColor: AppTheme.statusWarning,
-        ),
-      ),
-      const SizedBox(width: AppTheme.spacingMD),
-      const Expanded(
-        child: DataCard(
-          title: 'Remaining',
-          valueText: '₹3,437,500',
-          icon: Icons.savings,
-          iconColor: AppTheme.statusSuccess,
+      Expanded(
+        child: FutureBuilder<List<ProjectInvoice>>(
+          future: FinanceService().getProjectInvoices(widget.projectId),
+          builder: (context, snapshot) {
+            final invoices = snapshot.data ?? [];
+            final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+            final totalInvoiced = invoices.fold<double>(0, (sum, inv) => sum + inv.totalAmount);
+            final totalPaid = invoices.where((inv) => inv.status == 'PAID').fold<double>(0, (sum, inv) => sum + inv.totalAmount);
+            final outstanding = totalInvoiced - totalPaid;
+            return Column(
+              children: [
+                DataCard(
+                  title: 'Total Invoiced',
+                  valueText: formatter.format(totalInvoiced),
+                  icon: Icons.account_balance_wallet,
+                  iconColor: AppTheme.primaryBlue,
+                ),
+                const SizedBox(height: AppTheme.spacingMD),
+                DataCard(
+                  title: 'Paid',
+                  valueText: formatter.format(totalPaid),
+                  icon: Icons.payments,
+                  iconColor: AppTheme.statusSuccess,
+                ),
+                const SizedBox(height: AppTheme.spacingMD),
+                DataCard(
+                  title: 'Outstanding',
+                  valueText: formatter.format(outstanding),
+                  icon: Icons.savings,
+                  iconColor: outstanding > 0 ? AppTheme.statusWarning : AppTheme.statusSuccess,
+                ),
+              ],
+            );
+          },
         ),
       ),
     ];
   }
   
   Widget _buildBudgetChart() {
-    // Placeholder for pie/bar chart
-    return Container(
-      color: AppTheme.surfaceElevated,
-      child: const Center(
-        child: Text(
-          'Budget Chart - Use fl_chart or syncfusion_flutter_charts',
-          style: TextStyle(color: AppTheme.textSecondary),
-        ),
-      ),
+    return FutureBuilder<List<ProjectInvoice>>(
+      future: FinanceService().getProjectInvoices(widget.projectId),
+      builder: (context, snapshot) {
+        final invoices = snapshot.data ?? [];
+        final totalInvoiced = invoices.fold<double>(0, (sum, inv) => sum + inv.totalAmount);
+        final totalPaid = invoices.where((inv) => inv.status == 'PAID').fold<double>(0, (sum, inv) => sum + inv.totalAmount);
+        final paidRatio = totalInvoiced > 0 ? totalPaid / totalInvoiced : 0.0;
+        final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+        
+        return Padding(
+          padding: const EdgeInsets.all(AppTheme.spacingMD),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Paid: ${formatter.format(totalPaid)}',
+                      style: const TextStyle(color: AppTheme.statusSuccess, fontWeight: FontWeight.w600)),
+                  Text('Outstanding: ${formatter.format(totalInvoiced - totalPaid)}',
+                      style: const TextStyle(color: AppTheme.statusWarning, fontWeight: FontWeight.w600)),
+                ],
+              ),
+              const SizedBox(height: AppTheme.spacingMD),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                child: LinearProgressIndicator(
+                  value: paidRatio,
+                  minHeight: 24,
+                  backgroundColor: AppTheme.statusWarning.withOpacity(0.3),
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.statusSuccess),
+                ),
+              ),
+              const SizedBox(height: AppTheme.spacingSM),
+              Center(
+                child: Text(
+                  'Total Invoiced: ${formatter.format(totalInvoiced)}',
+                  style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
   
