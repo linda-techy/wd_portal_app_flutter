@@ -369,9 +369,10 @@ class ApprovalsScreen extends StatelessWidget {
 
   void _navigateToCreate(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Create approval request - to be implemented')),
+      const SnackBar(
+        content: Text('Approval requests are created from within project modules (e.g. Purchase Orders, Variations)'),
+        duration: Duration(seconds: 3),
+      ),
     );
   }
 }
-
-

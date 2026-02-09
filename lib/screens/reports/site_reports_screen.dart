@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/models/site_report_models.dart';
 import 'package:admin/providers/site_report_provider.dart';
+import 'package:admin/screens/reports/add_site_report_screen.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
@@ -333,10 +334,11 @@ class SiteReportsScreen extends StatelessWidget {
   }
 
   void _navigateToCreate(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Create site report - to be implemented')),
-    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AddSiteReportScreen()),
+    ).then((_) {
+      Provider.of<SiteReportProvider>(context, listen: false).fetch();
+    });
   }
 }
-
-

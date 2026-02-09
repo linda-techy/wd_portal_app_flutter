@@ -1,43 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../providers/subcontract_provider.dart';
+import '../../services/subcontract_service.dart';
+import '../../services/api_service.dart';
 import '../../models/subcontract_models.dart';
 import '../../theme/app_theme.dart';
 import 'record_subcontract_payment_screen.dart';
 
 /// Subcontract Work Order Detail Screen
-/// Shows detailed view with tabs for measurements and payments
+/// Shows detailed view with tabs for details, measurements, and payments
 class SubcontractWorkOrderDetailScreen extends StatefulWidget {
   final int workOrderId;
 
   const SubcontractWorkOrderDetailScreen({
-    Key? key,
+    super.key,
     required this.workOrderId,
-  }) : super(key: key);
+  });
 
   @override
-  State<SubcontractWorkOrderDetailScreen> createState() => _SubcontractWorkOrderDetailScreenState();
+  State<SubcontractWorkOrderDetailScreen> createState() =>
+      _SubcontractWorkOrderDetailScreenState();
 }
 
-class _SubcontractWorkOrderDetailScreenState extends State<SubcontractWorkOrderDetailScreen>
+class _SubcontractWorkOrderDetailScreenState
+    extends State<SubcontractWorkOrderDetailScreen>
     with SingleTickerProviderStateMixin {
-  final _currencyFormat = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+  final _currencyFormat =
+      NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
   final _dateFormat = DateFormat('dd MMM yyyy');
   late TabController _tabController;
+  final SubcontractService _service = SubcontractService(ApiService());
+
+  SubcontractSummary? _summary;
+  List<SubcontractMeasurement> _measurements = [];
+  List<SubcontractPayment> _payments = [];
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    
-    // TODO: Implement loadWorkOrderSummary, loadWorkOrderMeasurements, loadWorkOrderPayments in SubcontractProvider
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   final provider = context.read<SubcontractProvider>();
-    //   provider.loadWorkOrderSummary(widget.workOrderId);
-    //   provider.loadWorkOrderMeasurements(widget.workOrderId);
-    //   provider.loadWorkOrderPayments(widget.workOrderId);
-    // });
+    _loadData();
   }
 
   @override
@@ -46,13 +49,137 @@ class _SubcontractWorkOrderDetailScreenState extends State<SubcontractWorkOrderD
     super.dispose();
   }
 
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final results = await Future.wait([
+        _service.getWorkOrderSummary(widget.workOrderId),
+        _service.getWorkOrderMeasurements(widget.workOrderId),
+        _service.getWorkOrderPayments(widget.workOrderId),
+      ]);
+
+      if (!mounted) return;
+      setState(() {
+        _summary = results[0] as SubcontractSummary;
+        _measurements = results[1] as List<SubcontractMeasurement>;
+        _payments = results[2] as List<SubcontractPayment>;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _issueWorkOrder() async {
+    try {
+      await _service.issueWorkOrder(widget.workOrderId);
+      _loadData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Work order issued'),
+              backgroundColor: AppTheme.successGreen),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _completeWorkOrder() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (date == null) return;
+
+    try {
+      await _service.completeWorkOrder(widget.workOrderId, date);
+      _loadData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Work order completed'),
+              backgroundColor: AppTheme.successGreen),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _terminateWorkOrder() async {
+    final controller = TextEditingController();
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Terminate Work Order'),
+        content: TextField(
+          controller: controller,
+          decoration:
+              const InputDecoration(labelText: 'Reason for termination'),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            style:
+                ElevatedButton.styleFrom(backgroundColor: AppTheme.coralRed),
+            child:
+                const Text('Terminate', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (reason == null || reason.isEmpty) return;
+
+    try {
+      await _service.terminateWorkOrder(widget.workOrderId, reason);
+      _loadData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Work order terminated')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Work Order Details', style: TextStyle(color: Colors.white)),
+        title: const Text('Work Order Details',
+            style: TextStyle(color: Colors.white)),
         backgroundColor: AppTheme.deepSlate,
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: _buildActions(),
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
@@ -65,225 +192,427 @@ class _SubcontractWorkOrderDetailScreenState extends State<SubcontractWorkOrderD
           ],
         ),
       ),
-      body: Consumer<SubcontractProvider>(
-        builder: (context, provider, child) {
-          // TODO: Implement currentSummary, measurements, payments in SubcontractProvider
-          // Temporary placeholder until SubcontractProvider methods are implemented
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(24.0),
-              child: Text(
-                'Work order detail functionality to be implemented.\n\nSubcontractProvider needs:\n- loadWorkOrderSummary\n- loadWorkOrderMeasurements\n- loadWorkOrderPayments\n- currentSummary property\n- measurements property\n- payments property',
-                textAlign: TextAlign.center,
-              ),
-            ),
-          );
-
-          // Original code - uncomment when SubcontractProvider methods are implemented
-          // if (provider.isLoading && provider.currentSummary == null) {
-          //   return const Center(child: CircularProgressIndicator());
-          // }
-          // final summary = provider.currentSummary;
-          // if (summary == null) {
-          //   return const Center(child: Text('Work order not found'));
-          // }
-          // return TabBarView(
-          //   controller: _tabController,
-          //   children: [
-          //     _buildDetailsTab(summary),
-          //     _buildMeasurementsTab(provider),
-          //     _buildPaymentsTab(provider),
-          //   ],
-          // );
-        },
-      ),
-      // TODO: Uncomment when SubcontractProvider methods are implemented
-      // floatingActionButton: ValueListenableBuilder(
-      //   valueListenable: _tabController.animation!,
-      //   builder: (context, value, child) {
-      //     if (_tabController.index == 2) { // Payments Tab
-      //       return FloatingActionButton.extended(
-      //         onPressed: () {
-      //           final summary = context.read<SubcontractProvider>().currentSummary;
-      //           if (summary != null) {
-      //             Navigator.push(
-      //               context,
-      //               MaterialPageRoute(
-      //                 builder: (_) => RecordSubcontractPaymentScreen(
-      //                   workOrderId: widget.workOrderId,
-      //                   balanceDue: summary.balanceDue,
-      //                 ),
-      //               ),
-      //             ).then((_) {
-      //               // Refresh data
-      //               final p = context.read<SubcontractProvider>();
-      //               p.loadWorkOrderPayments(widget.workOrderId);
-      //               p.loadWorkOrderSummary(widget.workOrderId);
-      //             });
-      //           }
-      //         },
-      //         label: const Text('Record Payment'),
-      //         icon: const Icon(Icons.payment),
-      //         backgroundColor: AppTheme.coralRed,
-      //       );
-      //     }
-      //     return const SizedBox.shrink();
-      //   },
-      // ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          size: 48, color: Colors.red),
+                      const SizedBox(height: 16),
+                      Text('Error loading data',
+                          style: Theme.of(context).textTheme.titleMedium),
+                      const SizedBox(height: 8),
+                      Text(_error!, style: const TextStyle(color: Colors.grey)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                          onPressed: _loadData, child: const Text('Retry')),
+                    ],
+                  ),
+                )
+              : _summary == null
+                  ? const Center(child: Text('Work order not found'))
+                  : TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildDetailsTab(_summary!),
+                        _buildMeasurementsTab(),
+                        _buildPaymentsTab(),
+                      ],
+                    ),
+      floatingActionButton: _buildFab(),
     );
   }
 
+  List<Widget> _buildActions() {
+    if (_summary == null) return [];
+    final status = _summary!.status;
+
+    return [
+      PopupMenuButton<String>(
+        icon: const Icon(Icons.more_vert, color: Colors.white),
+        onSelected: (action) {
+          switch (action) {
+            case 'issue':
+              _issueWorkOrder();
+              break;
+            case 'complete':
+              _completeWorkOrder();
+              break;
+            case 'terminate':
+              _terminateWorkOrder();
+              break;
+          }
+        },
+        itemBuilder: (ctx) => [
+          if (status == 'DRAFT')
+            const PopupMenuItem(
+                value: 'issue', child: Text('Issue Work Order')),
+          if (status == 'ISSUED' || status == 'IN_PROGRESS')
+            const PopupMenuItem(
+                value: 'complete', child: Text('Mark Complete')),
+          if (status != 'COMPLETED' && status != 'TERMINATED')
+            const PopupMenuItem(
+                value: 'terminate',
+                child:
+                    Text('Terminate', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    ];
+  }
+
+  Widget? _buildFab() {
+    return ValueListenableBuilder(
+      valueListenable: _tabController.animation!,
+      builder: (context, value, child) {
+        if (_tabController.index == 1 && _summary != null) {
+          // Measurements tab
+          return FloatingActionButton.extended(
+            heroTag: 'measurement',
+            onPressed: _showRecordMeasurementDialog,
+            label: const Text('Record Measurement'),
+            icon: const Icon(Icons.straighten),
+            backgroundColor: AppTheme.tealAccent,
+          );
+        }
+        if (_tabController.index == 2 && _summary != null) {
+          // Payments tab
+          return FloatingActionButton.extended(
+            heroTag: 'payment',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => RecordSubcontractPaymentScreen(
+                    workOrderId: widget.workOrderId,
+                    balanceDue: _summary!.balanceDue,
+                  ),
+                ),
+              ).then((_) => _loadData());
+            },
+            label: const Text('Record Payment'),
+            icon: const Icon(Icons.payment),
+            backgroundColor: AppTheme.coralRed,
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  // ===== DETAILS TAB =====
+
   Widget _buildDetailsTab(SubcontractSummary summary) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Financial Summary Cards
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  'Contract Amount',
-                  _currencyFormat.format(summary.totalContractAmount),
-                  AppTheme.deepSlate,
-                  Icons.description,
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Financial Summary Cards
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    'Contract Amount',
+                    _currencyFormat.format(summary.totalContractAmount),
+                    AppTheme.deepSlate,
+                    Icons.description,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  'Total Paid',
-                  _currencyFormat.format(summary.totalPaid),
-                  AppTheme.tealAccent,
-                  Icons.payment,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    'Total Paid',
+                    _currencyFormat.format(summary.totalPaid),
+                    AppTheme.tealAccent,
+                    Icons.payment,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  'Balance Due',
-                  _currencyFormat.format(summary.balanceDue),
-                  summary.balanceDue > 0 ? AppTheme.amber : Colors.green,
-                  Icons.account_balance_wallet,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  'TDS Deducted',
-                  _currencyFormat.format(summary.totalTds),
-                  Colors.grey,
-                  Icons.calculate,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 24),
-          const Divider(),
-
-          // Work Order Details
-          const SizedBox(height: 16),
-          _buildDetailRow('Work Order', summary.workOrderNumber),
-          _buildDetailRow('Status', summary.status),
-          _buildDetailRow('Vendor', summary.vendorName ?? 'N/A'),
-          _buildDetailRow('Project', summary.projectName ?? 'N/A'),
-          _buildDetailRow('Measurement Basis', summary.measurementBasis),
-
-          const SizedBox(height: 16),
-          const Text(
-            'Scope of Work',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          const SizedBox(height: 8),
-          Text(summary.scopeDescription),
-
-          const SizedBox(height: 24),
-
-          // Progress (for unit-rate)
-          if (summary.measurementBasis == 'UNIT_RATE' && summary.percentageCompleted != null) ...[
-            const Text(
-              'Progress',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ],
             ),
             const SizedBox(height: 12),
-            LinearProgressIndicator(
-              value: (summary.percentageCompleted ?? 0) / 100,
-              backgroundColor: Colors.grey[200],
-              color: AppTheme.tealAccent,
-              minHeight: 8,
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    'Balance Due',
+                    _currencyFormat.format(summary.balanceDue),
+                    summary.balanceDue > 0 ? AppTheme.amber : Colors.green,
+                    Icons.account_balance_wallet,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    'TDS Deducted',
+                    _currencyFormat.format(summary.totalTds),
+                    Colors.grey,
+                    Icons.calculate,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 24),
+
+            // Status chip
+            Row(
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(summary.status),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    summary.status.replaceAll('_', ' '),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+
+            // Work Order Details
+            _buildDetailRow('Work Order', summary.workOrderNumber),
+            _buildDetailRow('Vendor', summary.vendorName ?? 'N/A'),
+            _buildDetailRow('Project', summary.projectName ?? 'N/A'),
+            _buildDetailRow('Measurement Basis', summary.measurementBasis),
+
+            const SizedBox(height: 16),
+            const Text(
+              'Scope of Work',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
-            Text(
-              '${summary.percentageCompleted?.toStringAsFixed(1)}% Complete',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: Text(summary.scopeDescription),
             ),
-            const SizedBox(height: 8),
-            Text('${summary.approvedMeasurements ?? 0} of ${summary.totalMeasurements ?? 0} measurements approved'),
+
+            const SizedBox(height: 24),
+
+            // Progress (for unit-rate)
+            if (summary.measurementBasis == 'UNIT_RATE' &&
+                summary.percentageCompleted != null) ...[
+              const Text(
+                'Progress',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: (summary.percentageCompleted ?? 0) / 100,
+                  backgroundColor: Colors.grey[200],
+                  color: AppTheme.tealAccent,
+                  minHeight: 10,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${summary.percentageCompleted?.toStringAsFixed(1)}% Complete',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${summary.approvedMeasurements ?? 0} of ${summary.totalMeasurements ?? 0} measurements approved',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ],
           ],
+        ),
+      ),
+    );
+  }
+
+  // ===== MEASUREMENTS TAB =====
+
+  Widget _buildMeasurementsTab() {
+    if (_measurements.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.straighten, size: 64, color: Colors.grey[300]),
+            const SizedBox(height: 16),
+            const Text('No measurements recorded',
+                style: TextStyle(fontSize: 16, color: Colors.grey)),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _measurements.length,
+        itemBuilder: (context, index) {
+          return _buildMeasurementCard(_measurements[index]);
+        },
+      ),
+    );
+  }
+
+  // ===== PAYMENTS TAB =====
+
+  Widget _buildPaymentsTab() {
+    if (_payments.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.payment, size: 64, color: Colors.grey[300]),
+            const SizedBox(height: 16),
+            const Text('No payments recorded',
+                style: TextStyle(fontSize: 16, color: Colors.grey)),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _payments.length,
+        itemBuilder: (context, index) {
+          return _buildPaymentCard(_payments[index]);
+        },
+      ),
+    );
+  }
+
+  // ===== DIALOGS =====
+
+  Future<void> _showRecordMeasurementDialog() async {
+    final descCtrl = TextEditingController();
+    final qtyCtrl = TextEditingController();
+    final unitCtrl = TextEditingController();
+    final rateCtrl = TextEditingController();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Record Measurement'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: descCtrl,
+                decoration: const InputDecoration(labelText: 'Description *'),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: qtyCtrl,
+                      decoration: const InputDecoration(labelText: 'Quantity *'),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: unitCtrl,
+                      decoration: const InputDecoration(labelText: 'Unit'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: rateCtrl,
+                decoration:
+                    const InputDecoration(labelText: 'Rate *', prefixText: '₹ '),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              if (descCtrl.text.isEmpty ||
+                  qtyCtrl.text.isEmpty ||
+                  rateCtrl.text.isEmpty) {
+                ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+                    content: Text('Fill required fields')));
+                return;
+              }
+              try {
+                final qty = double.parse(qtyCtrl.text);
+                final rate = double.parse(rateCtrl.text);
+                final measurement = SubcontractMeasurement(
+                  workOrderId: widget.workOrderId,
+                  description: descCtrl.text,
+                  quantity: qty,
+                  unit: unitCtrl.text.isNotEmpty ? unitCtrl.text : 'unit',
+                  rate: rate,
+                  amount: qty * rate,
+                  status: 'PENDING',
+                  measurementDate: DateTime.now(),
+                );
+                await _service.recordMeasurement(
+                    widget.workOrderId, measurement);
+                if (ctx.mounted) Navigator.pop(ctx, true);
+              } catch (e) {
+                if (ctx.mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(
+                        content: Text('Failed: $e'),
+                        backgroundColor: Colors.red),
+                  );
+                }
+              }
+            },
+            child: const Text('Record'),
+          ),
         ],
       ),
     );
+
+    if (result == true) {
+      _loadData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Measurement recorded'),
+              backgroundColor: AppTheme.successGreen),
+        );
+      }
+    }
   }
 
-  Widget _buildMeasurementsTab(SubcontractProvider provider) {
-    // TODO: Implement measurements property in SubcontractProvider
-    // final measurements = provider.measurements;
-    final measurements = <SubcontractMeasurement>[];
+  // ===== CARD BUILDERS =====
 
-    return Column(
-      children: [
-        if (measurements.isEmpty)
-          const Expanded(
-            child: Center(child: Text('No measurements recorded')),
-          )
-        else
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: measurements.length,
-              itemBuilder: (context, index) {
-                final measurement = measurements[index];
-                return _buildMeasurementCard(measurement);
-              },
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildPaymentsTab(SubcontractProvider provider) {
-    // TODO: Implement payments property in SubcontractProvider
-    // final payments = provider.payments;
-    final payments = <SubcontractPayment>[];
-
-    return Column(
-      children: [
-        if (payments.isEmpty)
-          const Expanded(
-            child: Center(child: Text('No payments recorded')),
-          )
-        else
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: payments.length,
-              itemBuilder: (context, index) {
-                final payment = payments[index];
-                return _buildPaymentCard(payment);
-              },
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildStatCard(String label, String value, Color color, IconData icon) {
+  Widget _buildStatCard(
+      String label, String value, Color color, IconData icon) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -359,19 +688,25 @@ class _SubcontractWorkOrderDetailScreenState extends State<SubcontractWorkOrderD
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  measurement.billNumber ?? 'Measurement',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                Expanded(
+                  child: Text(
+                    measurement.billNumber ?? 'Measurement',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     measurement.statusDisplay,
-                    style: TextStyle(color: statusColor, fontSize: 12),
+                    style: TextStyle(
+                        color: statusColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -399,6 +734,11 @@ class _SubcontractWorkOrderDetailScreenState extends State<SubcontractWorkOrderD
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ],
+            const SizedBox(height: 4),
+            Text(
+              'Date: ${_dateFormat.format(measurement.measurementDate)}',
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
           ],
         ),
       ),
@@ -421,23 +761,28 @@ class _SubcontractWorkOrderDetailScreenState extends State<SubcontractWorkOrderD
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppTheme.deepSlate.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     payment.paymentModeDisplay,
-                    style: TextStyle(color: AppTheme.deepSlate, fontSize: 12),
+                    style:
+                        const TextStyle(color: AppTheme.deepSlate, fontSize: 12),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
             _buildPaymentRow('Gross Amount', payment.grossAmount),
-            _buildPaymentRow('TDS (${payment.tdsPercentage}%)', -payment.tdsAmount),
-            if (payment.otherDeductions != null && payment.otherDeductions! > 0)
-              _buildPaymentRow('Other Deductions', -(payment.otherDeductions!)),
+            _buildPaymentRow(
+                'TDS (${payment.tdsPercentage}%)', -payment.tdsAmount),
+            if (payment.otherDeductions != null &&
+                payment.otherDeductions! > 0)
+              _buildPaymentRow(
+                  'Other Deductions', -(payment.otherDeductions!)),
             const Divider(),
             _buildPaymentRow('Net Paid', payment.netAmount, isBold: true),
             if (payment.transactionReference != null) ...[
@@ -477,5 +822,21 @@ class _SubcontractWorkOrderDetailScreenState extends State<SubcontractWorkOrderD
       ),
     );
   }
-}
 
+  Color _getStatusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'DRAFT':
+        return Colors.grey;
+      case 'ISSUED':
+        return AppTheme.primaryBlue;
+      case 'IN_PROGRESS':
+        return AppTheme.amber;
+      case 'COMPLETED':
+        return AppTheme.successGreen;
+      case 'TERMINATED':
+        return AppTheme.coralRed;
+      default:
+        return Colors.grey;
+    }
+  }
+}

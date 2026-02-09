@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/models/inventory_models.dart';
 import 'package:admin/providers/inventory_stock_provider.dart';
+import 'package:admin/services/inventory_service.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
@@ -328,14 +329,167 @@ class InventoryStockScreen extends StatelessWidget {
   }
 
   void _navigateToDetail(BuildContext context, InventoryStock stock) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('View details for ${stock.materialName}')),
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 16),
+            Text(stock.materialName ?? 'Stock Item', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            _detailRow('Project', stock.projectName ?? 'N/A'),
+            _detailRow('Current Qty', '${stock.currentQuantity} ${stock.unit ?? ''}'),
+            _detailRow('Last Updated', stock.lastUpdated),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          SizedBox(width: 120, child: Text(label, style: TextStyle(color: Colors.grey[600]))),
+          Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500))),
+        ],
+      ),
     );
   }
 
   void _navigateToCreate(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Add stock adjustment - to be implemented')),
+    showDialog(
+      context: context,
+      builder: (ctx) => _CreateStockAdjustmentDialog(
+        onCreated: () {
+          Provider.of<InventoryStockProvider>(context, listen: false).fetch();
+        },
+      ),
+    );
+  }
+}
+
+class _CreateStockAdjustmentDialog extends StatefulWidget {
+  final VoidCallback onCreated;
+  const _CreateStockAdjustmentDialog({required this.onCreated});
+
+  @override
+  State<_CreateStockAdjustmentDialog> createState() => _CreateStockAdjustmentDialogState();
+}
+
+class _CreateStockAdjustmentDialogState extends State<_CreateStockAdjustmentDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _projectIdCtrl = TextEditingController();
+  final _materialIdCtrl = TextEditingController();
+  final _quantityCtrl = TextEditingController();
+  final _reasonCtrl = TextEditingController();
+  String _adjustmentType = 'CORRECTION';
+  bool _isSaving = false;
+
+  final List<String> _types = [
+    'WASTAGE', 'THEFT', 'DAMAGE', 'CORRECTION', 'TRANSFER_OUT',
+  ];
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSaving = true);
+
+    try {
+      final service = InventoryService();
+      final adj = StockAdjustment(
+        projectId: int.parse(_projectIdCtrl.text),
+        materialId: int.parse(_materialIdCtrl.text),
+        adjustmentType: _adjustmentType,
+        quantity: double.parse(_quantityCtrl.text),
+        reason: _reasonCtrl.text.isNotEmpty ? _reasonCtrl.text : null,
+      );
+      await service.createStockAdjustment(adj);
+      widget.onCreated();
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Adjustment recorded'), backgroundColor: AppTheme.successGreen),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Stock Adjustment'),
+      content: SizedBox(
+        width: 400,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _projectIdCtrl,
+                  decoration: const InputDecoration(labelText: 'Project ID *'),
+                  keyboardType: TextInputType.number,
+                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _materialIdCtrl,
+                  decoration: const InputDecoration(labelText: 'Material ID *'),
+                  keyboardType: TextInputType.number,
+                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _adjustmentType,
+                  decoration: const InputDecoration(labelText: 'Adjustment Type'),
+                  items: _types.map((t) => DropdownMenuItem(value: t, child: Text(t.replaceAll('_', ' ')))).toList(),
+                  onChanged: (v) => setState(() => _adjustmentType = v!),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _quantityCtrl,
+                  decoration: const InputDecoration(labelText: 'Quantity *'),
+                  keyboardType: TextInputType.number,
+                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _reasonCtrl,
+                  decoration: const InputDecoration(labelText: 'Reason'),
+                  maxLines: 2,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed: _isSaving ? null : _submit,
+          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.deepSlate),
+          child: _isSaving
+              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Text('Record', style: TextStyle(color: Colors.white)),
+        ),
+      ],
     );
   }
 }

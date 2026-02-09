@@ -359,9 +359,10 @@ class DelayLogsScreen extends StatelessWidget {
 
   void _navigateToCreate(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Create delay log - to be implemented')),
+      const SnackBar(
+        content: Text('Delay logs are created from within a project\'s Delay Logs module'),
+        duration: Duration(seconds: 3),
+      ),
     );
   }
 }
-
-

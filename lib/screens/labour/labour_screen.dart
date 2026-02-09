@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/models/labour_models.dart';
 import 'package:admin/providers/labour_provider.dart';
+import 'package:admin/services/labour_service.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
@@ -196,8 +197,8 @@ class LabourScreen extends StatelessWidget {
                     radius: 24,
                     backgroundColor: Theme.of(context).primaryColor,
                     child: Text(
-                      labour.name != null && labour.name!.isNotEmpty
-                          ? labour.name![0].toUpperCase()
+                      labour.name.isNotEmpty
+                          ? labour.name[0].toUpperCase()
                           : 'L',
                       style: const TextStyle(color: Colors.white, fontSize: 20),
                     ),
@@ -333,14 +334,205 @@ class LabourScreen extends StatelessWidget {
   }
 
   void _navigateToDetail(BuildContext context, Labour labour) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('View details for ${labour.name}')),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(labour.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            _infoRow('Trade', labour.tradeType),
+            _infoRow('Phone', labour.phone),
+            _infoRow('Daily Wage', '₹${labour.dailyWage.toStringAsFixed(0)}'),
+            if (labour.idProofType != null) _infoRow('ID Type', labour.idProofType!),
+            if (labour.idProofNumber != null) _infoRow('ID Number', labour.idProofNumber!),
+            if (labour.emergencyContact != null) _infoRow('Emergency', labour.emergencyContact!),
+            _infoRow('Status', labour.active ? 'Active' : 'Inactive'),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          SizedBox(width: 120, child: Text(label, style: TextStyle(color: Colors.grey[600]))),
+          Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500))),
+        ],
+      ),
     );
   }
 
   void _navigateToCreate(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Create labour - to be implemented')),
+    showDialog(
+      context: context,
+      builder: (ctx) => _CreateLabourDialog(
+        onCreated: () {
+          Provider.of<LabourProvider>(context, listen: false).fetch();
+        },
+      ),
+    );
+  }
+}
+
+class _CreateLabourDialog extends StatefulWidget {
+  final VoidCallback onCreated;
+
+  const _CreateLabourDialog({required this.onCreated});
+
+  @override
+  State<_CreateLabourDialog> createState() => _CreateLabourDialogState();
+}
+
+class _CreateLabourDialogState extends State<_CreateLabourDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _wageCtrl = TextEditingController();
+  final _idNumberCtrl = TextEditingController();
+  final _emergencyCtrl = TextEditingController();
+
+  String _tradeType = 'MASON';
+  String? _idProofType;
+  bool _isSaving = false;
+
+  final List<String> _trades = [
+    'MASON', 'CARPENTER', 'PLUMBER', 'ELECTRICIAN', 'PAINTER',
+    'WELDER', 'FITTER', 'HELPER', 'SUPERVISOR', 'OTHER',
+  ];
+
+  final List<String> _idTypes = ['AADHAAR', 'PAN', 'VOTER_ID', 'DRIVING_LICENSE'];
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      final service = LabourService();
+      await service.createLabour({
+        'name': _nameCtrl.text,
+        'phone': _phoneCtrl.text,
+        'tradeType': _tradeType,
+        'dailyWage': double.parse(_wageCtrl.text),
+        if (_idProofType != null) 'idProofType': _idProofType,
+        if (_idNumberCtrl.text.isNotEmpty) 'idProofNumber': _idNumberCtrl.text,
+        if (_emergencyCtrl.text.isNotEmpty) 'emergencyContact': _emergencyCtrl.text,
+        'active': true,
+      });
+
+      widget.onCreated();
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Labour added'), backgroundColor: AppTheme.successGreen),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Add Labour'),
+      content: SizedBox(
+        width: 400,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _nameCtrl,
+                  decoration: const InputDecoration(labelText: 'Name *'),
+                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _phoneCtrl,
+                  decoration: const InputDecoration(labelText: 'Phone *'),
+                  keyboardType: TextInputType.phone,
+                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _tradeType,
+                  decoration: const InputDecoration(labelText: 'Trade Type'),
+                  items: _trades.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                  onChanged: (v) => setState(() => _tradeType = v!),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _wageCtrl,
+                  decoration: const InputDecoration(labelText: 'Daily Wage *', prefixText: '₹ '),
+                  keyboardType: TextInputType.number,
+                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _idProofType,
+                  decoration: const InputDecoration(labelText: 'ID Proof Type'),
+                  items: [
+                    const DropdownMenuItem(value: null, child: Text('None')),
+                    ..._idTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))),
+                  ],
+                  onChanged: (v) => setState(() => _idProofType = v),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _idNumberCtrl,
+                  decoration: const InputDecoration(labelText: 'ID Proof Number'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _emergencyCtrl,
+                  decoration: const InputDecoration(labelText: 'Emergency Contact'),
+                  keyboardType: TextInputType.phone,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed: _isSaving ? null : _submit,
+          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.deepSlate),
+          child: _isSaving
+              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Text('Add', style: TextStyle(color: Colors.white)),
+        ),
+      ],
     );
   }
 }

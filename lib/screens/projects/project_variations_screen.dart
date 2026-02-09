@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/models/project_variation.dart';
 import 'package:admin/providers/project_variation_provider.dart';
+import 'package:admin/services/project_tracking_service.dart';
+import 'package:admin/services/api_service.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
@@ -350,14 +352,211 @@ class ProjectVariationsScreen extends StatelessWidget {
   }
 
   void _navigateToDetail(BuildContext context, ProjectVariation variation) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('View details for variation ${variation.id}')),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        minChildSize: 0.4,
+        expand: false,
+        builder: (ctx, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Variation #${variation.id}',
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  _buildStatusBadge(variation.status),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildInfoItem('Description', variation.description),
+              _buildInfoItem('Estimated Amount',
+                  '₹${variation.estimatedAmount.toStringAsFixed(2)}'),
+              _buildInfoItem(
+                  'Client Approved', variation.clientApproved ? 'Yes' : 'No'),
+              if (variation.notes != null && variation.notes!.isNotEmpty)
+                _buildInfoItem('Notes', variation.notes!),
+              if (variation.createdAt != null)
+                _buildInfoItem('Created', _formatDate(variation.createdAt!)),
+              if (variation.approvedAt != null)
+                _buildInfoItem('Approved', _formatDate(variation.approvedAt!)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+          const SizedBox(height: 4),
+          Text(value, style: const TextStyle(fontSize: 15)),
+        ],
+      ),
     );
   }
 
   void _navigateToCreate(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Create project variation - to be implemented')),
+    showDialog(
+      context: context,
+      builder: (ctx) => _CreateVariationDialog(
+        onCreated: () {
+          Provider.of<ProjectVariationProvider>(context, listen: false).fetch();
+        },
+      ),
+    );
+  }
+}
+
+class _CreateVariationDialog extends StatefulWidget {
+  final VoidCallback onCreated;
+
+  const _CreateVariationDialog({required this.onCreated});
+
+  @override
+  State<_CreateVariationDialog> createState() => _CreateVariationDialogState();
+}
+
+class _CreateVariationDialogState extends State<_CreateVariationDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _descController = TextEditingController();
+  final _amountController = TextEditingController();
+  final _notesController = TextEditingController();
+  final _projectIdController = TextEditingController();
+  bool _isSaving = false;
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      final service = ProjectTrackingService(ApiService());
+      final projectId = int.parse(_projectIdController.text);
+      final variation = ProjectVariation(
+        projectId: projectId,
+        description: _descController.text,
+        estimatedAmount: double.parse(_amountController.text),
+        notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+      );
+
+      await service.createVariation(projectId, variation);
+      widget.onCreated();
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Variation created'),
+            backgroundColor: AppTheme.successGreen,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Create Variation'),
+      content: SizedBox(
+        width: 400,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _projectIdController,
+                  decoration: const InputDecoration(labelText: 'Project ID *'),
+                  keyboardType: TextInputType.number,
+                  validator: (v) =>
+                      v == null || v.isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _descController,
+                  decoration:
+                      const InputDecoration(labelText: 'Description *'),
+                  maxLines: 3,
+                  validator: (v) =>
+                      v == null || v.isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _amountController,
+                  decoration: const InputDecoration(
+                      labelText: 'Estimated Amount *', prefixText: '₹ '),
+                  keyboardType: TextInputType.number,
+                  validator: (v) =>
+                      v == null || v.isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _notesController,
+                  decoration: const InputDecoration(labelText: 'Notes'),
+                  maxLines: 2,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _isSaving ? null : _submit,
+          style:
+              ElevatedButton.styleFrom(backgroundColor: AppTheme.deepSlate),
+          child: _isSaving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white))
+              : const Text('Create',
+                  style: TextStyle(color: Colors.white)),
+        ),
+      ],
     );
   }
 }

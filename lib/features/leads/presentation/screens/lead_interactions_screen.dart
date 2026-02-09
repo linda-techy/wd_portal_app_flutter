@@ -395,7 +395,10 @@ class LeadInteractionsScreen extends StatelessWidget {
 
   void _navigateToCreate(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Create interaction - to be implemented')),
+      const SnackBar(
+        content: Text('Interactions are logged from a specific lead\'s detail page'),
+        duration: Duration(seconds: 3),
+      ),
     );
   }
 }

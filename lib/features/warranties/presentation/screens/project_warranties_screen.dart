@@ -377,9 +377,10 @@ class ProjectWarrantiesScreen extends StatelessWidget {
 
   void _navigateToCreate(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Create warranty - to be implemented')),
+      const SnackBar(
+        content: Text('Warranties are created from within a project\'s Warranties module'),
+        duration: Duration(seconds: 3),
+      ),
     );
   }
 }
-
-

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/models/inventory_models.dart';
 import 'package:admin/providers/material_provider.dart';
+import 'package:admin/services/inventory_service.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
@@ -307,16 +308,151 @@ class MaterialsScreen extends StatelessWidget {
   }
 
   void _navigateToDetail(BuildContext context, MaterialModel material) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('View details for ${material.name}')),
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 16),
+            Text(material.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            _detailRow('Category', material.category),
+            _detailRow('Unit', material.unit),
+            _detailRow('Status', material.active ? 'Active' : 'Inactive'),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          SizedBox(width: 100, child: Text(label, style: TextStyle(color: Colors.grey[600]))),
+          Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500))),
+        ],
+      ),
     );
   }
 
   void _navigateToCreate(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Create material screen - to be implemented')),
+    showDialog(
+      context: context,
+      builder: (ctx) => _CreateMaterialDialog(
+        onCreated: () {
+          Provider.of<MaterialProvider>(context, listen: false).fetch();
+        },
+      ),
     );
   }
 }
 
+class _CreateMaterialDialog extends StatefulWidget {
+  final VoidCallback onCreated;
+  const _CreateMaterialDialog({required this.onCreated});
 
+  @override
+  State<_CreateMaterialDialog> createState() => _CreateMaterialDialogState();
+}
+
+class _CreateMaterialDialogState extends State<_CreateMaterialDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameCtrl = TextEditingController();
+  final _unitCtrl = TextEditingController();
+  String _category = 'CEMENT';
+  bool _isSaving = false;
+
+  final List<String> _categories = [
+    'CEMENT', 'STEEL', 'SAND', 'AGGREGATE', 'BRICK',
+    'WOOD', 'PAINT', 'TILE', 'ELECTRICAL', 'PLUMBING',
+    'HARDWARE', 'GLASS', 'OTHER',
+  ];
+
+  final List<String> _units = ['KG', 'BAG', 'TON', 'CFT', 'SFT', 'RFT', 'NOS', 'LITRE', 'SQMT', 'CUM'];
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSaving = true);
+
+    try {
+      final service = InventoryService();
+      final material = MaterialModel(
+        name: _nameCtrl.text,
+        unit: _unitCtrl.text.isNotEmpty ? _unitCtrl.text : 'NOS',
+        category: _category,
+      );
+      await service.createMaterial(material);
+      widget.onCreated();
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Material created'), backgroundColor: AppTheme.successGreen),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Add Material'),
+      content: SizedBox(
+        width: 400,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _nameCtrl,
+                decoration: const InputDecoration(labelText: 'Material Name *'),
+                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _category,
+                decoration: const InputDecoration(labelText: 'Category'),
+                items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                onChanged: (v) => setState(() => _category = v!),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: 'NOS',
+                decoration: const InputDecoration(labelText: 'Unit'),
+                items: _units.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
+                onChanged: (v) => _unitCtrl.text = v ?? 'NOS',
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed: _isSaving ? null : _submit,
+          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.deepSlate),
+          child: _isSaving
+              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Text('Add', style: TextStyle(color: Colors.white)),
+        ),
+      ],
+    );
+  }
+}

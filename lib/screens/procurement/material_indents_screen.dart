@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/models/procurement_models.dart';
 import 'package:admin/providers/material_indent_provider.dart';
+import 'package:admin/features/procurement/presentation/screens/indent_creation_screen.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
@@ -212,14 +213,13 @@ class MaterialIndentsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (indent.status != null)
-                    _buildStatusBadge(indent.status!),
+                  _buildStatusBadge(indent.status),
                 ],
               ),
-              if (indent.items != null && indent.items!.isNotEmpty) ...[
+              if (indent.items.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(
-                  '${indent.items!.length} items',
+                  '${indent.items.length} items',
                   style: TextStyle(color: Colors.grey[600]),
                 ),
               ],
@@ -367,10 +367,41 @@ class MaterialIndentsScreen extends StatelessWidget {
   }
 
   void _navigateToCreate(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Create indent screen - to be implemented')),
+    final projectIdCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Create Material Indent'),
+        content: TextField(
+          controller: projectIdCtrl,
+          decoration: const InputDecoration(labelText: 'Project ID *'),
+          keyboardType: TextInputType.number,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              final projectId = int.tryParse(projectIdCtrl.text);
+              if (projectId == null) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  const SnackBar(content: Text('Please enter a valid project ID')),
+                );
+                return;
+              }
+              Navigator.pop(ctx);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => IndentCreationScreen(projectId: projectId),
+                ),
+              ).then((_) {
+                Provider.of<MaterialIndentProvider>(context, listen: false).fetch();
+              });
+            },
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
     );
   }
 }
-
-

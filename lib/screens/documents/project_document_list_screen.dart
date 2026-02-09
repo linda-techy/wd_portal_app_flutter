@@ -335,6 +335,7 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
   }
 
   Future<void> _confirmDelete(ProjectDocument doc) async {
+    final provider = context.read<DocumentProvider>();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -353,14 +354,14 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
 
     if (confirmed == true) {
       try {
-        await context.read<DocumentProvider>().deleteDocument(widget.projectId, doc.id);
+        await provider.deleteDocument(widget.projectId, doc.id);
         if (mounted && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Document deleted successfully")),
           );
         }
       } catch (e) {
-        if (mounted) {
+        if (mounted && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Delete failed: $e")),
           );
@@ -401,7 +402,6 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Could not launch download URL")),
         );
-      }
       }
     }
   }

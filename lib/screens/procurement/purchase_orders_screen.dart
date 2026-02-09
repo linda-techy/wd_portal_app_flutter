@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/models/procurement_models.dart';
 import 'package:admin/providers/purchase_order_provider.dart';
+import 'package:admin/screens/procurement/add_purchase_order_screen.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
@@ -235,17 +236,15 @@ class PurchaseOrdersScreen extends StatelessWidget {
                       icon: Icons.business,
                       label: po.projectName!,
                     ),
-                  if (po.totalAmount != null)
-                    _buildInfoChip(
-                      icon: Icons.currency_rupee,
-                      label: '₹${po.totalAmount!.toStringAsFixed(2)}',
-                      color: AppTheme.statusSuccess,
-                    ),
-                  if (po.poDate != null)
-                    _buildInfoChip(
-                      icon: Icons.calendar_today,
-                      label: _formatDate(po.poDate!),
-                    ),
+                  _buildInfoChip(
+                    icon: Icons.currency_rupee,
+                    label: '₹${po.totalAmount.toStringAsFixed(2)}',
+                    color: AppTheme.statusSuccess,
+                  ),
+                  _buildInfoChip(
+                    icon: Icons.calendar_today,
+                    label: _formatDate(po.poDate),
+                  ),
                   if (po.expectedDeliveryDate != null)
                     _buildInfoChip(
                       icon: Icons.local_shipping,
@@ -376,10 +375,11 @@ class PurchaseOrdersScreen extends StatelessWidget {
   }
 
   void _navigateToCreate(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Create PO screen - to be implemented')),
-    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AddPurchaseOrderScreen()),
+    ).then((_) {
+      Provider.of<PurchaseOrderProvider>(context, listen: false).fetch();
+    });
   }
 }
-
-

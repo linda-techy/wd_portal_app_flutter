@@ -1,7 +1,28 @@
-import 'package:dio/dio.dart';
 import 'package:admin/services/api_service.dart';
 import 'package:admin/models/paginated_response.dart';
-import '../../utils/error_handler.dart';
+
+class BoqWorkType {
+  final int id;
+  final String name;
+  final String? description;
+  final int? displayOrder;
+
+  BoqWorkType({
+    required this.id,
+    required this.name,
+    this.description,
+    this.displayOrder,
+  });
+
+  factory BoqWorkType.fromJson(Map<String, dynamic> json) {
+    return BoqWorkType(
+      id: json['id'],
+      name: json['name'],
+      description: json['description'],
+      displayOrder: json['displayOrder'],
+    );
+  }
+}
 
 class BoqItem {
   final int id;
@@ -11,6 +32,9 @@ class BoqItem {
   final double unitRate;
   final double? totalAmount;
   final String? notes;
+  final int? projectId;
+  final int? workTypeId;
+  final String? workTypeName;
 
   BoqItem({
     required this.id,
@@ -20,19 +44,25 @@ class BoqItem {
     required this.unitRate,
     this.totalAmount,
     this.notes,
+    this.projectId,
+    this.workTypeId,
+    this.workTypeName,
   });
 
   factory BoqItem.fromJson(Map<String, dynamic> json) {
     return BoqItem(
       id: json['id'],
-      description: json['description'],
-      unit: json['unit'],
-      quantity: (json['quantity'] as num).toDouble(),
-      unitRate: (json['unitRate'] as num).toDouble(),
+      description: json['description'] ?? '',
+      unit: json['unit'] ?? '',
+      quantity: json['quantity'] != null ? (json['quantity'] as num).toDouble() : 0,
+      unitRate: json['unitRate'] != null ? (json['unitRate'] as num).toDouble() : 0,
       totalAmount: json['totalAmount'] != null
           ? (json['totalAmount'] as num).toDouble()
           : null,
       notes: json['notes'],
+      projectId: json['project'] is Map ? json['project']['id'] : json['projectId'],
+      workTypeId: json['workType'] is Map ? json['workType']['id'] : json['workTypeId'],
+      workTypeName: json['workType'] is Map ? json['workType']['name'] : json['workTypeName'],
     );
   }
 
@@ -42,6 +72,45 @@ class BoqItem {
       'unitRate': unitRate,
       'notes': notes,
     };
+  }
+}
+
+class BoqSummary {
+  final int projectId;
+  final int totalItems;
+  final double totalAmount;
+  final List<WorkTypeBreakdown> workTypeBreakdown;
+
+  BoqSummary({
+    required this.projectId,
+    required this.totalItems,
+    required this.totalAmount,
+    required this.workTypeBreakdown,
+  });
+
+  factory BoqSummary.fromJson(Map<String, dynamic> json) {
+    return BoqSummary(
+      projectId: json['projectId'],
+      totalItems: json['totalItems'],
+      totalAmount: (json['totalAmount'] as num).toDouble(),
+      workTypeBreakdown: (json['workTypeBreakdown'] as List? ?? [])
+          .map((e) => WorkTypeBreakdown.fromJson(e))
+          .toList(),
+    );
+  }
+}
+
+class WorkTypeBreakdown {
+  final String workType;
+  final double total;
+
+  WorkTypeBreakdown({required this.workType, required this.total});
+
+  factory WorkTypeBreakdown.fromJson(Map<String, dynamic> json) {
+    return WorkTypeBreakdown(
+      workType: json['workType'],
+      total: (json['total'] as num).toDouble(),
+    );
   }
 }
 
@@ -61,23 +130,62 @@ class BoqService {
     }
   }
 
-  Future<BoqItem> updateBoqItem(int id, BoqItem item) async {
-    try {
-      final response = await _api.dio.put(
-        '/boq/$id',
-        data: item.toJson(),
-      );
+  Future<BoqItem> createBoqItem({
+    required int projectId,
+    required String description,
+    required String unit,
+    required double quantity,
+    required double unitRate,
+    int? workTypeId,
+    String? notes,
+  }) async {
+    final response = await _api.dio.post('/boq', data: {
+      'projectId': projectId,
+      'description': description,
+      'unit': unit,
+      'quantity': quantity,
+      'unitRate': unitRate,
+      'workTypeId': workTypeId,
+      'notes': notes,
+    });
+    if (response.statusCode == 201 && response.data['success'] == true) {
+      return BoqItem.fromJson(response.data['data']);
+    }
+    throw Exception(response.data['message'] ?? 'Failed to create BoQ item');
+  }
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        return BoqItem.fromJson(response.data['data']);
-      }
-      throw Exception(response.data['message'] ?? 'Failed to update BoQ item');
-    } catch (e) {
-      rethrow;
+  Future<BoqItem> updateBoqItem(int id, Map<String, dynamic> data) async {
+    final response = await _api.dio.put('/boq/$id', data: data);
+    if (response.statusCode == 200 && response.data['success'] == true) {
+      return BoqItem.fromJson(response.data['data']);
+    }
+    throw Exception(response.data['message'] ?? 'Failed to update BoQ item');
+  }
+
+  Future<void> deleteBoqItem(int id) async {
+    final response = await _api.dio.delete('/boq/$id');
+    if (response.statusCode != 200 || response.data['success'] != true) {
+      throw Exception(response.data['message'] ?? 'Failed to delete BoQ item');
     }
   }
 
-  /// NEW: Standardized search endpoint for BOQ items
+  Future<List<BoqWorkType>> getWorkTypes() async {
+    final response = await _api.dio.get('/boq/work-types');
+    if (response.statusCode == 200 && response.data['success'] == true) {
+      final List<dynamic> data = response.data['data'];
+      return data.map((e) => BoqWorkType.fromJson(e)).toList();
+    }
+    throw Exception(response.data['message'] ?? 'Failed to load work types');
+  }
+
+  Future<BoqSummary> getProjectSummary(int projectId) async {
+    final response = await _api.dio.get('/boq/project/$projectId/summary');
+    if (response.statusCode == 200 && response.data['success'] == true) {
+      return BoqSummary.fromJson(response.data['data']);
+    }
+    throw Exception(response.data['message'] ?? 'Failed to load BoQ summary');
+  }
+
   Future<PaginatedResponse<BoqItem>> searchBoqItems({
     required int page,
     required int size,

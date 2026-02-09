@@ -357,9 +357,10 @@ class PaymentsScreen extends StatelessWidget {
 
   void _navigateToCreate(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Create payment - to be implemented')),
+      const SnackBar(
+        content: Text('Payments are recorded from a specific project context (Subcontracts or Accounts Payable)'),
+        duration: Duration(seconds: 3),
+      ),
     );
   }
 }
-
-

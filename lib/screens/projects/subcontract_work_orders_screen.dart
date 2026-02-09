@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/models/subcontract_models.dart';
 import 'package:admin/providers/subcontract_provider.dart';
+import 'package:admin/services/subcontract_service.dart';
+import 'package:admin/services/api_service.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
@@ -355,8 +357,221 @@ class SubcontractWorkOrdersScreen extends StatelessWidget {
   }
 
   void _navigateToCreate(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Create subcontract screen - to be implemented')),
+    showDialog(
+      context: context,
+      builder: (ctx) => _CreateSubcontractDialog(
+        projectId: projectId,
+        onCreated: () {
+          Provider.of<SubcontractProvider>(context, listen: false).fetch();
+        },
+      ),
+    );
+  }
+}
+
+class _CreateSubcontractDialog extends StatefulWidget {
+  final int? projectId;
+  final VoidCallback onCreated;
+
+  const _CreateSubcontractDialog({this.projectId, required this.onCreated});
+
+  @override
+  State<_CreateSubcontractDialog> createState() =>
+      _CreateSubcontractDialogState();
+}
+
+class _CreateSubcontractDialogState extends State<_CreateSubcontractDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _woNumberController = TextEditingController();
+  final _scopeController = TextEditingController();
+  final _amountController = TextEditingController();
+  final _unitController = TextEditingController();
+  final _rateController = TextEditingController();
+  final _notesController = TextEditingController();
+  final _vendorIdController = TextEditingController();
+  final _projectIdController = TextEditingController();
+
+  String _measurementBasis = 'LUMPSUM';
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.projectId != null) {
+      _projectIdController.text = widget.projectId.toString();
+    }
+    _woNumberController.text =
+        'WO-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      final service = SubcontractService(ApiService());
+      final workOrder = SubcontractWorkOrder(
+        workOrderNumber: _woNumberController.text,
+        projectId: int.parse(_projectIdController.text),
+        vendorId: int.parse(_vendorIdController.text),
+        scopeDescription: _scopeController.text,
+        measurementBasis: _measurementBasis,
+        negotiatedAmount: double.parse(_amountController.text),
+        unit: _measurementBasis == 'UNIT_RATE' && _unitController.text.isNotEmpty
+            ? _unitController.text
+            : null,
+        rate: _measurementBasis == 'UNIT_RATE' && _rateController.text.isNotEmpty
+            ? double.tryParse(_rateController.text)
+            : null,
+        status: 'DRAFT',
+        notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+      );
+
+      await service.createWorkOrder(workOrder);
+      widget.onCreated();
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Work order created'),
+            backgroundColor: AppTheme.successGreen,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Create Work Order'),
+      content: SizedBox(
+        width: 400,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _woNumberController,
+                  decoration:
+                      const InputDecoration(labelText: 'Work Order Number *'),
+                  validator: (v) =>
+                      v == null || v.isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                if (widget.projectId == null)
+                  TextFormField(
+                    controller: _projectIdController,
+                    decoration:
+                        const InputDecoration(labelText: 'Project ID *'),
+                    keyboardType: TextInputType.number,
+                    validator: (v) =>
+                        v == null || v.isEmpty ? 'Required' : null,
+                  ),
+                if (widget.projectId == null) const SizedBox(height: 12),
+                TextFormField(
+                  controller: _vendorIdController,
+                  decoration: const InputDecoration(
+                      labelText: 'Vendor / Contractor ID *'),
+                  keyboardType: TextInputType.number,
+                  validator: (v) =>
+                      v == null || v.isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _scopeController,
+                  decoration: const InputDecoration(
+                      labelText: 'Scope of Work *'),
+                  maxLines: 3,
+                  validator: (v) =>
+                      v == null || v.isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _measurementBasis,
+                  decoration:
+                      const InputDecoration(labelText: 'Measurement Basis'),
+                  items: const [
+                    DropdownMenuItem(
+                        value: 'LUMPSUM', child: Text('Lump Sum')),
+                    DropdownMenuItem(
+                        value: 'UNIT_RATE', child: Text('Unit Rate')),
+                  ],
+                  onChanged: (v) =>
+                      setState(() => _measurementBasis = v!),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _amountController,
+                  decoration: const InputDecoration(
+                      labelText: 'Negotiated Amount *', prefixText: '₹ '),
+                  keyboardType: TextInputType.number,
+                  validator: (v) =>
+                      v == null || v.isEmpty ? 'Required' : null,
+                ),
+                if (_measurementBasis == 'UNIT_RATE') ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _unitController,
+                          decoration:
+                              const InputDecoration(labelText: 'Unit'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _rateController,
+                          decoration:
+                              const InputDecoration(labelText: 'Rate'),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _notesController,
+                  decoration: const InputDecoration(labelText: 'Notes'),
+                  maxLines: 2,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _isSaving ? null : _submit,
+          style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.deepSlate),
+          child: _isSaving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white))
+              : const Text('Create',
+                  style: TextStyle(color: Colors.white)),
+        ),
+      ],
     );
   }
 }

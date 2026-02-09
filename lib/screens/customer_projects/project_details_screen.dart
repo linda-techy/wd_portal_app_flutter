@@ -17,6 +17,10 @@ import 'package:admin/screens/projects/subcontract_work_orders_screen.dart';
 import 'package:admin/features/finance/presentation/screens/billing_dashboard_screen.dart';
 import 'package:admin/features/change_orders/presentation/screens/change_orders_screen.dart';
 import 'package:admin/features/delays/presentation/screens/delay_logs_screen.dart';
+import 'package:admin/features/feedback/presentation/screens/feedback_screen.dart';
+import 'package:admin/features/gallery/presentation/screens/gallery_screen.dart';
+import 'package:admin/features/observations/presentation/screens/observations_screen.dart';
+import 'package:admin/screens/projects/view_360_list_screen.dart';
 import 'package:admin/models/team_member.dart';
 import 'package:admin/widgets/animations/entrance_animation.dart';
 import 'package:admin/widgets/animations/motion_button.dart';
@@ -757,6 +761,38 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
 
       ),
       _ModuleTile(
+        title: 'Feedback',
+        icon: Icons.feedback_outlined,
+        color: AppTheme.skyBlue,
+        onTap: () {
+          _navigateToModule('Feedback', widget.project);
+        },
+      ),
+      _ModuleTile(
+        title: 'Gallery',
+        icon: Icons.photo_library_outlined,
+        color: AppTheme.coralRed,
+        onTap: () {
+          _navigateToModule('Gallery', widget.project);
+        },
+      ),
+      _ModuleTile(
+        title: 'Snags',
+        icon: Icons.warning_amber_rounded,
+        color: AppTheme.constructionOrange,
+        onTap: () {
+          _navigateToModule('Snags', widget.project);
+        },
+      ),
+      _ModuleTile(
+        title: '360° Views',
+        icon: Icons.vrpano_outlined,
+        color: AppTheme.primaryBlue,
+        onTap: () {
+          _navigateToModule('360 Views', widget.project);
+        },
+      ),
+      _ModuleTile(
         title: 'Site Reports',
         icon: Icons.assignment_outlined,
         color: AppTheme.primaryBlue,
@@ -964,6 +1000,37 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => QualityChecksScreen(projectId: widget.project.id!),
+        ),
+      );
+    } else if (moduleName == 'Feedback') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FeedbackScreen(projectId: widget.project.id!),
+        ),
+      );
+    } else if (moduleName == 'Gallery') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => GalleryScreen(projectId: widget.project.id!),
+        ),
+      );
+    } else if (moduleName == 'Snags') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ObservationsScreen(projectId: widget.project.id!),
+        ),
+      );
+    } else if (moduleName == '360 Views') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => View360ListScreen(
+            projectId: widget.project.id!,
+            projectName: widget.project.name,
+          ),
         ),
       );
     } else {

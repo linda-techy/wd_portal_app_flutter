@@ -364,15 +364,55 @@ class VendorQuotationsScreen extends StatelessWidget {
   }
 
   void _navigateToDetail(BuildContext context, VendorQuotation quotation) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('View details for ${quotation.quotationNumber}')),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 16),
+            Text(quotation.quotationNumber ?? 'Quotation', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            _detailRow('Vendor', quotation.vendorName ?? 'N/A'),
+            _detailRow('Amount', '₹${quotation.totalAmount.toStringAsFixed(2)}'),
+            _detailRow('Status', quotation.status),
+            if (quotation.validUntil != null)
+              _detailRow('Valid Until', _formatDate(quotation.validUntil!)),
+            if (quotation.notes != null && quotation.notes!.isNotEmpty)
+              _detailRow('Notes', quotation.notes!),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(width: 100, child: Text(label, style: TextStyle(color: Colors.grey[600]))),
+          Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500))),
+        ],
+      ),
     );
   }
 
   void _navigateToCreate(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-          content: Text('Create vendor quotation - to be implemented')),
+        content: Text('Vendor quotations are created from Material Indents → Manage Quotations'),
+        duration: Duration(seconds: 3),
+      ),
     );
   }
 }
