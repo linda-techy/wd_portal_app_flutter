@@ -37,6 +37,8 @@ class _BoqScreenState extends State<BoqScreen> {
     if (!authProvider.isAuthenticated) {
       if (mounted) {
         await ErrorHandler.handleAuthError(context);
+      }
+      if (mounted) {
         Navigator.of(context).pushReplacementNamed('/login');
       }
       return;
@@ -151,7 +153,7 @@ class _BoqScreenState extends State<BoqScreen> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [AppTheme.deepSlate, AppTheme.deepSlateLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

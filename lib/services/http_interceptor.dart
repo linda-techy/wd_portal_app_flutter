@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:provider/provider.dart';
 import '../providers/portal_auth_provider.dart';
 import '../utils/navigation_service.dart';
+import 'package:flutter/foundation.dart'; // Required for debugPrint
 import 'package:flutter/material.dart'; // Required for Colors and SnackBar
 import 'storage_service.dart';
 
@@ -19,19 +20,19 @@ class AuthInterceptor extends Interceptor {
     if (options.path.contains('/auth/login') ||
         options.path.contains('/auth/refresh-token') ||
         options.path.contains('/auth/logout')) {
-      print('DEBUG Flutter: Skipping token for ${options.path}');
+      debugPrint('DEBUG Flutter: Skipping token for ${options.path}');
       return handler.next(options);
     }
 
     // Add access token to request
-    print('DEBUG Flutter: Reading token for ${options.path}');
+    debugPrint('DEBUG Flutter: Reading token for ${options.path}');
     final accessToken = await _storage.read(key: 'access_token');
-    print('DEBUG Flutter: Token value: ${accessToken != null ? "EXISTS (${accessToken.substring(0, 20)}...)" : "NULL"}');
+    debugPrint('DEBUG Flutter: Token value: ${accessToken != null ? "EXISTS (${accessToken.substring(0, 20)}...)" : "NULL"}');
     if (accessToken != null) {
       options.headers['Authorization'] = 'Bearer $accessToken';
-      print('DEBUG Flutter: Added Bearer token to headers');
+      debugPrint('DEBUG Flutter: Added Bearer token to headers');
     } else {
-      print('DEBUG Flutter: No token found in storage!');
+      debugPrint('DEBUG Flutter: No token found in storage!');
     }
 
     return handler.next(options);
@@ -53,7 +54,7 @@ class AuthInterceptor extends Interceptor {
       try {
         // Try to refresh the token
         final refreshToken = await _storage.read(key: 'refresh_token');
-        print('DEBUG Flutter: Attempting refresh with token length: ${refreshToken?.length}');
+        debugPrint('DEBUG Flutter: Attempting refresh with token length: ${refreshToken?.length}');
         
         if (refreshToken != null) {
           try {
@@ -62,7 +63,7 @@ class AuthInterceptor extends Interceptor {
               data: {'refreshToken': refreshToken},
             );
             
-            print('DEBUG Flutter: Refresh successful. New access token received.');
+            debugPrint('DEBUG Flutter: Refresh successful. New access token received.');
 
             final newAccessToken = response.data['accessToken'];
             final newRefreshToken = response.data['refreshToken'];
@@ -80,19 +81,19 @@ class AuthInterceptor extends Interceptor {
             _isRefreshing = false;
             return handler.resolve(retryResponse);
           } catch (refreshError) {
-             print('DEBUG Flutter: Refresh API failed: $refreshError');
+             debugPrint('DEBUG Flutter: Refresh API failed: $refreshError');
              if (refreshError is DioException) {
-               print('DEBUG Flutter: Refresh API Response: ${refreshError.response?.data}');
-               print('DEBUG Flutter: Refresh API Status: ${refreshError.response?.statusCode}');
+               debugPrint('DEBUG Flutter: Refresh API Response: ${refreshError.response?.data}');
+               debugPrint('DEBUG Flutter: Refresh API Status: ${refreshError.response?.statusCode}');
              }
              rethrow;
           }
         } else {
-           print('DEBUG Flutter: No refresh token available in storage.');
+           debugPrint('DEBUG Flutter: No refresh token available in storage.');
         }
       } catch (e) {
         // Refresh failed, clear tokens and redirect to login
-        print('DEBUG Flutter: Token refresh flow failed completely: $e');
+        debugPrint('DEBUG Flutter: Token refresh flow failed completely: $e');
         await _storage.deleteAll();
         _isRefreshing = false;
         
@@ -112,9 +113,12 @@ class AuthInterceptor extends Interceptor {
           // Clear auth state in provider
           try {
             final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
-            await authProvider.logout(context);
+            // Check if context is still valid before using it
+            if (NavigationService.navigatorKey.currentContext != null) {
+              await authProvider.logout(context);
+            }
           } catch (providerError) {
-            print('DEBUG Flutter: Error clearing auth provider: $providerError');
+            debugPrint('DEBUG Flutter: Error clearing auth provider: $providerError');
           }
           
           // Navigate to login and clear navigation stack
@@ -126,7 +130,6 @@ class AuthInterceptor extends Interceptor {
       }
     }
 
-    // Handle 403 Forbidden - user doesn't have permission
     // Handle 403 Forbidden - user doesn't have permission
     if (err.response?.statusCode == 403) {
       // Just pass the error through so UI can show permission denied

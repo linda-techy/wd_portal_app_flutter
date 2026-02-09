@@ -17,10 +17,9 @@ class RecordGRNScreen extends StatefulWidget {
 
 class _RecordGRNScreenState extends State<RecordGRNScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _receivedByController = TextEditingController();
   final _invoiceNumberController = TextEditingController();
   final _invoiceAmountController = TextEditingController();
-  final _notesController = TextEditingController();
+  final _notesController = TextEditingController ();
   DateTime _receivedDate = DateTime.now();
 
   @override
@@ -117,7 +116,7 @@ class _RecordGRNScreenState extends State<RecordGRNScreen> {
       final grnData = {
         'poId': widget.po.id,
         'receivedDate': _receivedDate.toIso8601String(),
-        'receivedById': userId != null ? (userId is int ? userId : int.parse(userId.toString())) : null,
+        'receivedById': userId,
         'invoiceNumber': _invoiceNumberController.text,
         'invoiceAmount': double.tryParse(_invoiceAmountController.text) ?? 0,
         'notes': _notesController.text,

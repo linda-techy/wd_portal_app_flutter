@@ -408,7 +408,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
         );
         Navigator.pop(context, true); // Return true to indicate success
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       if (mounted) {
         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Error creating lead');
       }

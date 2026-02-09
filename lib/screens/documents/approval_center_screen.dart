@@ -187,7 +187,7 @@ class ApprovalCenterScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _buildStatusBadge(approval.status!),
+                  _buildStatusBadge(approval.status),
                 ],
               ),
               if (approval.comments != null) ...[
@@ -306,10 +306,6 @@ class ApprovalCenterScreen extends StatelessWidget {
       default:
         return AppTheme.statusWarning;
     }
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
   }
 
   void _navigateToDetail(BuildContext context, ApprovalRequest approval) {

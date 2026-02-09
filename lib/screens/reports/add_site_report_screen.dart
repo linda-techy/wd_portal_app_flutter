@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
 import 'package:motion_toast/motion_toast.dart';
 import '../../models/site_report_models.dart';
 import '../../models/customer_project.dart';
@@ -82,8 +81,10 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
         });
       }
     } catch (e) {
-      MotionToast.error(description: Text('Error picking image: $e'))
-          .show(context);
+      if (mounted) {
+        MotionToast.error(description: Text('Error picking image: $e'))
+            .show(context);
+      }
     }
   }
 
@@ -129,15 +130,21 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
         photos: _photos,
       );
 
-      MotionToast.success(
-              description: const Text('Report submitted successfully'))
-          .show(context);
-      Navigator.pop(context, true);
+      if (mounted) {
+        MotionToast.success(
+                description: const Text('Report submitted successfully'))
+            .show(context);
+        Navigator.pop(context, true);
+      }
     } catch (e) {
-      MotionToast.error(description: Text('Error submitting report: $e'))
-          .show(context);
+      if (mounted) {
+        MotionToast.error(description: Text('Error submitting report: $e'))
+            .show(context);
+      }
     } finally {
-      setState(() => _isSaving = false);
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 

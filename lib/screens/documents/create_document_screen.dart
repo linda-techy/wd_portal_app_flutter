@@ -186,12 +186,12 @@ class _CreateDocumentScreenState extends State<CreateDocumentScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(AppTheme.spacingLG),
+          padding: const EdgeInsets.all(AppTheme.spacingLG),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 720),
               child: Container(
-                padding: EdgeInsets.all(AppTheme.spacingLG),
+                padding: const EdgeInsets.all(AppTheme.spacingLG),
                 decoration: BoxDecoration(
                   color: AppTheme.surface,
                   borderRadius: BorderRadius.circular(AppTheme.radiusMD),
@@ -210,32 +210,32 @@ class _CreateDocumentScreenState extends State<CreateDocumentScreen> {
                         widget.documentType,
                         style: AppTheme.headlineMedium,
                       ),
-                      SizedBox(height: AppTheme.spacingSM),
+                      const SizedBox(height: AppTheme.spacingSM),
                       Text(
                         'Fill in the details below to generate the document.',
                         style: AppTheme.bodyMedium,
                       ),
-                      SizedBox(height: AppTheme.spacingLG),
+                      const SizedBox(height: AppTheme.spacingLG),
                       _buildCommonFieldsSection(),
                       if (_isConstructionAgreement) ...[
-                        SizedBox(height: AppTheme.spacingLG),
+                        const SizedBox(height: AppTheme.spacingLG),
                         _buildSectionHeader('Construction Agreement Details'),
-                        SizedBox(height: AppTheme.spacingMD),
+                        const SizedBox(height: AppTheme.spacingMD),
                         _buildConstructionAgreementFields(),
                       ],
                       if (_isSiteHandover) ...[
-                        SizedBox(height: AppTheme.spacingLG),
+                        const SizedBox(height: AppTheme.spacingLG),
                         _buildSectionHeader('Site Handover Details'),
-                        SizedBox(height: AppTheme.spacingMD),
+                        const SizedBox(height: AppTheme.spacingMD),
                         _buildSiteHandoverFields(),
                       ],
                       if (_isCompletionCertificate) ...[
-                        SizedBox(height: AppTheme.spacingLG),
+                        const SizedBox(height: AppTheme.spacingLG),
                         _buildSectionHeader('Completion Certificate Details'),
-                        SizedBox(height: AppTheme.spacingMD),
+                        const SizedBox(height: AppTheme.spacingMD),
                         _buildCompletionCertificateFields(),
                       ],
-                      SizedBox(height: AppTheme.spacingLG),
+                      const SizedBox(height: AppTheme.spacingLG),
                       Align(
                         alignment: Alignment.centerRight,
                         child: SizedBox(
@@ -269,7 +269,7 @@ class _CreateDocumentScreenState extends State<CreateDocumentScreen> {
             borderRadius: BorderRadius.circular(AppTheme.radiusSM),
           ),
         ),
-        SizedBox(width: AppTheme.spacingSM),
+        const SizedBox(width: AppTheme.spacingSM),
         Text(
           title,
           style: AppTheme.titleMedium,
@@ -283,7 +283,7 @@ class _CreateDocumentScreenState extends State<CreateDocumentScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildSectionHeader('Document Details'),
-        SizedBox(height: AppTheme.spacingMD),
+        const SizedBox(height: AppTheme.spacingMD),
         TextFormField(
           controller: _titleController,
           decoration: _buildInputDecoration('Document title'),
@@ -294,7 +294,7 @@ class _CreateDocumentScreenState extends State<CreateDocumentScreen> {
             return null;
           },
         ),
-        SizedBox(height: AppTheme.spacingMD),
+        const SizedBox(height: AppTheme.spacingMD),
         GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {
@@ -323,7 +323,7 @@ class _CreateDocumentScreenState extends State<CreateDocumentScreen> {
             ),
           ),
         ),
-        SizedBox(height: AppTheme.spacingMD),
+        const SizedBox(height: AppTheme.spacingMD),
         TextFormField(
           controller: _notesController,
           decoration: _buildInputDecoration('Notes', hint: 'Additional notes'),
@@ -347,7 +347,7 @@ class _CreateDocumentScreenState extends State<CreateDocumentScreen> {
             return null;
           },
         ),
-        SizedBox(height: AppTheme.spacingMD),
+        const SizedBox(height: AppTheme.spacingMD),
         TextFormField(
           controller: _projectValueController,
           keyboardType: TextInputType.number,
@@ -355,12 +355,12 @@ class _CreateDocumentScreenState extends State<CreateDocumentScreen> {
             'Project value',
             hint: 'Enter amount',
           ).copyWith(
-            prefixIcon: Padding(
+            prefixIcon: const Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: AppTheme.spacingMD,
                 vertical: AppTheme.spacingSM,
               ),
-              child: const Text(
+              child: Text(
                 '₹',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
@@ -382,7 +382,7 @@ class _CreateDocumentScreenState extends State<CreateDocumentScreen> {
             return null;
           },
         ),
-        SizedBox(height: AppTheme.spacingMD),
+        const SizedBox(height: AppTheme.spacingMD),
         TextFormField(
           controller: _contractTermsController,
           decoration: _buildInputDecoration('Contract terms'),
@@ -394,7 +394,7 @@ class _CreateDocumentScreenState extends State<CreateDocumentScreen> {
             return null;
           },
         ),
-        SizedBox(height: AppTheme.spacingMD),
+        const SizedBox(height: AppTheme.spacingMD),
         TextFormField(
           controller: _paymentTermsController,
           decoration: _buildInputDecoration('Payment terms'),
@@ -406,7 +406,7 @@ class _CreateDocumentScreenState extends State<CreateDocumentScreen> {
             return null;
           },
         ),
-        SizedBox(height: AppTheme.spacingMD),
+        const SizedBox(height: AppTheme.spacingMD),
         Row(
           children: [
             Expanded(
@@ -439,7 +439,7 @@ class _CreateDocumentScreenState extends State<CreateDocumentScreen> {
                 ),
               ),
             ),
-            SizedBox(width: AppTheme.spacingMD),
+            const SizedBox(width: AppTheme.spacingMD),
             Expanded(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
@@ -512,7 +512,7 @@ class _CreateDocumentScreenState extends State<CreateDocumentScreen> {
             ),
           ),
         ),
-        SizedBox(height: AppTheme.spacingMD),
+        const SizedBox(height: AppTheme.spacingMD),
         TextFormField(
           controller: _siteConditionController,
           decoration: _buildInputDecoration('Site condition'),
@@ -524,19 +524,19 @@ class _CreateDocumentScreenState extends State<CreateDocumentScreen> {
             return null;
           },
         ),
-        SizedBox(height: AppTheme.spacingMD),
+        const SizedBox(height: AppTheme.spacingMD),
         TextFormField(
           controller: _inspectionNotesController,
           decoration: _buildInputDecoration('Inspection notes'),
           maxLines: 3,
         ),
-        SizedBox(height: AppTheme.spacingMD),
+        const SizedBox(height: AppTheme.spacingMD),
         TextFormField(
           controller: _pendingItemsController,
           decoration: _buildInputDecoration('Pending items'),
           maxLines: 3,
         ),
-        SizedBox(height: AppTheme.spacingMD),
+        const SizedBox(height: AppTheme.spacingMD),
         TextFormField(
           controller: _handoverToController,
           decoration: _buildInputDecoration('Handover to (name)'),
@@ -583,7 +583,7 @@ class _CreateDocumentScreenState extends State<CreateDocumentScreen> {
             ),
           ),
         ),
-        SizedBox(height: AppTheme.spacingMD),
+        const SizedBox(height: AppTheme.spacingMD),
         TextFormField(
           controller: _certifyingAuthorityController,
           decoration: _buildInputDecoration('Certifying authority'),
@@ -594,19 +594,19 @@ class _CreateDocumentScreenState extends State<CreateDocumentScreen> {
             return null;
           },
         ),
-        SizedBox(height: AppTheme.spacingMD),
+        const SizedBox(height: AppTheme.spacingMD),
         TextFormField(
           controller: _finalInspectionNotesController,
           decoration: _buildInputDecoration('Final inspection notes'),
           maxLines: 3,
         ),
-        SizedBox(height: AppTheme.spacingMD),
+        const SizedBox(height: AppTheme.spacingMD),
         TextFormField(
           controller: _deficiencyListController,
           decoration: _buildInputDecoration('Deficiency list'),
           maxLines: 3,
         ),
-        SizedBox(height: AppTheme.spacingMD),
+        const SizedBox(height: AppTheme.spacingMD),
         TextFormField(
           controller: _warrantyPeriodController,
           decoration: _buildInputDecoration('Warranty period'),

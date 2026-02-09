@@ -112,7 +112,6 @@ class FormSections {
             child: Text('-- Not Assigned --'),
           ),
           ...teamMembers.where((m) => m.id != null).map((member) {
-            final isSelected = member.id == finalSelectedValue;
             return DropdownMenuItem<int>(
               value: member.id,
               child: Text(member.fullName),

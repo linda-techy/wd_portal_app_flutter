@@ -1153,13 +1153,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     // Extract file data using cross-platform helper
     final fileData = FileUploadHelper.extractFromResult(result);
     if (!mounted) return;
-    final provider = context.read<DocumentProvider>();
+    final provider = Provider.of<DocumentProvider>(context, listen: false);
 
     if (provider.categories.isEmpty) {
       await provider.fetchCategories(widget.projectId);
     }
 
-    if (!context.mounted) return;
+    if (!mounted) return;
 
     // Show simple category selection dialog
     final categoryId = await showDialog<int>(
@@ -1183,7 +1183,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       ),
     );
 
-    if (categoryId != null && context.mounted) {
+    if (categoryId != null && mounted) {
       try {
         await provider.uploadDocument(
           projectId: widget.projectId,

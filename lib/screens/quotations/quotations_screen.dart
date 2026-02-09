@@ -8,10 +8,10 @@ class QuotationsScreen extends StatefulWidget {
   const QuotationsScreen({super.key});
 
   @override
-  _QuotationsScreenState createState() => _QuotationsScreenState();
+  State<QuotationsScreen> createState() => QuotationsScreenState();
 }
 
-class _QuotationsScreenState extends State<QuotationsScreen> {
+class QuotationsScreenState extends State<QuotationsScreen> {
   final LeadQuotationService _quotationService = LeadQuotationService();
   List<LeadQuotation> _quotations = [];
   bool _isLoading = true;
@@ -179,9 +179,9 @@ class _QuotationsScreenState extends State<QuotationsScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.error_outline, size: 48, color: errorColor),
+                              const Icon(Icons.error_outline, size: 48, color: errorColor),
                               const SizedBox(height: 8),
-                              Text('Failed to load quotations', style: TextStyle(color: errorColor)),
+                              const Text('Failed to load quotations', style: TextStyle(color: errorColor)),
                               const SizedBox(height: 16),
                               ElevatedButton(onPressed: _loadQuotations, child: const Text('Retry')),
                             ],

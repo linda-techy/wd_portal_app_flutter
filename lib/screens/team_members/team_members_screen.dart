@@ -7,10 +7,10 @@ class TeamMembersScreen extends StatefulWidget {
   const TeamMembersScreen({super.key});
 
   @override
-  _TeamMembersScreenState createState() => _TeamMembersScreenState();
+  State<TeamMembersScreen> createState() => TeamMembersScreenState();
 }
 
-class _TeamMembersScreenState extends State<TeamMembersScreen> {
+class TeamMembersScreenState extends State<TeamMembersScreen> {
   final CRMService _crmService = CRMService();
   List<TeamMember> _allMembers = [];
   List<TeamMember> _filteredMembers = [];
@@ -197,9 +197,9 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.error_outline, size: 48, color: errorColor),
+                              const Icon(Icons.error_outline, size: 48, color: errorColor),
                               const SizedBox(height: 8),
-                              Text('Failed to load team members', style: TextStyle(color: errorColor)),
+                              const Text('Failed to load team members', style: TextStyle(color: errorColor)),
                               const SizedBox(height: 4),
                               Text(_error!, style: const TextStyle(fontSize: 12, color: textSecondary)),
                               const SizedBox(height: 16),
@@ -288,7 +288,7 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
               backgroundColor: primaryColor.withOpacity(0.1),
               child: Text(
                 m.fullName.isNotEmpty ? m.fullName[0].toUpperCase() : '?',
-                style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 14),
+                style: const TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 14),
               ),
             ),
             const SizedBox(width: 8),

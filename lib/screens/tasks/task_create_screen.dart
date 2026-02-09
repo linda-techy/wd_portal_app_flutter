@@ -208,7 +208,7 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
                       items: _projects
                           .map((project) => DropdownMenuItem(
                                 value: project.id!,
-                                child: Text(project.name ?? 'Unnamed Project'),
+                                child: Text(project.name),
                               ))
                           .toList(),
                       onChanged: (value) => setState(() => _selectedProjectId = value),
@@ -226,7 +226,7 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
                       items: _teamMembers
                           .map((member) => DropdownMenuItem(
                                 value: member.id,
-                                child: Text(member.fullName ?? 'Unknown'),
+                                child: Text(member.fullName),
                               ))
                           .toList(),
                       onChanged: (value) => setState(() => _selectedAssigneeId = value),

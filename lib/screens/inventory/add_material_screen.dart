@@ -28,8 +28,8 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
     if (widget.existingMaterial != null) {
       final m = widget.existingMaterial!;
       _nameController.text = m.name;
-      _category = m.category ?? 'CEMENT';
-      _unit = m.unit ?? 'BAGS';
+      _category = m.category;
+      _unit = m.unit;
     }
   }
 

@@ -46,8 +46,10 @@ class _UploadView360ScreenState extends State<UploadView360Screen> {
         });
       }
     } catch (e) {
-      MotionToast.error(description: Text('Error picking image: $e'))
-          .show(context);
+      if (mounted) {
+        MotionToast.error(description: Text('Error picking image: $e'))
+            .show(context);
+      }
     }
   }
 
@@ -74,15 +76,21 @@ class _UploadView360ScreenState extends State<UploadView360Screen> {
         fileName: _selectedFileData!.fileName,
       );
 
-      MotionToast.success(
-              description: const Text('Virtual tour uploaded successfully'))
-          .show(context);
-      Navigator.pop(context, true);
+      if (mounted) {
+        MotionToast.success(
+                description: const Text('Virtual tour uploaded successfully'))
+            .show(context);
+        Navigator.pop(context, true);
+      }
     } catch (e) {
-      MotionToast.error(description: Text('Error uploading tour: $e'))
-          .show(context);
+      if (mounted) {
+        MotionToast.error(description: Text('Error uploading tour: $e'))
+            .show(context);
+      }
     } finally {
-      setState(() => _isSaving = false);
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 

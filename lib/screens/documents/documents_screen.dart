@@ -9,10 +9,10 @@ class DocumentsScreen extends StatefulWidget {
   const DocumentsScreen({super.key});
 
   @override
-  _DocumentsScreenState createState() => _DocumentsScreenState();
+  State<DocumentsScreen> createState() => DocumentsScreenState();
 }
 
-class _DocumentsScreenState extends State<DocumentsScreen> {
+class DocumentsScreenState extends State<DocumentsScreen> {
   final DocumentService _documentService = DocumentService();
   final CRMService _crmService = CRMService();
 
@@ -226,7 +226,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.error_outline, size: 48, color: errorColor),
+                              const Icon(Icons.error_outline, size: 48, color: errorColor),
                               const SizedBox(height: 8),
                               Text(_error!, style: const TextStyle(color: textSecondary, fontSize: 12)),
                               const SizedBox(height: 16),

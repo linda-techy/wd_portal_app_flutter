@@ -3,9 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:admin/models/task_models.dart';
 import 'package:admin/providers/task_provider.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
-import 'package:admin/widgets/common/filter_panel_widget.dart';
 import 'package:admin/theme/app_theme.dart';
-import 'package:admin/theme/responsive_utils.dart';
 import 'task_detail_screen.dart';
 import 'task_create_screen.dart';
 import '../../providers/permission_provider.dart';
@@ -227,7 +225,7 @@ class TaskListScreen extends StatelessWidget {
               ...[
                 const SizedBox(height: 8),
                 Text(
-                  task.description!,
+                  task.description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: Colors.grey[600]),

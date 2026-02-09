@@ -30,12 +30,12 @@ class _AddVendorScreenState extends State<AddVendorScreen> {
     if (widget.existingVendor != null) {
       final v = widget.existingVendor!;
       _nameController.text = v.name;
-      _contactPersonController.text = v.contactName ?? '';
-      _phoneController.text = v.phone ?? '';
-      _emailController.text = v.email ?? '';
-      _gstinController.text = v.gstNumber ?? '';
-      _addressController.text = v.address ?? '';
-      _vendorType = v.vendorType ?? 'MATERIAL';
+      _contactPersonController.text = v.contactName;
+      _phoneController.text = v.phone;
+      _emailController.text = v.email;
+      _gstinController.text = v.gstNumber;
+      _addressController.text = v.address;
+      _vendorType = v.vendorType;
     }
   }
 

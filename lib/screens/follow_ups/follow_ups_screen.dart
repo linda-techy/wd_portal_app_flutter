@@ -9,10 +9,10 @@ class FollowUpsScreen extends StatefulWidget {
   const FollowUpsScreen({super.key});
 
   @override
-  _FollowUpsScreenState createState() => _FollowUpsScreenState();
+  State<FollowUpsScreen> createState() => FollowUpsScreenState();
 }
 
-class _FollowUpsScreenState extends State<FollowUpsScreen> with SingleTickerProviderStateMixin {
+class FollowUpsScreenState extends State<FollowUpsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final LeadService _leadService = LeadService();
 
@@ -192,9 +192,9 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> with SingleTickerProv
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: errorColor),
+            const Icon(Icons.error_outline, size: 48, color: errorColor),
             const SizedBox(height: 8),
-            Text('Failed to load overdue follow-ups', style: TextStyle(color: errorColor)),
+            const Text('Failed to load overdue follow-ups', style: TextStyle(color: errorColor)),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: _loadOverdueFollowUps, child: const Text('Retry')),
           ],
@@ -202,15 +202,15 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> with SingleTickerProv
       );
     }
     if (_overdueLeads.isEmpty) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.check_circle_outline, size: 48, color: successColor),
-            const SizedBox(height: 8),
-            const Text('No overdue follow-ups!', style: TextStyle(color: textSecondary, fontSize: 16)),
-            const SizedBox(height: 4),
-            const Text('All follow-ups are on track.', style: TextStyle(color: textMuted, fontSize: 13)),
+            SizedBox(height: 8),
+            Text('No overdue follow-ups!', style: TextStyle(color: textSecondary, fontSize: 16)),
+            SizedBox(height: 4),
+            Text('All follow-ups are on track.', style: TextStyle(color: textMuted, fontSize: 13)),
           ],
         ),
       );
@@ -233,7 +233,7 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> with SingleTickerProv
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               leading: CircleAvatar(
                 backgroundColor: errorColor.withOpacity(0.1),
-                child: Icon(Icons.warning, color: errorColor),
+                child: const Icon(Icons.warning, color: errorColor),
               ),
               title: Row(
                 children: [
@@ -247,7 +247,7 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> with SingleTickerProv
                       border: Border.all(color: errorColor.withOpacity(0.3)),
                     ),
                     child: Text('$daysOverdue day${daysOverdue == 1 ? '' : 's'} overdue',
-                        style: TextStyle(fontSize: 11, color: errorColor, fontWeight: FontWeight.w500)),
+                        style: const TextStyle(fontSize: 11, color: errorColor, fontWeight: FontWeight.w500)),
                   ),
                 ],
               ),
@@ -342,7 +342,7 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> with SingleTickerProv
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.error_outline, size: 48, color: errorColor),
+                          const Icon(Icons.error_outline, size: 48, color: errorColor),
                           const SizedBox(height: 16),
                           ElevatedButton(onPressed: _loadInteractions, child: const Text('Retry')),
                         ],
@@ -406,7 +406,7 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> with SingleTickerProv
                                         Text('Lead #${interaction.leadId}', style: const TextStyle(fontSize: 11, color: textMuted)),
                                         if (interaction.durationMinutes != null) ...[
                                           const SizedBox(width: 12),
-                                          Icon(Icons.timer, size: 12, color: textMuted),
+                                          const Icon(Icons.timer, size: 12, color: textMuted),
                                           Text(' ${interaction.durationMinutes}min', style: const TextStyle(fontSize: 11, color: textMuted)),
                                         ],
                                         if (interaction.outcome != null) ...[

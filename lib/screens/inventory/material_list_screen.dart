@@ -200,7 +200,7 @@ class MaterialListScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _buildCategoryBadge(material.category!),
+                  _buildCategoryBadge(material.category),
                 ],
               ),
               const SizedBox(height: 12),
@@ -306,13 +306,6 @@ class MaterialListScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Color _getStockColor(double stock, double? minLevel) {
-    if (minLevel == null) return Colors.grey;
-    if (stock <= minLevel) return AppTheme.statusError;
-    if (stock <= minLevel * 1.5) return AppTheme.statusWarning;
-    return AppTheme.statusSuccess;
   }
 
   void _navigateToDetail(BuildContext context, MaterialModel material) {

@@ -120,7 +120,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // Initialize services first
     final apiService = ApiService();
-    final subcontractService = SubcontractService(apiService);
     final vendorPaymentService = VendorPaymentService(apiService);
     final projectTrackingService = ProjectTrackingService(apiService);
 

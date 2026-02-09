@@ -46,6 +46,7 @@ class _ChallanManagementScreenState extends State<ChallanManagementScreen> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
+      if (!mounted) return;
       MotionToast.show(context, message: 'Failed to load challans', isError: true);
     }
   }
@@ -62,6 +63,7 @@ class _ChallanManagementScreenState extends State<ChallanManagementScreen> {
         shareText: 'Payment Challan - ${challan.challanNumber}',
       );
     } catch (e) {
+      if (!mounted) return;
       MotionToast.show(context, message: e.toString(), isError: true);
     }
   }
@@ -70,6 +72,7 @@ class _ChallanManagementScreenState extends State<ChallanManagementScreen> {
     if (_selectedIds.isEmpty) return;
     
     try {
+      if (!mounted) return;
       MotionToast.show(context, message: 'Generating ZIP archive...');
       final bytes = await _challanService.downloadBulk(_selectedIds.toList());
       
@@ -80,6 +83,7 @@ class _ChallanManagementScreenState extends State<ChallanManagementScreen> {
         shareText: 'Walldot Challans - Bulk Download',
       );
     } catch (e) {
+      if (!mounted) return;
       MotionToast.show(context, message: e.toString(), isError: true);
     }
   }

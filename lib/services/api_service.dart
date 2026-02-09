@@ -142,23 +142,23 @@ class ApiService {
               if (item is Map<String, dynamic>) {
                 return fromJsonT(item);
               } else {
-                print('Warning: List item is not a Map: $item (type: ${item.runtimeType})');
+                debugPrint('Warning: List item is not a Map: $item (type: ${item.runtimeType})');
                 return null;
               }
             } catch (e) {
-              print('Error parsing list item: $e');
-              print('Item data: $item');
+              debugPrint('Error parsing list item: $e');
+              debugPrint('Item data: $item');
               return null;
             }
           }).whereType<T>().toList();
         }
-        print('Warning: Expected List but got ${json.runtimeType}: $json');
+        debugPrint('Warning: Expected List but got ${json.runtimeType}: $json');
         return <T>[];
       });
     } catch (e, stackTrace) {
-      print('Error in unwrapList: $e');
-      print('Stack trace: $stackTrace');
-      print('Response data: ${response.data}');
+      debugPrint('Error in unwrapList: $e');
+      debugPrint('Stack trace: $stackTrace');
+      debugPrint('Response data: ${response.data}');
       rethrow;
     }
   }

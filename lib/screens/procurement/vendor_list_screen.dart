@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/procurement_provider.dart';
-import 'package:admin/models/procurement_models.dart';
 import 'package:admin/screens/procurement/add_vendor_screen.dart';
 
 class VendorListScreen extends StatefulWidget {

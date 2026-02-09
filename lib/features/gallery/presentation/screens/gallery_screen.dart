@@ -33,6 +33,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
     if (!authProvider.isAuthenticated) {
       if (mounted) {
         await ErrorHandler.handleAuthError(context);
+      }
+      if (mounted) {
         Navigator.of(context).pushReplacementNamed('/login');
       }
       return;
