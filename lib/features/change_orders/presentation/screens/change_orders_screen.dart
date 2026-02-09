@@ -13,10 +13,10 @@ class ChangeOrdersScreen extends StatefulWidget {
   const ChangeOrdersScreen({super.key, required this.projectId});
 
   @override
-  _ChangeOrdersScreenState createState() => _ChangeOrdersScreenState();
+  ChangeOrdersScreenState createState() => ChangeOrdersScreenState();
 }
 
-class _ChangeOrdersScreenState extends State<ChangeOrdersScreen> {
+class ChangeOrdersScreenState extends State<ChangeOrdersScreen> {
   final ChangeOrderService _service = ChangeOrderService();
   List<ChangeOrder> _changeOrders = [];
   bool _isPageLoading = true;
@@ -33,6 +33,8 @@ class _ChangeOrdersScreenState extends State<ChangeOrdersScreen> {
       if (mounted) {
          // Since this is likely a tab view, redirect might be handled by parent or just show error
          await ErrorHandler.handleAuthError(context);
+      }
+      if (mounted) {
          // Or consistent redirect
          Navigator.of(context).pushReplacementNamed('/login');
       }
@@ -172,7 +174,7 @@ class _ChangeOrdersScreenState extends State<ChangeOrdersScreen> {
       ),
     );
   }
-}
+
 
   void _showDetailDialog(ChangeOrder order) {
     final currencyFormatter = NumberFormat.currency(symbol: '\u20B9', decimalDigits: 2);
@@ -286,10 +288,10 @@ class AddChangeOrderDialog extends StatefulWidget {
   const AddChangeOrderDialog({super.key, required this.projectId, required this.onSave});
 
   @override
-  _AddChangeOrderDialogState createState() => _AddChangeOrderDialogState();
+  AddChangeOrderDialogState createState() => AddChangeOrderDialogState();
 }
 
-class _AddChangeOrderDialogState extends State<AddChangeOrderDialog> {
+class AddChangeOrderDialogState extends State<AddChangeOrderDialog> {
   final _formKey = GlobalKey<FormState>();
   final _descController = TextEditingController();
   final _amountController = TextEditingController();

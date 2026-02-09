@@ -1152,6 +1152,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
     // Extract file data using cross-platform helper
     final fileData = FileUploadHelper.extractFromResult(result);
+    if (!mounted) return;
     final provider = context.read<DocumentProvider>();
 
     if (provider.categories.isEmpty) {
@@ -1191,10 +1192,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           fileName: fileData.fileName,
           categoryId: categoryId,
         );
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Document uploaded successfully")),
         );
       } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Upload failed: $e")),
         );
