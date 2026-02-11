@@ -12,7 +12,7 @@ class WageSheetScreen extends StatefulWidget {
   const WageSheetScreen({super.key, this.projectId});
 
   @override
-  _WageSheetScreenState createState() => _WageSheetScreenState();
+  createState() => _WageSheetScreenState();
 }
 
 class _WageSheetScreenState extends State<WageSheetScreen> {

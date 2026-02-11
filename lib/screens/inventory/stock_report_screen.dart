@@ -114,15 +114,16 @@ class _StockReportScreenState extends State<StockReportScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          final selectedProjectId = _selectedProject?.id;
+          await Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const AddStockAdjustmentScreen()),
-          ).then((_) {
-            if (_selectedProject != null) {
-              context.read<InventoryProvider>().fetchProjectStock(_selectedProject!.id!);
-            }
-          });
+          );
+          if (selectedProjectId != null && mounted) {
+            // Use State's context property with mounted check
+            this.context.read<InventoryProvider>().fetchProjectStock(selectedProjectId);
+          }
         },
         label: const Text("Adjust Stock"),
         icon: const Icon(Icons.edit),

@@ -36,18 +36,22 @@ class PortalAuthProvider extends ChangeNotifier {
       );
 
       if (isLoggedIn) {
-        await _loadUserData(context).timeout(
-          const Duration(seconds: 5),
-          onTimeout: () {
-            debugPrint('Load user data timed out after 5 seconds');
-            throw TimeoutException('Failed to load user data');
-          },
-        );
+        if (context != null && context.mounted) {
+          await _loadUserData(context).timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              debugPrint('Load user data timed out after 5 seconds');
+              throw TimeoutException('Failed to load user data');
+            },
+          );
+        }
       }
     } catch (e) {
       // Handle error silently during initialization but clear state
       debugPrint('Auth initialization error: $e');
-      _clearUserData(context);
+      if (context != null && context.mounted) {
+        _clearUserData(context);
+      }
     } finally {
       _setLoading(false);
     }
@@ -103,7 +107,9 @@ class PortalAuthProvider extends ChangeNotifier {
     } catch (e) {
       // Continue with logout even if API call fails
     } finally {
-      _clearUserData(context, permissionProvider: permProvider);
+      if (context != null && context.mounted) {
+        _clearUserData(context, permissionProvider: permProvider);
+      }
       _setLoading(false);
     }
   }
@@ -193,7 +199,9 @@ class PortalAuthProvider extends ChangeNotifier {
       
       notifyListeners();
     } catch (e) {
-      _clearUserData(context, permissionProvider: permProvider);
+      if (context != null && context.mounted) {
+        _clearUserData(context, permissionProvider: permProvider);
+      }
     }
   }
   // Change Password

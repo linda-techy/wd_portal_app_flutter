@@ -395,7 +395,9 @@ class MaterialIndentsScreen extends StatelessWidget {
                   builder: (_) => IndentCreationScreen(projectId: projectId),
                 ),
               ).then((_) {
-                Provider.of<MaterialIndentProvider>(context, listen: false).fetch();
+                if (context.mounted) {
+                  Provider.of<MaterialIndentProvider>(context, listen: false).fetch();
+                }
               });
             },
             child: const Text('Continue'),

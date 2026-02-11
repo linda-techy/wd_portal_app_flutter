@@ -326,12 +326,13 @@ class CustomersScreen extends StatelessWidget {
     );
   }
 
-  void _navigateToCreate(BuildContext context) {
-    Navigator.push(
+  void _navigateToCreate(BuildContext context) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AddCustomerScreen()),
-    ).then((_) {
+    );
+    if (context.mounted) {
       Provider.of<CustomerProvider>(context, listen: false).fetch();
-    });
+    }
   }
 }

@@ -433,10 +433,10 @@ packages:
     dependency: "direct overridden"
     description:
       name: geolocator_android
-      sha256: "48363a2ba956ccb8408d1ff9d74735d397828baa4b9b243e4825a5b3ead09289"
+      sha256: fcb1760a50d7500deca37c9a666785c047139b5f9ee15aa5469fae7dbbe3170d
       url: "https://pub.dev"
     source: hosted
-    version: "5.0.0"
+    version: "4.6.2"
   geolocator_apple:
     dependency: transitive
     description:

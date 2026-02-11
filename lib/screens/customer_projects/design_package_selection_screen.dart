@@ -117,7 +117,7 @@ class _DesignPackageSelectionScreenState
         ),
       ),
     ).then((result) {
-      if (result == true) {
+      if (result == true && mounted) {
         Navigator.pop(context, true);
       }
     });

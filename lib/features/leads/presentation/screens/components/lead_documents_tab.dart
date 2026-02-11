@@ -139,6 +139,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
       }
 
       // Show upload dialog with category and description
+      if (!mounted) return;
       final dialogResult = await showDialog<Map<String, dynamic>>(
         context: context,
         builder: (context) => _UploadDocumentDialog(categories: _categories),
@@ -203,30 +204,6 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
     return filename.split('.').last.toLowerCase();
   }
 
-  bool _isViewable(String extension) {
-    return [
-      'pdf',
-      'jpg',
-      'jpeg',
-      'png',
-      'webp',
-      'doc',
-      'docx',
-      'xls',
-      'xlsx',
-      'ppt',
-      'pptx',
-      'csv',
-      'txt'
-    ].contains(extension);
-  }
-
-  String _getViewableType(String extension) {
-    if (extension == 'pdf') return 'pdf';
-    if (['jpg', 'jpeg', 'png', 'webp'].contains(extension)) return 'image';
-    return 'office';
-  }
-
   Future<void> _viewDocument(LeadDocument doc) async {
     final extension = _getFileExtension(doc.filename);
     if (doc.downloadUrl == null || doc.downloadUrl!.isEmpty) return;
@@ -245,6 +222,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
 
     if (kIsWeb) {
       if (['pdf'].contains(extension)) {
+        if (!mounted) return;
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -257,6 +235,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
           ),
         );
       } else if (['jpg', 'jpeg', 'png', 'webp'].contains(extension)) {
+        if (!mounted) return;
         Navigator.push(
           context,
           MaterialPageRoute(

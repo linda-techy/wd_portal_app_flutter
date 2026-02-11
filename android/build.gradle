@@ -26,15 +26,14 @@ rootProject.minSdkVersion = rootProject.ext.minSdkVersion
 rootProject.targetSdkVersion = rootProject.ext.targetSdkVersion
 
 rootProject.buildDir = "../build"
-subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
-    project.evaluationDependsOn(":app")
-}
-// Provide 'flutter' extension for plugin projects that expect flutter.compileSdkVersion (e.g. geolocator_android)
 subprojects { subproject ->
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+    
+    // Ensure app is evaluated first for all subprojects
     if (subproject.name != "app") {
+        subproject.evaluationDependsOn(":app")
+        
+        // Provide 'flutter' extension for plugin projects that expect flutter.compileSdkVersion (e.g. geolocator_android)
         subproject.ext.flutter = [
             compileSdkVersion: rootProject.ext.compileSdkVersion,
             minSdkVersion    : rootProject.ext.minSdkVersion,

@@ -338,7 +338,9 @@ class SiteReportsScreen extends StatelessWidget {
       context,
       MaterialPageRoute(builder: (_) => const AddSiteReportScreen()),
     ).then((_) {
-      Provider.of<SiteReportProvider>(context, listen: false).fetch();
+      if (context.mounted) {
+        Provider.of<SiteReportProvider>(context, listen: false).fetch();
+      }
     });
   }
 }

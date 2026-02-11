@@ -108,13 +108,14 @@ class AuthInterceptor extends Interceptor {
         
         // Navigate to login screen
         final context = NavigationService.navigatorKey.currentContext;
-        if (context != null) {
+        if (context != null && context.mounted) {
           // Clear auth state in provider
           try {
             final authProvider = Provider.of<PortalAuthProvider>(context, listen: false);
             // Check if context is still valid before using it
-            if (NavigationService.navigatorKey.currentContext != null) {
-              await authProvider.logout(context);
+            final currentContext = NavigationService.navigatorKey.currentContext;
+            if (currentContext != null && currentContext.mounted) {
+              await authProvider.logout(currentContext);
             }
           } catch (providerError) {
             debugPrint('DEBUG Flutter: Error clearing auth provider: $providerError');

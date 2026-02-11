@@ -42,6 +42,8 @@ class _FeedbackScreenState extends State<FeedbackScreen>
     if (!authProvider.isAuthenticated) {
       if (mounted) {
         await ErrorHandler.handleAuthError(context);
+      }
+      if (mounted) {
         Navigator.of(context).pushReplacementNamed('/login');
       }
       return;

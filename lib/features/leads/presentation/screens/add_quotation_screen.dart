@@ -11,7 +11,7 @@ class AddQuotationScreen extends StatefulWidget {
       {super.key, required this.lead, this.quotationToEdit});
 
   @override
-  _AddQuotationScreenState createState() => _AddQuotationScreenState();
+  State<AddQuotationScreen> createState() => _AddQuotationScreenState();
 }
 
 class _AddQuotationScreenState extends State<AddQuotationScreen> {

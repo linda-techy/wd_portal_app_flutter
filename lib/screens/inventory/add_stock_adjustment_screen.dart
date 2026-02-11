@@ -38,10 +38,12 @@ class _AddStockAdjustmentScreenState extends State<AddStockAdjustmentScreen> {
   Future<void> _loadData() async {
     try {
       final projectsResponse = await _crmService.getCustomerProjectsPaginated(page: 0, size: 100);
-      setState(() {
-        _projects = projectsResponse.data;
-      });
-      await context.read<InventoryProvider>().fetchMaterials();
+      if (mounted) {
+        setState(() {
+          _projects = projectsResponse.data;
+        });
+        await context.read<InventoryProvider>().fetchMaterials();
+      }
     } catch (e) {
       debugPrint("Error loading data: $e");
     }

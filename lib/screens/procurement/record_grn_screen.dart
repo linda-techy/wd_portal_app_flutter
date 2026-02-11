@@ -81,7 +81,7 @@ class _RecordGRNScreenState extends State<RecordGRNScreen> {
                 child: ElevatedButton(
                   onPressed: _submitGRN,
                   style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
-                  child: const Text("Record Successfull Receipt", style: TextStyle(color: Colors.white, fontSize: 16)),
+                  child: const Text("Record Successful Receipt", style: TextStyle(color: Colors.white, fontSize: 16)),
                 ),
               ),
             ],

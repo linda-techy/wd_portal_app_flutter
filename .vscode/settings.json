@@ -1,0 +1,6 @@
+{
+  // Disable Java extension's Gradle integration for Flutter projects
+  // This prevents the "initialization script does not exist" error
+  "java.import.gradle.enabled": false,
+  "java.configuration.updateBuildConfiguration": "disabled"
+}

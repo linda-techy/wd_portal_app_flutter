@@ -296,6 +296,8 @@ class _LeadsScreenState extends State<LeadsScreen> {
           shareText:
               'Leads Export - ${DateTime.now().toString().split('.')[0]}',
         );
+      }
+      if (mounted) {
         MotionToast.showSuccess(context,
             message: 'Excel file exported successfully');
       }
@@ -1934,7 +1936,6 @@ class Chart extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ),
-          // TODO: Add a proper chart widget here (e.g., using fl_chart package)
         ],
       ),
     );

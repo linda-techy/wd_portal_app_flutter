@@ -88,8 +88,10 @@ class RetentionDashboardScreenState extends State<RetentionDashboardScreen> {
                 );
 
                 await _service.releaseRetention(release);
-                Navigator.pop(ctx);
-                _loadData(); // Refresh
+                if (context.mounted) {
+                  Navigator.pop(ctx);
+                  _loadData(); // Refresh
+                }
               } catch (e) {
                 if (mounted) {
                   ErrorHandler.handleApiError(context, e);

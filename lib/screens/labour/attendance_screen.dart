@@ -32,10 +32,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     try {
       final projectsResponse =
           await _crmService.getCustomerProjectsPaginated(page: 0, size: 100);
-      setState(() {
-        _projects = projectsResponse.data;
-      });
-      await context.read<LabourProvider>().fetch();
+      if (mounted) {
+        setState(() {
+          _projects = projectsResponse.data;
+        });
+        await context.read<LabourProvider>().fetch();
+      }
     } catch (e) {
       debugPrint("Error loading data: $e");
     }

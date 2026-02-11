@@ -379,7 +379,9 @@ class PurchaseOrdersScreen extends StatelessWidget {
       context,
       MaterialPageRoute(builder: (_) => const AddPurchaseOrderScreen()),
     ).then((_) {
-      Provider.of<PurchaseOrderProvider>(context, listen: false).fetch();
+      if (context.mounted) {
+        Provider.of<PurchaseOrderProvider>(context, listen: false).fetch();
+      }
     });
   }
 }

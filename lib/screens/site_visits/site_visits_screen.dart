@@ -40,8 +40,8 @@ class _SiteVisitsScreenState extends State<SiteVisitsScreen> {
     }
   }
 
-  Future<void> _handleCheckIn(BuildContext context, SiteVisitProvider provider) async {
-    final visit = await SiteVisitCheckInDialog.show(context);
+  Future<void> _handleCheckIn(BuildContext dialogContext, SiteVisitProvider provider) async {
+    final visit = await SiteVisitCheckInDialog.show(dialogContext);
     if (visit != null && mounted) {
       setState(() => _activeVisit = visit);
       provider.fetch();
@@ -56,9 +56,9 @@ class _SiteVisitsScreenState extends State<SiteVisitsScreen> {
     }
   }
 
-  Future<void> _handleCheckOut(BuildContext context, SiteVisitProvider provider) async {
+  Future<void> _handleCheckOut(BuildContext dialogContext, SiteVisitProvider provider) async {
     if (_activeVisit == null) return;
-    final visit = await SiteVisitCheckOutDialog.show(context, _activeVisit!);
+    final visit = await SiteVisitCheckOutDialog.show(dialogContext, _activeVisit!);
     if (visit != null && mounted) {
       setState(() => _activeVisit = null);
       provider.fetch();

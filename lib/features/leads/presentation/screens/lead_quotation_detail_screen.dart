@@ -258,6 +258,8 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
           mimeType: 'application/pdf',
           shareText: 'Quotation - ${_quotation!.quotationNumber}',
         );
+      }
+      if (mounted) {
         MotionToast.showSuccess(context,
             message: 'PDF downloaded successfully');
       }

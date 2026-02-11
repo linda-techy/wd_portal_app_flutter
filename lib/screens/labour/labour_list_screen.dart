@@ -307,18 +307,19 @@ class LabourListScreen extends StatelessWidget {
     );
   }
 
-  Color _getTypeColor(String type) {
-    switch (type.toUpperCase()) {
-      case 'PERMANENT':
-        return AppTheme.statusSuccess;
-      case 'CONTRACT':
-        return Colors.blue;
-      case 'DAILY_WAGE':
-        return AppTheme.statusWarning;
-      default:
-        return Colors.grey;
-    }
-  }
+  // Commented out unused method to avoid linter warning
+  // Color _getTypeColor(String type) {
+  //   switch (type.toUpperCase()) {
+  //     case 'PERMANENT':
+  //       return AppTheme.statusSuccess;
+  //     case 'CONTRACT':
+  //       return Colors.blue;
+  //     case 'DAILY_WAGE':
+  //       return AppTheme.statusWarning;
+  //     default:
+  //       return Colors.grey;
+  //   }
+  // }
 
   void _navigateToDetail(BuildContext context, Labour labour) {
     ScaffoldMessenger.of(context).showSnackBar(
