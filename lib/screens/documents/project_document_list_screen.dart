@@ -1,12 +1,15 @@
+import 'dart:math';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/document_provider.dart';
 import 'package:admin/models/document_models.dart';
+import 'package:admin/features/shared/universal_file_viewer_screen.dart';
+import 'package:admin/services/document_download_service.dart';
+import 'package:admin/utils/file_download_helper.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
 import '../../utils/file_upload_helper.dart';
@@ -266,69 +269,14 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
     );
   }
 
-  void _showPreview(ProjectDocument doc) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(AppTheme.spacingMD),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            Flexible(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  doc.downloadUrl,
-                  fit: BoxFit.contain,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                            : null,
-                        color: Colors.white,
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    padding: const EdgeInsets.all(20),
-                    color: Colors.white,
-                    child: const Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.error_outline, color: Colors.red, size: 48),
-                        SizedBox(height: 12),
-                        Text("Failed to load image"),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                doc.filename,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-              ),
-            ),
-          ],
+  Future<void> _showPreview(ProjectDocument doc) async {
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => UniversalFileViewerScreen(
+          fileUrl: doc.downloadUrl,
+          filename: doc.filename,
         ),
       ),
     );
@@ -393,16 +341,48 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
     return '${(bytes / pow(1024, i)).toStringAsFixed(1)} ${suffixes[i]}';
   }
 
-  Future<void> _downloadFile(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
-      if (mounted && context.mounted) {
+  Future<void> _downloadFile(String downloadUrl) async {
+    final filename = downloadUrl.split('/').last;
+
+    if (kIsWeb) {
+      // Web: Fetch bytes with auth, then trigger browser download
+      try {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Could not launch download URL")),
+          const SnackBar(content: Text('Preparing download...')),
         );
+
+        final bytes = await DocumentDownloadService.fetchBytes(downloadUrl);
+        final mimeType = DocumentDownloadService.guessMimeType(filename);
+
+        await FileDownloadHelper.downloadAndShareFile(
+          bytes: bytes,
+          fileName: filename,
+          mimeType: mimeType,
+        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Download failed: $e')),
+          );
+        }
       }
+    } else {
+      // Mobile/Desktop: Open viewer which handles auth and has download capability
+      if (!mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => UniversalFileViewerScreen(
+            fileUrl: downloadUrl,
+            filename: filename,
+          ),
+        ),
+      );
     }
   }
 }

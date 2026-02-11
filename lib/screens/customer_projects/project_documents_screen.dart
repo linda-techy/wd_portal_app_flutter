@@ -1,12 +1,21 @@
+import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:admin/models/customer_project.dart';
 import 'package:admin/models/project_document.dart';
 import 'package:admin/models/document_category.dart';
 import 'package:admin/services/project_module_service.dart';
+import 'package:admin/services/document_download_service.dart';
+import 'package:admin/services/storage_service.dart';
+import 'package:admin/features/shared/universal_file_viewer_screen.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/utils/error_handler.dart';
 import 'package:admin/utils/file_upload_helper.dart';
+import 'package:admin/utils/file_download_helper.dart';
 
 
 class ProjectDocumentsScreen extends StatefulWidget {
@@ -452,32 +461,122 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
     );
   }
 
-  void _openDocument(ProjectDocument doc) {
-    // Open document in browser or viewer
-    // final url = _moduleService.getDownloadUrl(doc.filePath);
-    // You can use url_launcher package here
-    // launchUrl(Uri.parse(url));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening ${doc.filename}...'),
-        action: SnackBarAction(
-          label: 'Copy URL',
-          onPressed: () {
-            // Copy URL to clipboard
-          },
+  Future<void> _openDocument(ProjectDocument doc) async {
+    if (doc.downloadUrl.isEmpty) return;
+    
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => UniversalFileViewerScreen(
+          fileUrl: doc.downloadUrl,
+          filename: doc.filename,
         ),
       ),
     );
   }
 
-  void _downloadDocument(ProjectDocument doc) {
-    // final url = _moduleService.getDownloadUrl(doc.filePath);
-    // Implement download functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Downloading ${doc.filename}...'),
-      ),
+  Future<void> _downloadDocument(ProjectDocument doc) async {
+    try {
+      if (doc.downloadUrl.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Download URL not available'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      if (kIsWeb) {
+        // Web: Fetch bytes with Dio auth, then trigger browser download
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Preparing download...')),
+          );
+        }
+
+        final bytes = await DocumentDownloadService.fetchBytes(doc.downloadUrl);
+        final mimeType = DocumentDownloadService.guessMimeType(doc.filename);
+
+        await FileDownloadHelper.downloadAndShareFile(
+          bytes: bytes,
+          fileName: doc.filename,
+          mimeType: mimeType,
+        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        }
+      } else {
+        // Mobile/Desktop: Download with authentication via HttpClient
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Downloading...')),
+          );
+        }
+
+        final fullUrl = DocumentDownloadService.resolveUrl(doc.downloadUrl);
+
+        final storage = StorageService();
+        final token = await storage.read(key: 'access_token');
+
+        final request = await HttpClient().getUrl(Uri.parse('$fullUrl?download=true'));
+        if (token != null) {
+          request.headers.add('Authorization', 'Bearer $token');
+        }
+        final response = await request.close();
+
+        if (response.statusCode != 200) {
+          throw Exception('Failed to download file: ${response.statusCode}');
+        }
+
+        final bytes = await _consolidateHttpClientResponseBytes(response);
+
+        Directory? directory;
+        if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+          directory = await getDownloadsDirectory();
+        }
+        directory ??= await getApplicationDocumentsDirectory();
+
+        final file = File('${directory.path}/${doc.filename}');
+        await file.writeAsBytes(bytes);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Downloaded to: ${file.path}'),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error downloading document: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<Uint8List> _consolidateHttpClientResponseBytes(
+      HttpClientResponse response) {
+    final completer = Completer<Uint8List>();
+    final chunks = <List<int>>[];
+    response.listen(
+      (chunk) => chunks.add(chunk),
+      onDone: () {
+        final bytes = Uint8List.fromList(chunks.expand((x) => x).toList());
+        completer.complete(bytes);
+      },
+      onError: completer.completeError,
+      cancelOnError: true,
     );
+    return completer.future;
   }
 
   Widget _buildCategoryChip(String label, DocumentCategory? category) {
