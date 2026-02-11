@@ -18,6 +18,41 @@ enum ReportType {
       case ReportType.other: return 'Other';
     }
   }
+
+  // Convert from backend SCREAMING_SNAKE_CASE to camelCase enum
+  static ReportType fromJson(String? json) {
+    if (json == null) return ReportType.dailyProgress;
+    
+    // Normalize string to match enum names (e.g. DAILY_PROGRESS -> dailyProgress)
+    // Map of backend values to enum values
+    const map = {
+      'DAILY_PROGRESS': ReportType.dailyProgress,
+      'QUALITY_CHECK': ReportType.qualityCheck,
+      'SAFETY_INCIDENT': ReportType.safetyIncident,
+      'MATERIAL_DELIVERY': ReportType.materialDelivery,
+      'SITE_VISIT_SUMMARY': ReportType.siteVisitSummary,
+      'OTHER': ReportType.other,
+    };
+
+    return map[json] ?? 
+           // Try camelCase match if backend sends camelCase
+           ReportType.values.firstWhere(
+             (e) => e.name == json,
+             orElse: () => ReportType.other, // Safer default than dailyProgress to avoid masking errors
+           );
+  }
+
+  // Convert to backend SCREAMING_SNAKE_CASE
+  String toJson() {
+    switch (this) {
+      case ReportType.dailyProgress: return 'DAILY_PROGRESS';
+      case ReportType.qualityCheck: return 'QUALITY_CHECK';
+      case ReportType.safetyIncident: return 'SAFETY_INCIDENT';
+      case ReportType.materialDelivery: return 'MATERIAL_DELIVERY';
+      case ReportType.siteVisitSummary: return 'SITE_VISIT_SUMMARY';
+      case ReportType.other: return 'OTHER';
+    }
+  }
 }
 
 class SiteReportPhoto {
@@ -81,10 +116,7 @@ class SiteReport {
       description: json['description'] as String?,
       reportDate: parsedDate ?? DateTime.now(),
       status: json['status'] as String? ?? 'SUBMITTED',
-      reportType: ReportType.values.firstWhere(
-        (e) => e.name == json['reportType'],
-        orElse: () => ReportType.dailyProgress,
-      ),
+      reportType: ReportType.fromJson(json['reportType']),
       siteVisitId: json['siteVisit'] != null ? (json['siteVisit']['id'] as int?) : null,
       photos: (json['photos'] as List? ?? [])
           .map((p) => SiteReportPhoto.fromJson(p))

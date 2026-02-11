@@ -813,25 +813,40 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     ];
 
     return ResponsiveLayout(
-      mobile: Column(
-        children: modules.asMap().entries.map((entry) {
-          final index = entry.key;
-          final module = entry.value;
-          return EntranceAnimation(
-            delay: Duration(milliseconds: 150 + (index * 50)),
-            child: Padding(
-              padding: EdgeInsets.only(
-                bottom: ResponsiveUtils.responsiveValue(
-                  context: context,
-                  mobile: AppTheme.spacingMD,
-                  tablet: AppTheme.spacingLG,
-                  desktop: AppTheme.spacingMD,
-                ),
-              ),
-              child: module,
+      mobile: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: ResponsiveUtils.responsiveValue(
+            context: context,
+            mobile: AppTheme.spacingSM,
+            tablet: 0,
+            desktop: 0,
+          ),
+        ),
+        child: GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: ResponsiveUtils.responsiveValue(
+              context: context,
+              mobile: AppTheme.spacingMD,
+              tablet: AppTheme.spacingLG,
+              desktop: AppTheme.spacingMD,
             ),
-          );
-        }).toList(),
+            mainAxisSpacing: ResponsiveUtils.responsiveValue(
+              context: context,
+              mobile: AppTheme.spacingMD,
+              tablet: AppTheme.spacingLG,
+              desktop: AppTheme.spacingMD,
+            ),
+            childAspectRatio: 1.4,
+          ),
+          itemCount: modules.length,
+          itemBuilder: (context, index) => EntranceAnimation(
+            delay: Duration(milliseconds: 150 + (index * 50)),
+            child: modules[index],
+          ),
+        ),
       ),
       tablet: Padding(
         padding: EdgeInsets.symmetric(

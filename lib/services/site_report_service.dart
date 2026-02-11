@@ -32,7 +32,7 @@ class SiteReportService {
       'projectId': projectId,
       'title': title,
       'description': description,
-      'reportType': reportType.name,
+      'reportType': reportType.toJson(),
       'siteVisitId': siteVisitId,
     };
 
