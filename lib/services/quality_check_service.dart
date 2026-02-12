@@ -75,7 +75,7 @@ class QualityCheckService {
 
   Future<List<QualityCheck>> getProjectChecks(int projectId) async {
     try {
-      final response = await _api.dio.get('/quality-checks/project/$projectId');
+      final response = await _api.dio.get('/api/quality-checks/project/$projectId');
       if (response.statusCode == 200 && response.data['success'] == true) {
         final List<dynamic> data = response.data['data'];
         return data.map((e) => QualityCheck.fromJson(e)).toList();
@@ -90,7 +90,7 @@ class QualityCheckService {
   Future<QualityCheck> createCheck(QualityCheck check) async {
     try {
       final response = await _api.dio.post(
-        '/quality-checks',
+        '/api/quality-checks',
         data: check.toJson(),
       );
 
@@ -107,7 +107,7 @@ class QualityCheckService {
   Future<QualityCheck> updateCheck(int id, QualityCheck check) async {
     try {
       final response = await _api.dio.put(
-        '/quality-checks/$id',
+        '/api/quality-checks/$id',
         data: check.toJson(),
       );
 

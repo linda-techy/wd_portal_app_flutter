@@ -13,7 +13,7 @@ class ProjectTrackingService {
   // ===== PROJECT PHASES =====
 
   Future<List<ProjectPhase>> getPhases(int projectId) async {
-    final response = await _apiService.get('/projects/$projectId/tracking/phases');
+    final response = await _apiService.get('/api/projects/$projectId/tracking/phases');
     if (response.data is List) {
       return (response.data as List).map((e) => ProjectPhase.fromJson(e)).toList();
     }
@@ -22,7 +22,7 @@ class ProjectTrackingService {
 
   Future<ProjectPhase> createPhase(int projectId, ProjectPhase phase) async {
     final response = await _apiService.post(
-      '/projects/$projectId/tracking/phases',
+      '/api/projects/$projectId/tracking/phases',
       data: phase.toJson(),
     );
     return ProjectPhase.fromJson(response.data);
@@ -44,7 +44,7 @@ class ProjectTrackingService {
       data['actualEnd'] = actualEnd.toIso8601String().split('T')[0];
     }
     final response = await _apiService.put(
-      '/projects/$projectId/tracking/phases/$phaseId',
+      '/api/projects/$projectId/tracking/phases/$phaseId',
       data: data,
     );
     return ProjectPhase.fromJson(response.data);
@@ -53,7 +53,7 @@ class ProjectTrackingService {
   // ===== DELAY LOGS =====
 
   Future<List<DelayLog>> getDelayLogs(int projectId) async {
-    final response = await _apiService.get('/projects/$projectId/tracking/delays');
+    final response = await _apiService.get('/api/projects/$projectId/tracking/delays');
     if (response.data is List) {
       return (response.data as List).map((e) => DelayLog.fromJson(e)).toList();
     }
@@ -62,7 +62,7 @@ class ProjectTrackingService {
 
   Future<DelayLog> logDelay(int projectId, DelayLog delay) async {
     final response = await _apiService.post(
-      '/projects/$projectId/tracking/delays',
+      '/api/projects/$projectId/tracking/delays',
       data: delay.toJson(),
     );
     return DelayLog.fromJson(response.data);
@@ -71,7 +71,7 @@ class ProjectTrackingService {
   // ===== PROJECT VARIATIONS =====
 
   Future<List<ProjectVariation>> getVariations(int projectId) async {
-    final response = await _apiService.get('/projects/$projectId/tracking/variations');
+    final response = await _apiService.get('/api/projects/$projectId/tracking/variations');
     if (response.data is List) {
       return (response.data as List).map((e) => ProjectVariation.fromJson(e)).toList();
     }
@@ -83,7 +83,7 @@ class ProjectTrackingService {
     ProjectVariation variation,
   ) async {
     final response = await _apiService.post(
-      '/projects/$projectId/tracking/variations',
+      '/api/projects/$projectId/tracking/variations',
       data: variation.toJson(),
     );
     return ProjectVariation.fromJson(response.data);
@@ -91,7 +91,7 @@ class ProjectTrackingService {
 
   Future<ProjectVariation> submitVariation(int projectId, int variationId) async {
     final response = await _apiService.put(
-      '/projects/$projectId/tracking/variations/$variationId/submit',
+      '/api/projects/$projectId/tracking/variations/$variationId/submit',
       data: {},
     );
     return ProjectVariation.fromJson(response.data);
@@ -104,7 +104,7 @@ class ProjectTrackingService {
     bool approve,
   ) async {
     final response = await _apiService.put(
-      '/projects/$projectId/tracking/variations/$variationId/approve',
+      '/api/projects/$projectId/tracking/variations/$variationId/approve',
       data: {
         'approvedById': approvedById,
         'approve': approve,
@@ -116,19 +116,19 @@ class ProjectTrackingService {
   // ===== PROJECT HEALTH =====
 
   Future<ProjectHealthSummary> getProjectHealth(int projectId) async {
-    final response = await _apiService.get('/projects/$projectId/tracking/health');
+    final response = await _apiService.get('/api/projects/$projectId/tracking/health');
     return ProjectHealthSummary.fromJson(response.data);
   }
 
   // ===== BUDGET & P/L =====
 
   Future<BudgetSummary> getBudgetSummary(int projectId) async {
-    final response = await _apiService.get('/projects/$projectId/budget/summary');
+    final response = await _apiService.get('/api/projects/$projectId/budget/summary');
     return BudgetSummary.fromJson(response.data);
   }
 
   Future<ProjectPLSummary> getProjectPL(int projectId) async {
-    final response = await _apiService.get('/projects/$projectId/budget/pl');
+    final response = await _apiService.get('/api/projects/$projectId/budget/pl');
     return ProjectPLSummary.fromJson(response.data);
   }
 }

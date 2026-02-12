@@ -9,13 +9,13 @@ class SiteReportService {
   final ApiService _apiService = ApiService();
 
   Future<List<SiteReport>> getReportsByProject(int projectId) async {
-    final response = await _apiService.get('/site-reports/project/$projectId');
+    final response = await _apiService.get('/api/site-reports/project/$projectId');
     return _apiService.unwrapList(
         response, (json) => SiteReport.fromJson(json));
   }
 
   Future<List<SiteReport>> getMyReports() async {
-    final response = await _apiService.get('/site-reports/me');
+    final response = await _apiService.get('/api/site-reports/me');
     return _apiService.unwrapList(
         response, (json) => SiteReport.fromJson(json));
   }
@@ -55,7 +55,7 @@ class SiteReportService {
     final formData = FormData.fromMap(formDataMap);
 
     final response = await _apiService.post(
-      '/site-reports',
+      '/api/site-reports',
       data: formData,
       options: Options(contentType: 'multipart/form-data'),
     );
@@ -65,7 +65,7 @@ class SiteReportService {
   }
 
   Future<void> deleteReport(int id) async {
-    final response = await _apiService.delete('/site-reports/$id');
+    final response = await _apiService.delete('/api/site-reports/$id');
     _apiService.unwrap(response, (_) {});
   }
 

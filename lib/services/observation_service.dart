@@ -63,7 +63,7 @@ class ObservationService {
 
   Future<List<ObservationItem>> getActiveObservations(int projectId) async {
     final response =
-        await _api.dio.get('/observations/project/$projectId/active');
+        await _api.dio.get('/api/observations/project/$projectId/active');
     if (response.statusCode == 200 && response.data['success'] == true) {
       final List<dynamic> data = response.data['data'];
       return data.map((e) => ObservationItem.fromJson(e)).toList();
@@ -73,7 +73,7 @@ class ObservationService {
 
   Future<List<ObservationItem>> getResolvedObservations(int projectId) async {
     final response =
-        await _api.dio.get('/observations/project/$projectId/resolved');
+        await _api.dio.get('/api/observations/project/$projectId/resolved');
     if (response.statusCode == 200 && response.data['success'] == true) {
       final List<dynamic> data = response.data['data'];
       return data.map((e) => ObservationItem.fromJson(e)).toList();
@@ -83,7 +83,7 @@ class ObservationService {
 
   Future<Map<String, int>> getCounts(int projectId) async {
     final response =
-        await _api.dio.get('/observations/project/$projectId/counts');
+        await _api.dio.get('/api/observations/project/$projectId/counts');
     if (response.statusCode == 200 && response.data['success'] == true) {
       final data = response.data['data'] as Map<String, dynamic>;
       return data.map((k, v) => MapEntry(k, (v as num).toInt()));
@@ -107,7 +107,7 @@ class ObservationService {
 
     // Use FormData for multipart/form-data
     final response = await _api.dio.post(
-      '/observations/project/$projectId',
+      '/api/observations/project/$projectId',
       data: FormData.fromMap(formData),
     );
     if (response.statusCode == 200 && response.data['success'] == true) {
@@ -120,7 +120,7 @@ class ObservationService {
   Future<ObservationItem> resolveObservation(
       int id, String? resolutionNotes) async {
     final response = await _api.dio.post(
-      '/observations/$id/resolve',
+      '/api/observations/$id/resolve',
       queryParameters: {
         if (resolutionNotes != null) 'resolutionNotes': resolutionNotes,
       },
@@ -133,7 +133,7 @@ class ObservationService {
   }
 
   Future<void> deleteObservation(int id) async {
-    final response = await _api.dio.delete('/observations/$id');
+    final response = await _api.dio.delete('/api/observations/$id');
     if (response.statusCode != 200 || response.data['success'] != true) {
       throw Exception(
           response.data['message'] ?? 'Failed to delete observation');

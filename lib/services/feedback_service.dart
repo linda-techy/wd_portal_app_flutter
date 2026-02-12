@@ -84,7 +84,7 @@ class FeedbackService {
 
   Future<List<FeedbackForm>> getProjectForms(int projectId, {bool activeOnly = false}) async {
     final response = await _api.dio.get(
-      '/feedback/forms/project/$projectId',
+      '/api/feedback/forms/project/$projectId',
       queryParameters: {'activeOnly': activeOnly},
     );
     if (response.statusCode == 200) {
@@ -99,7 +99,7 @@ class FeedbackService {
     required String title,
     String? description,
   }) async {
-    final response = await _api.dio.post('/feedback/forms', data: {
+    final response = await _api.dio.post('/api/feedback/forms', data: {
       'projectId': projectId,
       'title': title,
       'description': description,
@@ -115,7 +115,7 @@ class FeedbackService {
     String? description,
     bool? isActive,
   }) async {
-    final response = await _api.dio.put('/feedback/forms/$formId', data: {
+    final response = await _api.dio.put('/api/feedback/forms/$formId', data: {
       if (title != null) 'title': title,
       if (description != null) 'description': description,
       if (isActive != null) 'isActive': isActive,
@@ -127,14 +127,14 @@ class FeedbackService {
   }
 
   Future<void> deleteForm(int formId) async {
-    final response = await _api.dio.delete('/feedback/forms/$formId');
+    final response = await _api.dio.delete('/api/feedback/forms/$formId');
     if (response.statusCode != 200) {
       throw Exception('Failed to delete feedback form');
     }
   }
 
   Future<List<FeedbackResponse>> getFormResponses(int formId) async {
-    final response = await _api.dio.get('/feedback/forms/$formId/responses');
+    final response = await _api.dio.get('/api/feedback/forms/$formId/responses');
     if (response.statusCode == 200) {
       final List<dynamic> data = response.data is List ? response.data : [];
       return data.map((e) => FeedbackResponse.fromJson(e)).toList();
@@ -143,7 +143,7 @@ class FeedbackService {
   }
 
   Future<List<FeedbackResponse>> getProjectResponses(int projectId) async {
-    final response = await _api.dio.get('/feedback/responses/project/$projectId');
+    final response = await _api.dio.get('/api/feedback/responses/project/$projectId');
     if (response.statusCode == 200) {
       final List<dynamic> data = response.data is List ? response.data : [];
       return data.map((e) => FeedbackResponse.fromJson(e)).toList();

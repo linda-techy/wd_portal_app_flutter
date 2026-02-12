@@ -8,14 +8,14 @@ class SiteVisitService {
   /// Check in to a project site with GPS coordinates
   Future<SiteVisit> checkIn(CheckInRequest request) async {
     final response =
-        await _apiService.post('/site-visits/check-in', data: request.toJson());
+        await _apiService.post('/api/site-visits/check-in', data: request.toJson());
     return _apiService.unwrap<SiteVisit>(
         response, (json) => SiteVisit.fromJson(json as Map<String, dynamic>));
   }
 
   /// Check out from a site visit
   Future<SiteVisit> checkOut(int visitId, CheckOutRequest request) async {
-    final response = await _apiService.post('/site-visits/$visitId/check-out',
+    final response = await _apiService.post('/api/site-visits/$visitId/check-out',
         data: request.toJson());
     return _apiService.unwrap<SiteVisit>(
         response, (json) => SiteVisit.fromJson(json as Map<String, dynamic>));
@@ -23,7 +23,7 @@ class SiteVisitService {
 
   /// Get current active visit for logged-in user
   Future<SiteVisit?> getMyActiveVisit() async {
-    final response = await _apiService.get('/site-visits/active');
+    final response = await _apiService.get('/api/site-visits/active');
     // For nullable return, we can check if response.data['data'] is null
     return _apiService.unwrap<SiteVisit?>(response, (json) {
       if (json == null) return null;

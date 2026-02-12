@@ -239,7 +239,7 @@ class CRMService {
   // =====================================================
 
   Future<ProjectSummary> getProject360(int id) async {
-    final response = await _apiService.get('/projects/360/$id');
+    final response = await _apiService.get('/api/projects/360/$id');
     return _apiService.unwrap<ProjectSummary>(response,
         (json) => ProjectSummary.fromJson(json as Map<String, dynamic>));
   }

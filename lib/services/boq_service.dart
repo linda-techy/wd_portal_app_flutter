@@ -119,7 +119,7 @@ class BoqService {
 
   Future<List<BoqItem>> getProjectBoq(int projectId) async {
     try {
-      final response = await _api.dio.get('/boq/project/$projectId');
+      final response = await _api.dio.get('/api/boq/project/$projectId');
       if (response.statusCode == 200 && response.data['success'] == true) {
         final List<dynamic> data = response.data['data'];
         return data.map((e) => BoqItem.fromJson(e)).toList();
@@ -139,7 +139,7 @@ class BoqService {
     int? workTypeId,
     String? notes,
   }) async {
-    final response = await _api.dio.post('/boq', data: {
+    final response = await _api.dio.post('/api/boq', data: {
       'projectId': projectId,
       'description': description,
       'unit': unit,
@@ -155,7 +155,7 @@ class BoqService {
   }
 
   Future<BoqItem> updateBoqItem(int id, Map<String, dynamic> data) async {
-    final response = await _api.dio.put('/boq/$id', data: data);
+    final response = await _api.dio.put('/api/boq/$id', data: data);
     if (response.statusCode == 200 && response.data['success'] == true) {
       return BoqItem.fromJson(response.data['data']);
     }
@@ -163,14 +163,14 @@ class BoqService {
   }
 
   Future<void> deleteBoqItem(int id) async {
-    final response = await _api.dio.delete('/boq/$id');
+    final response = await _api.dio.delete('/api/boq/$id');
     if (response.statusCode != 200 || response.data['success'] != true) {
       throw Exception(response.data['message'] ?? 'Failed to delete BoQ item');
     }
   }
 
   Future<List<BoqWorkType>> getWorkTypes() async {
-    final response = await _api.dio.get('/boq/work-types');
+    final response = await _api.dio.get('/api/boq/work-types');
     if (response.statusCode == 200 && response.data['success'] == true) {
       final List<dynamic> data = response.data['data'];
       return data.map((e) => BoqWorkType.fromJson(e)).toList();

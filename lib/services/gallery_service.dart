@@ -51,7 +51,7 @@ class GalleryService {
   final ApiService _api = ApiService();
 
   Future<List<GalleryImage>> getProjectImages(int projectId) async {
-    final response = await _api.dio.get('/gallery/project/$projectId');
+    final response = await _api.dio.get('/api/gallery/project/$projectId');
     if (response.statusCode == 200 && response.data['success'] == true) {
       final List<dynamic> data = response.data['data'];
       return data.map((e) => GalleryImage.fromJson(e)).toList();
@@ -60,7 +60,7 @@ class GalleryService {
   }
 
   Future<void> deleteImage(int imageId) async {
-    final response = await _api.dio.delete('/gallery/$imageId');
+    final response = await _api.dio.delete('/api/gallery/$imageId');
     if (response.statusCode != 200 || response.data['success'] != true) {
       throw Exception(response.data['message'] ?? 'Failed to delete image');
     }
