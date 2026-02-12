@@ -36,28 +36,37 @@ class SiteReportService {
       'siteVisitId': siteVisitId,
     };
 
-    final Map<String, dynamic> formDataMap = {
-      'report': MultipartFile.fromString(
+    final formData = FormData();
+
+    // Send report JSON as text/plain so Spring's StringHttpMessageConverter
+    // can resolve @RequestPart("report") String correctly.
+    // Using application/json causes Spring to try Jackson deserialization
+    // into String which fails for JSON objects.
+    formData.files.add(MapEntry(
+      'report',
+      MultipartFile.fromString(
         jsonEncode(reportData),
-        contentType: DioMediaType.parse('application/json'),
+        contentType: DioMediaType.parse('text/plain'),
       ),
-    };
+    ));
 
     if (photos != null && photos.isNotEmpty) {
-      formDataMap['photos'] = await Future.wait(
-        photos.map((file) async => MultipartFile.fromBytes(
-              await file.readAsBytes(),
-              filename: file.name,
-            )),
-      );
+      for (final file in photos) {
+        formData.files.add(MapEntry(
+          'photos',
+          MultipartFile.fromBytes(
+            await file.readAsBytes(),
+            filename: file.name,
+          ),
+        ));
+      }
     }
 
-    final formData = FormData.fromMap(formDataMap);
-
+    // Don't set contentType explicitly — Dio auto-sets multipart/form-data
+    // with the correct boundary when sending FormData
     final response = await _apiService.post(
       '/api/site-reports',
       data: formData,
-      options: Options(contentType: 'multipart/form-data'),
     );
 
     return _apiService.unwrap(
