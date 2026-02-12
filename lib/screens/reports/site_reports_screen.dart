@@ -285,30 +285,73 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
   }
 
   Widget _buildTimelineItem(BuildContext context, SiteReport report, bool isLast) {
+    final dateStr = DateFormat('MMM d, yyyy').format(report.reportDate);
     final timeStr = DateFormat('h:mm a').format(report.reportDate);
 
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Date label and timeline
+          SizedBox(
+            width: 100,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 12, top: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        dateStr,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        timeStr,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
           // Timeline line and dot
           SizedBox(
-            width: 40,
+            width: 24,
             child: Column(
               children: [
+                const SizedBox(height: 12),
                 Container(
-                  width: 16,
-                  height: 16,
+                  width: 14,
+                  height: 14,
                   decoration: BoxDecoration(
                     color: Theme.of(context).primaryColor,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(context).primaryColor.withOpacity(0.3),
+                        blurRadius: 4,
+                        spreadRadius: 1,
+                      ),
+                    ],
                   ),
                 ),
                 if (!isLast)
                   Expanded(
                     child: Container(
                       width: 2,
+                      margin: const EdgeInsets.symmetric(vertical: 4),
                       color: Colors.grey[300],
                     ),
                   ),
@@ -318,22 +361,8 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
           // Content
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(left: 12, bottom: isLast ? 0 : 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    timeStr,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildTimelineCard(context, report),
-                ],
-              ),
+              padding: EdgeInsets.only(left: 12, bottom: isLast ? 0 : 20),
+              child: _buildTimelineCard(context, report),
             ),
           ),
         ],
@@ -356,7 +385,7 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      report.title ?? report.reportType.label,
+                      report.title,
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
@@ -408,6 +437,54 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 13, color: Colors.grey[700]),
                 ),
+              ],
+              // Photos Preview
+              if (report.photos.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 70,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: report.photos.length > 4 ? 4 : report.photos.length,
+                    itemBuilder: (context, photoIndex) {
+                      final photo = report.photos[photoIndex];
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: GestureDetector(
+                          onTap: () => _openPhotoGallery(context, report, photoIndex),
+                          child: Hero(
+                            tag: 'photo_${report.id}_$photoIndex',
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Image.network(
+                                photo.fullUrl,
+                                width: 70,
+                                height: 70,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 70,
+                                    height: 70,
+                                    color: Colors.grey[300],
+                                    child: Icon(Icons.broken_image, size: 20, color: Colors.grey[600]),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                if (report.photos.length > 4)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      '+${report.photos.length - 4} more photos',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                    ),
+                  ),
               ],
               const SizedBox(height: 8),
               Wrap(
@@ -694,5 +771,189 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
         Provider.of<SiteReportProvider>(context, listen: false).fetch();
       }
     });
+  }
+
+  void _openPhotoGallery(BuildContext context, SiteReport report, int initialIndex) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _PhotoGalleryViewer(
+          photos: report.photos,
+          initialIndex: initialIndex,
+          reportTitle: report.title,
+        ),
+      ),
+    );
+  }
+}
+
+/// Full screen photo gallery viewer for site report photos
+class _PhotoGalleryViewer extends StatefulWidget {
+  final List<SiteReportPhoto> photos;
+  final int initialIndex;
+  final String reportTitle;
+
+  const _PhotoGalleryViewer({
+    required this.photos,
+    required this.initialIndex,
+    required this.reportTitle,
+  });
+
+  @override
+  State<_PhotoGalleryViewer> createState() => _PhotoGalleryViewerState();
+}
+
+class _PhotoGalleryViewerState extends State<_PhotoGalleryViewer> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.reportTitle,
+              style: const TextStyle(fontSize: 16),
+            ),
+            Text(
+              '${_currentIndex + 1} of ${widget.photos.length}',
+              style: const TextStyle(fontSize: 12, color: Colors.white70),
+            ),
+          ],
+        ),
+      ),
+      body: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            itemCount: widget.photos.length,
+            onPageChanged: (index) => setState(() => _currentIndex = index),
+            itemBuilder: (context, index) {
+              final photo = widget.photos[index];
+              return InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Center(
+                  child: Hero(
+                    tag: 'photo_${widget.photos.hashCode}_$index',
+                    child: Image.network(
+                      photo.fullUrl,
+                      fit: BoxFit.contain,
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: progress.expectedTotalBytes != null
+                                ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
+                                : null,
+                            color: Colors.white,
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.broken_image, size: 64, color: Colors.white54),
+                            SizedBox(height: 16),
+                            Text(
+                              'Failed to load image',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          // Photo thumbnails at bottom
+          if (widget.photos.length > 1)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 100,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.7),
+                    ],
+                  ),
+                ),
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  itemCount: widget.photos.length,
+                  itemBuilder: (context, index) {
+                    final isSelected = index == _currentIndex;
+                    return GestureDetector(
+                      onTap: () {
+                        _pageController.animateToPage(
+                          index,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: isSelected ? Colors.white : Colors.transparent,
+                            width: 2,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.network(
+                            widget.photos[index].fullUrl,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 60,
+                                height: 60,
+                                color: Colors.grey[800],
+                                child: const Icon(Icons.broken_image, color: Colors.grey),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
