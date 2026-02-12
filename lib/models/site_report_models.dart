@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import '../constants.dart';
 
 enum ReportType {
   dailyProgress,
@@ -67,6 +68,12 @@ class SiteReportPhoto {
     required this.storagePath,
     this.createdAt,
   });
+
+  /// Full URL for loading the photo (prepends API base URL to relative path).
+  String get fullUrl {
+    if (photoUrl.startsWith('http')) return photoUrl;
+    return '${ApiConfig.fullApiUrl}$photoUrl';
+  }
 
   factory SiteReportPhoto.fromJson(Map<String, dynamic> json) {
     return SiteReportPhoto(

@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import 'package:admin/models/site_report_models.dart';
 import 'package:admin/providers/site_report_provider.dart';
 import 'package:admin/screens/reports/add_site_report_screen.dart';
+import 'package:admin/screens/reports/site_report_detail_screen.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
 
-class SiteReportsScreen extends StatelessWidget {
+class SiteReportsScreen extends StatefulWidget {
   const SiteReportsScreen({super.key});
+
+  @override
+  State<SiteReportsScreen> createState() => _SiteReportsScreenState();
+}
+
+class _SiteReportsScreenState extends State<SiteReportsScreen> {
+  bool _isTimelineView = true;
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +29,15 @@ class SiteReportsScreen extends StatelessWidget {
             appBar: AppBar(
               title: const Text('Site Reports'),
               actions: [
+                IconButton(
+                  icon: Icon(_isTimelineView ? Icons.view_list : Icons.timeline),
+                  onPressed: () {
+                    setState(() {
+                      _isTimelineView = !_isTimelineView;
+                    });
+                  },
+                  tooltip: _isTimelineView ? 'Card View' : 'Timeline View',
+                ),
                 Consumer<PermissionProvider>(
                   builder: (context, permissionProvider, _) {
                     if (permissionProvider.hasPermission('report:create')) {
@@ -36,7 +54,11 @@ class SiteReportsScreen extends StatelessWidget {
             body: Column(
               children: [
                 _buildSearchAndFilters(context, provider),
-                Expanded(child: _buildReportList(context, provider)),
+                Expanded(
+                  child: _isTimelineView
+                      ? _buildTimelineView(context, provider)
+                      : _buildReportList(context, provider),
+                ),
                 if (provider.totalPages > 1)
                   _buildPagination(context, provider),
               ],
@@ -114,6 +136,333 @@ class SiteReportsScreen extends StatelessWidget {
       labelStyle: TextStyle(
         color: isSelected ? Colors.white : (color ?? Colors.black87),
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+    );
+  }
+
+  Widget _buildTimelineView(BuildContext context, SiteReportProvider provider) {
+    if (provider.isLoading && provider.items.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (provider.error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('Error: ${provider.error}'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => provider.fetch(),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (provider.items.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.timeline, size: 48, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('No site reports found', style: TextStyle(fontSize: 16)),
+          ],
+        ),
+      );
+    }
+
+    // Group reports by date
+    final groupedReports = <DateTime, List<SiteReport>>{};
+    for (final report in provider.items) {
+      final date = DateTime(
+        report.reportDate.year,
+        report.reportDate.month,
+        report.reportDate.day,
+      );
+      groupedReports.putIfAbsent(date, () => []).add(report);
+    }
+
+    final sortedDates = groupedReports.keys.toList()
+      ..sort((a, b) => b.compareTo(a));
+
+    return RefreshIndicator(
+      onRefresh: () => provider.fetch(),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: sortedDates.length,
+        itemBuilder: (context, index) {
+          final date = sortedDates[index];
+          final reports = groupedReports[date]!;
+          return _buildDateGroup(context, date, reports);
+        },
+      ),
+    );
+  }
+
+  Widget _buildDateGroup(BuildContext context, DateTime date, List<SiteReport> reports) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    
+    final isToday = date.isAtSameMomentAs(today);
+    final isYesterday = date.isAtSameMomentAs(yesterday);
+
+    String dateLabel;
+    if (isToday) {
+      dateLabel = 'Today';
+    } else if (isYesterday) {
+      dateLabel = 'Yesterday';
+    } else {
+      dateLabel = DateFormat('EEEE, MMMM d, y').format(date);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Date Header
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isToday 
+                        ? Theme.of(context).primaryColor.withOpacity(0.1) 
+                        : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 14,
+                        color: isToday 
+                            ? Theme.of(context).primaryColor 
+                            : Colors.grey[600],
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        dateLabel,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isToday 
+                              ? Theme.of(context).primaryColor 
+                              : Colors.grey[800],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${reports.length} ${reports.length == 1 ? 'report' : 'reports'}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Timeline items
+          ...reports.asMap().entries.map((entry) {
+            final index = entry.key;
+            final report = entry.value;
+            final isLast = index == reports.length - 1;
+            return _buildTimelineItem(context, report, isLast);
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimelineItem(BuildContext context, SiteReport report, bool isLast) {
+    final timeStr = DateFormat('h:mm a').format(report.reportDate);
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Timeline line and dot
+          SizedBox(
+            width: 40,
+            child: Column(
+              children: [
+                Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                ),
+                if (!isLast)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      color: Colors.grey[300],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          // Content
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(left: 12, bottom: isLast ? 0 : 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    timeStr,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildTimelineCard(context, report),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimelineCard(BuildContext context, SiteReport report) {
+    return Card(
+      elevation: 2,
+      child: InkWell(
+        onTap: () => _navigateToDetail(context, report),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      report.title ?? report.reportType.label,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (report.reportType == ReportType.safetyIncident)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.statusError,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'INCIDENT',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              if (report.projectName != null) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(Icons.business, size: 14, color: Colors.grey[600]),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        report.projectName!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              if (report.summary != null && report.summary!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  report.summary!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                ),
+              ],
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  if (report.reportedByName != null)
+                    _buildSmallInfoChip(
+                      icon: Icons.person,
+                      label: report.reportedByName!,
+                    ),
+                  if (report.weatherCondition != null)
+                    _buildSmallInfoChip(
+                      icon: Icons.wb_sunny,
+                      label: report.weatherCondition!,
+                    ),
+                  if (report.labourCount != null)
+                    _buildSmallInfoChip(
+                      icon: Icons.groups,
+                      label: '${report.labourCount}',
+                    ),
+                  if (report.photos.isNotEmpty)
+                    _buildSmallInfoChip(
+                      icon: Icons.photo_library,
+                      label: '${report.photos.length}',
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSmallInfoChip({
+    required IconData icon,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: Colors.grey[700]),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(fontSize: 11, color: Colors.grey[700]),
+          ),
+        ],
       ),
     );
   }
@@ -328,8 +677,11 @@ class SiteReportsScreen extends StatelessWidget {
   }
 
   void _navigateToDetail(BuildContext context, SiteReport report) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('View details for report ${report.id}')),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SiteReportDetailScreen(report: report),
+      ),
     );
   }
 
