@@ -67,7 +67,7 @@ class GalleryService {
   }
 
   Future<int> getImageCount(int projectId) async {
-    final response = await _api.dio.get('/gallery/project/$projectId/count');
+    final response = await _api.dio.get('/api/gallery/project/$projectId/count');
     if (response.statusCode == 200 && response.data['success'] == true) {
       return response.data['data'] as int;
     }

@@ -15,7 +15,7 @@ class VendorPaymentService {
   Future<VendorPayment> recordPayment(VendorPayment payment) async {
     try {
       final response = await _apiService.post(
-        '/accounts-payable/payments',
+        '/api/accounts-payable/payments',
         data: payment.toJson(),
       );
       return VendorPayment.fromJson(response.data);
@@ -27,7 +27,7 @@ class VendorPaymentService {
   /// Get payment history for an invoice
   Future<List<VendorPayment>> getInvoicePayments(int invoiceId) async {
     try {
-      final response = await _apiService.get('/accounts-payable/invoices/$invoiceId/payments');
+      final response = await _apiService.get('/api/accounts-payable/invoices/$invoiceId/payments');
       return (response.data as List)
           .map((json) => VendorPayment.fromJson(json))
           .toList();
@@ -39,7 +39,7 @@ class VendorPaymentService {
   /// Get all payments for a vendor
   Future<List<VendorPayment>> getVendorPayments(int vendorId) async {
     try {
-      final response = await _apiService.get('/accounts-payable/vendors/$vendorId/payments');
+      final response = await _apiService.get('/api/accounts-payable/vendors/$vendorId/payments');
       return (response.data as List)
           .map((json) => VendorPayment.fromJson(json))
           .toList();
@@ -52,7 +52,7 @@ class VendorPaymentService {
   Future<List<VendorPayment>> getPaymentsByDateRange(DateTime startDate, DateTime endDate) async {
     try {
       final response = await _apiService.get(
-        '/accounts-payable/payments',
+        '/api/accounts-payable/payments',
         queryParams: {
           'startDate': startDate.toIso8601String().split('T')[0],
           'endDate': endDate.toIso8601String().split('T')[0],
@@ -71,7 +71,7 @@ class VendorPaymentService {
   /// Get accounts payable aging report
   Future<AccountsPayableAging> getAccountsPayableAging() async {
     try {
-      final response = await _apiService.get('/accounts-payable/aging');
+      final response = await _apiService.get('/api/accounts-payable/aging');
       return AccountsPayableAging.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
@@ -81,7 +81,7 @@ class VendorPaymentService {
   /// Get vendor outstanding summaries
   Future<List<VendorOutstanding>> getVendorOutstanding() async {
     try {
-      final response = await _apiService.get('/accounts-payable/vendor-outstanding');
+      final response = await _apiService.get('/api/accounts-payable/vendor-outstanding');
       return (response.data as List)
           .map((json) => VendorOutstanding.fromJson(json))
           .toList();
@@ -93,7 +93,7 @@ class VendorPaymentService {
   /// Get outstanding for specific vendor
   Future<VendorOutstanding> getVendorOutstandingDetail(int vendorId) async {
     try {
-      final response = await _apiService.get('/accounts-payable/vendors/$vendorId/outstanding');
+      final response = await _apiService.get('/api/accounts-payable/vendors/$vendorId/outstanding');
       return VendorOutstanding.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
@@ -105,7 +105,7 @@ class VendorPaymentService {
   /// Get pending invoices
   Future<List> getPendingInvoices() async {
     try {
-      final response = await _apiService.get('/accounts-payable/invoices/pending');
+      final response = await _apiService.get('/api/accounts-payable/invoices/pending');
       return response.data as List;
     } catch (e) {
       throw _handleError(e);
@@ -115,7 +115,7 @@ class VendorPaymentService {
   /// Get overdue invoices
   Future<List> getOverdueInvoices() async {
     try {
-      final response = await _apiService.get('/accounts-payable/invoices/overdue');
+      final response = await _apiService.get('/api/accounts-payable/invoices/overdue');
       return response.data as List;
     } catch (e) {
       throw _handleError(e);
@@ -128,7 +128,7 @@ class VendorPaymentService {
   Future<double> getTotalPaidInPeriod(DateTime startDate, DateTime endDate) async {
     try {
       final response = await _apiService.get(
-        '/accounts-payable/statistics/total-paid',
+        '/api/accounts-payable/statistics/total-paid',
         queryParams: {
           'startDate': startDate.toIso8601String().split('T')[0],
           'endDate': endDate.toIso8601String().split('T')[0],
@@ -144,7 +144,7 @@ class VendorPaymentService {
   Future<double> getTotalTdsDeducted(DateTime startDate, DateTime endDate) async {
     try {
       final response = await _apiService.get(
-        '/accounts-payable/statistics/total-tds',
+        '/api/accounts-payable/statistics/total-tds',
         queryParams: {
           'startDate': startDate.toIso8601String().split('T')[0],
           'endDate': endDate.toIso8601String().split('T')[0],

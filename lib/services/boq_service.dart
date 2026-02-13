@@ -179,7 +179,7 @@ class BoqService {
   }
 
   Future<BoqSummary> getProjectSummary(int projectId) async {
-    final response = await _api.dio.get('/boq/project/$projectId/summary');
+    final response = await _api.dio.get('/api/boq/project/$projectId/summary');
     if (response.statusCode == 200 && response.data['success'] == true) {
       return BoqSummary.fromJson(response.data['data']);
     }

@@ -10,7 +10,7 @@ class View360Service {
 
   Future<List<View360>> getToursByProject(int projectId) async {
     try {
-      final response = await _apiService.get('/view360/project/$projectId');
+      final response = await _apiService.get('/api/view360/project/$projectId');
       return (response.data as List)
           .map((json) => View360.fromJson(json))
           .toList();
@@ -80,7 +80,7 @@ class View360Service {
       });
 
       final response = await _apiService.post(
-        '/view360',
+        '/api/view360',
         data: formData,
         options: Options(contentType: 'multipart/form-data'),
       );
@@ -93,7 +93,7 @@ class View360Service {
 
   Future<void> deleteTour(int id) async {
     try {
-      await _apiService.delete('/view360/$id');
+      await _apiService.delete('/api/view360/$id');
     } catch (e) {
       rethrow;
     }
