@@ -76,6 +76,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
   final bool _isLoadingTeamMembers = false;
 
   final List<String> _projectPhases = [
+    'Planning',
     'Design',
     'Construction',
     'Completed',

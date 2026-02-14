@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -11,6 +10,7 @@ import '../../../../models/site_report_models.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../utils/error_handler.dart';
 import '../../../../providers/portal_auth_provider.dart';
+import '../../../../widgets/authenticated_image.dart';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Site Reports Screen – Timeline-based, GPS-enabled, photo management
@@ -29,7 +29,6 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
   List<SiteReport> _reports = [];
   bool _isPageLoading = true;
   final Set<DateTime> _expandedDates = {};
-  String? _token;
 
   @override
   void initState() {
@@ -47,14 +46,7 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
       }
       return;
     }
-    await _loadToken();
     await _loadData();
-  }
-
-  Future<void> _loadToken() async {
-    const storage = FlutterSecureStorage();
-    final token = await storage.read(key: 'access_token');
-    if (mounted) setState(() => _token = token);
   }
 
   Future<void> _loadData() async {
@@ -396,36 +388,11 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
                         final photo = report.photos[i];
                         return Padding(
                           padding: const EdgeInsets.only(right: 6),
-                          child: ClipRRect(
+                          child: AuthenticatedImage(
+                            imageUrl: photo.fullUrl,
+                            width: 64,
+                            height: 64,
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              photo.fullUrl,
-                              headers: _token != null
-                                  ? {'Authorization': 'Bearer $_token'}
-                                  : null,
-                              width: 64,
-                              height: 64,
-                              fit: BoxFit.cover,
-                              loadingBuilder: (_, child, progress) {
-                                if (progress == null) return child;
-                                return Container(
-                                  width: 64,
-                                  height: 64,
-                                  color: Colors.grey[200],
-                                  child: const Center(
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2),
-                                  ),
-                                );
-                              },
-                              errorBuilder: (_, __, ___) => Container(
-                                width: 64,
-                                height: 64,
-                                color: Colors.grey[300],
-                                child: Icon(Icons.broken_image,
-                                    size: 20, color: Colors.grey[500]),
-                              ),
-                            ),
                           ),
                         );
                       },
@@ -1062,20 +1029,12 @@ class _SiteReportDetailPageState extends State<_SiteReportDetailPage> {
   final SiteReportService _service = SiteReportService();
   final ImagePicker _picker = ImagePicker();
   late SiteReport _report;
-  String? _token;
   bool _isAddingPhotos = false;
 
   @override
   void initState() {
     super.initState();
     _report = widget.report;
-    _loadToken();
-  }
-
-  Future<void> _loadToken() async {
-    const storage = FlutterSecureStorage();
-    final token = await storage.read(key: 'access_token');
-    if (mounted) setState(() => _token = token);
   }
 
   Future<void> _addPhotos() async {
@@ -1170,7 +1129,6 @@ class _SiteReportDetailPageState extends State<_SiteReportDetailPage> {
         builder: (_) => _FullScreenPhotoViewer(
           photos: _report.photos,
           initialIndex: initialIndex,
-          token: _token,
           onDelete: _deletePhoto,
         ),
       ),
@@ -1404,41 +1362,11 @@ class _SiteReportDetailPageState extends State<_SiteReportDetailPage> {
                 children: [
                   GestureDetector(
                     onTap: () => _openFullScreenPhoto(i),
-                    child: ClipRRect(
+                    child: AuthenticatedImage(
+                      imageUrl: photo.fullUrl,
+                      width: double.infinity,
+                      height: double.infinity,
                       borderRadius: BorderRadius.circular(10),
-                      child: _token == null
-                          ? Container(
-                              color: Colors.grey[200],
-                              child: const Center(
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2)))
-                          : Image.network(
-                              photo.fullUrl,
-                              headers: {'Authorization': 'Bearer $_token'},
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
-                              loadingBuilder: (_, child, progress) {
-                                if (progress == null) return child;
-                                return Container(
-                                  color: Colors.grey[200],
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      value: progress.expectedTotalBytes != null
-                                          ? progress.cumulativeBytesLoaded /
-                                              progress.expectedTotalBytes!
-                                          : null,
-                                    ),
-                                  ),
-                                );
-                              },
-                              errorBuilder: (_, __, ___) => Container(
-                                color: Colors.grey[200],
-                                child: const Icon(Icons.broken_image,
-                                    color: Colors.grey),
-                              ),
-                            ),
                     ),
                   ),
                   // Delete button
@@ -1502,13 +1430,11 @@ class _SiteReportDetailPageState extends State<_SiteReportDetailPage> {
 class _FullScreenPhotoViewer extends StatefulWidget {
   final List<SiteReportPhoto> photos;
   final int initialIndex;
-  final String? token;
   final Function(SiteReportPhoto) onDelete;
 
   const _FullScreenPhotoViewer({
     required this.photos,
     required this.initialIndex,
-    required this.token,
     required this.onDelete,
   });
 
@@ -1557,31 +1483,17 @@ class _FullScreenPhotoViewerState extends State<_FullScreenPhotoViewer> {
         onPageChanged: (i) => setState(() => _currentIndex = i),
         itemBuilder: (ctx, i) {
           final photo = widget.photos[i];
-          if (widget.token == null) {
-            return const Center(
-                child: CircularProgressIndicator(color: Colors.white));
-          }
           return InteractiveViewer(
             minScale: 0.5,
             maxScale: 4.0,
             child: Center(
-              child: Image.network(
-                photo.fullUrl,
-                headers: {'Authorization': 'Bearer ${widget.token}'},
+              child: AuthenticatedImage(
+                imageUrl: photo.fullUrl,
                 fit: BoxFit.contain,
-                loadingBuilder: (_, child, progress) {
-                  if (progress == null) return child;
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      value: progress.expectedTotalBytes != null
-                          ? progress.cumulativeBytesLoaded /
-                              progress.expectedTotalBytes!
-                          : null,
-                    ),
-                  );
-                },
-                errorBuilder: (_, __, ___) => const Column(
+                placeholder: const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
+                errorWidget: const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.broken_image, color: Colors.white54, size: 48),

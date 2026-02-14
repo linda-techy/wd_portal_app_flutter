@@ -64,44 +64,38 @@ class ProjectPhaseBadge extends StatelessWidget {
   }
 
   _PhaseInfo _getPhaseInfo(String phase) {
-    final phaseUpper = phase.toUpperCase();
-    
-    switch (phaseUpper) {
-      case 'DESIGN':
-        return _PhaseInfo(
-          displayName: 'Design',
-          color: AppTheme.primaryBlue,
-          icon: Icons.design_services,
-        );
+    final normalized = phase.toUpperCase().replaceAll(' ', '_');
+
+    switch (normalized) {
       case 'PLANNING':
         return _PhaseInfo(
           displayName: 'Planning',
           color: AppTheme.statusInfo,
           icon: Icons.calculate,
         );
-      case 'EXECUTION':
+      case 'DESIGN':
         return _PhaseInfo(
-          displayName: 'Execution',
+          displayName: 'Design',
+          color: AppTheme.primaryBlue,
+          icon: Icons.design_services,
+        );
+      case 'CONSTRUCTION':
+        return _PhaseInfo(
+          displayName: 'Construction',
           color: AppTheme.statusWarning,
           icon: Icons.construction,
         );
-      case 'COMPLETION':
+      case 'COMPLETED':
         return _PhaseInfo(
-          displayName: 'Completion',
-          color: AppTheme.coralRed,
-          icon: Icons.check_circle_outline,
-        );
-      case 'HANDOVER':
-        return _PhaseInfo(
-          displayName: 'Handover',
+          displayName: 'Completed',
           color: AppTheme.statusSuccess,
-          icon: Icons.handshake,
+          icon: Icons.check_circle,
         );
-      case 'WARRANTY':
+      case 'ON_HOLD':
         return _PhaseInfo(
-          displayName: 'Warranty',
-          color: AppTheme.primaryColor,
-          icon: Icons.verified_user,
+          displayName: 'On Hold',
+          color: AppTheme.coralRed,
+          icon: Icons.pause_circle_filled,
         );
       default:
         return _PhaseInfo(
@@ -124,4 +118,3 @@ class _PhaseInfo {
     required this.icon,
   });
 }
-

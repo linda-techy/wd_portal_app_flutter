@@ -108,6 +108,12 @@ class CustomerProjectsScreen extends StatelessWidget {
           isSelected: provider.filters['projectPhase'] == 'COMPLETED',
           onTap: () => provider.updateFilter('projectPhase', 'COMPLETED'),
         ),
+        _buildFilterChip(
+          context,
+          label: 'On Hold',
+          isSelected: provider.filters['projectPhase'] == 'ON_HOLD',
+          onTap: () => provider.updateFilter('projectPhase', 'ON_HOLD'),
+        ),
         const SizedBox(width: 16),
         // Project Type filters
         _buildFilterChip(

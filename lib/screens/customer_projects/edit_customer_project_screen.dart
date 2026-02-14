@@ -91,9 +91,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
   final List<String> _projectPhases = [
     'Planning',
     'Design',
-    'Foundation',
     'Construction',
-    'Finishing',
     'Completed',
     'On Hold',
   ];
