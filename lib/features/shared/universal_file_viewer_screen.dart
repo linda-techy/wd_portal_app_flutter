@@ -144,7 +144,7 @@ class _UniversalFileViewerScreenState extends State<UniversalFileViewerScreen> {
 
       debugPrint('=== LOADING FILE ===');
       debugPrint('URL: $_resolvedFileUrl');
-      debugPrint('Token: ${token.substring(0, 20)}...');
+      debugPrint('Token: [REDACTED]');
       debugPrint('Filename: ${widget.filename}');
 
       final dio = Dio();

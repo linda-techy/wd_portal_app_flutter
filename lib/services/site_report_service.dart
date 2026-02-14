@@ -27,6 +27,9 @@ class SiteReportService {
     required ReportType reportType,
     int? siteVisitId,
     List<XFile>? photos,
+    double? latitude,
+    double? longitude,
+    double? locationAccuracy,
   }) async {
     final Map<String, dynamic> reportData = {
       'projectId': projectId,
@@ -34,6 +37,9 @@ class SiteReportService {
       'description': description,
       'reportType': reportType.toJson(),
       'siteVisitId': siteVisitId,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      if (locationAccuracy != null) 'locationAccuracy': locationAccuracy,
     };
 
     final formData = FormData();

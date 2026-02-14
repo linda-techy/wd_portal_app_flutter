@@ -17,7 +17,7 @@ class SiteReportsScreen extends StatefulWidget {
 }
 
 class _SiteReportsScreenState extends State<SiteReportsScreen> {
-  bool _isTimelineView = true;
+  bool _isTimelineView = true; // Default to timeline view to show GPS features
 
   @override
   Widget build(BuildContext context) {
@@ -496,6 +496,14 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
                       icon: Icons.person,
                       label: report.reportedByName!,
                     ),
+                  if (report.latitude != null && report.longitude != null)
+                    _buildSmallInfoChip(
+                      icon: Icons.location_on,
+                      label: report.distanceFromProject != null 
+                          ? '${report.distanceFromProject!.toStringAsFixed(1)} km'
+                          : 'GPS',
+                      color: Colors.green,
+                    ),
                   if (report.weatherCondition != null)
                     _buildSmallInfoChip(
                       icon: Icons.wb_sunny,
@@ -523,21 +531,25 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
   Widget _buildSmallInfoChip({
     required IconData icon,
     required String label,
+    Color? color,
   }) {
+    final chipColor = color ?? Colors.grey[700]!;
+    final bgColor = color?.withOpacity(0.1) ?? Colors.grey[100]!;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: bgColor,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: Colors.grey[700]),
+          Icon(icon, size: 12, color: chipColor),
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: Colors.grey[700]),
+            style: TextStyle(fontSize: 11, color: chipColor),
           ),
         ],
       ),

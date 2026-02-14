@@ -61,12 +61,20 @@ class SiteReportPhoto {
   final String photoUrl;
   final String storagePath;
   final DateTime? createdAt;
+  final String? caption;
+  final double? latitude;
+  final double? longitude;
+  final int displayOrder;
 
   SiteReportPhoto({
     this.id,
     required this.photoUrl,
     required this.storagePath,
     this.createdAt,
+    this.caption,
+    this.latitude,
+    this.longitude,
+    this.displayOrder = 0,
   });
 
   /// Full URL for loading the photo (prepends API base URL to relative path).
@@ -81,7 +89,24 @@ class SiteReportPhoto {
       photoUrl: json['photoUrl'] as String? ?? '',
       storagePath: json['storagePath'] as String? ?? '',
       createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'].toString()) : null,
+      caption: json['caption'] as String?,
+      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
+      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
+      displayOrder: json['displayOrder'] as int? ?? 0,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (id != null) 'id': id,
+      'photoUrl': photoUrl,
+      'storagePath': storagePath,
+      if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+      if (caption != null) 'caption': caption,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      'displayOrder': displayOrder,
+    };
   }
 }
 
@@ -96,6 +121,10 @@ class SiteReport {
   final int? siteVisitId;
   final List<SiteReportPhoto> photos;
   final String? submittedByName;
+  final double? latitude;
+  final double? longitude;
+  final double? locationAccuracy;
+  final double? distanceFromProject;
 
   SiteReport({
     this.id,
@@ -108,6 +137,10 @@ class SiteReport {
     this.siteVisitId,
     this.photos = const [],
     this.submittedByName,
+    this.latitude,
+    this.longitude,
+    this.locationAccuracy,
+    this.distanceFromProject,
   });
 
   factory SiteReport.fromJson(Map<String, dynamic> json) {
@@ -131,6 +164,10 @@ class SiteReport {
       submittedByName: json['submittedBy'] != null 
           ? '${json['submittedBy']['firstName'] ?? ''} ${json['submittedBy']['lastName'] ?? ''}'.trim()
           : null,
+      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
+      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
+      locationAccuracy: json['locationAccuracy'] != null ? (json['locationAccuracy'] as num).toDouble() : null,
+      distanceFromProject: json['distanceFromProject'] != null ? (json['distanceFromProject'] as num).toDouble() : null,
     );
   }
 

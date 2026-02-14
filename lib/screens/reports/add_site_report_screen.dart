@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:motion_toast/motion_toast.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../models/site_report_models.dart';
 import '../../models/customer_project.dart';
 import '../../services/site_report_service.dart';
 import '../../services/crm_service.dart';
+import '../../services/location_service.dart';
 import '../../theme/app_theme.dart';
 import '../../constants.dart';
 
@@ -34,6 +36,14 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
   ReportType _selectedType = ReportType.dailyProgress;
   final List<XFile> _photos = [];
   bool _isSaving = false;
+
+  // GPS/Location state
+  double? _latitude;
+  double? _longitude;
+  double? _locationAccuracy;
+  bool _isLoadingLocation = false;
+  bool _locationCaptured = false;
+  String? _locationError;
 
   @override
   void initState() {
@@ -94,6 +104,55 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
     });
   }
 
+  Future<void> _captureLocation() async {
+    setState(() {
+      _isLoadingLocation = true;
+      _locationError = null;
+    });
+
+    try {
+      final Position position = await LocationService.getCurrentPosition();
+      
+      setState(() {
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+        _locationAccuracy = position.accuracy;
+        _locationCaptured = true;
+        _isLoadingLocation = false;
+      });
+
+      if (mounted) {
+        MotionToast.success(
+          description: const Text('Location captured successfully'),
+          toastDuration: const Duration(seconds: 2),
+        ).show(context);
+      }
+    } on LocationException catch (e) {
+      setState(() {
+        _locationError = e.message;
+        _isLoadingLocation = false;
+      });
+      
+      if (mounted) {
+        MotionToast.error(
+          description: Text(e.message),
+          toastDuration: const Duration(seconds: 4),
+        ).show(context);
+      }
+    } catch (e) {
+      setState(() {
+        _locationError = 'Failed to capture location: $e';
+        _isLoadingLocation = false;
+      });
+      
+      if (mounted) {
+        MotionToast.error(
+          description: Text('Failed to capture location: $e'),
+        ).show(context);
+      }
+    }
+  }
+
   Future<void> _saveReport() async {
     if (_selectedProject == null) {
       MotionToast.warning(description: const Text('Please select a project'))
@@ -128,6 +187,9 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
         reportType: _selectedType,
         siteVisitId: widget.siteVisitId,
         photos: _photos,
+        latitude: _latitude,
+        longitude: _longitude,
+        locationAccuracy: _locationAccuracy,
       );
 
       if (mounted) {
@@ -191,6 +253,8 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
               _buildTextField('Description', _descriptionController,
                   'Detail the observations...',
                   maxLines: 5),
+              const SizedBox(height: defaultPadding * 1.5),
+              _buildLocationSection(),
               const SizedBox(height: defaultPadding * 1.5),
               _buildPhotoSection(),
               const SizedBox(height: defaultPadding * 2),
@@ -372,6 +436,122 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
                 ],
               );
             },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildLocationSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(Icons.location_on, color: AppTheme.coralRed, size: 20),
+            SizedBox(width: 8),
+            Text('Location', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            SizedBox(width: 8),
+            Text('(Recommended)', style: TextStyle(color: Colors.grey, fontSize: 12)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (!_locationCaptured && !_isLoadingLocation)
+          ElevatedButton.icon(
+            onPressed: _captureLocation,
+            icon: const Icon(Icons.gps_fixed),
+            label: const Text('Capture Location'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.coralRed,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 48),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          )
+        else if (_isLoadingLocation)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: const Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 12),
+                Text('Capturing location...', style: TextStyle(color: Colors.blue)),
+              ],
+            ),
+          )
+        else if (_locationCaptured)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.green.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.green.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.green, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Location Captured Successfully',
+                      style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Lat: ${_latitude?.toStringAsFixed(6)}, Lng: ${_longitude?.toStringAsFixed(6)}',
+                  style: const TextStyle(fontSize: 12, color: Colors.black87),
+                ),
+                if (_locationAccuracy != null)
+                  Text(
+                    'Accuracy: ±${_locationAccuracy!.toStringAsFixed(1)}m',
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: _captureLocation,
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Recapture'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.coralRed,
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (_locationError != null && !_isLoadingLocation && !_locationCaptured)
+          Container(
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(top: 8),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.red.shade200),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _locationError!,
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
           ),
       ],
     );

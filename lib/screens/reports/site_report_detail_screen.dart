@@ -84,6 +84,13 @@ class SiteReportDetailScreen extends StatelessWidget {
             _infoRow(Icons.calendar_today, 'Date', report.formattedDate),
             if (report.submittedByName != null)
               _infoRow(Icons.person, 'Submitted by', report.submittedByName!),
+            if (report.latitude != null && report.longitude != null) ...[
+              _infoRow(Icons.location_on, 'Location', 
+                'Lat: ${report.latitude!.toStringAsFixed(5)}, Lng: ${report.longitude!.toStringAsFixed(5)}'),
+              if (report.distanceFromProject != null)
+                _infoRow(Icons.map, 'Distance from project', 
+                  '${report.distanceFromProject!.toStringAsFixed(2)} km'),
+            ],
             _infoRow(
                 Icons.photo_library, 'Photos', '${report.photos.length}'),
           ],
