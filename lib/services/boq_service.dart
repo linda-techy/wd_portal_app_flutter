@@ -68,6 +68,32 @@ class BoqCategory {
   bool get isSubcategory => parentId != null;
 }
 
+class InventoryMaterial {
+  final int id;
+  final String name;
+  final String unit;
+  final String? category;
+  final bool isActive;
+
+  InventoryMaterial({
+    required this.id,
+    required this.name,
+    required this.unit,
+    this.category,
+    required this.isActive,
+  });
+
+  factory InventoryMaterial.fromJson(Map<String, dynamic> json) {
+    return InventoryMaterial(
+      id: json['id'],
+      name: json['name'],
+      unit: json['unit'] ?? '',
+      category: json['category'],
+      isActive: json['active'] ?? true,
+    );
+  }
+}
+
 class BoqItem {
   final int id;
   final int projectId;
@@ -436,6 +462,21 @@ class BoqService {
       return data.map((e) => BoqWorkType.fromJson(e)).toList();
     }
     throw Exception(response.data['message'] ?? 'Failed to load work types');
+  }
+
+  Future<List<InventoryMaterial>> getMaterials() async {
+    try {
+      final response = await _api.dio.get('/api/inventory/materials');
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final List<dynamic> data = response.data['data'];
+        return data.map((e) => InventoryMaterial.fromJson(e)).where((m) => m.isActive).toList();
+      }
+      return [];
+    } catch (e) {
+      // Gracefully handle if materials endpoint is not available
+      print('Failed to load materials: $e');
+      return [];
+    }
   }
 
   // ---- Category Management ----
