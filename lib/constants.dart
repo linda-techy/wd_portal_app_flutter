@@ -56,7 +56,7 @@ class ApiConfig {
 }
 
 // Legacy support (keeping for backward compatibility)
-const String baseUrl = AppConfig.localApiUrl;
+String get baseUrl => AppConfig.apiBaseUrl;
 const String apiVersion = AppConfig.apiVersion;
 
 // CRM Module Names

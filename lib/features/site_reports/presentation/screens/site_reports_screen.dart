@@ -324,6 +324,49 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
     );
   }
 
+  Future<void> _deleteReport(SiteReport report) async {
+    if (report.id == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete Site Report'),
+        content: Text(
+            'Are you sure you want to delete "${report.title}"? This will permanently remove the report and all its photos.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child:
+                  const Text('Delete', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await _service.deleteReport(report.id!);
+      setState(() {
+        _reports.removeWhere((r) => r.id == report.id);
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Site report deleted'),
+              backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        await ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'Failed to delete site report');
+      }
+    }
+  }
+
   Widget _buildReportCard(SiteReport report, String timeStr) {
     return Card(
       elevation: 2,
@@ -346,6 +389,33 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
                   ),
                   Text(timeStr,
                       style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                  const SizedBox(width: 4),
+                  PopupMenuButton<String>(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    iconSize: 20,
+                    icon: Icon(Icons.more_vert,
+                        size: 18, color: Colors.grey[500]),
+                    onSelected: (value) {
+                      if (value == 'delete') {
+                        _deleteReport(report);
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline,
+                                size: 18, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Delete',
+                                style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 6),

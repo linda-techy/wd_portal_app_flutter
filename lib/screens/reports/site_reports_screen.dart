@@ -782,6 +782,8 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
       if (context.mounted) {
         Provider.of<SiteReportProvider>(context, listen: false).fetch();
       }
+    }).catchError((e) {
+      debugPrint('Error navigating to create site report: $e');
     });
   }
 

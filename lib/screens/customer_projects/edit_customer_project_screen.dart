@@ -1684,6 +1684,8 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
     ).then((_) {
       // Rebuild parent widget to show updated chips
       setState(() {});
+    }).catchError((e) {
+      debugPrint('Error in team member selection dialog: $e');
     });
   }
 }

@@ -465,6 +465,8 @@ class CustomerProjectsScreen extends StatelessWidget {
       // Refresh the list when returning from detail screen
       final provider = Provider.of<CustomerProjectProviderPaginated>(context, listen: false);
       provider.fetch();
+    }).catchError((e) {
+      debugPrint('Error navigating to project detail: $e');
     });
   }
 
@@ -479,6 +481,8 @@ class CustomerProjectsScreen extends StatelessWidget {
       // Refresh the list when returning from create screen
       final provider = Provider.of<CustomerProjectProviderPaginated>(context, listen: false);
       provider.fetch();
+    }).catchError((e) {
+      debugPrint('Error navigating to create project: $e');
     });
   }
 
@@ -493,6 +497,8 @@ class CustomerProjectsScreen extends StatelessWidget {
       // Refresh the list when returning from edit screen
       final provider = Provider.of<CustomerProjectProviderPaginated>(context, listen: false);
       provider.fetch();
+    }).catchError((e) {
+      debugPrint('Error navigating to edit project: $e');
     });
   }
 

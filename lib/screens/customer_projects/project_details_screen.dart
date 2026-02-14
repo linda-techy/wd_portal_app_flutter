@@ -1049,18 +1049,24 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         ),
       );
     } else {
-      // Show a placeholder dialog for other modules
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(moduleName),
-          content: Text('The $moduleName module is not yet available for this project.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
+      // Show a "Coming Soon" SnackBar for unimplemented modules
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.info_outline, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '$moduleName is coming soon! This feature is being developed and will be available shortly.',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: AppTheme.primaryBlue,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
         ),
       );
     }

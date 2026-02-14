@@ -52,11 +52,10 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
     {'value': 'COST_PLUS', 'label': 'Cost Plus (Cost + Margin)'},
   ];
   String? _state = 'Kerala'; // Default to Kerala
-  String? _district = 'Thrissur'; // Default to Thrissur
+  String? _district; // No default - user must select
   Lead? _selectedLead;
   List<Lead> _leads = [];
   List<Lead> _filteredLeads = [];
-  final bool _isLoadingLeads = false;
   bool _isPageLoading = true;
   bool _isLoading = false;
   bool _showLeadDropdown = false;
@@ -427,7 +426,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
         projectType: _projectType,
         contractType: _contractType,
         state: _state ?? 'Kerala',
-        district: _district ?? 'Thrissur',
+        district: _district,
         startDate: _startDate,
         endDate: _endDate,
         location: _locationController.text.trim(),
@@ -822,7 +821,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                           onChanged: (value) {
                             setState(() {
                               _state = value;
-                              _district = 'Thrissur'; // Reset district to default when state changes
+                              _district = null; // Reset district when state changes
                             });
                           },
                         ),
@@ -901,7 +900,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                             onChanged: (value) {
                               setState(() {
                                 _state = value;
-                                _district = 'Thrissur'; // Reset district to default when state changes
+                                _district = null; // Reset district when state changes
                               });
                             },
                           ),
@@ -1281,12 +1280,7 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
                 border: Border.all(color: AppTheme.borderLight),
                 borderRadius: BorderRadius.circular(AppTheme.radiusMD),
               ),
-              child: _isLoadingLeads
-                  ? const Padding(
-                      padding: EdgeInsets.all(AppTheme.spacingMD),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  : _filteredLeads.isEmpty
+              child: _filteredLeads.isEmpty
                       ? Padding(
                           padding: const EdgeInsets.all(AppTheme.spacingMD),
                           child: Text(
@@ -1531,6 +1525,8 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
     ).then((_) {
       // Rebuild parent widget to show updated chips
       setState(() {});
+    }).catchError((e) {
+      debugPrint('Error in team member selection dialog: $e');
     });
   }
 }

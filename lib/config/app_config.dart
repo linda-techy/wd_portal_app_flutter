@@ -7,18 +7,25 @@ class AppConfig {
   static bool get isDebug => kDebugMode;
 
   // API Configuration
-  static const String localApiUrl = 'http://localhost:8081';
-  static const String productionApiUrl = 'https://api.walldotbuilders.com';
-  static const String apiVersion = '';
-
-  // Get the appropriate API URL based on environment
+  // Development: Uses localhost as default fallback (port 8081)
+  // Production: Must be set via dart-define: --dart-define=API_BASE_URL=https://api.walldotbuilders.com
+  // For release builds, API_BASE_URL should always be provided via dart-define
+  static const String _devApiUrl = 'http://localhost:8081';
+  static const String _prodApiUrl = 'https://api.walldotbuilders.com';
+  
+  // Get API URL from environment variable (dart-define) or use defaults
+  // In production (kReleaseMode), this will use the dart-define value or production URL
+  // In development, this will use the dart-define value or localhost
   static String get apiBaseUrl {
-    if (isProduction) {
-      return productionApiUrl;
-    } else {
-      return localApiUrl;
+    const String envApiUrl = String.fromEnvironment('API_BASE_URL');
+    if (envApiUrl.isNotEmpty) {
+      return envApiUrl;
     }
+    // Fallback: use production URL in release mode, localhost in development
+    return isProduction ? _prodApiUrl : _devApiUrl;
   }
+  
+  static const String apiVersion = '';
 
   static String get fullApiUrl => '$apiBaseUrl$apiVersion';
 
