@@ -84,6 +84,38 @@ class SiteReportService {
     _apiService.unwrap(response, (_) {});
   }
 
+  Future<SiteReport> updateReport(int id, Map<String, dynamic> updateData) async {
+    final response = await _apiService.put('/api/site-reports/$id', data: updateData);
+    return _apiService.unwrap(
+        response, (json) => SiteReport.fromJson(json as Map<String, dynamic>));
+  }
+
+  Future<SiteReport> addPhotosToReport(int reportId, List<XFile> photos) async {
+    final formData = FormData();
+    for (final file in photos) {
+      formData.files.add(MapEntry(
+        'photos',
+        MultipartFile.fromBytes(
+          await file.readAsBytes(),
+          filename: file.name,
+        ),
+      ));
+    }
+
+    final response = await _apiService.post(
+      '/api/site-reports/$reportId/photos',
+      data: formData,
+    );
+
+    return _apiService.unwrap(
+        response, (json) => SiteReport.fromJson(json as Map<String, dynamic>));
+  }
+
+  Future<void> deletePhoto(int reportId, int photoId) async {
+    final response = await _apiService.delete('/api/site-reports/$reportId/photos/$photoId');
+    _apiService.unwrap(response, (_) {});
+  }
+
   /// NEW: Standardized search endpoint for site reports
   Future<PaginatedResponse<SiteReport>> searchSiteReports({
     required int page,
