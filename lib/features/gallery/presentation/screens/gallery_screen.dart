@@ -5,6 +5,7 @@ import 'package:admin/services/gallery_service.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/utils/error_handler.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
+import 'package:admin/widgets/authenticated_image.dart';
 
 class GalleryScreen extends StatefulWidget {
   final int projectId;
@@ -173,19 +174,9 @@ class _GalleryScreenState extends State<GalleryScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Container(
-              color: Colors.grey[200],
-              child: image.thumbnailPath != null || image.imagePath != null
-                  ? Image.network(
-                      image.thumbnailPath ?? image.imagePath!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Center(
-                        child:
-                            Icon(Icons.broken_image, color: Colors.grey),
-                      ),
-                    )
-                  : const Center(
-                      child: Icon(Icons.photo, color: Colors.grey)),
+            AuthenticatedImage(
+              imageUrl: image.fullThumbnailUrl,
+              fit: BoxFit.cover,
             ),
             if (image.locationTag != null)
               Positioned(
@@ -198,8 +189,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                   color: Colors.black54,
                   child: Text(
                     image.locationTag!,
-                    style:
-                        const TextStyle(color: Colors.white, fontSize: 9),
+                    style: const TextStyle(color: Colors.white, fontSize: 9),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -235,26 +225,11 @@ class _GalleryScreenState extends State<GalleryScreen> {
           padding: const EdgeInsets.all(10),
           child: Row(
             children: [
-              ClipRRect(
+              AuthenticatedImage(
+                imageUrl: image.fullThumbnailUrl,
+                width: 64,
+                height: 64,
                 borderRadius: BorderRadius.circular(8),
-                child: SizedBox(
-                  width: 64,
-                  height: 64,
-                  child: image.thumbnailPath != null || image.imagePath != null
-                      ? Image.network(
-                          image.thumbnailPath ?? image.imagePath!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: Colors.grey[200],
-                            child: const Icon(Icons.broken_image,
-                                color: Colors.grey),
-                          ),
-                        )
-                      : Container(
-                          color: Colors.grey[200],
-                          child:
-                              const Icon(Icons.photo, color: Colors.grey)),
-                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -331,21 +306,14 @@ class _GalleryScreenState extends State<GalleryScreen> {
             ),
             const SizedBox(height: 16),
             // Image
-            if (image.imagePath != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  image.imagePath!,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => Container(
-                    height: 200,
-                    color: Colors.grey[200],
-                    child: const Center(
-                        child: Icon(Icons.broken_image,
-                            size: 48, color: Colors.grey)),
-                  ),
-                ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: AuthenticatedImage(
+                imageUrl: image.fullImageUrl,
+                height: 300,
+                fit: BoxFit.contain,
               ),
+            ),
             const SizedBox(height: 16),
             if (image.caption != null && image.caption!.isNotEmpty)
               Text(image.caption!,
