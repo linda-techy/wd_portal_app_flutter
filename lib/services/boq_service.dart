@@ -467,8 +467,11 @@ class BoqService {
   Future<List<InventoryMaterial>> getMaterials() async {
     try {
       final response = await _api.dio.get('/api/inventory/materials');
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        final List<dynamic> data = response.data['data'];
+      if (response.statusCode == 200) {
+        // Handle both wrapped response {success: true, data: [...]} and direct list [...]
+        final List<dynamic> data = response.data is List 
+            ? response.data 
+            : (response.data['data'] ?? []);
         return data.map((e) => InventoryMaterial.fromJson(e)).where((m) => m.isActive).toList();
       }
       return [];
