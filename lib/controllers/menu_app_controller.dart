@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 class MenuAppController extends ChangeNotifier {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final StorageService _storage = StorageService();
-  
-  int _selectedIndex = 11; // Default to Tasks
+
+  int _selectedIndex = 11;
 
   GlobalKey<ScaffoldState> get scaffoldKey => _scaffoldKey;
   int get selectedIndex => _selectedIndex;

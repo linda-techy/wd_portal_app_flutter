@@ -1,5 +1,6 @@
 import 'package:admin/services/api_service.dart';
 import 'package:admin/models/paginated_response.dart';
+import 'package:flutter/foundation.dart';
 
 class BoqWorkType {
   final int id;
@@ -477,7 +478,7 @@ class BoqService {
       return [];
     } catch (e) {
       // Gracefully handle if materials endpoint is not available
-      print('Failed to load materials: $e');
+      debugPrint('Failed to load materials: $e');
       return [];
     }
   }

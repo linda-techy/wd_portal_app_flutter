@@ -27,7 +27,13 @@ rootProject.targetSdkVersion = rootProject.ext.targetSdkVersion
 
 rootProject.buildDir = "../build"
 subprojects { subproject ->
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
+    // Keep shared build dir only for modules on same drive as root project.
+    // Pub-cache plugins on another drive (e.g. C:) can fail path relativization.
+    def rootDrive = rootProject.projectDir.absolutePath.substring(0, 2).toLowerCase()
+    def subDrive = subproject.projectDir.absolutePath.substring(0, 2).toLowerCase()
+    if (rootDrive == subDrive) {
+        project.buildDir = "${rootProject.buildDir}/${project.name}"
+    }
     
     // Ensure app is evaluated first for all subprojects
     if (subproject.name != "app") {

@@ -135,9 +135,9 @@
     },
     {
       "name": "cupertino_icons",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/cupertino_icons-1.0.8",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/cupertino_icons-1.0.6",
       "packageUri": "lib/",
-      "languageVersion": "3.1"
+      "languageVersion": "2.19"
     },
     {
       "name": "dart_style",
@@ -1028,7 +1028,7 @@
       "languageVersion": "3.5"
     }
   ],
-  "generated": "2026-02-11T14:58:38.857473Z",
+  "generated": "2026-02-28T14:38:31.055697Z",
   "generator": "pub",
   "generatorVersion": "3.5.4",
   "flutterRoot": "file:///C:/src/flutter",

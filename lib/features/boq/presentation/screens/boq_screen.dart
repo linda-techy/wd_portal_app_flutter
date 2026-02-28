@@ -965,7 +965,7 @@ class _BoqScreenState extends State<BoqScreen> {
           }
 
           return AlertDialog(
-            title: Row(
+            title: const Row(
               children: [
                 const Icon(Icons.add_circle_outline, color: AppTheme.deepSlate, size: 24),
                 const SizedBox(width: 8),
