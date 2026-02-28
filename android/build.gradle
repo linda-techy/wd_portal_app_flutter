@@ -25,26 +25,24 @@ rootProject.compileSdkVersion = rootProject.ext.compileSdkVersion
 rootProject.minSdkVersion = rootProject.ext.minSdkVersion
 rootProject.targetSdkVersion = rootProject.ext.targetSdkVersion
 
-rootProject.buildDir = "../build"
-subprojects { subproject ->
-    // Keep shared build dir only for modules on same drive as root project.
-    // Pub-cache plugins on another drive (e.g. C:) can fail path relativization.
-    def rootDrive = rootProject.projectDir.absolutePath.substring(0, 2).toLowerCase()
-    def subDrive = subproject.projectDir.absolutePath.substring(0, 2).toLowerCase()
-    if (rootDrive == subDrive) {
-        project.buildDir = "${rootProject.buildDir}/${project.name}"
-    }
-    
-    // Ensure app is evaluated first for all subprojects
-    if (subproject.name != "app") {
-        subproject.evaluationDependsOn(":app")
-        
-        // Provide 'flutter' extension for plugin projects that expect flutter.compileSdkVersion (e.g. geolocator_android)
-        subproject.ext.flutter = [
-            compileSdkVersion: rootProject.ext.compileSdkVersion,
-            minSdkVersion    : rootProject.ext.minSdkVersion,
-            targetSdkVersion: rootProject.ext.targetSdkVersion
-        ]
+subprojects {
+    project.evaluationDependsOn(":app")
+}
+
+subprojects { project ->
+    project.ext.flutter = [
+        compileSdkVersion: rootProject.ext.compileSdkVersion,
+        minSdkVersion    : rootProject.ext.minSdkVersion,
+        targetSdkVersion: rootProject.ext.targetSdkVersion
+    ]
+
+    // Fix for motion_sensors targeting old JVM
+    if (project.name == "motion_sensors") {
+        project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+            kotlinOptions {
+                jvmTarget = "1.8"
+            }
+        }
     }
 }
 

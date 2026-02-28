@@ -967,9 +967,9 @@ class _BoqScreenState extends State<BoqScreen> {
           return AlertDialog(
             title: const Row(
               children: [
-                const Icon(Icons.add_circle_outline, color: AppTheme.deepSlate, size: 24),
-                const SizedBox(width: 8),
-                const Text('Add BoQ Item', style: TextStyle(fontSize: 18)),
+                Icon(Icons.add_circle_outline, color: AppTheme.deepSlate, size: 24),
+                SizedBox(width: 8),
+                Text('Add BoQ Item', style: TextStyle(fontSize: 18)),
               ],
             ),
             content: SizedBox(
