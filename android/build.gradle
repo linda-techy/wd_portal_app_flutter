@@ -16,25 +16,23 @@ allprojects {
 }
 
 rootProject.ext {
-    compileSdkVersion = 35
-    minSdkVersion = 21
-    targetSdkVersion = 35
+    compileSdkVersion = 36
+    minSdkVersion = 24
+    targetSdkVersion = 36
 }
 // Expose SDK versions at root so plugins (e.g. geolocator_android) can read them
 rootProject.compileSdkVersion = rootProject.ext.compileSdkVersion
 rootProject.minSdkVersion = rootProject.ext.minSdkVersion
 rootProject.targetSdkVersion = rootProject.ext.targetSdkVersion
 
-subprojects {
-    project.evaluationDependsOn(":app")
-}
-
 subprojects { project ->
-    project.ext.flutter = [
-        compileSdkVersion: rootProject.ext.compileSdkVersion,
-        minSdkVersion    : rootProject.ext.minSdkVersion,
-        targetSdkVersion: rootProject.ext.targetSdkVersion
-    ]
+    if (project.name != "app") {
+        project.ext.flutter = [
+            compileSdkVersion: rootProject.ext.compileSdkVersion,
+            minSdkVersion    : rootProject.ext.minSdkVersion,
+            targetSdkVersion: rootProject.ext.targetSdkVersion
+        ]
+    }
 
     // Fix for motion_sensors targeting old JVM
     if (project.name == "motion_sensors") {
@@ -44,6 +42,24 @@ subprojects { project ->
             }
         }
     }
+
+    project.afterEvaluate {
+        if (project.hasProperty("android")) {
+            project.android {
+                if (namespace == null) {
+                    namespace project.group
+                }
+                compileSdkVersion rootProject.ext.compileSdkVersion
+                defaultConfig {
+                    targetSdkVersion rootProject.ext.targetSdkVersion
+                }
+            }
+        }
+    }
+}
+
+subprojects {
+    project.evaluationDependsOn(":app")
 }
 
 tasks.register("clean", Delete) {
