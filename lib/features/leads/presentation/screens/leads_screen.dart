@@ -720,7 +720,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
     return Row(
       children: [
         Expanded(
-          child: DropdownButton<String>(
+          child: DropdownButton<String?>(
             value: projectTypeFilter,
             isExpanded: true,
             hint: const Text('Project Type'),
@@ -837,7 +837,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
           _onFilterChanged();
         },
       ),
-      DropdownButton<String>(
+      DropdownButton<String?>(
         value: projectTypeFilter,
         hint: const Text('Project Type'),
         items: ProjectTypeConstants.searchDropdownItems,
