@@ -10,13 +10,16 @@
             "type": "dart",
             "args": [
                 "-d",
-                "chrome"
+                "chrome",
+                "--web-port=3001"
             ]
         },
         {
-            "name": "wd_portal_app_flutter",
+            "name": "wd_portal_app_flutter (Chrome - 3001)",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "deviceId": "chrome",
+            "args": ["--web-port=3001"]
         },
         {
             "name": "wd_portal_app_flutter (profile mode)",

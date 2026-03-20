@@ -2,5 +2,9 @@
   // Disable Java extension's Gradle integration for Flutter projects
   // This prevents the "initialization script does not exist" error
   "java.import.gradle.enabled": false,
-  "java.configuration.updateBuildConfiguration": "disabled"
+  "java.configuration.updateBuildConfiguration": "disabled",
+  // Force Flutter web to always run on localhost:3001 from VS Code/Cursor run actions
+  "dart.flutterRunAdditionalArgs": [
+    "--web-port=3001"
+  ]
 }
