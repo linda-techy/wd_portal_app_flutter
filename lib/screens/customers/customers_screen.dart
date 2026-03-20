@@ -202,10 +202,10 @@ class CustomersScreen extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        if (customer.customerType != null) ...[
+                        if (customer.leadSource != null) ...[
                           const SizedBox(height: 4),
                           Text(
-                            customer.customerType!,
+                            customer.leadSource!,
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
@@ -239,15 +239,10 @@ class CustomersScreen extends StatelessWidget {
                       icon: Icons.phone,
                       label: customer.primaryPhone!,
                     ),
-                  if (customer.city != null)
+                  if (customer.address != null)
                     _buildInfoChip(
-                      icon: Icons.location_city,
-                      label: customer.city!,
-                    ),
-                  if (customer.state != null)
-                    _buildInfoChip(
-                      icon: Icons.map,
-                      label: customer.state!,
+                      icon: Icons.location_on,
+                      label: customer.address!,
                     ),
                 ],
               ),
