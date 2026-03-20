@@ -29,13 +29,32 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Show list-data immediately for instant UI, then refresh in background
-    // to ensure the full customer object (including roleId) is available for edit.
     if (widget.initialCustomer != null) {
+      // Show list-item data instantly; silently fetch full record in background
+      // so roleId and all fields are up-to-date when the user taps Edit.
       _customer = widget.initialCustomer;
       _isLoading = false;
+      _refreshSilently();
+    } else {
+      _loadCustomer();
     }
-    _loadCustomer();
+  }
+
+  /// Fetches the full customer record without showing the loading spinner.
+  /// Used when we already have partial data from the list (initialCustomer).
+  Future<void> _refreshSilently() async {
+    try {
+      final customer =
+          await _customerService.getCustomerById(widget.customerId);
+      if (mounted) {
+        setState(() {
+          _customer = customer;
+          _error = null;
+        });
+      }
+    } catch (_) {
+      // Silent failure — we still have initialCustomer to display.
+    }
   }
 
   Future<void> _loadCustomer() async {

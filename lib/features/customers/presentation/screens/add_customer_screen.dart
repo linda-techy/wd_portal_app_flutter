@@ -6,6 +6,7 @@ import '../../data/services/customer_service.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
 import 'package:admin/utils/error_handler.dart';
+import 'package:admin/utils/validators.dart';
 
 class AddCustomerScreen extends StatefulWidget {
   const AddCustomerScreen({super.key});
@@ -259,15 +260,8 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                                 ),
                               ),
                               obscureText: _obscurePassword,
-                              validator: (value) {
-                                if (value?.isEmpty == true) {
-                                  return 'Password is required';
-                                }
-                                if (value != null && value.length < 6) {
-                                  return 'Password must be at least 6 characters';
-                                }
-                                return null;
-                              },
+                              validator: (value) =>
+                                  Validators.password(value, required: true),
                             ),
                             const SizedBox(height: defaultPadding),
                             Row(
@@ -353,6 +347,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                                       prefixIcon: Icon(Icons.phone),
                                     ),
                                     keyboardType: TextInputType.phone,
+                                    validator: Validators.phone,
                                   ),
                                 ),
                                 const SizedBox(width: defaultPadding),
@@ -365,6 +360,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                                       prefixIcon: Icon(Icons.message),
                                     ),
                                     keyboardType: TextInputType.phone,
+                                    validator: Validators.phone,
                                   ),
                                 ),
                               ],
@@ -411,6 +407,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                                       labelText: 'GST Number',
                                       border: OutlineInputBorder(),
                                     ),
+                                    textCapitalization:
+                                        TextCapitalization.characters,
+                                    validator: Validators.gst,
                                   ),
                                 ),
                               ],

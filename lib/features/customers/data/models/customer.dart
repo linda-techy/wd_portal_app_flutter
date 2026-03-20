@@ -9,8 +9,8 @@ class Customer {
   final DateTime? updatedAt;
   final int? roleId;
   final int projectCount;
-  
-  // New Business Fields
+
+  // Business Fields
   final String? phone;
   final String? whatsappNumber;
   final String? address;
@@ -41,24 +41,17 @@ class Customer {
 
   String get fullName => '$firstName $lastName'.trim();
 
-  /// Customer type / lead source for display.
-  String? get customerType => leadSource;
-
   /// Whether the customer account is active (alias for enabled).
   bool get isActive => enabled;
 
-  /// Primary contact phone (phone or whatsapp).
+  /// Primary contact phone (phone preferred, fallback to whatsapp).
   String? get primaryPhone => phone ?? whatsappNumber;
-
-  /// City when available from address or API.
-  String? get city => null;
-
-  /// State when available from address or API.
-  String? get state => null;
 
   factory Customer.fromJson(Map<String, dynamic> json) {
     return Customer(
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? ''),
       email: json['email'] ?? '',
       enabled: json['enabled'] ?? true,
       firstName: json['first_name'] ?? json['firstName'] ?? '',
@@ -77,12 +70,13 @@ class Customer {
           ? json['role_id']
           : json['roleId'] is int
               ? json['roleId']
-              : int.tryParse(json['role_id']?.toString() ?? json['roleId']?.toString() ?? ''),
+              : int.tryParse(
+                  json['role_id']?.toString() ??
+                      json['roleId']?.toString() ??
+                      ''),
       projectCount: json['project_count'] is int
           ? json['project_count']
           : int.tryParse(json['project_count']?.toString() ?? '0') ?? 0,
-          
-      // New Fields Mapping
       phone: json['phone'],
       whatsappNumber: json['whatsapp_number'] ?? json['whatsappNumber'],
       address: json['address'],
@@ -93,6 +87,7 @@ class Customer {
     );
   }
 
+  /// Serialise for both create and update — password omitted when null/empty.
   Map<String, dynamic> toJson() {
     return {
       'email': email,
@@ -101,51 +96,24 @@ class Customer {
       'last_name': lastName,
       if (password != null && password!.isNotEmpty) 'password': password,
       if (roleId != null) 'role_id': roleId,
-      if (phone != null) 'phone': phone,
-      if (whatsappNumber != null) 'whatsapp_number': whatsappNumber,
-      if (address != null) 'address': address,
-      if (companyName != null) 'company_name': companyName,
-      if (gstNumber != null) 'gst_number': gstNumber,
-      if (leadSource != null) 'lead_source': leadSource,
-      if (notes != null) 'notes': notes,
+      if (phone != null && phone!.isNotEmpty) 'phone': phone,
+      if (whatsappNumber != null && whatsappNumber!.isNotEmpty)
+        'whatsapp_number': whatsappNumber,
+      if (address != null && address!.isNotEmpty) 'address': address,
+      if (companyName != null && companyName!.isNotEmpty)
+        'company_name': companyName,
+      if (gstNumber != null && gstNumber!.isNotEmpty) 'gst_number': gstNumber,
+      if (leadSource != null && leadSource!.isNotEmpty)
+        'lead_source': leadSource,
+      if (notes != null && notes!.isNotEmpty) 'notes': notes,
     };
   }
 
-  Map<String, dynamic> toCreateJson() {
-    return {
-      'email': email,
-      'enabled': enabled,
-      'first_name': firstName,
-      'last_name': lastName,
-      if (password != null && password!.isNotEmpty) 'password': password,
-      if (roleId != null) 'role_id': roleId,
-      if (phone != null) 'phone': phone,
-      if (whatsappNumber != null) 'whatsapp_number': whatsappNumber,
-      if (address != null) 'address': address,
-      if (companyName != null) 'company_name': companyName,
-      if (gstNumber != null) 'gst_number': gstNumber,
-      if (leadSource != null) 'lead_source': leadSource,
-      if (notes != null) 'notes': notes,
-    };
-  }
+  /// Alias kept for call-site compatibility.
+  Map<String, dynamic> toCreateJson() => toJson();
 
-  Map<String, dynamic> toUpdateJson() {
-    return {
-      'email': email,
-      'enabled': enabled,
-      'first_name': firstName,
-      'last_name': lastName,
-      if (password != null && password!.isNotEmpty) 'password': password,
-      if (roleId != null) 'role_id': roleId is int ? roleId : int.tryParse(roleId.toString()),
-      if (phone != null) 'phone': phone,
-      if (whatsappNumber != null) 'whatsapp_number': whatsappNumber,
-      if (address != null) 'address': address,
-      if (companyName != null) 'company_name': companyName,
-      if (gstNumber != null) 'gst_number': gstNumber,
-      if (leadSource != null) 'lead_source': leadSource,
-      if (notes != null) 'notes': notes,
-    };
-  }
+  /// Alias kept for call-site compatibility.
+  Map<String, dynamic> toUpdateJson() => toJson();
 
   Customer copyWith({
     int? id,
@@ -157,6 +125,7 @@ class Customer {
     DateTime? createdAt,
     DateTime? updatedAt,
     int? roleId,
+    int? projectCount,
     String? phone,
     String? whatsappNumber,
     String? address,
@@ -175,6 +144,7 @@ class Customer {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       roleId: roleId ?? this.roleId,
+      projectCount: projectCount ?? this.projectCount,
       phone: phone ?? this.phone,
       whatsappNumber: whatsappNumber ?? this.whatsappNumber,
       address: address ?? this.address,
@@ -185,4 +155,3 @@ class Customer {
     );
   }
 }
-

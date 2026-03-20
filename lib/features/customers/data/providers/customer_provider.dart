@@ -31,31 +31,17 @@ class CustomerProvider extends BasePaginatedProvider<Customer> {
     updateFilter('customerType', customerType);
   }
 
-  void filterByCity(String? city) {
-    updateFilter('city', city);
-  }
-
-  void filterByState(String? state) {
-    updateFilter('state', state);
-  }
-
   void filterByActive(bool? active) {
     updateFilter('active', active);
   }
 
   void applyAllFilters({
     String? customerType,
-    String? city,
-    String? state,
     bool? active,
   }) {
     final filters = <String, dynamic>{};
-    
     if (customerType != null) filters['customerType'] = customerType;
-    if (city != null) filters['city'] = city;
-    if (state != null) filters['state'] = state;
     if (active != null) filters['active'] = active;
-    
     applyFilters(filters);
   }
 }

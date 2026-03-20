@@ -4,6 +4,7 @@ import '../../data/models/customer.dart';
 import 'package:admin/models/customer_role.dart';
 import '../../data/services/customer_service.dart';
 import 'package:admin/utils/error_handler.dart';
+import 'package:admin/utils/validators.dart';
 
 class EditCustomerScreen extends StatefulWidget {
   final Customer customer;
@@ -51,13 +52,17 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
     // Password field is intentionally left empty - user can enter new password or leave empty to keep current
     _passwordController = TextEditingController();
     
-    _phoneController = TextEditingController(text: customer.phone);
-    _whatsappController = TextEditingController(text: customer.whatsappNumber);
-    _addressController = TextEditingController(text: customer.address);
-    _companyNameController = TextEditingController(text: customer.companyName);
-    _gstNumberController = TextEditingController(text: customer.gstNumber);
-    _leadSourceController = TextEditingController(text: customer.leadSource);
-    _notesController = TextEditingController(text: customer.notes);
+    _phoneController = TextEditingController(text: customer.phone ?? '');
+    _whatsappController =
+        TextEditingController(text: customer.whatsappNumber ?? '');
+    _addressController = TextEditingController(text: customer.address ?? '');
+    _companyNameController =
+        TextEditingController(text: customer.companyName ?? '');
+    _gstNumberController =
+        TextEditingController(text: customer.gstNumber ?? '');
+    _leadSourceController =
+        TextEditingController(text: customer.leadSource ?? '');
+    _notesController = TextEditingController(text: customer.notes ?? '');
 
     _enabled = customer.enabled;
     _roleId = customer.roleId;
@@ -305,15 +310,8 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                                       // Trigger rebuild to show/hide visibility icon
                                     });
                                   },
-                                  validator: (value) {
-                                    // Only validate if password is provided
-                                    if (value != null && value.isNotEmpty) {
-                                      if (value.length < 6) {
-                                        return 'Password must be at least 6 characters';
-                                      }
-                                    }
-                                    return null;
-                                  },
+                                  validator: (value) =>
+                                    Validators.password(value, required: false),
                                 );
                               },
                             ),
@@ -402,6 +400,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                                       prefixIcon: Icon(Icons.phone),
                                     ),
                                     keyboardType: TextInputType.phone,
+                                    validator: Validators.phone,
                                   ),
                                 ),
                                 const SizedBox(width: defaultPadding),
@@ -414,6 +413,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                                       prefixIcon: Icon(Icons.message),
                                     ),
                                     keyboardType: TextInputType.phone,
+                                    validator: Validators.phone,
                                   ),
                                 ),
                               ],
@@ -460,6 +460,9 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                                       labelText: 'GST Number',
                                       border: OutlineInputBorder(),
                                     ),
+                                    textCapitalization:
+                                        TextCapitalization.characters,
+                                    validator: Validators.gst,
                                   ),
                                 ),
                               ],
