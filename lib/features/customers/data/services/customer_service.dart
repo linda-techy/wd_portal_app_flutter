@@ -42,4 +42,12 @@ class CustomerService {
     final response = await _apiService.get('/customers/roles');
     return _apiService.unwrapList<CustomerRole>(response, (json) => CustomerRole.fromJson(json));
   }
+
+  /// Triggers a password-reset email to the customer via the portal API.
+  /// Uses a separate portal endpoint — not the customer API's /auth/forgot-password.
+  Future<void> sendPasswordResetEmail(int customerId) async {
+    final response =
+        await _apiService.post('/customers/$customerId/send-password-reset');
+    _apiService.unwrap<void>(response, (_) {});
+  }
 }
