@@ -24,6 +24,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   final CustomerService _customerService = CustomerService();
   Customer? _customer;
   bool _isLoading = true;
+  bool _isSendingReset = false;
   String? _error;
 
   @override
@@ -84,6 +85,56 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     }
   }
 
+  Future<void> _sendPasswordReset() async {
+    if (_customer == null || _customer!.id == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Send Password Reset Email'),
+        content: Text(
+          'Send a password reset link to "${_customer!.email}"?\n\n'
+          'The link will be valid for 15 minutes.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Send Email'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isSendingReset = true);
+    try {
+      await _customerService.sendPasswordResetEmail(_customer!.id!);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password reset email sent successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        await ErrorHandler.handleApiError(
+          context,
+          e,
+          defaultMessage: 'Failed to send password reset email',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSendingReset = false);
+    }
+  }
+
   Future<void> _navigateToEdit() async {
     if (_customer == null) return;
 
@@ -97,54 +148,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     if (result == true && mounted) {
       // Refresh customer data after edit
       await _loadCustomer();
-    }
-  }
-
-  Future<void> _sendPasswordReset() async {
-    if (_customer == null || _customer!.id == null) return;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Send Password Reset Email'),
-        content: Text(
-          'Send a password reset link to ${_customer!.email}?\n\n'
-          'The link will expire in 15 minutes.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Send'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      try {
-        await _customerService.sendPasswordResetEmail(_customer!.id!);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                  'Password reset email sent to ${_customer!.email}'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          await ErrorHandler.handleApiError(
-            context,
-            e,
-            defaultMessage: 'Failed to send password reset email',
-          );
-        }
-      }
     }
   }
 
@@ -203,11 +206,20 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         title: Text(_customer?.fullName ?? 'Customer Details'),
         actions: [
           if (_customer != null) ...[
-            IconButton(
-              icon: const Icon(Icons.lock_reset),
-              onPressed: _sendPasswordReset,
-              tooltip: 'Send Password Reset Email',
-            ),
+            _isSendingReset
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.lock_reset),
+                    onPressed: _sendPasswordReset,
+                    tooltip: 'Send Password Reset Email',
+                  ),
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: _navigateToEdit,
