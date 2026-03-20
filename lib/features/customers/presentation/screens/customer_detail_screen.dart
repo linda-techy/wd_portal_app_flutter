@@ -29,12 +29,13 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   @override
   void initState() {
     super.initState();
+    // Show list-data immediately for instant UI, then refresh in background
+    // to ensure the full customer object (including roleId) is available for edit.
     if (widget.initialCustomer != null) {
       _customer = widget.initialCustomer;
       _isLoading = false;
-    } else {
-      _loadCustomer();
     }
+    _loadCustomer();
   }
 
   Future<void> _loadCustomer() async {

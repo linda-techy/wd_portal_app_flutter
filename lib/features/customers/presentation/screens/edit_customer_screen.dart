@@ -67,10 +67,27 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
   Future<void> _loadCustomerRoles() async {
     try {
       setState(() => _isLoadingRoles = true);
-      final roles = await _customerService.getCustomerRoles();
+
+      // Fetch roles and fresh customer data in parallel.
+      // The list API may omit roleId — always get full customer to pre-select the role.
+      final futures = await Future.wait([
+        _customerService.getCustomerRoles(),
+        if (widget.customer.id != null && _roleId == null)
+          _customerService.getCustomerById(widget.customer.id!)
+        else
+          Future.value(null),
+      ]);
+
+      final roles = futures[0] as List<CustomerRole>;
+      final freshCustomer = futures[1] as Customer?;
+
       if (mounted) {
         setState(() {
           _customerRoles = roles;
+          // Use roleId from fresh API fetch when the passed customer had none
+          if (_roleId == null && freshCustomer?.roleId != null) {
+            _roleId = freshCustomer!.roleId;
+          }
           _isLoadingRoles = false;
           _isPageLoading = false;
         });
