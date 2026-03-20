@@ -1,81 +1,64 @@
 import 'package:flutter/material.dart';
 
+/// Define categories that a customer would look for.
 enum ProjectType {
-  turnkeyProject,
-  residentialConstruction,
-  commercialConstruction,
-  interiorWork,
-  renovationRemodeling,
+  residential('residential_construction', 'New Home Construction'),
+  commercial('commercial_construction', 'Commercial / Office Space'),
+  industrial('industrial_construction', 'Industrial & Warehouse'),
+  interiors('interior_work', 'Interior Design'),
+  renovation('renovation_remodeling', 'Renovation & Remodeling'),
+  vastu('vastu_consultation', 'Vastu Consultation'),
+  smartHome('smart_home_integration', 'Smart Home Solutions');
+
+  final String value;
+  final String label;
+
+  // Constructor linking the database value to the UI label
+  const ProjectType(this.value, this.label);
+
+  /// Helper to convert a database string back to an Enum
+  static ProjectType fromValue(String? value) {
+    return ProjectType.values.firstWhere(
+      (type) => type.value == value,
+      orElse: () => ProjectType.residential, // Safe default
+    );
+  }
 }
 
 class ProjectTypeConstants {
-  static const Map<ProjectType, String> _labels = {
-    ProjectType.turnkeyProject: 'Turnkey Project',
-    ProjectType.residentialConstruction: 'Residential Construction',
-    ProjectType.commercialConstruction: 'Commercial Construction',
-    ProjectType.interiorWork: 'Interior Work',
-    ProjectType.renovationRemodeling: 'Renovation / Remodeling',
-  };
+  // Access labels and values directly from the enum properties
+  static String getLabel(ProjectType type) => type.label;
+  static String getValue(ProjectType type) => type.value;
 
-  static const Map<ProjectType, String> _values = {
-    ProjectType.turnkeyProject: 'turnkey_project',
-    ProjectType.residentialConstruction: 'residential_construction',
-    ProjectType.commercialConstruction: 'commercial_construction',
-    ProjectType.interiorWork: 'interior_work',
-    ProjectType.renovationRemodeling: 'renovation_remodeling',
-  };
-
-  static String getLabel(ProjectType type) {
-    return _labels[type] ?? type.toString();
-  }
-
-  static String getValue(ProjectType type) {
-    return _values[type] ?? type.toString();
-  }
-
-  static ProjectType fromValue(String value) {
-    for (var entry in _values.entries) {
-      if (entry.value == value) {
-        return entry.key;
-      }
-    }
-    return ProjectType.turnkeyProject; // Default fallback
-  }
-
-  static List<DropdownMenuItem<ProjectType>> get dropdownItems {
+  /// Used for "Select Project Type" in Forms
+  static List<DropdownMenuItem<String>> get formDropdownItems {
     return ProjectType.values.map((type) {
-      return DropdownMenuItem<ProjectType>(
-        value: type,
-        child: Text(getLabel(type)),
+      return DropdownMenuItem<String>(
+        value: type.value,
+        child: Text(type.label),
       );
     }).toList();
   }
 
-  static List<DropdownMenuItem<String>> get searchDropdownItems {
+  /// Used for Filters/Search (Includes "All" option)
+  /// Note: The value is String? to allow null for "All"
+  static List<DropdownMenuItem<String?>> get searchDropdownItems {
     return [
-      const DropdownMenuItem<String>(
+      const DropdownMenuItem<String?>(
         value: null,
         child: Text('All Project Types'),
       ),
       ...ProjectType.values.map((type) {
-        return DropdownMenuItem<String>(
-          value: getValue(type),
-          child: Text(getLabel(type)),
+        return DropdownMenuItem<String?>(
+          value: type.value,
+          child: Text(type.label),
         );
       }),
     ];
   }
 
-  static List<DropdownMenuItem<String>> get formDropdownItems {
-    return ProjectType.values.map((type) {
-      return DropdownMenuItem<String>(
-        value: getValue(type),
-        child: Text(getLabel(type)),
-      );
-    }).toList();
-  }
-
-  static const ProjectType defaultType = ProjectType.turnkeyProject;
-  static const String defaultLabel = 'Turnkey Project';
-  static const String defaultValue = 'turnkey_project';
+  // Updated Defaults
+  static const ProjectType defaultType = ProjectType.residential;
+  static const String defaultLabel = 'New Home Construction';
+  static const String defaultValue = 'residential_construction';
 }
