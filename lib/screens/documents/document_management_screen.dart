@@ -208,7 +208,7 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
               context,
               MaterialPageRoute(
                 builder: (context) => CreateDocumentScreen(
-                  documentType: docType['title'] as String,
+                  documentType: (docType['title'] as String?) ?? '',
                 ),
               ),
             );
@@ -234,7 +234,7 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
               ),
               const SizedBox(height: AppTheme.spacingMD),
               Text(
-                docType['title'] as String,
+                (docType['title'] as String?) ?? '',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,

@@ -253,6 +253,16 @@ class SideMenu extends StatelessWidget {
       ));
     }
 
+    // PARTNERSHIPS - Visible to admins and managers
+    if (permissions.canViewPortalUsers) {
+      menuItems.add(_buildMenuItem(
+        context,
+        title: 'Partnerships',
+        svgSrc: "assets/icons/menu_profile.svg",
+        index: 23,
+      ));
+    }
+
     // DOCUMENTS - Check for document view permission
     if (permissions.canView('DOCUMENT')) {
       menuItems.add(_buildMenuItem(

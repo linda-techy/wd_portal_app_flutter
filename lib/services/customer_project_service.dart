@@ -184,4 +184,63 @@ class CustomerProjectService {
 
     return PaginatedResponse.empty();
   }
+
+  /// Get all external members (architects, designers, etc.) for a project
+  Future<List<Map<String, dynamic>>> getProjectMembers(int projectId) async {
+    try {
+      final response = await _apiService.get('/customer-projects/$projectId/members');
+      if (response.data != null && response.data['data'] != null) {
+        return List<Map<String, dynamic>>.from(response.data['data']);
+      }
+      return [];
+    } catch (e) {
+      throw Exception('Failed to fetch project members: $e');
+    }
+  }
+
+  /// Add an external member to a project
+  Future<Map<String, dynamic>> addProjectMember(
+      int projectId, int customerUserId, String roleInProject) async {
+    try {
+      final response = await _apiService.post(
+        '/customer-projects/$projectId/members',
+        data: {
+          'customer_user_id': customerUserId,
+          'role_in_project': roleInProject,
+        },
+      );
+      if (response.data != null && response.data['data'] != null) {
+        return Map<String, dynamic>.from(response.data['data']);
+      }
+      throw Exception('Invalid response format');
+    } catch (e) {
+      throw Exception('Failed to add project member: $e');
+    }
+  }
+
+  /// Remove an external member from a project
+  Future<void> removeProjectMember(int projectId, int membershipId) async {
+    try {
+      await _apiService.delete('/customer-projects/$projectId/members/$membershipId');
+    } catch (e) {
+      throw Exception('Failed to remove project member: $e');
+    }
+  }
+
+  /// Trigger hybrid progress recalculation for a project.
+  /// Returns the updated project with new overallProgress value.
+  Future<CustomerProject> recalculateProgress(int projectId) async {
+    try {
+      final response = await _apiService.post(
+        '/customer-projects/$projectId/progress/recalculate',
+        data: {},
+      );
+      if (response.data != null && response.data['data'] != null) {
+        return CustomerProject.fromJson(response.data['data']);
+      }
+      throw Exception('Invalid response format');
+    } catch (e) {
+      throw Exception('Failed to recalculate progress: $e');
+    }
+  }
 }

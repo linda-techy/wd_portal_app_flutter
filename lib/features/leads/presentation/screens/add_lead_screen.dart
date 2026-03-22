@@ -57,6 +57,8 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
       'requirements': '',
       'budget': null,
       'projectSqftArea': null,
+      'plotArea': null,
+      'floors': null,
       'assignedTeam': '',
       'assignedToId': null, // Added assignedToId
       'state': IndiaLocationData.getDefaultState(),
@@ -380,6 +382,8 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
             formData['projectType'] ?? ProjectTypeConstants.defaultValue,
         budget: formData['budget'],
         projectSqftArea: formData['projectSqftArea'],
+        plotArea: formData['plotArea'],
+        floors: formData['floors'],
         clientRating: formData['clientRating'] ?? 3,
         probabilityToWin: formData['probabilityToWin'] ?? 50,
         lastContactDate: lastContactDate,

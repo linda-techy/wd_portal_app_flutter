@@ -26,6 +26,8 @@ class EditLeadController extends ChangeNotifier {
   late String requirements;
   double? budget;
   double? projectSqftArea;
+  double? plotArea;
+  int? floors;
   late String assignedTeam;
   int? assignedToId;
   late String state;
@@ -71,6 +73,8 @@ class EditLeadController extends ChangeNotifier {
         'requirements': requirements,
         'budget': budget,
         'projectSqftArea': projectSqftArea,
+        'plotArea': plotArea,
+        'floors': floors,
         'assignedTeam': assignedTeam,
         'assignedToId': assignedToId,
         'state': state,
@@ -271,6 +275,12 @@ class EditLeadController extends ChangeNotifier {
       case 'lostReason':
         lostReason = value;
         break;
+      case 'plotArea':
+        plotArea = value;
+        break;
+      case 'floors':
+        floors = value;
+        break;
     }
     notifyListeners();
   }
@@ -391,6 +401,8 @@ class EditLeadController extends ChangeNotifier {
         projectType: projectType,
         budget: budget,
         projectSqftArea: projectSqftArea,
+        plotArea: plotArea,
+        floors: floors,
         lastContactDate: lastContactDate,
         clientRating: clientRating,
         probabilityToWin: probabilityToWin,

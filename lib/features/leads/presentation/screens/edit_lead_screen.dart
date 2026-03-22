@@ -8,6 +8,8 @@ import 'package:admin/constants/project_type_constants.dart';
 import 'components/lead_activity_timeline.dart';
 import 'components/lead_tasks_tab.dart';
 import 'components/lead_documents_tab.dart';
+import 'package:admin/features/partnerships/data/services/partnership_admin_service.dart';
+import 'package:admin/features/partnerships/presentation/screens/partner_admin_detail_screen.dart';
 
 class EditLeadScreen extends StatefulWidget {
   final Lead lead;
@@ -19,13 +21,104 @@ class EditLeadScreen extends StatefulWidget {
 
 class _EditLeadScreenState extends State<EditLeadScreen> {
   late EditLeadController _controller;
+  final _partnershipService = PartnershipAdminService();
+  Map<String, dynamic>? _referringPartner;
+  bool _loadingPartner = false;
 
   @override
   void initState() {
     super.initState();
     _controller = EditLeadController(widget.lead);
     _controller.addListener(_onControllerChanged);
-    // Controller will initialize asynchronously and notify listeners when ready
+    // Load referring partner info if this is a referral lead
+    if (widget.lead.source == LeadSource.referralClient ||
+        widget.lead.source == LeadSource.referralArchitect) {
+      _loadReferringPartner();
+    }
+  }
+
+  Future<void> _loadReferringPartner() async {
+    final leadIdInt = int.tryParse(widget.lead.leadId);
+    if (leadIdInt == null) return;
+    setState(() => _loadingPartner = true);
+    try {
+      final partner = await _partnershipService.getPartnerByLead(leadIdInt);
+      if (mounted) setState(() => _referringPartner = partner);
+    } catch (_) {
+      // Silent — partner lookup is informational only
+    } finally {
+      if (mounted) setState(() => _loadingPartner = false);
+    }
+  }
+
+  Widget _buildReferralBanner() {
+    final isArchitect = widget.lead.source == LeadSource.referralArchitect;
+    final color = isArchitect ? Colors.purple : Colors.green;
+    final label = isArchitect ? 'Referred by Architect/Designer' : 'Referred by Client';
+
+    String partnerInfo = '';
+    if (_loadingPartner) {
+      partnerInfo = 'Loading partner info...';
+    } else if (_referringPartner != null) {
+      final name = _referringPartner!['fullName'] ?? '';
+      final type = _referringPartner!['partnershipType'] ?? '';
+      final phone = _referringPartner!['phone'] ?? '';
+      partnerInfo = [name, type, phone].where((s) => s.isNotEmpty).join(' · ');
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: defaultPadding),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.07),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.handshake_outlined, color: color, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: color,
+                  ),
+                ),
+                if (partnerInfo.isNotEmpty)
+                  Text(
+                    partnerInfo,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+          ),
+          if (_referringPartner != null)
+            TextButton(
+              onPressed: () {
+                final id = _referringPartner!['id'];
+                if (id != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PartnerAdminDetailScreen(partnerId: id as int),
+                    ),
+                  );
+                }
+              },
+              style: TextButton.styleFrom(foregroundColor: color),
+              child: const Text('View Partner'),
+            ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -66,7 +159,10 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
           ),
           actions: [
             // Convert Button (Only for WON status check logic handled inside or visually disabled)
-            if (widget.lead.status.toLowerCase() != 'won')
+            if (widget.lead.status.toLowerCase() != 'project_won' &&
+                widget.lead.status.toLowerCase() != 'won' &&
+                widget.lead.status.toLowerCase() != 'converted' &&
+                widget.lead.status.toLowerCase() != 'lost')
               TextButton.icon(
                 onPressed: _showConvertDialog,
                 icon: const Icon(Icons.check_circle_outline, color: primaryColor),
@@ -91,6 +187,9 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          if (widget.lead.source == LeadSource.referralClient ||
+                              widget.lead.source == LeadSource.referralArchitect)
+                            _buildReferralBanner(),
                           _buildSectionHeader(EditLeadConstants.basicInfoHeader),
                           FormSections.buildBasicInfoSection(
                             formData: _controller.formData,

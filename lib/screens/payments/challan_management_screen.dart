@@ -33,7 +33,7 @@ class _ChallanManagementScreenState extends State<ChallanManagementScreen> {
   }
 
   Future<void> _loadChallans() async {
-    setState(() => _isLoading = true);
+    setState(() { _isLoading = true; });
     try {
       final results = await _challanService.searchChallans(
         fy: _selectedFy,

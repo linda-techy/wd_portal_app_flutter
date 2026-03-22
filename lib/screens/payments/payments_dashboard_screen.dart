@@ -76,7 +76,7 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
       if (mounted) {
         setState(() {
           _payments = result['content'] as List<DesignPackagePayment>;
-          _totalPages = result['totalPages'] as int;
+          _totalPages = (result['totalPages'] as int?) ?? 0;
           _isLoading = false;
         });
       }

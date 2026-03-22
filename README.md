@@ -23,7 +23,7 @@ Edit `lib/config/app_config.dart`:
 
 ```dart
 // Local development
-static const String localApiUrl = 'http://localhost:8081';
+static const String localApiUrl = 'http://localhost:8080';
 
 // Production
 static const String productionApiUrl = 'https://api.walldotbuilders.com';

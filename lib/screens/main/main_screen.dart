@@ -25,6 +25,7 @@ import 'package:admin/screens/procurement/procurement_dashboard_screen.dart';
 import 'package:admin/screens/labour/labour_dashboard_screen.dart';
 import 'package:admin/screens/inventory/inventory_dashboard_screen.dart';
 import 'package:admin/screens/finance/finance_dashboard_screen.dart';
+import 'package:admin/features/partnerships/presentation/screens/partnerships_admin_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/theme/responsive_utils.dart';
@@ -65,6 +66,7 @@ class MainScreenState extends State<MainScreen> {
     const LabourDashboardScreen(), // Index 20 - Labour
     const InventoryDashboardScreen(), // Index 21 - Inventory
     const FinanceDashboardScreen(), // Index 22 - Finance
+    const PartnershipsAdminScreen(), // Index 23 - Partnerships & Referrals
   ];
 
   void _onMenuItemClick(int index) {
@@ -119,6 +121,8 @@ class MainScreenState extends State<MainScreen> {
         return 'Inventory Tracking';
       case 22:
         return 'Finance & Billing';
+      case 23:
+        return 'Partnerships & Referrals';
       default:
         return 'Tasks';
     }

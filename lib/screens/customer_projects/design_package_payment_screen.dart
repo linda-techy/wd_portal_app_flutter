@@ -38,7 +38,7 @@ class _DesignPackagePaymentScreenState
   double get _sqFeet => widget.project.sqfeet ?? 0.0;
 
   double get _basePrice {
-    final pricePerSqFt = widget.packageDetails['priceValue'] as double;
+    final pricePerSqFt = ((widget.packageDetails['priceValue'] as num?) ?? 0.0).toDouble();
     return pricePerSqFt * _sqFeet;
   }
 

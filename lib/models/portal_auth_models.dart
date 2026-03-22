@@ -57,7 +57,7 @@ class PortalLoginResponse {
       tokenType: json['tokenType'] as String,
       expiresIn: json['expiresIn'] as int,
       user: PortalUserInfo.fromJson(json['user'] as Map<String, dynamic>),
-      permissions: List<String>.from(json['permissions'] as List),
+      permissions: json['permissions'] != null ? List<String>.from(json['permissions'] as List) : [],
     );
   }
 }
@@ -106,8 +106,8 @@ class PortalUserInfo {
       lastName: json['lastName'] as String,
       role: json['role'] as String,
       enabled: json['enabled'] as bool,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : DateTime.now(),
+      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt'] as String) : DateTime.now(),
     );
   }
 }

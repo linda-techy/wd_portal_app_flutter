@@ -544,10 +544,10 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(AppTheme.radiusSM),
                     child: LinearProgressIndicator(
-                      value: (item['percentage'] as double) / 100,
+                      value: ((item['percentage'] as num?) ?? 0.0).toDouble() / 100,
                       backgroundColor: AppTheme.borderLight,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        _getProgressColor(item['percentage'] as double),
+                        _getProgressColor(((item['percentage'] as num?) ?? 0.0).toDouble()),
                       ),
                       minHeight: 8,
                     ),

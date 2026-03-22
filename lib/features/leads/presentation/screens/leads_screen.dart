@@ -39,7 +39,9 @@ class LeadsScreen extends StatefulWidget {
 }
 
 class _LeadsScreenState extends State<LeadsScreen> {
-  String statusFilter = LeadStatusConstants.defaultValue;
+  String statusFilter = 'All';
+  String? searchQuery;
+  final TextEditingController _searchController = TextEditingController();
   LeadSource? sourceFilter;
   DateTimeRange? dateRangeFilter;
   String? projectTypeFilter;
@@ -70,6 +72,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
     return PaginationParams(
       page: currentPage,
       limit: itemsPerPage,
+      search: searchQuery?.isNotEmpty == true ? searchQuery : null,
       status: statusFilter == 'All' ? null : statusFilter,
       source:
           sourceFilter != null ? Lead.getSourceApiValue(sourceFilter!) : null,
@@ -128,6 +131,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -236,7 +240,9 @@ class _LeadsScreenState extends State<LeadsScreen> {
 
   void _clearAllFilters() {
     setState(() {
-      statusFilter = LeadStatusConstants.defaultValue;
+      statusFilter = 'All';
+      searchQuery = null;
+      _searchController.clear();
       sourceFilter = null;
       projectTypeFilter = null;
       salesRepFilter = null;
@@ -461,6 +467,39 @@ class _LeadsScreenState extends State<LeadsScreen> {
                         ),
                     ],
                   ),
+            const SizedBox(height: defaultPadding),
+            // Search bar
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search by name, phone, email...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: searchQuery?.isNotEmpty == true
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            searchQuery = null;
+                            _searchController.clear();
+                          });
+                          _onFilterChanged();
+                        },
+                      )
+                    : null,
+                border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(
+                    vertical: 8, horizontal: 12),
+              ),
+              onChanged: (value) {
+                setState(() => searchQuery = value.isEmpty ? null : value);
+                // Debounce: trigger search after user stops typing
+                Future.delayed(const Duration(milliseconds: 400), () {
+                  if (mounted && (searchQuery == value || (searchQuery == null && value.isEmpty))) {
+                    _onFilterChanged();
+                  }
+                });
+              },
+            ),
             const SizedBox(height: defaultPadding),
             // Responsive filter section
             Responsive(
@@ -1298,9 +1337,13 @@ class _LeadsTableState extends State<LeadsTable> {
                             DataCell(
                               ConstrainedBox(
                                 constraints:
-                                    const BoxConstraints(maxWidth: 150),
+                                    const BoxConstraints(maxWidth: 160),
                                 child: Tooltip(
-                                  message: lead.name,
+                                  message: lead.source == LeadSource.referralClient
+                                      ? '${lead.name} (Referred by client)'
+                                      : lead.source == LeadSource.referralArchitect
+                                          ? '${lead.name} (Referred by architect/designer)'
+                                          : lead.name,
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -1313,6 +1356,37 @@ class _LeadsTableState extends State<LeadsTable> {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
+                                      if (lead.source == LeadSource.referralClient ||
+                                          lead.source == LeadSource.referralArchitect)
+                                        Container(
+                                          margin: const EdgeInsets.only(top: 2),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 5, vertical: 1),
+                                          decoration: BoxDecoration(
+                                            color: lead.source == LeadSource.referralArchitect
+                                                ? Colors.purple.withOpacity(0.12)
+                                                : Colors.green.withOpacity(0.12),
+                                            borderRadius: BorderRadius.circular(4),
+                                            border: Border.all(
+                                              color: lead.source == LeadSource.referralArchitect
+                                                  ? Colors.purple.withOpacity(0.4)
+                                                  : Colors.green.withOpacity(0.4),
+                                              width: 0.5,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            lead.source == LeadSource.referralArchitect
+                                                ? 'Referred'
+                                                : 'Referred',
+                                            style: TextStyle(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w600,
+                                              color: lead.source == LeadSource.referralArchitect
+                                                  ? Colors.purple
+                                                  : Colors.green,
+                                            ),
+                                          ),
+                                        ),
                                     ],
                                   ),
                                 ),

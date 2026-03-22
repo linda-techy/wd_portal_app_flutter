@@ -25,6 +25,9 @@ import 'package:admin/models/team_member.dart';
 import 'package:admin/widgets/animations/entrance_animation.dart';
 import 'package:admin/widgets/animations/motion_button.dart';
 import 'package:admin/utils/error_handler.dart';
+import 'package:admin/services/customer_project_service.dart';
+import 'package:admin/features/customers/data/services/customer_service.dart';
+import 'package:admin/features/customers/data/models/customer.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
   final CustomerProject project;
@@ -40,11 +43,53 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   // Master loading flag for Data-First pattern
   bool _isPageLoading = true;
   final CRMService _crmService = CRMService();
+  final CustomerProjectService _projectService = CustomerProjectService();
+  final CustomerService _customerService = CustomerService();
+
+  List<Map<String, dynamic>> _projectMembers = [];
+  bool _membersLoading = false;
+  bool _isRecalculating = false;
+  // Mutable copy so we can reflect refreshed progress without full page reload
+  late CustomerProject _currentProject;
 
   @override
   void initState() {
     super.initState();
+    _currentProject = widget.project;
     _loadCustomerLead();
+    _loadProjectMembers();
+  }
+
+  Future<void> _recalculateProgress() async {
+    if (widget.project.id == null || _isRecalculating) return;
+    setState(() => _isRecalculating = true);
+    try {
+      final updated = await _projectService.recalculateProgress(widget.project.id!);
+      if (mounted) {
+        setState(() {
+          _currentProject = updated;
+          _isRecalculating = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Progress updated: ${updated.progress?.toStringAsFixed(1) ?? 0}%',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isRecalculating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to recalculate: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _loadCustomerLead() async {
@@ -72,6 +117,217 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to load lead details', showToast: false);
       }
     }
+  }
+
+  Future<void> _loadProjectMembers() async {
+    if (widget.project.id == null) return;
+    setState(() => _membersLoading = true);
+    try {
+      final members = await _projectService.getProjectMembers(widget.project.id!);
+      if (mounted) {
+        setState(() {
+          _projectMembers = members;
+          _membersLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _membersLoading = false);
+    }
+  }
+
+  Future<void> _removeMember(int membershipId) async {
+    if (widget.project.id == null) return;
+    try {
+      await _projectService.removeProjectMember(widget.project.id!, membershipId);
+      _loadProjectMembers();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to remove member: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _showAddMemberDialog() async {
+    if (widget.project.id == null) return;
+
+    final roleOptions = ['ARCHITECT', 'INTERIOR_DESIGNER', 'SITE_ENGINEER', 'VIEWER'];
+    String selectedRole = roleOptions.first;
+    Customer? selectedCustomer;
+    List<Customer> allCustomers = [];
+    String searchQuery = '';
+
+    try {
+      allCustomers = await _customerService.getAllCustomers();
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final filtered = allCustomers
+              .where((c) =>
+                  searchQuery.isEmpty ||
+                  c.fullName.toLowerCase().contains(searchQuery.toLowerCase()) ||
+                  c.email.toLowerCase().contains(searchQuery.toLowerCase()))
+              .toList();
+
+          return AlertDialog(
+            title: const Text('Add External Member'),
+            content: SizedBox(
+              width: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DropdownButtonFormField<String>(
+                    value: selectedRole,
+                    decoration: const InputDecoration(labelText: 'Role'),
+                    items: roleOptions
+                        .map((r) => DropdownMenuItem(value: r, child: Text(r.replaceAll('_', ' '))))
+                        .toList(),
+                    onChanged: (v) => setDialogState(() => selectedRole = v ?? selectedRole),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: 'Search Customer',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: (v) => setDialogState(() => searchQuery = v),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 200,
+                    child: ListView.builder(
+                      itemCount: filtered.length,
+                      itemBuilder: (_, i) {
+                        final c = filtered[i];
+                        final isSelected = selectedCustomer?.id == c.id;
+                        return ListTile(
+                          selected: isSelected,
+                          selectedTileColor: AppTheme.primaryBlue.withOpacity(0.1),
+                          title: Text(c.fullName),
+                          subtitle: Text(c.email),
+                          onTap: () => setDialogState(() => selectedCustomer = c),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+              ElevatedButton(
+                onPressed: selectedCustomer == null
+                    ? null
+                    : () async {
+                        Navigator.pop(ctx);
+                        try {
+                          await _projectService.addProjectMember(
+                              widget.project.id!, selectedCustomer!.id!, selectedRole);
+                          _loadProjectMembers();
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text('Failed to add member: $e'),
+                                  backgroundColor: Colors.red),
+                            );
+                          }
+                        }
+                      },
+                child: const Text('Add'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildExternalMembersSection() {
+    return Card(
+      elevation: 2,
+      margin: EdgeInsets.symmetric(
+        horizontal: ResponsiveUtils.responsiveValue(
+          context: context,
+          mobile: 0,
+          tablet: AppTheme.spacingSM,
+          desktop: AppTheme.spacingMD,
+        ),
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spacingMD),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'External Members',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.person_add_outlined, color: AppTheme.primaryBlue),
+                  tooltip: 'Add External Member',
+                  onPressed: _showAddMemberDialog,
+                ),
+              ],
+            ),
+            const Divider(),
+            if (_membersLoading)
+              const Center(child: Padding(
+                padding: EdgeInsets.all(16),
+                child: CircularProgressIndicator(),
+              ))
+            else if (_projectMembers.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  'No external members yet. Tap + to add architects, designers, or other 3rd-party viewers.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                ),
+              )
+            else
+              ..._projectMembers.map((m) {
+                final membershipId = m['id'] as int?;
+                final name = m['fullName'] as String? ?? '';
+                final email = m['email'] as String? ?? '';
+                final role = (m['roleInProject'] as String? ?? '').replaceAll('_', ' ');
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: CircleAvatar(
+                    backgroundColor: AppTheme.primaryBlue.withOpacity(0.1),
+                    child: Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : '?',
+                      style: const TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  title: Text(name),
+                  subtitle: Text('$email\n$role'),
+                  isThreeLine: true,
+                  trailing: IconButton(
+                    icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                    tooltip: 'Remove',
+                    onPressed: membershipId != null ? () => _removeMember(membershipId) : null,
+                  ),
+                );
+              }),
+          ],
+        ),
+      ),
+    );
   }
 
   String _formatDate(DateTime? date) {
@@ -193,9 +449,22 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 desktop: AppTheme.spacingLG,
               )),
               
+              // External Members Section
+              EntranceAnimation(
+                delay: const Duration(milliseconds: 150),
+                child: _buildExternalMembersSection(),
+              ),
+
+              SizedBox(height: ResponsiveUtils.responsiveValue(
+                context: context,
+                mobile: AppTheme.spacingLG,
+                tablet: AppTheme.spacingXL,
+                desktop: AppTheme.spacingXL,
+              )),
+
               // Clickable Tiles Grid
               _buildModulesGrid(),
-              
+
               SizedBox(height: ResponsiveUtils.responsiveValue(
                 context: context,
                 mobile: AppTheme.spacingXL,
@@ -210,7 +479,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   }
 
   Widget _buildProjectOverviewCard() {
-    final progress = widget.project.progress ?? 0.0;
+    final progress = _currentProject.progress ?? 0.0;
     
     return Card(
       elevation: 2,
@@ -611,7 +880,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                             ),
                       ),
                       Text(
-                        _formatProgress(widget.project.progress),
+                        _formatProgress(_currentProject.progress),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: _getProgressColor(progress),
@@ -628,6 +897,26 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                       backgroundColor: AppTheme.borderLight,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         _getProgressColor(progress),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingSM),
+                  // Recalculate Progress Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _isRecalculating ? null : _recalculateProgress,
+                      icon: _isRecalculating
+                          ? const SizedBox(
+                              width: 16, height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh, size: 18),
+                      label: Text(_isRecalculating ? 'Recalculating...' : 'Recalculate Progress'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        side: const BorderSide(color: AppTheme.primaryBlue),
+                        foregroundColor: AppTheme.primaryBlue,
                       ),
                     ),
                   ),

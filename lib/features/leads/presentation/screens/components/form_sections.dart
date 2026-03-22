@@ -727,7 +727,7 @@ class FormSections {
                             5,
                             (index) => IconButton(
                               icon: Icon(
-                                index < (formData['clientRating'] as int)
+                                index < ((formData['clientRating'] as int?) ?? 0)
                                     ? Icons.star
                                     : Icons.star_border,
                                 color: Colors.amber,
@@ -767,7 +767,7 @@ class FormSections {
                             5,
                             (index) => IconButton(
                               icon: Icon(
-                                index < (formData['clientRating'] as int)
+                                index < ((formData['clientRating'] as int?) ?? 0)
                                     ? Icons.star
                                     : Icons.star_border,
                                 color: Colors.amber,
@@ -841,7 +841,7 @@ class FormSections {
               children: [
                 Expanded(
                   child: Slider(
-                    value: (formData['probabilityToWin'] as int).toDouble(),
+                    value: ((formData['probabilityToWin'] as int?) ?? 0).toDouble(),
                     min: 0,
                     max: 100,
                     divisions: 20,
@@ -871,6 +871,59 @@ class FormSections {
         padding: const EdgeInsets.all(defaultPadding),
         child: Column(
           children: [
+            _responsiveRow(
+              context,
+              [
+                Expanded(
+                  child: TextFormField(
+                    initialValue: formData['plotArea']?.toString() ?? '',
+                    decoration: const InputDecoration(
+                      labelText: 'Plot Area (sq ft)',
+                      border: OutlineInputBorder(),
+                      suffixText: 'sq ft',
+                      hintText: 'Land/plot area',
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) {
+                      if (value.isNotEmpty) {
+                        onChanged('plotArea', double.tryParse(value));
+                      } else {
+                        onChanged('plotArea', null);
+                      }
+                    },
+                    onSaved: (value) {
+                      if (value != null && value.isNotEmpty) {
+                        onChanged('plotArea', double.tryParse(value));
+                      }
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: TextFormField(
+                    initialValue: formData['floors']?.toString() ?? '',
+                    decoration: const InputDecoration(
+                      labelText: 'Number of Floors',
+                      border: OutlineInputBorder(),
+                      hintText: 'e.g. 2',
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) {
+                      if (value.isNotEmpty) {
+                        onChanged('floors', int.tryParse(value));
+                      } else {
+                        onChanged('floors', null);
+                      }
+                    },
+                    onSaved: (value) {
+                      if (value != null && value.isNotEmpty) {
+                        onChanged('floors', int.tryParse(value));
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: defaultPadding),
             TextFormField(
               initialValue: formData['notes'],
               decoration: const InputDecoration(

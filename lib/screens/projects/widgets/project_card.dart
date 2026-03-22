@@ -18,6 +18,17 @@ class ProjectCard extends StatelessWidget {
     this.onDelete,
   });
 
+  Color _projectTypeColor(String? type) {
+    switch ((type ?? '').toUpperCase()) {
+      case 'RESIDENTIAL':   return Colors.green;
+      case 'COMMERCIAL':    return Colors.blue;
+      case 'INDUSTRIAL':    return Colors.orange;
+      case 'RENOVATION':    return Colors.purple;
+      case 'INTERIOR_ONLY': return Colors.pink;
+      default:              return Colors.blueGrey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -119,20 +130,35 @@ class ProjectCard extends StatelessWidget {
               
               const SizedBox(height: AppTheme.spacingSM),
               
-              // Project Type
+              // Project Type Badge
               if (project.projectType != null) ...[
                 Row(
                   children: [
-                    const Icon(Icons.business, size: 16, color: AppTheme.textSecondary),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        project.projectType!,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppTheme.textSecondary,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: _projectTypeColor(project.projectType).withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: _projectTypeColor(project.projectType).withOpacity(0.4),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.business_outlined,
+                              size: 12,
+                              color: _projectTypeColor(project.projectType)),
+                          const SizedBox(width: 4),
+                          Text(
+                            project.projectType!.replaceAll('_', ' '),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: _projectTypeColor(project.projectType),
                             ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
                     ),
                   ],

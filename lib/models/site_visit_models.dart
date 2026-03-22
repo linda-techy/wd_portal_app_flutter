@@ -47,8 +47,8 @@ class SiteVisit {
 
   factory SiteVisit.fromJson(Map<String, dynamic> json) {
     return SiteVisit(
-      id: json['id'] as int,
-      projectId: json['projectId'] as int,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      projectId: (json['projectId'] as num?)?.toInt() ?? 0,
       projectName: json['projectName'] ?? 'Unknown Project',
       visitedById: json['visitedById'] as int?,
       visitedByName: json['visitedByName'] as String?,

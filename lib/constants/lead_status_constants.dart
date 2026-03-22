@@ -30,8 +30,9 @@ class LeadStatusConstants {
     DropdownMenuItem(value: lost, child: Text(lostLabel)),
   ];
 
-  // Search dropdown items (includes 'All')
+  // Search dropdown items (includes 'All' at top)
   static const List<DropdownMenuItem<String>> searchDropdownItems = [
+    DropdownMenuItem(value: 'All', child: Text('All Statuses')),
     DropdownMenuItem(value: newInquiry, child: Text(newInquiryLabel)),
     DropdownMenuItem(value: contacted, child: Text(contactedLabel)),
     DropdownMenuItem(value: qualifiedLead, child: Text(qualifiedLeadLabel)),
@@ -39,7 +40,6 @@ class LeadStatusConstants {
     DropdownMenuItem(value: negotiation, child: Text(negotiationLabel)),
     DropdownMenuItem(value: projectWon, child: Text(projectWonLabel)),
     DropdownMenuItem(value: lost, child: Text(lostLabel)),
-    DropdownMenuItem(value: 'All', child: Text('All')),
   ];
 
   // All valid values
