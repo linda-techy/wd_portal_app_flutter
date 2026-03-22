@@ -85,6 +85,15 @@ class _LeadFormState extends State<LeadForm> {
             TextFormField(
                 initialValue: phone,
                 decoration: const InputDecoration(labelText: 'Phone'),
+                keyboardType: TextInputType.phone,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return null;
+                  final digits = v.trim().replaceAll(RegExp(r'[\s\-]'), '');
+                  if (!RegExp(r'^(\+?91)?[6-9]\d{9}$').hasMatch(digits)) {
+                    return 'Enter a valid 10-digit Indian mobile number';
+                  }
+                  return null;
+                },
                 onSaved: (v) => phone = v ?? ''),
             TextFormField(
                 initialValue: customerType,

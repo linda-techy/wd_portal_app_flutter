@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/portal_auth_provider.dart';
+import '../providers/permission_provider.dart';
 import '../theme/app_theme.dart';
 import '../screens/documents/document_management_screen.dart';
 
@@ -67,22 +68,24 @@ class PortalRoleBasedNavigation extends StatelessWidget {
                     ),
                     const SizedBox(height: AppTheme.spacingSM),
                     // Role Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.coralRed,
-                        borderRadius: BorderRadius.circular(AppTheme.radiusSM),
-                      ),
-                      child: Text(
-                        user.roleCode,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
+                    Consumer<PermissionProvider>(
+                      builder: (context, permProvider, _) => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.coralRed,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                        ),
+                        child: Text(
+                          permProvider.roleDisplayName,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                       ),
                     ),
@@ -110,7 +113,7 @@ class PortalRoleBasedNavigation extends StatelessWidget {
 
                   // Reports - Available to Admin and Sales
                   if (authProvider
-                      .hasAnyPermission(['VIEW_REPORTS', 'MANAGE_REPORTS']))
+                      .hasAnyPermission(['REPORT_VIEW', 'REPORT_EXPORT']))
                     _buildMenuItem(
                       icon: Icons.assessment,
                       title: 'Reports',
@@ -121,7 +124,7 @@ class PortalRoleBasedNavigation extends StatelessWidget {
 
                   // Projects - Available to Admin and Employee
                   if (authProvider
-                      .hasAnyPermission(['VIEW_PROJECTS', 'MANAGE_PROJECTS']))
+                      .hasAnyPermission(['PROJECT_VIEW', 'PROJECT_CREATE']))
                     _buildMenuItem(
                       icon: Icons.construction,
                       title: 'Projects',
@@ -132,7 +135,7 @@ class PortalRoleBasedNavigation extends StatelessWidget {
 
                   // Clients - Available to Admin, Employee, and Sales
                   if (authProvider
-                      .hasAnyPermission(['VIEW_CLIENTS', 'MANAGE_CLIENTS']))
+                      .hasAnyPermission(['CUSTOMER_VIEW', 'CUSTOMER_CREATE']))
                     _buildMenuItem(
                       icon: Icons.people,
                       title: 'Clients',
@@ -143,7 +146,7 @@ class PortalRoleBasedNavigation extends StatelessWidget {
 
                   // Leads - Available to Admin and Sales
                   if (authProvider
-                      .hasAnyPermission(['VIEW_LEADS', 'MANAGE_LEADS']))
+                      .hasAnyPermission(['LEAD_VIEW', 'LEAD_CREATE']))
                     _buildMenuItem(
                       icon: Icons.person_add,
                       title: 'Leads',
@@ -153,7 +156,7 @@ class PortalRoleBasedNavigation extends StatelessWidget {
                     ),
 
                   // Users - Available only to Admin
-                  if (authProvider.hasPermission('MANAGE_USERS'))
+                  if (authProvider.hasPermission('PORTAL_USER_VIEW'))
                     _buildMenuItem(
                       icon: Icons.manage_accounts,
                       title: 'Users',
@@ -180,7 +183,7 @@ class PortalRoleBasedNavigation extends StatelessWidget {
 
                   // Invoices - Available to Admin and Sales
                   if (authProvider
-                      .hasAnyPermission(['VIEW_INVOICES', 'MANAGE_INVOICES']))
+                      .hasAnyPermission(['FINANCE_VIEW', 'FINANCE_CREATE']))
                     _buildMenuItem(
                       icon: Icons.receipt,
                       title: 'Invoices',
@@ -191,7 +194,7 @@ class PortalRoleBasedNavigation extends StatelessWidget {
 
                   // Contracts - Available to Admin and Sales
                   if (authProvider
-                      .hasAnyPermission(['VIEW_CONTRACTS', 'MANAGE_CONTRACTS']))
+                      .hasAnyPermission(['DOCUMENT_VIEW', 'DOCUMENT_CREATE']))
                     _buildMenuItem(
                       icon: Icons.description,
                       title: 'Contracts',
@@ -201,7 +204,7 @@ class PortalRoleBasedNavigation extends StatelessWidget {
                     ),
 
                   // Communication - Available to all authenticated users
-                  if (authProvider.hasPermission('VIEW_COMMUNICATION'))
+                  if (authProvider.hasPermission('QUERY_VIEW'))
                     _buildMenuItem(
                       icon: Icons.message,
                       title: 'Communication',
@@ -212,7 +215,7 @@ class PortalRoleBasedNavigation extends StatelessWidget {
 
                   // Follow-ups - Available to Admin and Sales
                   if (authProvider.hasAnyPermission(
-                      ['VIEW_FOLLOW_UPS', 'MANAGE_FOLLOW_UPS']))
+                      ['LEAD_VIEW', 'LEAD_CREATE']))
                     _buildMenuItem(
                       icon: Icons.schedule,
                       title: 'Follow-ups',
@@ -223,7 +226,7 @@ class PortalRoleBasedNavigation extends StatelessWidget {
 
                   // Site Visits - Available to Admin and Employee
                   if (authProvider.hasAnyPermission(
-                      ['VIEW_SITE_VISITS', 'MANAGE_SITE_VISITS']))
+                      ['SITE_REPORT_VIEW', 'SITE_REPORT_CREATE']))
                     _buildMenuItem(
                       icon: Icons.location_on,
                       title: 'Site Visits',
@@ -234,7 +237,7 @@ class PortalRoleBasedNavigation extends StatelessWidget {
 
                   // Tasks - Available to Admin and Employee
                   if (authProvider
-                      .hasAnyPermission(['VIEW_TASKS', 'MANAGE_TASKS']))
+                      .hasAnyPermission(['TASK_VIEW', 'TASK_CREATE']))
                     _buildMenuItem(
                       icon: Icons.task,
                       title: 'Tasks',
@@ -244,7 +247,7 @@ class PortalRoleBasedNavigation extends StatelessWidget {
                     ),
 
                   // Team Members - Available to Admin
-                  if (authProvider.hasPermission('MANAGE_TEAM_MEMBERS'))
+                  if (authProvider.hasPermission('PORTAL_USER_VIEW'))
                     _buildMenuItem(
                       icon: Icons.group,
                       title: 'Team Members',
@@ -255,7 +258,7 @@ class PortalRoleBasedNavigation extends StatelessWidget {
 
                   // Quotations - Available to Admin and Sales
                   if (authProvider.hasAnyPermission(
-                      ['VIEW_QUOTATIONS', 'MANAGE_QUOTATIONS']))
+                      ['BOQ_VIEW', 'BOQ_CREATE']))
                     _buildMenuItem(
                       icon: Icons.format_quote,
                       title: 'Quotations',

@@ -238,11 +238,12 @@ class FormSections {
                     ),
                     keyboardType: TextInputType.phone,
                     validator: (value) {
-                      if (value?.isEmpty == true) {
+                      if (value == null || value.trim().isEmpty) {
                         return 'Phone is required';
                       }
-                      if (value != null && value.length < 10) {
-                        return 'Phone number must be at least 10 digits';
+                      final digits = value.trim().replaceAll(RegExp(r'[\s\-]'), '');
+                      if (!RegExp(r'^(\+?91)?[6-9]\d{9}$').hasMatch(digits)) {
+                        return 'Enter a valid 10-digit Indian mobile number';
                       }
                       return null;
                     },
@@ -259,8 +260,10 @@ class FormSections {
                     ),
                     keyboardType: TextInputType.phone,
                     validator: (value) {
-                      if (value?.isNotEmpty == true && value!.length < 10) {
-                        return 'WhatsApp number must be at least 10 digits';
+                      if (value == null || value.trim().isEmpty) return null;
+                      final digits = value.trim().replaceAll(RegExp(r'[\s\-]'), '');
+                      if (!RegExp(r'^(\+?91)?[6-9]\d{9}$').hasMatch(digits)) {
+                        return 'Enter a valid 10-digit Indian mobile number';
                       }
                       return null;
                     },

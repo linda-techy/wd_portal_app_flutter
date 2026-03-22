@@ -1,10 +1,15 @@
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/services/observation_service.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/utils/error_handler.dart';
+import 'package:admin/utils/file_upload_helper.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
+import 'dart:io' show File;
 
 class ObservationsScreen extends StatefulWidget {
   final int projectId;
@@ -446,6 +451,9 @@ class _ObservationsScreenState extends State<ObservationsScreen>
     final descController = TextEditingController();
     final locationController = TextEditingController();
     String priority = 'MEDIUM';
+    File? pickedFile;
+    Uint8List? pickedBytes;
+    String? pickedFileName;
 
     final result = await showDialog<bool>(
       context: context,
@@ -482,6 +490,49 @@ class _ObservationsScreenState extends State<ObservationsScreen>
                   decoration:
                       const InputDecoration(labelText: 'Location (optional)'),
                 ),
+                const SizedBox(height: 12),
+                // Image picker row
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        pickedFileName ?? 'No photo selected',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: pickedFileName != null
+                              ? AppTheme.deepSlate
+                              : AppTheme.textTertiary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final result = await FilePicker.platform.pickFiles(
+                          type: FileType.image,
+                          withData: kIsWeb,
+                        );
+                        if (result != null) {
+                          try {
+                            final data = FileUploadHelper.extractFileData(
+                                result.files.single);
+                            setDialogState(() {
+                              pickedFile = data.file;
+                              pickedBytes = data.bytes;
+                              pickedFileName = data.fileName;
+                            });
+                          } catch (_) {}
+                        }
+                      },
+                      icon: const Icon(Icons.attach_file, size: 16),
+                      label: const Text('Photo',
+                          style: TextStyle(fontSize: 12)),
+                      style: OutlinedButton.styleFrom(
+                          visualDensity: VisualDensity.compact),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -517,6 +568,9 @@ class _ObservationsScreenState extends State<ObservationsScreen>
           location: locationController.text.isNotEmpty
               ? locationController.text
               : null,
+          imageFile: pickedFile,
+          imageBytes: pickedBytes,
+          imageFileName: pickedFileName,
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

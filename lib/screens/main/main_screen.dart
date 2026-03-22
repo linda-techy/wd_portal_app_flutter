@@ -26,10 +26,14 @@ import 'package:admin/screens/labour/labour_dashboard_screen.dart';
 import 'package:admin/screens/inventory/inventory_dashboard_screen.dart';
 import 'package:admin/screens/finance/finance_dashboard_screen.dart';
 import 'package:admin/features/partnerships/presentation/screens/partnerships_admin_screen.dart';
+import 'package:admin/screens/notifications/portal_notification_screen.dart';
+import 'package:admin/services/api_service.dart';
+import 'package:admin/services/portal_notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/theme/responsive_utils.dart';
 import 'package:admin/theme/app_theme.dart';
+import 'package:badges/badges.dart' as badges;
 
 import 'components/side_menu.dart';
 
@@ -41,6 +45,35 @@ class MainScreen extends StatefulWidget {
 }
 
 class MainScreenState extends State<MainScreen> {
+  int _unreadNotificationCount = 0;
+  late final PortalNotificationService _notificationService;
+
+  @override
+  void initState() {
+    super.initState();
+    _notificationService = PortalNotificationService(
+      Provider.of<ApiService>(context, listen: false),
+    );
+    _refreshUnreadCount();
+  }
+
+  Future<void> _refreshUnreadCount() async {
+    try {
+      final count = await _notificationService.getUnreadCount();
+      if (mounted) setState(() => _unreadNotificationCount = count);
+    } catch (_) {}
+  }
+
+  void _openNotifications(BuildContext context) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const PortalNotificationScreen(),
+      ),
+    );
+    // Refresh count after returning from notification screen
+    _refreshUnreadCount();
+  }
 
   final List<Widget> _screens = [
     const DashboardScreen(),
@@ -142,7 +175,28 @@ class MainScreenState extends State<MainScreen> {
               backgroundColor: secondaryColor,
               foregroundColor: Colors.black87,
               automaticallyImplyLeading: false,
-
+              actions: [
+                IconButton(
+                  icon: _unreadNotificationCount > 0
+                      ? badges.Badge(
+                          badgeContent: Text(
+                            _unreadNotificationCount > 99
+                                ? '99+'
+                                : '$_unreadNotificationCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            ),
+                          ),
+                          badgeStyle: const badges.BadgeStyle(
+                            badgeColor: AppTheme.coralRed,
+                          ),
+                          child: const Icon(Icons.notifications_outlined),
+                        )
+                      : const Icon(Icons.notifications_outlined),
+                  onPressed: () => _openNotifications(context),
+                ),
+              ],
             ),
       drawer: Drawer(
         child: SideMenu(

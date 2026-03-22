@@ -132,4 +132,116 @@ class PermissionProvider with ChangeNotifier {
   // Reports permissions
   bool get canViewReports => canView('REPORT');
   bool get canExportReports => canExport('REPORT');
+
+  // Finance permissions
+  bool get canViewFinance => canView('FINANCE');
+  bool get canCreateFinance => canCreate('FINANCE');
+  bool get canEditFinance => canEdit('FINANCE');
+
+  // Payment permissions
+  bool get canViewPayments => canView('PAYMENT');
+  bool get canCreatePayment => canCreate('PAYMENT');
+  bool get canEditPayment => canEdit('PAYMENT');
+  bool get canApprovePayment => hasPermission('PAYMENT_APPROVE');
+
+  // BOQ permissions
+  bool get canViewBoq => canView('BOQ');
+  bool get canCreateBoq => canCreate('BOQ');
+  bool get canEditBoq => canEdit('BOQ');
+  bool get canDeleteBoq => canDelete('BOQ');
+  bool get canApproveBoq => hasPermission('BOQ_APPROVE');
+
+  // Site Report permissions
+  bool get canViewSiteReports => canView('SITE_REPORT');
+  bool get canCreateSiteReport => canCreate('SITE_REPORT');
+  bool get canEditSiteReport => canEdit('SITE_REPORT');
+
+  // Gallery permissions
+  bool get canViewGallery => canView('GALLERY');
+  bool get canCreateGallery => canCreate('GALLERY');
+  bool get canDeleteGallery => canDelete('GALLERY');
+
+  // Labour permissions
+  bool get canViewLabour => canView('LABOUR');
+  bool get canCreateLabour => canCreate('LABOUR');
+  bool get canEditLabour => canEdit('LABOUR');
+
+  // Procurement permissions
+  bool get canViewProcurement => canView('PROCUREMENT');
+  bool get canCreateProcurement => canCreate('PROCUREMENT');
+  bool get canEditProcurement => canEdit('PROCUREMENT');
+  bool get canApproveProcurement => hasPermission('PROCUREMENT_APPROVE');
+
+  // Inventory permissions
+  bool get canViewInventory => canView('INVENTORY');
+  bool get canCreateInventory => canCreate('INVENTORY');
+  bool get canEditInventory => canEdit('INVENTORY');
+  bool get canDeleteInventory => canDelete('INVENTORY');
+
+  // QC permissions
+  bool get canViewQc => canView('QC');
+  bool get canCreateQc => canCreate('QC');
+  bool get canEditQc => canEdit('QC');
+
+  // Observation permissions
+  bool get canViewObservations => canView('OBSERVATION');
+  bool get canCreateObservation => canCreate('OBSERVATION');
+  bool get canEditObservation => canEdit('OBSERVATION');
+
+  // Snag permissions
+  bool get canViewSnags => canView('SNAG');
+  bool get canCreateSnag => canCreate('SNAG');
+  bool get canEditSnag => canEdit('SNAG');
+
+  // Query permissions
+  bool get canViewQueries => canView('QUERY');
+  bool get canCreateQuery => canCreate('QUERY');
+  bool get canEditQuery => canEdit('QUERY');
+
+  // Attendance permissions
+  bool get canViewAttendance => canView('ATTENDANCE');
+  bool get canCreateAttendance => canCreate('ATTENDANCE');
+  bool get canEditAttendance => canEdit('ATTENDANCE');
+
+  // Notification permissions
+  bool get canViewNotifications => canView('NOTIFICATION');
+
+  /// Human-readable display name for the current role
+  String get roleDisplayName {
+    const Map<String, String> roleNames = {
+      'ADMIN': 'Administrator',
+      'PROJECT_MANAGER': 'Project Manager',
+      'SITE_ENGINEER': 'Site Engineer',
+      'PROCUREMENT_OFFICER': 'Procurement Officer',
+      'INVENTORY_MANAGER': 'Inventory Manager',
+      'FINANCE_OFFICER': 'Finance Officer',
+      'HR_MANAGER': 'HR Manager',
+      'SALES': 'Sales Team Member',
+      'QUALITY_SAFETY': 'Quality & Safety Officer',
+      'EMPLOYEE': 'Employee',
+      'SITE_SUPERVISOR': 'Site Supervisor',
+      'ESTIMATOR': 'Estimator / Quantity Surveyor',
+      'ARCHITECT_DESIGNER': 'Architect / Designer',
+      'VISUALIZER': '3D Visualizer',
+      'STRUCTURAL_ENGINEER': 'Structural Engineer',
+      'INTERIOR_DESIGNER': 'Interior Designer',
+      'PURCHASE_ASSISTANT': 'Purchase Assistant',
+      'ACCOUNTS_ASSISTANT': 'Accounts Assistant',
+      'ADMIN_EXECUTIVE': 'Admin Executive',
+      'CLIENT_COORDINATOR': 'Client Coordinator',
+      'MARKETING': 'Marketing Executive',
+      'CRM': 'CRM Executive',
+      'IT_ADMIN': 'IT / Systems Administrator',
+      'DRAFTSMAN': 'Draftsman',
+      'FOREMAN': 'Foreman',
+      'MEP_SUPERVISOR': 'MEP Supervisor',
+      'INTERN': 'Intern / Trainee',
+      // Legacy codes
+      'USER': 'User',
+      'PM': 'Project Manager',
+      'SALES_MANAGER': 'Sales Manager',
+      'PROCUREMENT_MANAGER': 'Procurement Manager',
+    };
+    return roleNames[_roleCode.toUpperCase()] ?? _roleCode;
+  }
 }

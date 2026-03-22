@@ -1,4 +1,6 @@
-import 'package:dio/dio.dart' show FormData;
+import 'dart:io' show File;
+import 'dart:typed_data';
+import 'package:dio/dio.dart';
 import 'package:admin/services/api_service.dart';
 
 class ObservationItem {
@@ -97,18 +99,30 @@ class ObservationService {
     required String description,
     String? location,
     String? priority,
+    File? imageFile,
+    Uint8List? imageBytes,
+    String? imageFileName,
   }) async {
-    final formData = {
+    final formData = FormData.fromMap({
       'title': title,
       'description': description,
       if (location != null) 'location': location,
       if (priority != null) 'priority': priority,
-    };
+    });
 
-    // Use FormData for multipart/form-data
+    if (imageBytes != null && imageFileName != null) {
+      formData.files.add(MapEntry(
+          'image', MultipartFile.fromBytes(imageBytes, filename: imageFileName)));
+    } else if (imageFile != null) {
+      formData.files.add(MapEntry(
+          'image',
+          await MultipartFile.fromFile(imageFile.path,
+              filename: imageFile.path.split(RegExp(r'[/\\]')).last)));
+    }
+
     final response = await _api.dio.post(
       '/api/observations/project/$projectId',
-      data: FormData.fromMap(formData),
+      data: formData,
     );
     if (response.statusCode == 200 && response.data['success'] == true) {
       return ObservationItem.fromJson(response.data['data']);

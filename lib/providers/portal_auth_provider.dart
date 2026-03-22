@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/auth_models.dart';
 import '../services/portal_auth_service.dart';
+import '../services/notification_service.dart';
 import '../utils/web_error_handler.dart';
 import 'permission_provider.dart';
 
@@ -83,6 +84,14 @@ class PortalAuthProvider extends ChangeNotifier {
         Provider.of<PermissionProvider>(context, listen: false)
             .setPermissions(response.permissions, response.user.roleCode);
       }
+
+      // Initialize Firebase push notifications after successful login
+      NotificationService.initialize(
+        onTokenReceived: (token) => PortalAuthService.registerFcmToken(token),
+      ).catchError((e) {
+        // FCM init failure must never break the login flow
+        debugPrint('FCM init error: $e');
+      });
 
       return true;
     } catch (e) {

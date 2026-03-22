@@ -151,6 +151,15 @@ class PortalAuthService {
       rethrow;
     }
   }
+
+  // Register FCM token with backend (for push notifications)
+  static Future<void> registerFcmToken(String token) async {
+    try {
+      await _dio.post('/auth/portal/fcm-token', data: {'fcmToken': token});
+    } catch (e) {
+      // Non-critical — token registration failure must not affect app behaviour
+    }
+  }
 }
 
 

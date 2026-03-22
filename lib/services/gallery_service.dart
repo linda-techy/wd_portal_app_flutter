@@ -1,5 +1,8 @@
+import 'dart:io' show File;
+import 'dart:typed_data';
 import 'package:admin/constants.dart';
 import 'package:admin/services/api_service.dart';
+import 'package:dio/dio.dart';
 
 class GalleryImage {
   final int id;
@@ -91,5 +94,36 @@ class GalleryService {
       return response.data['data'] as int;
     }
     return 0;
+  }
+
+  Future<GalleryImage> uploadImage({
+    required int projectId,
+    File? file,
+    Uint8List? bytes,
+    required String fileName,
+    String? caption,
+    String? locationTag,
+    List<String>? tags,
+  }) async {
+    final MultipartFile multipartFile = bytes != null
+        ? MultipartFile.fromBytes(bytes, filename: fileName)
+        : await MultipartFile.fromFile(file!.path, filename: fileName);
+
+    final formData = FormData.fromMap({
+      'image': multipartFile,
+      if (caption != null && caption.isNotEmpty) 'caption': caption,
+      if (locationTag != null && locationTag.isNotEmpty)
+        'locationTag': locationTag,
+      if (tags != null && tags.isNotEmpty) 'tags': tags,
+    });
+
+    final response = await _api.dio.post(
+      '/api/gallery/project/$projectId',
+      data: formData,
+    );
+    if (response.statusCode == 200 && response.data['success'] == true) {
+      return GalleryImage.fromJson(response.data['data']);
+    }
+    throw Exception(response.data['message'] ?? 'Failed to upload image');
   }
 }
