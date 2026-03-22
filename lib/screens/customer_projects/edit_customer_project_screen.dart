@@ -75,6 +75,7 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
 
   // Project Manager
   TeamMember? _selectedProjectManager;
+  final List<TeamMember> _potentialProjectManagers = [];
 
 
 
@@ -251,8 +252,8 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
 
 
 
-      // Filter for Project Managers (Portal Users)
-       final allPortalUsersMember = portalUsers.map((user) => TeamMember(
+      // All portal users as TeamMembers (used for team member list & PM pre-select)
+      final allPortalUsersMember = portalUsers.map((user) => TeamMember(
         id: user.id.toString(),
         firstName: user.firstName,
         lastName: user.lastName,
@@ -260,6 +261,32 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
         type: 'PORTAL',
         designation: portalRoleMap[user.roleId] ?? '',
       )).toList();
+
+      // Find the "Project Manager" role to restrict the PM dropdown
+      int? pmRoleId;
+      try {
+        final pmRole = roles.firstWhere(
+          (r) =>
+              (r.code?.toUpperCase() == 'PM') ||
+              (r.code?.toUpperCase() == 'PROJECT_MANAGER') ||
+              (r.name.toLowerCase() == 'project manager') ||
+              (r.name.toUpperCase() == 'PROJECT_MANAGER'),
+        );
+        pmRoleId = pmRole.id;
+      } catch (_) {
+        // Role not found — fall back to showing all portal users
+      }
+
+      // PM dropdown list: only users with PM role (fallback: all portal users)
+      final pmOnlyMembers = pmRoleId != null
+          ? allPortalUsersMember.where((m) {
+              final user = portalUsers.firstWhere(
+                (u) => u.id.toString() == m.id,
+                orElse: () => portalUsers.first,
+              );
+              return user.roleId == pmRoleId;
+            }).toList()
+          : allPortalUsersMember;
 
 
       // Find admin role ID for Portal Users
@@ -361,8 +388,12 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
           _filteredLeads = leads;
           _customers = customers;
           
+          // Populate project manager list — PM-role users only (or all if role absent)
+          _potentialProjectManagers
+            ..clear()
+            ..addAll(pmOnlyMembers);
+
           // Pre-select Project Manager
-          // _potentialProjectManagers removed as it was unused
           if (widget.project.projectManagerId != null) {
             try {
               _selectedProjectManager = allPortalUsersMember.firstWhere((m) => m.id == widget.project.projectManagerId.toString() && m.type == 'PORTAL');
@@ -1245,6 +1276,35 @@ class _EditCustomerProjectScreenState extends State<EditCustomerProjectScreen> {
                         const SizedBox(height: AppTheme.spacingXS),
                         _buildLeadSearchDropdown(),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingMD),
+
+                  // Project Manager Selection
+                  EntranceAnimation(
+                    delay: const Duration(milliseconds: 475),
+                    child: DropdownButtonFormField<TeamMember>(
+                      value: _selectedProjectManager,
+                      decoration: const InputDecoration(
+                        labelText: 'Project Manager',
+                        hintText: 'Select Project Manager',
+                      ),
+                      items: _potentialProjectManagers.map((member) {
+                        return DropdownMenuItem(
+                          value: member,
+                          child: Text(member.fullName),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedProjectManager = value;
+                          // Auto-add to team members if not present
+                          if (value != null && !_selectedTeamMembers.any((m) => m.id == value.id && m.type == value.type)) {
+                            _selectedTeamMembers.add(value);
+                          }
+                        });
+                      },
+                      validator: (value) => null, // Optional
                     ),
                   ),
                   const SizedBox(height: AppTheme.spacingMD),

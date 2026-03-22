@@ -326,13 +326,43 @@ class _AddCustomerProjectScreenState extends State<AddCustomerProjectScreen> {
         }
       }
 
+      // Find the "Project Manager" role ID to filter the dropdown
+      int? pmRoleId;
+      try {
+        final pmRole = roles.firstWhere(
+          (r) =>
+              (r.code?.toUpperCase() == 'PM') ||
+              (r.code?.toUpperCase() == 'PROJECT_MANAGER') ||
+              (r.name.toLowerCase() == 'project manager') ||
+              (r.name.toUpperCase() == 'PROJECT_MANAGER'),
+        );
+        pmRoleId = pmRole.id;
+      } catch (_) {
+        // Role not found — will show all portal users as fallback
+      }
+
+      // Build project manager list — only users with PM role, or all portal users if role unset
+      final List<TeamMember> projectManagers = portalUsers
+          .where((user) => pmRoleId == null || user.roleId == pmRoleId)
+          .map((user) => TeamMember(
+                id: user.id.toString(),
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                type: 'PORTAL',
+                designation: portalRoleMap[user.roleId] ?? '',
+              ))
+          .toList();
+
       if (mounted) {
         setState(() {
           _leads = leads;
           _filteredLeads = leads;
           _customers = customers;
           _teamMembers = allTeamMembers;
-          _teamMembers = allTeamMembers;
+          _potentialProjectManagers
+            ..clear()
+            ..addAll(projectManagers);
           _selectedTeamMembers = autoSelectedAdmins;
           _isLoading = false;
           _isPageLoading = false;
