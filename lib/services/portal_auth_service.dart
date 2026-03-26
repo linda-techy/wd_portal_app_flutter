@@ -98,6 +98,19 @@ class PortalAuthService {
     }
   }
 
+  // Get stored user info
+  static Future<Map<String, dynamic>?> getUserInfo() async {
+    try {
+      final userInfoString = await _storage.read(key: 'user_info');
+      if (userInfoString != null && userInfoString.isNotEmpty) {
+        return jsonDecode(userInfoString);
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   // Get stored permissions
   static Future<List<String>> getPermissions() async {
     try {
@@ -108,6 +121,15 @@ class PortalAuthService {
       return [];
     } catch (e) {
       return [];
+    }
+  }
+
+  // Get stored permissions as string
+  static Future<String?> getPermissionsString() async {
+    try {
+      return await _storage.read(key: 'permissions');
+    } catch (e) {
+      return null;
     }
   }
 

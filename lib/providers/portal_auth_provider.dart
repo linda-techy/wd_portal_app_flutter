@@ -13,12 +13,57 @@ class PortalAuthProvider extends ChangeNotifier {
   bool _isLoading = true;
   bool _isAuthenticated = false;
 
+  PortalAuthProvider() {
+    // Auto-initialize on creation
+    _autoInitialize();
+  }
+
   // Getters
   UserInfo? get currentUser => _currentUser;
   UserInfo? get user => _currentUser;
   List<String> get permissions => _permissions;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _isAuthenticated;
+
+  // Auto-initialize without context (safe for router)
+  Future<void> _autoInitialize() async {
+    _setLoading(true);
+    try {
+      final isLoggedIn = await WebErrorHandler.safeAsyncWithDefault(
+        () => PortalAuthService.isLoggedIn(),
+        false,
+        operationName: 'Check Login Status',
+      ).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          debugPrint('Auth check timed out after 5 seconds');
+          return false;
+        },
+      );
+
+      if (isLoggedIn) {
+        // Load user data without context for initial check
+        try {
+          final userJson = await PortalAuthService.getUserInfo();
+          final permissions = await PortalAuthService.getPermissions();
+          
+          if (userJson != null) {
+            _currentUser = UserInfo.fromJson(userJson);
+            _permissions = permissions;
+            _isAuthenticated = true;
+          }
+        } catch (e) {
+          debugPrint('Failed to load user data: $e');
+          _isAuthenticated = false;
+        }
+      }
+    } catch (e) {
+      debugPrint('Auth auto-initialization error: $e');
+      _isAuthenticated = false;
+    } finally {
+      _setLoading(false);
+    }
+  }
 
   // Initialize auth state
   Future<void> initializeAuth(BuildContext? context) async {

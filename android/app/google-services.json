@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "27851314244",
+    "project_id": "walldot-portal-73856",
+    "storage_bucket": "walldot-portal-73856.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:27851314244:android:3e380cb09a6790d1df9811",
+        "android_client_info": {
+          "package_name": "com.example.wd_portal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1EiEgMRPu5fvrx4cun0yM0MHHCf-SMYw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

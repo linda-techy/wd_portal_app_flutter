@@ -10,6 +10,7 @@ import 'package:admin/screens/projects/widgets/project_phase_badge.dart';
 import 'package:admin/screens/projects/widgets/project_filters_widget.dart';
 import 'package:admin/screens/projects/project_detail_screen.dart';
 import 'package:admin/screens/projects/project_form_dialog.dart';
+import 'package:admin/widgets/error_state_widget.dart';
 import 'package:intl/intl.dart';
 
 class ProjectsScreen extends StatefulWidget {
@@ -257,32 +258,9 @@ class ProjectsScreenState extends State<ProjectsScreen> {
         }
 
         if (provider.error != null) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 64, color: AppTheme.statusError),
-                const SizedBox(height: AppTheme.spacingMD),
-                Text(
-                  'Error loading projects',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: AppTheme.spacingSM),
-                Text(
-                  provider.error!,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.textSecondary,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppTheme.spacingLG),
-                ElevatedButton.icon(
-                  onPressed: _loadData,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Retry'),
-                ),
-              ],
-            ),
+          return ErrorStateWidget(
+            message: provider.error!,
+            onRetry: _loadData,
           );
         }
 

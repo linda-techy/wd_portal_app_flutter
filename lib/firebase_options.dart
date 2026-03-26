@@ -34,29 +34,30 @@ class DefaultFirebaseOptions {
   // ─── REPLACE ALL VALUES BELOW ────────────────────────────────────────────
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'REPLACE_WITH_WEB_API_KEY',
-    appId: 'REPLACE_WITH_WEB_APP_ID',
-    messagingSenderId: 'REPLACE_WITH_SENDER_ID',
-    projectId: 'REPLACE_WITH_PROJECT_ID',
-    authDomain: 'REPLACE_WITH_PROJECT_ID.firebaseapp.com',
-    storageBucket: 'REPLACE_WITH_PROJECT_ID.appspot.com',
-    measurementId: 'REPLACE_WITH_MEASUREMENT_ID',
+    apiKey: 'AIzaSyCeX1XoNNCCqLlRalpjGmHEHwmkza23Nl0',
+    appId: '1:27851314244:web:63e66501eb4b5c07df9811',
+    messagingSenderId: '27851314244',
+    projectId: 'walldot-portal-73856',
+    authDomain: 'walldot-portal-73856.firebaseapp.com',
+    storageBucket: 'walldot-portal-73856.firebasestorage.app',
+    measurementId: 'G-J9XD9PXCE5',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'REPLACE_WITH_ANDROID_API_KEY',
-    appId: 'REPLACE_WITH_ANDROID_APP_ID',
-    messagingSenderId: 'REPLACE_WITH_SENDER_ID',
-    projectId: 'REPLACE_WITH_PROJECT_ID',
-    storageBucket: 'REPLACE_WITH_PROJECT_ID.appspot.com',
+    apiKey: 'AIzaSyC1EiEgMRPu5fvrx4cun0yM0MHHCf-SMYw',
+    appId: '1:27851314244:android:3e380cb09a6790d1df9811',
+    messagingSenderId: '27851314244',
+    projectId: 'walldot-portal-73856',
+    storageBucket: 'walldot-portal-73856.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'REPLACE_WITH_IOS_API_KEY',
-    appId: 'REPLACE_WITH_IOS_APP_ID',
-    messagingSenderId: 'REPLACE_WITH_SENDER_ID',
-    projectId: 'REPLACE_WITH_PROJECT_ID',
-    storageBucket: 'REPLACE_WITH_PROJECT_ID.appspot.com',
-    iosBundleId: 'REPLACE_WITH_IOS_BUNDLE_ID',
+    apiKey: 'AIzaSyB45KB_5ChiBY16YuHVqqLBLEeFTk2DbX4',
+    appId: '1:27851314244:ios:e3c8bfc4ce3a5d07df9811',
+    messagingSenderId: '27851314244',
+    projectId: 'walldot-portal-73856',
+    storageBucket: 'walldot-portal-73856.firebasestorage.app',
+    iosBundleId: 'com.example.wdPortal',
   );
+
 }

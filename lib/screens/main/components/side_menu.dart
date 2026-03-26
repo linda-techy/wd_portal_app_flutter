@@ -331,7 +331,57 @@ class SideMenu extends StatelessWidget {
       ));
     }
 
+    // ACCESS CONTROL (ACL) - Admin only
+    if (permissions.canEditPortalUser) {
+      menuItems.add(_buildMenuItemWithIcon(
+        context,
+        title: 'Access Control',
+        icon: Icons.shield_outlined,
+        index: 24,
+      ));
+    }
+
     return menuItems;
+  }
+
+  Widget _buildMenuItemWithIcon(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required int index,
+  }) {
+    final isSelected = selectedIndex == index;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: isSelected ? AppTheme.coralRed : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        onTap: () {
+          onMenuItemClick(index);
+          if (isDrawer) {
+            Navigator.of(context).pop();
+          }
+        },
+        horizontalTitleGap: 0.0,
+        selected: isSelected,
+        selectedTileColor: Colors.transparent,
+        leading: Icon(
+          icon,
+          color: isSelected ? Colors.white : Colors.grey[600],
+          size: 18,
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.grey[700],
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildMenuItem(

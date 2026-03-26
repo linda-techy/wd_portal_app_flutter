@@ -9,12 +9,12 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-comp
 
 // REPLACE with your actual Firebase web config
 firebase.initializeApp({
-  apiKey: 'REPLACE_WITH_WEB_API_KEY',
-  authDomain: 'REPLACE_WITH_PROJECT_ID.firebaseapp.com',
-  projectId: 'REPLACE_WITH_PROJECT_ID',
-  storageBucket: 'REPLACE_WITH_PROJECT_ID.appspot.com',
-  messagingSenderId: 'REPLACE_WITH_SENDER_ID',
-  appId: 'REPLACE_WITH_WEB_APP_ID',
+  apiKey: 'AIzaSyCeX1XoNNCCqLlRalpjGmHEHwmkza23Nl0',
+  authDomain: 'walldot-portal-73856.firebaseapp.com',
+  projectId: 'walldot-portal-73856',
+  storageBucket: 'walldot-portal-73856.firebasestorage.app',
+  messagingSenderId: '27851314244',
+  appId: '1:27851314244:web:63e66501eb4b5c07df9811',
 });
 
 const messaging = firebase.messaging();

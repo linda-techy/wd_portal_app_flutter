@@ -19,6 +19,8 @@ import 'package:admin/utils/error_handler.dart';
 import 'package:admin/utils/motion_toast.dart';
 import 'package:admin/utils/file_download_helper.dart';
 import 'package:admin/config/app_config.dart';
+import 'package:admin/utils/debouncer.dart';
+import 'package:admin/widgets/error_state_widget.dart';
 import 'add_lead_screen.dart';
 import 'edit_lead_screen.dart';
 import 'lead_quotations_screen.dart';
@@ -66,6 +68,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
   String? errorMessage;
   final LeadService _leadService = LeadService();
   final ScrollController _scrollController = ScrollController();
+  final Debouncer _debouncer = Debouncer();
   List<PortalUser> teamMembers = [];
 
   PaginationParams get _paginationParams {
@@ -132,6 +135,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
   void dispose() {
     _scrollController.dispose();
     _searchController.dispose();
+    _debouncer.dispose();
     super.dispose();
   }
 
@@ -492,12 +496,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
               ),
               onChanged: (value) {
                 setState(() => searchQuery = value.isEmpty ? null : value);
-                // Debounce: trigger search after user stops typing
-                Future.delayed(const Duration(milliseconds: 400), () {
-                  if (mounted && (searchQuery == value || (searchQuery == null && value.isEmpty))) {
-                    _onFilterChanged();
-                  }
-                });
+                _debouncer.run(_onFilterChanged);
               },
             ),
             const SizedBox(height: defaultPadding),
@@ -525,56 +524,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
             ),
             const SizedBox(height: defaultPadding),
             if (errorMessage != null)
-              Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Colors.red.withOpacity(0.7),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Error',
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: Colors.red,
-                                fontWeight: FontWeight.bold,
-                              ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      errorMessage!,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.red.shade700,
-                          ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: _loadLeads,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Retry'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        OutlinedButton.icon(
-                          onPressed: _clearAllFilters,
-                          icon: const Icon(Icons.clear_all),
-                          label: const Text('Clear Filters'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              )
+              ErrorStateWidget(message: errorMessage!, onRetry: _loadLeads)
             else
               Column(
                 children: [

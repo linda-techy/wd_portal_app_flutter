@@ -29,7 +29,9 @@ import 'package:admin/features/partnerships/presentation/screens/partnerships_ad
 import 'package:admin/screens/notifications/portal_notification_screen.dart';
 import 'package:admin/services/api_service.dart';
 import 'package:admin/services/portal_notification_service.dart';
+import 'package:admin/config/router.dart' show indexToPath;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/theme/responsive_utils.dart';
 import 'package:admin/theme/app_theme.dart';
@@ -38,7 +40,12 @@ import 'package:badges/badges.dart' as badges;
 import 'components/side_menu.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  /// When provided by GoRouter's ShellRoute, this widget replaces the
+  /// legacy index-based screen lookup. Falls back to [_screens[selectedIndex]]
+  /// when null (non-GoRouter usage).
+  final Widget? child;
+
+  const MainScreen({super.key, this.child});
 
   @override
   MainScreenState createState() => MainScreenState();
@@ -104,6 +111,7 @@ class MainScreenState extends State<MainScreen> {
 
   void _onMenuItemClick(int index) {
     context.read<MenuAppController>().setSelectedIndex(index);
+    context.go(indexToPath(index));
   }
 
   String _getScreenTitle(int index) {
@@ -224,12 +232,12 @@ class MainScreenState extends State<MainScreen> {
                       constraints: BoxConstraints(
                         maxWidth: MediaQuery.of(context).size.width,
                       ),
-                      child: _screens[selectedIndex],
+                      child: widget.child ?? _screens[selectedIndex],
                     ),
                   ),
                 ],
                )
-             : _screens[selectedIndex],
+             : (widget.child ?? _screens[selectedIndex]),
       ),
       bottomNavigationBar: ResponsiveUtils.isMobile(context) || ResponsiveUtils.isTablet(context)
           ? BottomNavigationBar(

@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -10,7 +9,6 @@ import 'package:admin/utils/error_handler.dart';
 import 'package:admin/utils/file_upload_helper.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
 import 'package:admin/widgets/authenticated_image.dart';
-import 'dart:io' show File;
 
 class GalleryScreen extends StatefulWidget {
   final int projectId;

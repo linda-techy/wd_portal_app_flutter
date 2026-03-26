@@ -27,14 +27,16 @@ class NotificationService {
 
   // IMPORTANT: Replace with your actual VAPID key from Firebase Console
   // Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Key pair
-  static const String _vapidKey = 'REPLACE_WITH_VAPID_KEY';
+  static const String _vapidKey =
+      'BM9PxWKhyYLg8GllNdbD17SHP7vXU9ziAqAURLNvOMJu_UzsZA7-S_RcVTCNljRmmlGF4CxiW9qN1-bsNR6VSQQ';
 
   /// Initialize Firebase, request permissions, register handlers and send the
   /// FCM token to the backend via [onTokenReceived].
   static Future<void> initialize({
     required Future<void> Function(String token) onTokenReceived,
   }) async {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
 
     // Request notification permission (iOS + Android 13+)
     final settings = await FirebaseMessaging.instance.requestPermission(
@@ -63,7 +65,8 @@ class NotificationService {
         ?.createNotificationChannel(channel);
 
     // Get token and register with backend
-    final token = await FirebaseMessaging.instance.getToken(vapidKey: _vapidKey);
+    final token =
+        await FirebaseMessaging.instance.getToken(vapidKey: _vapidKey);
     if (token != null) await onTokenReceived(token);
 
     // Refresh token handler

@@ -1,6 +1,6 @@
 import 'package:admin/controllers/menu_app_controller.dart';
-// import 'package:admin/screens/main/main_screen.dart';
 import 'package:admin/config/app_config.dart';
+import 'package:admin/config/router.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
 import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/providers/procurement_provider.dart';
@@ -22,7 +22,6 @@ import 'package:admin/services/project_tracking_service.dart';
 import 'package:admin/services/vendor_payment_service.dart';
 import 'package:admin/utils/api_connection_test.dart';
 import 'package:admin/utils/web_error_handler.dart';
-import 'package:admin/widgets/portal_auth_wrapper.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +29,7 @@ import 'package:provider/provider.dart';
 import 'package:admin/utils/navigation_service.dart';
 import 'package:admin/services/notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:go_router/go_router.dart';
 
 void main() async {
   // Ensure Flutter binding is initialized
@@ -116,13 +116,27 @@ void _testApiConnectionAsync() {
   });
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  // Create auth provider before the router so it can be used as
+  // refreshListenable. The same instance is also registered in MultiProvider.
+  final PortalAuthProvider _authProvider = PortalAuthProvider();
+  late final GoRouter _router = buildAppRouter(_authProvider);
+
+  @override
+  void dispose() {
+    _authProvider.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Initialize services first
     final apiService = ApiService();
     final vendorPaymentService = VendorPaymentService(apiService);
     final projectTrackingService = ProjectTrackingService(apiService);
@@ -136,10 +150,8 @@ class MyApp extends StatelessWidget {
         // Menu controller
         ChangeNotifierProvider(create: (_) => MenuAppController()),
 
-        // Auth provider
-        ChangeNotifierProvider(
-          create: (_) => PortalAuthProvider(),
-        ),
+        // Auth provider — same instance used by the router
+        ChangeNotifierProvider<PortalAuthProvider>.value(value: _authProvider),
 
         // Permission provider
         ChangeNotifierProvider(create: (_) => PermissionProvider()),
@@ -163,14 +175,12 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
             create: (_) => VendorPaymentProvider(vendorPaymentService)),
       ],
-      child: MaterialApp(
+      child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
-        navigatorKey: NavigationService.navigatorKey,
         scaffoldMessengerKey: NavigationService.scaffoldMessengerKey,
+        routerConfig: _router,
         title: AppConfig.appName,
-        // Use new construction-appropriate theme
         theme: AppTheme.lightTheme,
-        home: const PortalAuthWrapper(),
       ),
     );
   }
