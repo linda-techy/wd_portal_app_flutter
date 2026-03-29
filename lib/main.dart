@@ -29,6 +29,7 @@ import 'package:provider/provider.dart';
 import 'package:admin/utils/navigation_service.dart';
 import 'package:admin/services/notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:app_links/app_links.dart';
 import 'package:go_router/go_router.dart';
 
 void main() async {
@@ -128,6 +129,35 @@ class _MyAppState extends State<MyApp> {
   // refreshListenable. The same instance is also registered in MultiProvider.
   final PortalAuthProvider _authProvider = PortalAuthProvider();
   late final GoRouter _router = buildAppRouter(_authProvider);
+  final AppLinks _appLinks = AppLinks();
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen for incoming deep links while the app is running (foreground).
+    // Handles wdportal:// scheme and https://portal.walldotbuilders.com links.
+    if (!kIsWeb) {
+      _appLinks.uriLinkStream.listen((uri) {
+        _handleDeepLink(uri);
+      }, onError: (_) {});
+
+      // Handle the initial link if the app was launched from a deep link.
+      _appLinks.getInitialLink().then((uri) {
+        if (uri != null) _handleDeepLink(uri);
+      }).catchError((_) {});
+    }
+  }
+
+  /// Parses the incoming URI and navigates to the correct screen.
+  void _handleDeepLink(Uri uri) {
+    final path = uri.path;
+    final params = uri.queryParameters;
+    if (path == '/reset-password' && params.containsKey('token')) {
+      _router.go('/reset-password?token=${params['token']}');
+    } else if (path == '/forgot-password') {
+      _router.go('/forgot-password');
+    }
+  }
 
   @override
   void dispose() {

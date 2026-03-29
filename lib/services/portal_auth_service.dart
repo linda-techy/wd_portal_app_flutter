@@ -1,7 +1,12 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:admin/config/app_config.dart';
 import '../models/auth_models.dart';
+import '../providers/portal_auth_provider.dart';
+import '../utils/navigation_service.dart';
 import 'storage_service.dart';
 
 class PortalAuthService {
@@ -174,6 +179,38 @@ class PortalAuthService {
     }
   }
 
+  // ── Password Reset ─────────────────────────────────────────────────────────
+
+  /// Sends a password-reset email. Always succeeds (backend never reveals
+  /// whether the email address is registered, to prevent enumeration).
+  static Future<void> forgotPassword(String email) async {
+    try {
+      await _dio.post('/auth/forgot-password', data: {'email': email});
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 400) {
+        throw Exception(e.response?.data?['error'] ?? 'Invalid email address');
+      }
+      throw Exception('Failed to send reset email. Please try again.');
+    }
+  }
+
+  /// Validates the reset token and sets a new password.
+  static Future<void> resetPassword(String token, String newPassword) async {
+    try {
+      final response = await _dio.post('/auth/reset-password', data: {
+        'token': token,
+        'newPassword': newPassword,
+      });
+      // Any 2xx is success — check for error body just in case
+      if (response.statusCode != 200) {
+        throw Exception(response.data?['error'] ?? 'Password reset failed');
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data?['error'];
+      throw Exception(msg ?? 'Password reset failed. Please try again.');
+    }
+  }
+
   // Register FCM token with backend (for push notifications)
   static Future<void> registerFcmToken(String token) async {
     try {
@@ -185,7 +222,7 @@ class PortalAuthService {
 }
 
 
-// Portal-specific auth interceptor
+// Portal-specific auth interceptor (used by PortalAuthService._dio)
 class PortalAuthInterceptor extends Interceptor {
   final StorageService _storage = StorageService();
   final Dio _dio;
@@ -193,64 +230,119 @@ class PortalAuthInterceptor extends Interceptor {
 
   PortalAuthInterceptor(this._dio);
 
+  // ── Public auth paths that should never trigger token injection / 401 loop ──
+  static const _publicPaths = [
+    '/auth/login',
+    '/auth/refresh-token',
+    '/auth/logout',
+    '/auth/forgot-password',
+    '/auth/reset-password',
+  ];
+
+  static bool _isPublicPath(String path) =>
+      _publicPaths.any((p) => path.contains(p));
+
+  // ── Request ───────────────────────────────────────────────────────────────
+
   @override
   void onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
-    // Skip token for auth endpoints
-    if (options.path.contains('/auth/login') ||
-        options.path.contains('/auth/refresh-token') ||
-        options.path.contains('/auth/logout')) {
+    if (_isPublicPath(options.path)) {
       return handler.next(options);
     }
-
-    // Add access token to request
     final accessToken = await _storage.read(key: 'access_token');
     if (accessToken != null) {
       options.headers['Authorization'] = 'Bearer $accessToken';
     }
-
     return handler.next(options);
   }
 
+  // ── Error ─────────────────────────────────────────────────────────────────
+
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.response?.statusCode == 401 && !_isRefreshing) {
+    final status = err.response?.statusCode;
+
+    if (status == 401 && !_isPublicPath(err.requestOptions.path)) {
+      if (_isRefreshing) {
+        // Already tried refreshing — session is expired.
+        await _expireSession();
+        _isRefreshing = false;
+        return handler.next(err);
+      }
+
       _isRefreshing = true;
 
-      try {
-        // Try to refresh the token
-        final refreshToken = await _storage.read(key: 'refresh_token');
-        if (refreshToken != null) {
-          final response = await _dio.post(
-            '/auth/refresh-token',
-            data: {'refreshToken': refreshToken},
-          );
-
-          final newAccessToken = response.data['accessToken'];
-          final newRefreshToken = response.data['refreshToken'];
-          
-          await _storage.write(key: 'access_token', value: newAccessToken);
-          if (newRefreshToken != null) {
-            await _storage.write(key: 'refresh_token', value: newRefreshToken);
-          }
-
-          // Retry the original request with new token
-          final originalRequest = err.requestOptions;
-          originalRequest.headers['Authorization'] = 'Bearer $newAccessToken';
-
-          final retryResponse = await _dio.fetch(originalRequest);
-          _isRefreshing = false;
-          return handler.resolve(retryResponse);
-        }
-      } catch (e) {
-        // Refresh failed, clear tokens and redirect to login
-        await _storage.deleteAll();
+      final refreshToken = await _storage.read(key: 'refresh_token');
+      if (refreshToken == null) {
+        await _expireSession();
         _isRefreshing = false;
-        // You might want to emit an event here to notify the app to redirect to login
+        return handler.next(err);
+      }
+
+      try {
+        final response = await _dio.post(
+          '/auth/refresh-token',
+          data: {'refreshToken': refreshToken},
+        );
+
+        final newAccessToken = response.data['accessToken'];
+        final newRefreshToken = response.data['refreshToken'];
+
+        await _storage.write(key: 'access_token', value: newAccessToken);
+        if (newRefreshToken != null) {
+          await _storage.write(key: 'refresh_token', value: newRefreshToken);
+        }
+
+        // Retry the original request with the new token.
+        final retried = err.requestOptions
+          ..headers['Authorization'] = 'Bearer $newAccessToken';
+        final retryResponse = await _dio.fetch(retried);
+        _isRefreshing = false;
+        return handler.resolve(retryResponse);
+      } catch (_) {
+        // Refresh failed — force logout.
+        await _expireSession();
+        _isRefreshing = false;
+        return handler.next(err);
       }
     }
 
     _isRefreshing = false;
     return handler.next(err);
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  /// Clears stored tokens, notifies [PortalAuthProvider] so GoRouter's
+  /// refreshListenable fires and redirects to /login automatically.
+  Future<void> _expireSession() async {
+    await _storage.deleteAll();
+
+    final ctx = NavigationService.navigatorKey.currentContext;
+    if (ctx != null && ctx.mounted) {
+      try {
+        Provider.of<PortalAuthProvider>(ctx, listen: false).forceExpireSession();
+      } catch (_) {
+        GoRouter.of(ctx).go('/login');
+      }
+    }
+
+    _showSnackBar('Your session has expired. Please log in again.',
+        color: Colors.orange.shade700);
+  }
+
+  void _showSnackBar(String message, {required Color color}) {
+    NavigationService.scaffoldMessengerKey.currentState?.showSnackBar(
+      SnackBar(
+        content: Text(message,
+            style: const TextStyle(color: Colors.white, fontSize: 13)),
+        backgroundColor: color,
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
 }

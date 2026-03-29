@@ -45,6 +45,20 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Custom URL scheme for deep linking (password reset links) -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.walldot.portal</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>wdportal</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs access to your location for site visit check-in and check-out verification.</string>
 	<key>NSLocationAlwaysUsageDescription</key>

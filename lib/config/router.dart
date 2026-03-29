@@ -31,6 +31,8 @@ import 'package:admin/screens/inventory/inventory_dashboard_screen.dart';
 import 'package:admin/screens/finance/finance_dashboard_screen.dart';
 import 'package:admin/features/partnerships/presentation/screens/partnerships_admin_screen.dart';
 import 'package:admin/screens/acl/acl_screen.dart';
+import 'package:admin/screens/auth/forgot_password_screen.dart';
+import 'package:admin/screens/auth/reset_password_screen.dart';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -92,9 +94,13 @@ GoRouter buildAppRouter(PortalAuthProvider authProvider) {
 
       final onLogin = state.matchedLocation == '/login';
       final onLoading = state.matchedLocation == '/loading';
+      final onForgotPassword = state.matchedLocation == '/forgot-password';
+      final onResetPassword = state.matchedLocation.startsWith('/reset-password');
 
       if (!auth.isAuthenticated) {
-        return (onLogin || onLoading) ? null : '/login';
+        return (onLogin || onLoading || onForgotPassword || onResetPassword)
+            ? null
+            : '/login';
       }
       // Authenticated
       if (onLogin || onLoading) return '/';
@@ -108,6 +114,17 @@ GoRouter buildAppRouter(PortalAuthProvider authProvider) {
       GoRoute(
         path: '/login',
         builder: (_, __) => const PortalLoginScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (_, __) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (context, state) {
+          final token = state.uri.queryParameters['token'] ?? '';
+          return ResetPasswordScreen(token: token);
+        },
       ),
 
       // ── Authenticated shell ─────────────────────────────────────────────

@@ -258,6 +258,19 @@ class PortalAuthProvider extends ChangeNotifier {
       }
     }
   }
+  /// Called by the auth interceptor when a 401 is received and the token
+  /// refresh has failed (or no refresh token exists).
+  /// Clears all in-memory auth state and fires [notifyListeners()] so that
+  /// GoRouter's [refreshListenable] immediately triggers a redirect to /login.
+  /// Does NOT call the logout API endpoint (tokens are already invalid).
+  void forceExpireSession() {
+    _currentUser = null;
+    _permissions = [];
+    _isAuthenticated = false;
+    _isLoading = false;
+    notifyListeners();
+  }
+
   // Change Password
   Future<void> changePassword(String currentPassword, String newPassword) async {
     if (_currentUser == null) return;

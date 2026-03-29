@@ -6,6 +6,7 @@ import '../../widgets/animations/entrance_animation.dart';
 import '../../widgets/animations/shake_widget.dart';
 import '../../widgets/components/premium_input.dart';
 import '../../widgets/components/premium_button.dart';
+import 'package:go_router/go_router.dart';
 import '../../providers/portal_auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/design_tokens.dart';
@@ -319,6 +320,31 @@ class _PortalLoginScreenState extends State<PortalLoginScreen>
                       height: isMobile
                           ? DesignTokens.spacingLG
                           : DesignTokens.spacingXL),
+
+                  // Forgot password link — right-aligned, above sign in button
+                  EntranceAnimation(
+                    delay: const Duration(milliseconds: 250),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => context.go('/forgot-password'),
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          foregroundColor: AppTheme.coralRed,
+                        ),
+                        child: const Text(
+                          'Forgot Password?',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
                   // Login Button
                   EntranceAnimation(
