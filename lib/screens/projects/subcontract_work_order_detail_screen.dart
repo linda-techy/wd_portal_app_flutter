@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:admin/utils/error_handler.dart';
 import '../../services/subcontract_service.dart';
 import '../../services/api_service.dart';
 import '../../models/subcontract_models.dart';
@@ -92,9 +93,7 @@ class _SubcontractWorkOrderDetailScreenState
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
-        );
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }
@@ -120,9 +119,7 @@ class _SubcontractWorkOrderDetailScreenState
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
-        );
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }
@@ -165,9 +162,7 @@ class _SubcontractWorkOrderDetailScreenState
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
-        );
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }
@@ -584,11 +579,7 @@ class _SubcontractWorkOrderDetailScreenState
                 if (ctx.mounted) Navigator.pop(ctx, true);
               } catch (e) {
                 if (ctx.mounted) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    SnackBar(
-                        content: Text('Failed: $e'),
-                        backgroundColor: Colors.red),
-                  );
+                  ErrorHandler.showErrorSnackBar(ctx, e);
                 }
               }
             },

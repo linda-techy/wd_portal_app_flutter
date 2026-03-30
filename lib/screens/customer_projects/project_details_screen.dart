@@ -82,12 +82,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isRecalculating = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to recalculate: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }
@@ -142,9 +137,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       _loadProjectMembers();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to remove member: $e'), backgroundColor: Colors.red),
-        );
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }
@@ -233,11 +226,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                           _loadProjectMembers();
                         } catch (e) {
                           if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text('Failed to add member: $e'),
-                                  backgroundColor: Colors.red),
-                            );
+                            ErrorHandler.showErrorSnackBar(context, e);
                           }
                         }
                       },

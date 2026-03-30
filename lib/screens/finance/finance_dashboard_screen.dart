@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/constants.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/finance_provider.dart';
 import 'package:admin/models/finance_models.dart';
@@ -316,9 +317,7 @@ class _VendorBillsTabState extends State<VendorBillsTab> {
                   }
                 } catch (e) {
                   if (ctx.mounted) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(
-                      SnackBar(content: Text('Error: $e'), backgroundColor: errorColor),
-                    );
+                    ErrorHandler.showErrorSnackBar(ctx, e);
                   }
                 }
               },
@@ -571,9 +570,7 @@ class _LabourPaymentsTabState extends State<LabourPaymentsTab> {
                   }
                 } catch (e) {
                   if (ctx.mounted) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(
-                      SnackBar(content: Text('Error: $e'), backgroundColor: errorColor),
-                    );
+                    ErrorHandler.showErrorSnackBar(ctx, e);
                   }
                 }
               },

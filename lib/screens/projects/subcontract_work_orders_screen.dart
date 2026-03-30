@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/models/subcontract_models.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'package:admin/providers/subcontract_provider.dart';
 import 'package:admin/services/subcontract_service.dart';
 import 'package:admin/services/api_service.dart';
@@ -442,9 +443,7 @@ class _CreateSubcontractDialogState extends State<_CreateSubcontractDialog> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
-        );
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }

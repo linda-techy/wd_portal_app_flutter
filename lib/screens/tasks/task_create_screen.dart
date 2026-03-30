@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'package:admin/models/task_models.dart';
 import 'package:admin/services/task_service.dart';
 import 'package:admin/services/crm_service.dart';
@@ -51,9 +52,7 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
     } catch (e) {
       setState(() => _isLoadingData = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading data: $e')),
-        );
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }
@@ -97,9 +96,7 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error creating task: $e')),
-        );
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }

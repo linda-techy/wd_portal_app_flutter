@@ -245,9 +245,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
         );
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error loading document: $e')),
-          );
+          ErrorHandler.showErrorSnackBar(context, e);
         }
       }
     } else {
@@ -299,9 +297,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error viewing document: $e')),
-          );
+          ErrorHandler.showErrorSnackBar(context, e);
         }
       }
     }

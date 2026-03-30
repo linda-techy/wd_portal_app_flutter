@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'package:admin/features/procurement/data/models/material_indent.dart';
 import 'package:admin/features/procurement/data/models/vendor_quotation.dart';
 import 'package:admin/features/procurement/data/services/material_indent_service.dart';
@@ -44,8 +45,7 @@ class _QuotationManagementScreenState extends State<QuotationManagementScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isPageLoading = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+      ErrorHandler.showErrorSnackBar(context, e);
     }
   }
 
@@ -68,8 +68,7 @@ class _QuotationManagementScreenState extends State<QuotationManagementScreen> {
       _loadQuotations();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+      ErrorHandler.showErrorSnackBar(context, e);
     }
   }
 
@@ -263,8 +262,7 @@ class _AddQuoteDialogState extends State<_AddQuoteDialog> {
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+      ErrorHandler.showErrorSnackBar(context, e);
       setState(() => _submitting = false);
     }
   }

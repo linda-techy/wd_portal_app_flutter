@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'package:admin/features/partnerships/data/models/partner_model.dart';
 import 'package:admin/features/partnerships/data/services/partnership_admin_service.dart';
 import 'package:admin/theme/app_theme.dart';
@@ -89,9 +90,7 @@ class _PartnershipsAdminScreenState extends State<PartnershipsAdminScreen>
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load partners: $e'), backgroundColor: Colors.red),
-        );
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }
@@ -407,10 +406,7 @@ class _PartnershipsAdminScreenState extends State<PartnershipsAdminScreen>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Failed: $e'),
-          backgroundColor: Colors.red,
-        ));
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }

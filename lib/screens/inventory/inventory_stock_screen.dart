@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/models/inventory_models.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'package:admin/providers/inventory_stock_provider.dart';
 import 'package:admin/services/inventory_service.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
@@ -423,9 +424,7 @@ class _CreateStockAdjustmentDialogState extends State<_CreateStockAdjustmentDial
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
-        );
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }

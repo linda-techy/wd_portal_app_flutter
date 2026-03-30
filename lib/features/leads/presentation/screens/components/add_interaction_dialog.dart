@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:admin/utils/error_handler.dart';
 import '../../../data/models/lead_interaction.dart';
 import '../../../data/services/lead_service.dart';
 import 'package:intl/intl.dart';
@@ -107,9 +108,7 @@ class _AddInteractionDialogState extends State<AddInteractionDialog> {
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving activity: $e')),
-        );
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     } finally {
       if (mounted) {

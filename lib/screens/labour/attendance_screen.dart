@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/labour_provider.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'package:admin/models/customer_project.dart';
 import 'package:admin/services/crm_service.dart';
 import 'package:admin/services/labour_service.dart';
@@ -175,8 +176,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("Error: $e")));
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }

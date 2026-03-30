@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:admin/constants.dart';
+import 'package:admin/utils/error_handler.dart';
 import '../../data/models/lead.dart';
 import 'controllers/edit_lead_controller.dart';
 import 'components/form_sections.dart';
@@ -349,8 +350,7 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
         }
       } catch (e) {
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
+           ErrorHandler.showErrorSnackBar(context, e);
         }
       }
     }

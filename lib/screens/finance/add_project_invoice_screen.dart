@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/theme/app_theme.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'package:admin/providers/finance_provider.dart';
 import 'package:admin/models/finance_models.dart';
 import 'package:admin/models/customer_project.dart';
@@ -147,8 +148,7 @@ class _AddProjectInvoiceScreenState extends State<AddProjectInvoiceScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text("Error: $e")));
+          ErrorHandler.showErrorSnackBar(context, e);
         }
       }
     }

@@ -1,5 +1,6 @@
 import 'package:admin/features/finance/data/models/billing_models.dart';
 import 'package:admin/services/finance_service.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -38,7 +39,7 @@ class _MilestoneListScreenState extends State<MilestoneListScreen> {
       setState(() {
         _isPageLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading milestones: $e')));
+      ErrorHandler.showErrorSnackBar(context, e);
     }
   }
 
@@ -123,7 +124,7 @@ class _MilestoneListScreenState extends State<MilestoneListScreen> {
                     _loadMilestones();
                   } catch (e) {
                     if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                    ErrorHandler.showErrorSnackBar(context, e);
                   }
                 }
               },
@@ -143,7 +144,7 @@ class _MilestoneListScreenState extends State<MilestoneListScreen> {
           _loadMilestones();
       } catch (e) {
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error generating invoice: $e')));
+          ErrorHandler.showErrorSnackBar(context, e);
       }
   }
 
@@ -166,7 +167,7 @@ class _MilestoneListScreenState extends State<MilestoneListScreen> {
             _loadMilestones();
        } catch (e) {
            if (!mounted) return;
-           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+           ErrorHandler.showErrorSnackBar(context, e);
        }
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:admin/constants.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'package:admin/features/leads/data/models/lead_quotation.dart';
 import 'package:admin/features/leads/data/services/lead_quotation_service.dart';
 import 'package:intl/intl.dart';
@@ -319,9 +320,7 @@ class QuotationsScreenState extends State<QuotationsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: errorColor),
-        );
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }
@@ -353,9 +352,7 @@ class QuotationsScreenState extends State<QuotationsScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: errorColor),
-          );
+          ErrorHandler.showErrorSnackBar(context, e);
         }
       }
     }

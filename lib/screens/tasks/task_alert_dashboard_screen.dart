@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:admin/utils/error_handler.dart';
 import '../../models/task_models.dart';
 import '../../services/task_service.dart';
 
@@ -62,9 +63,7 @@ class _TaskAlertDashboardScreenState extends State<TaskAlertDashboardScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }

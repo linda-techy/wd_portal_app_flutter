@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'package:provider/provider.dart';
 
 import 'package:admin/theme/app_theme.dart';
@@ -310,9 +311,7 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
         }
       } catch (e) {
         if (mounted && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Delete failed: $e")),
-          );
+          ErrorHandler.showErrorSnackBar(context, e);
         }
       }
     }
@@ -366,9 +365,7 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Download failed: $e')),
-          );
+          ErrorHandler.showErrorSnackBar(context, e);
         }
       }
     } else {
@@ -452,9 +449,7 @@ class _UploadDocumentDialogState extends State<UploadDocumentDialog> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Upload failed: $e")),
-        );
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);

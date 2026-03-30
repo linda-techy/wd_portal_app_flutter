@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:admin/constants.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'package:admin/models/document_models.dart';
 import 'package:admin/models/customer_project.dart';
 import 'package:admin/services/document_service.dart';
@@ -377,9 +378,7 @@ class DocumentsScreenState extends State<DocumentsScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: errorColor),
-          );
+          ErrorHandler.showErrorSnackBar(context, e);
         }
       }
     }

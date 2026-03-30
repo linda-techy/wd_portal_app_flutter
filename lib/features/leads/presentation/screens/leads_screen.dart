@@ -974,9 +974,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting lead: $e')),
-        );
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }
@@ -1097,9 +1095,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Error converting lead: $e'),
-              backgroundColor: Colors.red));
+          ErrorHandler.showErrorSnackBar(context, e);
         }
       } finally {
         if (mounted) setState(() => _isPageLoading = false);

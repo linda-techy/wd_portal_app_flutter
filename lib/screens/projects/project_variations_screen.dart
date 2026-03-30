@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/models/project_variation.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'package:admin/providers/project_variation_provider.dart';
 import 'package:admin/services/project_tracking_service.dart';
 import 'package:admin/services/api_service.dart';
@@ -483,9 +484,7 @@ class _CreateVariationDialogState extends State<_CreateVariationDialog> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
-        );
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }

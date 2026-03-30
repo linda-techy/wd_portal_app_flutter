@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:admin/constants.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'package:admin/models/team_member.dart';
 import 'package:admin/services/crm_service.dart';
 
@@ -482,9 +483,7 @@ class TeamMembersScreenState extends State<TeamMembersScreen> {
                   }
                 } catch (e) {
                   if (ctx.mounted) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(
-                      SnackBar(content: Text('Error: $e'), backgroundColor: errorColor),
-                    );
+                    ErrorHandler.showErrorSnackBar(ctx, e);
                   }
                 }
               },
@@ -518,9 +517,7 @@ class TeamMembersScreenState extends State<TeamMembersScreen> {
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: errorColor),
-                  );
+                  ErrorHandler.showErrorSnackBar(context, e);
                 }
               }
             },

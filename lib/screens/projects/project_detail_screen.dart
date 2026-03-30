@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:admin/utils/error_handler.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/responsive_utils.dart';
 import '../../widgets/components/data_card.dart';
@@ -1197,9 +1198,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         );
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Upload failed: $e")),
-        );
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }

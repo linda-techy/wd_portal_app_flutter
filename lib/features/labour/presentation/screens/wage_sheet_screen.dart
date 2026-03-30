@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:admin/utils/error_handler.dart';
 import 'package:admin/features/labour/data/models/labour_models.dart';
 import 'package:admin/features/labour/data/services/labour_service.dart';
 import 'package:admin/services/crm_service.dart';
@@ -50,7 +51,7 @@ class _WageSheetScreenState extends State<WageSheetScreen> {
       }
     } catch (e) {
       if (mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading projects: $e')));
+         ErrorHandler.showErrorSnackBar(context, e);
          setState(() => _isPageLoading = false);
       }
     }
@@ -75,7 +76,7 @@ class _WageSheetScreenState extends State<WageSheetScreen> {
         _isLoading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ErrorHandler.showErrorSnackBar(context, e);
       }
     }
   }

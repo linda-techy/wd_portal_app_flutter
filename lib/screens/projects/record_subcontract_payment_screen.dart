@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:admin/utils/error_handler.dart';
 import '../../providers/subcontract_provider.dart';
 import '../../models/subcontract_models.dart';
 import '../../theme/app_theme.dart';
@@ -342,9 +343,7 @@ class _RecordSubcontractPaymentScreenState
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error recording payment: $e')),
-          );
+          ErrorHandler.showErrorSnackBar(context, e);
         }
       }
     }
