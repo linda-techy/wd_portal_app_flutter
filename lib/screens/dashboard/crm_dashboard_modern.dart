@@ -90,8 +90,8 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
       child: Column(
         children: List.generate(
           4,
-          (_) => Padding(
-            padding: const EdgeInsets.only(bottom: 16),
+          (_) => const Padding(
+            padding: EdgeInsets.only(bottom: 16),
             child: ShimmerLoading(
               width: double.infinity,
               height: 120,

@@ -221,7 +221,7 @@ class _NotificationTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       notification.body!,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
                         color: AppTheme.textSecondary,
                       ),
@@ -232,7 +232,7 @@ class _NotificationTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     _formatDate(notification.createdAt),
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 11,
                       color: AppTheme.textTertiary,
                     ),
@@ -272,7 +272,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -281,7 +281,7 @@ class _EmptyState extends StatelessWidget {
             size: 64,
             color: AppTheme.textTertiary,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             'No notifications yet',
             style: TextStyle(
@@ -289,7 +289,7 @@ class _EmptyState extends StatelessWidget {
               color: AppTheme.textSecondary,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             'New leads, tasks, and updates will appear here.',
             style: TextStyle(
