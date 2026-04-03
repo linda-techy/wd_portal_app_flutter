@@ -263,11 +263,12 @@ class PortalAuthProvider extends ChangeNotifier {
   /// Clears all in-memory auth state and fires [notifyListeners()] so that
   /// GoRouter's [refreshListenable] immediately triggers a redirect to /login.
   /// Does NOT call the logout API endpoint (tokens are already invalid).
-  void forceExpireSession() {
+  void forceExpireSession({PermissionProvider? permissionProvider}) {
     _currentUser = null;
     _permissions = [];
     _isAuthenticated = false;
     _isLoading = false;
+    permissionProvider?.clearPermissions();
     notifyListeners();
   }
 

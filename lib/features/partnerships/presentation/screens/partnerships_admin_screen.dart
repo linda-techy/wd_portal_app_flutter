@@ -41,7 +41,6 @@ class _PartnershipsAdminScreenState extends State<PartnershipsAdminScreen>
     {'value': 'vastu', 'label': 'Vastu'},
     {'value': 'land_consultant', 'label': 'Land Consultant'},
     {'value': 'corporate', 'label': 'Corporate'},
-    {'value': 'referral_client', 'label': 'Referral Client'},
   ];
 
   @override
@@ -543,7 +542,6 @@ class _PartnerCard extends StatelessWidget {
       case 'financial': return Colors.green;
       case 'material_supplier': return Colors.brown;
       case 'land_consultant': return Colors.orange;
-      case 'referral_client': return AppTheme.primaryBlue;
       default: return Colors.grey;
     }
   }
@@ -558,7 +556,6 @@ class _PartnerCard extends StatelessWidget {
       case 'vastu': return 'Vastu';
       case 'land_consultant': return 'Land Consultant';
       case 'corporate': return 'Corporate';
-      case 'referral_client': return 'Referral Client';
       default: return type;
     }
   }

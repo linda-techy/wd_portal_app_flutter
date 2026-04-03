@@ -2,8 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../config/app_config.dart';
 import '../providers/portal_auth_provider.dart';
 import '../utils/navigation_service.dart';
+import '../utils/web_redirect.dart';
 import 'storage_service.dart';
 
 /// HTTP interceptor for the main [ApiService] Dio instance.
@@ -121,18 +123,21 @@ class AuthInterceptor extends Interceptor {
     // 1. Clear persisted tokens.
     await _storage.deleteAll();
 
-    // 2. Notify PortalAuthProvider → GoRouter refreshListenable fires → /login.
+    // 2. Redirect to portal base URL (full page redirect on web).
+    redirectToUrl(AppConfig.portalBaseUrl);
+
+    // 3. Notify PortalAuthProvider → GoRouter refreshListenable fires → /login
+    //    (fallback for non-web / in case redirect is blocked).
     final ctx = NavigationService.navigatorKey.currentContext;
     if (ctx != null && ctx.mounted) {
       try {
         Provider.of<PortalAuthProvider>(ctx, listen: false).forceExpireSession();
       } catch (_) {
-        // Provider not available in this context — fall back to direct navigation.
         GoRouter.of(ctx).go('/login');
       }
     }
 
-    // 3. Inform the user.
+    // 4. Inform the user.
     _showSnackBar('Your session has expired. Please log in again.',
         color: Colors.orange.shade700);
   }

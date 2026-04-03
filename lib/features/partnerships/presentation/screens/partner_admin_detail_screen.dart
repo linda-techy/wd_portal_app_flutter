@@ -724,7 +724,6 @@ class _TypeBadge extends StatelessWidget {
       case 'financial': return 'Financial';
       case 'material_supplier': return 'Supplier';
       case 'land_consultant': return 'Land Consultant';
-      case 'referral_client': return 'Referral Client';
       default: return type;
     }
   }

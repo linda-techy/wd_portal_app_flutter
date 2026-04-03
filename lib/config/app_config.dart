@@ -13,6 +13,18 @@ class AppConfig {
   static const String _devApiUrl = 'http://localhost:8080';
   static const String _prodApiUrl = 'https://api.walldotbuilders.com';
 
+  // Portal App Base URL
+  // Used for full-page redirects (e.g. after session expiry on web).
+  // Override via: --dart-define=PORTAL_BASE_URL=https://portal.walldotbuilders.com
+  static const String _devPortalUrl = 'http://localhost:3001';
+  static const String _prodPortalUrl = 'https://portal.walldotbuilders.com';
+
+  static String get portalBaseUrl {
+    const String envPortalUrl = String.fromEnvironment('PORTAL_BASE_URL');
+    if (envPortalUrl.isNotEmpty) return envPortalUrl;
+    return isProduction ? _prodPortalUrl : _devPortalUrl;
+  }
+
   // Get API URL from environment variable (dart-define) or use defaults
   // In production (kReleaseMode), this will use the dart-define value or production URL
   // In development, this will use the dart-define value or localhost

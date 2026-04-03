@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:admin/config/app_config.dart';
 import '../models/auth_models.dart';
 import '../providers/portal_auth_provider.dart';
+import '../providers/permission_provider.dart';
 import '../utils/navigation_service.dart';
 import 'storage_service.dart';
 
@@ -322,7 +323,9 @@ class PortalAuthInterceptor extends Interceptor {
     final ctx = NavigationService.navigatorKey.currentContext;
     if (ctx != null && ctx.mounted) {
       try {
-        Provider.of<PortalAuthProvider>(ctx, listen: false).forceExpireSession();
+        final permProvider = Provider.of<PermissionProvider>(ctx, listen: false);
+        Provider.of<PortalAuthProvider>(ctx, listen: false)
+            .forceExpireSession(permissionProvider: permProvider);
       } catch (_) {
         GoRouter.of(ctx).go('/login');
       }
