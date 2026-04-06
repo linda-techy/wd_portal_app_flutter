@@ -183,8 +183,23 @@ class _MyAppState extends State<MyApp> {
         // Auth provider — same instance used by the router
         ChangeNotifierProvider<PortalAuthProvider>.value(value: _authProvider),
 
-        // Permission provider
-        ChangeNotifierProvider(create: (_) => PermissionProvider()),
+        // Permission provider stays in sync with auth state, including
+        // app restarts/idle resume where we restore session from storage.
+        ChangeNotifierProxyProvider<PortalAuthProvider, PermissionProvider>(
+          create: (_) => PermissionProvider(),
+          update: (_, auth, permissions) {
+            final permissionProvider = permissions ?? PermissionProvider();
+            final roleCode = auth.currentUser?.roleCode ?? '';
+
+            if (auth.isAuthenticated && roleCode.isNotEmpty) {
+              permissionProvider.setPermissions(auth.permissions, roleCode);
+            } else {
+              permissionProvider.clearPermissions();
+            }
+
+            return permissionProvider;
+          },
+        ),
 
         // Domain providers
         ChangeNotifierProvider(create: (_) => ProcurementProvider()),

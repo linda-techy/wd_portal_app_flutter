@@ -22,14 +22,32 @@ class PermissionProvider with ChangeNotifier {
 
   /// Set permissions from login response
   void setPermissions(List<String> permissions, String roleCode) {
-    _permissions = permissions;
-    _roleCode = roleCode;
-    _isAdmin = roleCode.toUpperCase() == 'ADMIN' || roleCode.toUpperCase() == 'ROLE_ADMIN';
+    final normalizedRoleCode = roleCode;
+    final normalizedPermissions = List<String>.from(permissions);
+    final nextIsAdmin = normalizedRoleCode.toUpperCase() == 'ADMIN' ||
+        normalizedRoleCode.toUpperCase() == 'ROLE_ADMIN';
+
+    final hasRoleChanged = _roleCode != normalizedRoleCode;
+    final hasAdminChanged = _isAdmin != nextIsAdmin;
+    final hasPermissionsChanged =
+        _permissions.length != normalizedPermissions.length ||
+            !_permissions.every(normalizedPermissions.contains);
+
+    if (!hasRoleChanged && !hasAdminChanged && !hasPermissionsChanged) {
+      return;
+    }
+
+    _permissions = normalizedPermissions;
+    _roleCode = normalizedRoleCode;
+    _isAdmin = nextIsAdmin;
     notifyListeners();
   }
 
   /// Clear permissions (on logout)
   void clearPermissions() {
+    if (_permissions.isEmpty && !_isAdmin && _roleCode.isEmpty) {
+      return;
+    }
     _permissions = [];
     _isAdmin = false;
     _roleCode = '';

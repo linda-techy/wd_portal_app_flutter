@@ -23,6 +23,7 @@ class CustomerDetailScreen extends StatefulWidget {
 class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   final CustomerService _customerService = CustomerService();
   Customer? _customer;
+  Map<int, String> _roleNamesById = const {};
   bool _isLoading = true;
   bool _isSendingReset = false;
   String? _error;
@@ -35,9 +36,25 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       // so roleId and all fields are up-to-date when the user taps Edit.
       _customer = widget.initialCustomer;
       _isLoading = false;
+      _loadCustomerRoles();
       _refreshSilently();
     } else {
+      _loadCustomerRoles();
       _loadCustomer();
+    }
+  }
+
+  Future<void> _loadCustomerRoles() async {
+    try {
+      final roles = await _customerService.getCustomerRoles();
+      if (!mounted) return;
+      setState(() {
+        _roleNamesById = {
+          for (final role in roles) role.id: role.name,
+        };
+      });
+    } catch (_) {
+      // Non-blocking: details screen can still render with role ID fallback.
     }
   }
 
@@ -366,7 +383,11 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             _buildInfoRow('Email', _customer!.email, Icons.email),
             if (_customer!.roleId != null)
               _buildInfoRow(
-                  'Role ID', _customer!.roleId.toString(), Icons.badge),
+                'Role',
+                _roleNamesById[_customer!.roleId!] ??
+                    'Role #${_customer!.roleId}',
+                Icons.badge,
+              ),
             _buildInfoRow(
                 'Projects', _customer!.projectCount.toString(), Icons.folder),
           ],
