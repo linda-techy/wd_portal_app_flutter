@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:admin/services/api_service.dart';
 import 'package:admin/models/paginated_response.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 
 class BoqWorkType {
   final int id;
@@ -126,6 +129,9 @@ class BoqItem {
   final String? notes;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final int? version;
+  // BASE | ADDON | OPTIONAL | EXCLUSION
+  final String itemKind;
 
   BoqItem({
     required this.id,
@@ -158,6 +164,8 @@ class BoqItem {
     this.notes,
     this.createdAt,
     this.updatedAt,
+    this.version,
+    this.itemKind = 'BASE',
   });
 
   factory BoqItem.fromJson(Map<String, dynamic> json) {
@@ -192,6 +200,8 @@ class BoqItem {
       notes: json['notes'],
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      version: json['version'],
+      itemKind: json['itemKind'] ?? 'BASE',
     );
   }
 
@@ -359,6 +369,7 @@ class BoqService {
     int? materialId,
     String? specifications,
     String? notes,
+    String itemKind = 'BASE',
   }) async {
     final response = await _api.dio.post('/api/boq', data: {
       'projectId': projectId,
@@ -372,6 +383,7 @@ class BoqService {
       'materialId': materialId,
       'specifications': specifications,
       'notes': notes,
+      'itemKind': itemKind,
     });
     if (response.statusCode == 201 && response.data['success'] == true) {
       return BoqItem.fromJson(response.data['data']);
@@ -560,5 +572,19 @@ class BoqService {
       (json) => PaginatedResponse.fromJson(
           json as Map<String, dynamic>, BoqItem.fromJson),
     );
+  }
+
+  /// Downloads the BOQ Excel export for [projectId] and returns the local [File].
+  Future<File> downloadBoqExcel(int projectId) async {
+    final dir = await getTemporaryDirectory();
+    final filePath = '${dir.path}/boq_project_${projectId}_${DateTime.now().millisecondsSinceEpoch}.xlsx';
+
+    await _api.dio.download(
+      '/api/boq/project/$projectId/export',
+      filePath,
+      options: Options(responseType: ResponseType.bytes),
+    );
+
+    return File(filePath);
   }
 }

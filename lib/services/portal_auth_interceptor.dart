@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -7,7 +8,11 @@ class PortalAuthInterceptor extends Interceptor {
 
   final FlutterSecureStorage _storage;
   final Dio _dio;
-  bool _isRefreshing = false;
+
+  /// Non-null while a token refresh is in progress.
+  /// Concurrent 401s await this future instead of triggering their own refresh.
+  /// Completes with the new access token on success, or null on failure.
+  Completer<String?>? _refreshCompleter;
 
   PortalAuthInterceptor(this._dio) : _storage = const FlutterSecureStorage();
 
@@ -20,7 +25,6 @@ class PortalAuthInterceptor extends Interceptor {
       return handler.next(options);
     }
 
-    // Add access token to request headers
     final accessToken = await _storage.read(key: _accessTokenKey);
     if (accessToken != null) {
       options.headers['Authorization'] = 'Bearer $accessToken';
@@ -29,8 +33,6 @@ class PortalAuthInterceptor extends Interceptor {
     handler.next(options);
   }
 
-  final List<Map<String, dynamic>> _requestQueue = [];
-
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     final responseData = err.response?.data;
@@ -38,71 +40,69 @@ class PortalAuthInterceptor extends Interceptor {
       return handler.next(err);
     }
 
-    if (err.response?.statusCode == 401) {
-      // If we are already refreshing, queue this request
-      if (_isRefreshing) {
-        _requestQueue.add({
-          'options': err.requestOptions,
-          'handler': handler,
-        });
-        return;
-      }
-
-      _isRefreshing = true;
-      final refreshToken = await _storage.read(key: _refreshTokenKey);
-
-      if (refreshToken != null) {
-        try {
-          // Perform the refresh
-          final response = await _dio.post('/auth/refresh-token', data: {
-            'refreshToken': refreshToken,
-          });
-
-          if (response.statusCode == 200) {
-            final newAccessToken = response.data['accessToken'];
-            final newRefreshToken = response.data['refreshToken'];
-
-            // Store new tokens
-            await _storage.write(key: _accessTokenKey, value: newAccessToken);
-            await _storage.write(key: _refreshTokenKey, value: newRefreshToken);
-
-            _isRefreshing = false;
-
-            // 1. Resolve current failed request
-            final originalRequest = err.requestOptions;
-            originalRequest.headers['Authorization'] = 'Bearer $newAccessToken';
-            final retryResponse = await _dio.fetch(originalRequest);
-            handler.resolve(retryResponse);
-
-            // 2. Resolve all queued requests
-            for (var queuedRequest in _requestQueue) {
-              final options = queuedRequest['options'] as RequestOptions;
-              final qHandler = queuedRequest['handler'] as ErrorInterceptorHandler;
-              
-              options.headers['Authorization'] = 'Bearer $newAccessToken';
-              try {
-                final response = await _dio.fetch(options);
-                qHandler.resolve(response);
-              } catch (e) {
-                qHandler.next(e as DioException);
-              }
-            }
-            _requestQueue.clear();
-            return;
-          }
-        } catch (e) {
-          // Refresh failed (invalid/expired refresh token)
-          await _handleLogout();
-        }
-      } else {
-        await _handleLogout();
-      }
-
-      _isRefreshing = false;
-      _requestQueue.clear();
+    if (err.response?.statusCode != 401) {
+      return handler.next(err);
     }
 
-    handler.next(err);
+    // If a refresh is already running, wait for it to complete and retry.
+    if (_refreshCompleter != null) {
+      final newToken = await _refreshCompleter!.future;
+      if (newToken != null) {
+        err.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+        try {
+          final retryResponse = await _dio.fetch(err.requestOptions);
+          return handler.resolve(retryResponse);
+        } catch (e) {
+          return handler.next(e as DioException);
+        }
+      } else {
+        return handler.next(err);
+      }
+    }
+
+    // This coroutine is first — own the refresh.
+    _refreshCompleter = Completer<String?>();
+
+    final refreshToken = await _storage.read(key: _refreshTokenKey);
+    if (refreshToken == null) {
+      await _handleLogout();
+      _refreshCompleter!.complete(null);
+      _refreshCompleter = null;
+      return handler.next(err);
+    }
+
+    try {
+      final response = await _dio.post('/auth/refresh-token', data: {
+        'refreshToken': refreshToken,
+      });
+
+      if (response.statusCode == 200) {
+        final newAccessToken = response.data['accessToken'] as String;
+        final newRefreshToken = response.data['refreshToken'] as String;
+
+        await _storage.write(key: _accessTokenKey, value: newAccessToken);
+        await _storage.write(key: _refreshTokenKey, value: newRefreshToken);
+
+        // Unblock all waiters with the new token.
+        _refreshCompleter!.complete(newAccessToken);
+        _refreshCompleter = null;
+
+        // Retry the original request.
+        err.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
+        final retryResponse = await _dio.fetch(err.requestOptions);
+        return handler.resolve(retryResponse);
+      } else {
+        await _handleLogout();
+        _refreshCompleter!.complete(null);
+        _refreshCompleter = null;
+        return handler.next(err);
+      }
+    } catch (e) {
+      await _handleLogout();
+      _refreshCompleter!.complete(null);
+      _refreshCompleter = null;
+      return handler.next(err);
+    }
   }
 
   Future<void> _handleLogout() async {

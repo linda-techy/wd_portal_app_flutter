@@ -10,12 +10,14 @@ import 'project_payments_screen.dart';
 import 'design_package_selection_screen.dart';
 import 'package:admin/features/warranties/presentation/screens/warranties_screen.dart';
 import '../../features/boq/presentation/screens/boq_screen.dart';
+import '../../features/boq/presentation/screens/payment_schedule_screen.dart';
+import '../../features/boq/presentation/screens/co_management_screen.dart';
+import '../../features/boq/presentation/screens/boq_invoice_screen.dart';
 import '../../features/quality/presentation/screens/quality_checks_screen.dart';
 import '../../features/site_reports/presentation/screens/site_reports_screen.dart';
 
 import 'package:admin/screens/projects/subcontract_work_orders_screen.dart';
 import 'package:admin/features/finance/presentation/screens/billing_dashboard_screen.dart';
-import 'package:admin/features/change_orders/presentation/screens/change_orders_screen.dart';
 import 'package:admin/features/delays/presentation/screens/delay_logs_screen.dart';
 import 'package:admin/features/feedback/presentation/screens/feedback_screen.dart';
 import 'package:admin/features/gallery/presentation/screens/gallery_screen.dart';
@@ -995,21 +997,28 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         },
       ),
       _ModuleTile(
-        title: 'Billing',
-        icon: Icons.attach_money,
+        title: 'Payment Schedule',
+        icon: Icons.calendar_month_outlined,
+        color: AppTheme.statusSuccess,
+        onTap: () {
+          _navigateToModule('Payment Schedule', widget.project);
+        },
+      ),
+      _ModuleTile(
+        title: 'BOQ Invoices',
+        icon: Icons.receipt_outlined,
         color: AppTheme.primaryBlue,
         onTap: () {
-          _navigateToModule('Billing', widget.project);
+          _navigateToModule('BOQ Invoices', widget.project);
         },
       ),
       _ModuleTile(
         title: 'Change Orders',
-         icon: Icons.edit_note_outlined,
-         color: AppTheme.coralRed,
-         onTap: () {
-           _navigateToModule('Change Orders', widget.project);
-         },
-
+        icon: Icons.edit_note_outlined,
+        color: AppTheme.coralRed,
+        onTap: () {
+          _navigateToModule('Change Orders', widget.project);
+        },
       ),
       _ModuleTile(
         title: 'Warranties',
@@ -1224,6 +1233,20 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           builder: (context) => ProjectPaymentsScreen(project: project),
         ),
       );
+    } else if (moduleName == 'Payment Schedule') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentScheduleScreen(projectId: widget.project.id!),
+        ),
+      );
+    } else if (moduleName == 'BOQ Invoices') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BoqInvoiceScreen(projectId: widget.project.id!),
+        ),
+      );
     } else if (moduleName == 'Billing') {
       Navigator.push(
         context,
@@ -1258,10 +1281,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => Scaffold(
-             appBar: AppBar(title: const Text('Change Orders')),
-             body: ChangeOrdersScreen(projectId: widget.project.id!),
-          ),
+          builder: (context) => CoManagementScreen(projectId: widget.project.id!),
         ),
       );
     } else if (moduleName == 'Subcontracts') {
