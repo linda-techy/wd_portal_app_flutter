@@ -11,8 +11,6 @@ import 'package:admin/features/leads/presentation/screens/leads_screen.dart';
 import 'package:admin/features/customers/presentation/screens/customers_screen.dart';
 import 'package:admin/screens/customer_projects/customer_projects_screen.dart';
 import 'package:admin/screens/portal_users/portal_users_screen.dart';
-import 'package:admin/screens/clients/clients_screen.dart';
-import 'package:admin/screens/projects/projects_screen.dart';
 import 'package:admin/screens/quotations/quotations_screen.dart';
 import 'package:admin/screens/contracts/contracts_screen.dart';
 import 'package:admin/screens/follow_ups/follow_ups_screen.dart';
@@ -45,32 +43,30 @@ const Map<String, int> kPathToMenuIndex = {
   '/customers':    2,
   '/cx-projects':  3,
   '/users':        4,
-  '/clients':      5,
-  '/projects':     6,
-  '/quotations':   7,
-  '/contracts':    8,
-  '/follow-ups':   9,
-  '/site-visits':  10,
-  '/tasks':        11,
-  '/team':         12,
-  '/communication':13,
-  '/documents':    14,
-  '/payments':     15,
-  '/reports':      16,
-  '/profile':      17,
-  '/challans':     18,
-  '/procurement':  19,
-  '/labour':       20,
-  '/inventory':    21,
-  '/finance':      22,
-  '/partnerships': 23,
-  '/acl':          24,
+  '/quotations':   5,
+  '/contracts':    6,
+  '/follow-ups':   7,
+  '/site-visits':  8,
+  '/tasks':        9,
+  '/team':         10,
+  '/communication':11,
+  '/documents':    12,
+  '/payments':     13,
+  '/reports':      14,
+  '/profile':      15,
+  '/challans':     16,
+  '/procurement':  17,
+  '/labour':       18,
+  '/inventory':    19,
+  '/finance':      20,
+  '/partnerships': 21,
+  '/acl':          22,
 };
 
 /// Map a menu index (from [MenuAppController]) to its route path.
 const List<String> kIndexToPath = [
-  '/', '/leads', '/customers', '/cx-projects', '/users', '/clients',
-  '/projects', '/quotations', '/contracts', '/follow-ups', '/site-visits',
+  '/', '/leads', '/customers', '/cx-projects', '/users',
+  '/quotations', '/contracts', '/follow-ups', '/site-visits',
   '/tasks', '/team', '/communication', '/documents', '/payments',
   '/reports', '/profile', '/challans', '/procurement', '/labour',
   '/inventory', '/finance', '/partnerships', '/acl',
@@ -146,8 +142,6 @@ GoRouter buildAppRouter(PortalAuthProvider authProvider) {
           GoRoute(path: '/customers',    builder: (_, __) => const CustomersScreen()),
           GoRoute(path: '/cx-projects',  builder: (_, __) => const CustomerProjectsScreen()),
           GoRoute(path: '/users',        builder: (_, __) => const PortalUsersScreen()),
-          GoRoute(path: '/clients',      builder: (_, __) => const ClientsScreen()),
-          GoRoute(path: '/projects',     builder: (_, __) => const ProjectsScreen()),
           GoRoute(path: '/quotations',   builder: (_, __) => const QuotationsScreen()),
           GoRoute(path: '/contracts',    builder: (_, __) => const ContractsScreen()),
           GoRoute(path: '/follow-ups',   builder: (_, __) => const FollowUpsScreen()),

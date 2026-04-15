@@ -114,7 +114,7 @@ class SideMenu extends StatelessWidget {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () =>
-                        onMenuItemClick(17), // Navigate to Profile (Index 17)
+                        onMenuItemClick(15), // Navigate to Profile (Index 15)
                     borderRadius: BorderRadius.circular(12),
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -239,7 +239,7 @@ class SideMenu extends StatelessWidget {
         context,
         title: tasksModule,
         svgSrc: "assets/icons/menu_task.svg",
-        index: 11, // Tasks index in MainScreen
+        index: 9,
       ));
     }
 
@@ -259,7 +259,7 @@ class SideMenu extends StatelessWidget {
         context,
         title: 'Partnerships',
         svgSrc: "assets/icons/menu_profile.svg",
-        index: 23,
+        index: 21,
       ));
     }
 
@@ -269,7 +269,7 @@ class SideMenu extends StatelessWidget {
         context,
         title: documentsModule,
         svgSrc: "assets/icons/menu_doc.svg",
-        index: 14, // Matches MainScreen index
+        index: 12,
       ));
     }
 
@@ -278,7 +278,7 @@ class SideMenu extends StatelessWidget {
       context,
       title: 'Payments',
       svgSrc: "assets/icons/menu_task.svg",
-      index: 15, // Matches MainScreen index
+      index: 13,
     ));
 
     // CHALLANS - New Module
@@ -286,7 +286,7 @@ class SideMenu extends StatelessWidget {
       context,
       title: 'Challans',
       svgSrc: "assets/icons/menu_doc.svg",
-      index: 18,
+      index: 16,
     ));
 
     // PROCUREMENT - New Module
@@ -294,7 +294,7 @@ class SideMenu extends StatelessWidget {
       context,
       title: 'Procurement',
       svgSrc: "assets/icons/menu_task.svg",
-      index: 19,
+      index: 17,
     ));
 
     // LABOUR - New Module
@@ -302,7 +302,7 @@ class SideMenu extends StatelessWidget {
       context,
       title: 'Labour Management',
       svgSrc: "assets/icons/menu_profile.svg",
-      index: 20,
+      index: 18,
     ));
 
     // INVENTORY - New Module
@@ -310,7 +310,7 @@ class SideMenu extends StatelessWidget {
       context,
       title: 'Inventory',
       svgSrc: "assets/icons/menu_store.svg",
-      index: 21,
+      index: 19,
     ));
 
     // FINANCE - New Module
@@ -318,7 +318,7 @@ class SideMenu extends StatelessWidget {
       context,
       title: 'Finance & Billing',
       svgSrc: "assets/icons/menu_tran.svg",
-      index: 22,
+      index: 20,
     ));
 
     // REPORTS - Only if can view reports
@@ -327,7 +327,7 @@ class SideMenu extends StatelessWidget {
         context,
         title: reportsModule,
         svgSrc: "assets/icons/menu_setting.svg",
-        index: 13,
+        index: 14,
       ));
     }
 
@@ -337,7 +337,7 @@ class SideMenu extends StatelessWidget {
         context,
         title: 'Access Control',
         icon: Icons.shield_outlined,
-        index: 24,
+        index: 22,
       ));
     }
 

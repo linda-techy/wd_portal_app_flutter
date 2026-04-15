@@ -6,8 +6,6 @@ import 'package:admin/features/leads/presentation/screens/leads_screen.dart';
 import 'package:admin/features/customers/presentation/screens/customers_screen.dart';
 import 'package:admin/screens/customer_projects/customer_projects_screen.dart';
 import 'package:admin/screens/portal_users/portal_users_screen.dart';
-import 'package:admin/screens/clients/clients_screen.dart';
-import 'package:admin/screens/projects/projects_screen.dart';
 import 'package:admin/screens/quotations/quotations_screen.dart';
 import 'package:admin/screens/contracts/contracts_screen.dart';
 import 'package:admin/screens/follow_ups/follow_ups_screen.dart';
@@ -83,30 +81,28 @@ class MainScreenState extends State<MainScreen> {
   }
 
   final List<Widget> _screens = [
-    const DashboardScreen(),
-    const LeadsScreen(),
-    const CustomersScreen(),
-    const CustomerProjectsScreen(),
-    const PortalUsersScreen(),
-    const ClientsScreen(),
-    const ProjectsScreen(),
-    const QuotationsScreen(),
-    const ContractsScreen(),
-    const FollowUpsScreen(),
-    const SiteVisitsScreen(),
-    const TaskListScreen(), // Index 11 - Tasks (Entry Screen)
-    const TeamMembersScreen(),
-    const CommunicationScreen(),
-    const DocumentManagementScreen(),
-    const PaymentsDashboardScreen(), // Index 15 - Payments Dashboard
-    const ReportsScreen(),
-    const ProfileScreen(), // Index 17 - Profile
-    const ChallanManagementScreen(), // Index 18 - Challans
-    const ProcurementDashboardScreen(), // Index 19 - Procurement
-    const LabourDashboardScreen(), // Index 20 - Labour
-    const InventoryDashboardScreen(), // Index 21 - Inventory
-    const FinanceDashboardScreen(), // Index 22 - Finance
-    const PartnershipsAdminScreen(), // Index 23 - Partnerships & Referrals
+    const DashboardScreen(),        // 0
+    const LeadsScreen(),            // 1
+    const CustomersScreen(),        // 2
+    const CustomerProjectsScreen(), // 3
+    const PortalUsersScreen(),      // 4
+    const QuotationsScreen(),       // 5
+    const ContractsScreen(),        // 6
+    const FollowUpsScreen(),        // 7
+    const SiteVisitsScreen(),       // 8
+    const TaskListScreen(),         // 9
+    const TeamMembersScreen(),      // 10
+    const CommunicationScreen(),    // 11
+    const DocumentManagementScreen(), // 12
+    const PaymentsDashboardScreen(), // 13
+    const ReportsScreen(),          // 14
+    const ProfileScreen(),          // 15
+    const ChallanManagementScreen(), // 16
+    const ProcurementDashboardScreen(), // 17
+    const LabourDashboardScreen(),  // 18
+    const InventoryDashboardScreen(), // 19
+    const FinanceDashboardScreen(), // 20
+    const PartnershipsAdminScreen(), // 21
   ];
 
   void _onMenuItemClick(int index) {
@@ -116,56 +112,29 @@ class MainScreenState extends State<MainScreen> {
 
   String _getScreenTitle(int index) {
     switch (index) {
-      case 0:
-        return 'Dashboard';
-      case 1:
-        return 'Leads';
-      case 2:
-        return 'Customers';
-      case 3:
-        return 'Customer Projects';
-      case 4:
-        return 'Portal Users';
-      case 5:
-        return 'Clients';
-      case 6:
-        return 'Projects';
-      case 7:
-        return 'Quotations';
-      case 8:
-        return 'Contracts';
-      case 9:
-        return 'Follow Ups';
-      case 10:
-        return 'Site Visits';
-      case 11:
-        return 'Tasks';
-      case 12:
-        return 'Team Members';
-      case 13:
-        return 'Communication';
-      case 14:
-        return 'Documents';
-      case 15:
-        return 'Payments';
-      case 16:
-        return 'Reports';
-      case 17:
-        return 'Profile';
-      case 18:
-        return 'Challans';
-      case 19:
-        return 'Procurement';
-      case 20:
-        return 'Labour Management';
-      case 21:
-        return 'Inventory Tracking';
-      case 22:
-        return 'Finance & Billing';
-      case 23:
-        return 'Partnerships & Referrals';
-      default:
-        return 'Tasks';
+      case 0:  return 'Dashboard';
+      case 1:  return 'Leads';
+      case 2:  return 'Customers';
+      case 3:  return 'Customer Projects';
+      case 4:  return 'Portal Users';
+      case 5:  return 'Quotations';
+      case 6:  return 'Contracts';
+      case 7:  return 'Follow Ups';
+      case 8:  return 'Site Visits';
+      case 9:  return 'Tasks';
+      case 10: return 'Team Members';
+      case 11: return 'Communication';
+      case 12: return 'Documents';
+      case 13: return 'Payments';
+      case 14: return 'Reports';
+      case 15: return 'Profile';
+      case 16: return 'Challans';
+      case 17: return 'Procurement';
+      case 18: return 'Labour Management';
+      case 19: return 'Inventory Tracking';
+      case 20: return 'Finance & Billing';
+      case 21: return 'Partnerships & Referrals';
+      default: return 'Dashboard';
     }
   }
 
@@ -244,15 +213,15 @@ class MainScreenState extends State<MainScreen> {
               backgroundColor: Colors.white,
               selectedItemColor:AppTheme.primaryBlue,
               unselectedItemColor: AppTheme.textTertiary,
-              currentIndex: selectedIndex == 3 ? 1 : selectedIndex == 17 ? 2 : 0,
+              currentIndex: selectedIndex == 3 ? 1 : selectedIndex == 15 ? 2 : 0,
               onTap: (index) {
                 // Map bottom nav indices
-                // 0 -> Open Menu, 1 -> Projects (3), 2 -> Profile (17)
+                // 0 -> Open Menu, 1 -> Projects (3), 2 -> Profile (15)
                 if (index == 0) {
                   // Open drawer/menu
                   context.read<MenuAppController>().controlMenu();
                 } else {
-                  final screenIndex = index == 1 ? 3 : 17;
+                  final screenIndex = index == 1 ? 3 : 15;
                   _onMenuItemClick(screenIndex);
                 }
               },

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/services/boq_service.dart';
+import 'package:admin/models/paginated_response.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/utils/error_handler.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
@@ -29,10 +30,13 @@ class _BoqScreenState extends State<BoqScreen> {
   int? _selectedCategoryId;
   String? _selectedStatus;
   bool _isLoading = true;
+  bool _isLoadingMore = false;
   bool _isExporting = false; // controls AppBar export icon spinner
   bool _showSummary = true;
   static const int _pageSize = 50;
-  int _displayLimit = _pageSize;
+  int _currentPage = 0;
+  bool _hasNextPage = false;
+  int _totalServerItems = 0;
 
   @override
   void initState() {
@@ -58,19 +62,30 @@ class _BoqScreenState extends State<BoqScreen> {
   Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
-      _displayLimit = _pageSize;
+      _currentPage = 0;
+      _items = [];
     });
     try {
       // Materials are only needed when the create/edit dialog opens — load them lazily there.
       final results = await Future.wait([
-        _service.getProjectBoq(widget.projectId),
+        _service.getProjectBoq(
+          widget.projectId,
+          page: 0,
+          size: _pageSize,
+          workTypeId: _selectedWorkTypeId,
+          categoryId: _selectedCategoryId,
+          status: _selectedStatus,
+        ),
         _service.getWorkTypes(),
         _service.getCategories(widget.projectId),
         _service.getFinancialSummary(widget.projectId),
       ]);
       if (mounted) {
+        final boqPage = results[0] as PaginatedResponse<BoqItem>;
         setState(() {
-          _items = results[0] as List<BoqItem>;
+          _items = boqPage.content;
+          _hasNextPage = boqPage.hasNext;
+          _totalServerItems = boqPage.totalElements;
           _workTypes = results[1] as List<BoqWorkType>;
           _categories = results[2] as List<BoqCategory>;
           _summary = results[3] as BoqFinancialSummary;
@@ -82,6 +97,38 @@ class _BoqScreenState extends State<BoqScreen> {
         setState(() => _isLoading = false);
         await ErrorHandler.handleApiError(context, e,
             defaultMessage: 'Failed to load BoQ');
+      }
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (_isLoadingMore || !_hasNextPage) return;
+    setState(() => _isLoadingMore = true);
+    try {
+      final nextPage = _currentPage + 1;
+      final boqPage = await _service.getProjectBoq(
+        widget.projectId,
+        page: nextPage,
+        size: _pageSize,
+        workTypeId: _selectedWorkTypeId,
+        categoryId: _selectedCategoryId,
+        status: _selectedStatus,
+      );
+      if (mounted) {
+        setState(() {
+          _items = [..._items, ...boqPage.content];
+          _currentPage = nextPage;
+          _hasNextPage = boqPage.hasNext;
+          _totalServerItems = boqPage.totalElements;
+          _isLoadingMore = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingMore = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load more: $e'), backgroundColor: Colors.red),
+        );
       }
     }
   }
@@ -110,26 +157,10 @@ class _BoqScreenState extends State<BoqScreen> {
     }
   }
 
-  List<BoqItem> get _allFilteredItems {
-    return _items.where((item) {
-      if (_selectedWorkTypeId != null && item.workTypeId != _selectedWorkTypeId) return false;
-      if (_selectedCategoryId != null && item.categoryId != _selectedCategoryId) return false;
-      if (_selectedStatus != null && item.status != _selectedStatus) return false;
-      return true;
-    }).toList();
-  }
-
-  List<BoqItem> get _filteredItems {
-    final all = _allFilteredItems;
-    if (all.length <= _displayLimit) return all;
-    return all.sublist(0, _displayLimit);
-  }
-
-  bool get _hasMoreItems => _allFilteredItems.length > _displayLimit;
-
+  // Filters are applied server-side; _items holds all fetched pages accumulated so far.
   Map<String, List<BoqItem>> get _groupedItems {
     final map = <String, List<BoqItem>>{};
-    for (final item in _filteredItems) {
+    for (final item in _items) {
       final key = item.categoryName ?? item.workTypeName ?? 'Uncategorized';
       map.putIfAbsent(key, () => []).add(item);
     }
@@ -186,7 +217,7 @@ class _BoqScreenState extends State<BoqScreen> {
                   // Filters
                   SliverToBoxAdapter(child: _buildFilters()),
                   // Grouped items
-                  if (_filteredItems.isEmpty)
+                  if (_items.isEmpty)
                     const SliverFillRemaining(
                       child: Center(
                         child: Column(
@@ -202,15 +233,18 @@ class _BoqScreenState extends State<BoqScreen> {
                     )
                   else
                     ..._buildGroupedItemSlivers(),
-                  if (_hasMoreItems)
+                  if (_hasNextPage)
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: OutlinedButton.icon(
-                          onPressed: () => setState(() => _displayLimit += _pageSize),
-                          icon: const Icon(Icons.expand_more),
-                          label: Text('Show more (${_allFilteredItems.length - _displayLimit} remaining)'),
-                        ),
+                        child: _isLoadingMore
+                            ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
+                            : OutlinedButton.icon(
+                                onPressed: _loadMore,
+                                icon: const Icon(Icons.expand_more),
+                                label: Text(
+                                    'Load more (${_totalServerItems - _items.length} remaining)'),
+                              ),
                       ),
                     ),
                   // Bottom padding for FAB
@@ -321,25 +355,30 @@ class _BoqScreenState extends State<BoqScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Column(
         children: [
-          // Status filter
+          // Status filter — changes trigger a server reload from page 0
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
                 _buildFilterChip('All', _selectedStatus == null, () {
                   setState(() => _selectedStatus = null);
+                  _loadData();
                 }),
                 _buildFilterChip('Draft', _selectedStatus == 'DRAFT', () {
                   setState(() => _selectedStatus = 'DRAFT');
+                  _loadData();
                 }),
                 _buildFilterChip('Approved', _selectedStatus == 'APPROVED', () {
                   setState(() => _selectedStatus = 'APPROVED');
+                  _loadData();
                 }),
                 _buildFilterChip('Locked', _selectedStatus == 'LOCKED', () {
                   setState(() => _selectedStatus = 'LOCKED');
+                  _loadData();
                 }),
                 _buildFilterChip('Completed', _selectedStatus == 'COMPLETED', () {
                   setState(() => _selectedStatus = 'COMPLETED');
+                  _loadData();
                 }),
               ],
             ),
@@ -355,20 +394,26 @@ class _BoqScreenState extends State<BoqScreen> {
                     ..._categories.where((c) => c.isTopLevel).map((cat) => _buildFilterChip(
                           cat.name,
                           _selectedCategoryId == cat.id,
-                          () => setState(() {
-                            _selectedCategoryId = _selectedCategoryId == cat.id ? null : cat.id;
-                            _selectedWorkTypeId = null;
-                          }),
+                          () {
+                            setState(() {
+                              _selectedCategoryId = _selectedCategoryId == cat.id ? null : cat.id;
+                              _selectedWorkTypeId = null;
+                            });
+                            _loadData();
+                          },
                         )),
                   ],
                   if (_workTypes.isNotEmpty) ...[
                     ..._workTypes.map((wt) => _buildFilterChip(
                           wt.name,
                           _selectedWorkTypeId == wt.id,
-                          () => setState(() {
-                            _selectedWorkTypeId = _selectedWorkTypeId == wt.id ? null : wt.id;
-                            _selectedCategoryId = null;
-                          }),
+                          () {
+                            setState(() {
+                              _selectedWorkTypeId = _selectedWorkTypeId == wt.id ? null : wt.id;
+                              _selectedCategoryId = null;
+                            });
+                            _loadData();
+                          },
                         )),
                   ],
                 ],

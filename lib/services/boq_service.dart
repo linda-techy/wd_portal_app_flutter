@@ -336,12 +336,30 @@ class BoqService {
 
   // ---- CRUD Operations ----
 
-  Future<List<BoqItem>> getProjectBoq(int projectId) async {
+  Future<PaginatedResponse<BoqItem>> getProjectBoq(
+    int projectId, {
+    int page = 0,
+    int size = 50,
+    int? workTypeId,
+    int? categoryId,
+    String? status,
+  }) async {
     try {
-      final response = await _api.dio.get('/api/boq/project/$projectId');
+      final response = await _api.dio.get(
+        '/api/boq/project/$projectId',
+        queryParameters: {
+          'page': page,
+          'size': size,
+          if (workTypeId != null) 'workTypeId': workTypeId,
+          if (categoryId != null) 'categoryId': categoryId,
+          if (status != null) 'status': status,
+        },
+      );
       if (response.statusCode == 200 && response.data['success'] == true) {
-        final List<dynamic> data = response.data['data'];
-        return data.map((e) => BoqItem.fromJson(e)).toList();
+        return PaginatedResponse.fromJson(
+          response.data['data'],
+          BoqItem.fromJson,
+        );
       }
       throw Exception(response.data['message'] ?? 'Failed to load BoQ');
     } catch (e) {
