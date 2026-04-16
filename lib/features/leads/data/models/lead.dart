@@ -13,7 +13,8 @@ enum LeadSource {
   onlineAds,
   directWalkin,
   eventTradeShow,
-  printAdvertising
+  printAdvertising,
+  coldCall
 }
 
 enum LeadPriority { low, medium, high }
@@ -317,6 +318,8 @@ class Lead {
         return Colors.indigo;
       case LeadSource.printAdvertising:
         return Colors.amber;
+      case LeadSource.coldCall:
+        return Colors.blueGrey;
     }
   }
 
@@ -342,6 +345,8 @@ class Lead {
         return 'Event/Trade Show';
       case LeadSource.printAdvertising:
         return 'Print Advertising';
+      case LeadSource.coldCall:
+        return 'Cold Call';
     }
   }
 
@@ -373,6 +378,8 @@ class Lead {
         return 'event_trade_show';
       case LeadSource.printAdvertising:
         return 'print_advertising';
+      case LeadSource.coldCall:
+        return 'cold_call';
     }
   }
 
@@ -418,6 +425,9 @@ class Lead {
       case 'printadvertising':
       case 'print_advertising':
         return LeadSource.printAdvertising;
+      case 'coldcall':
+      case 'cold_call':
+        return LeadSource.coldCall;
       default:
         return LeadSource.website;
     }

@@ -14,6 +14,7 @@ class LeadSourceConstants {
   static const LeadSource directWalkin = LeadSource.directWalkin;
   static const LeadSource eventTradeShow = LeadSource.eventTradeShow;
   static const LeadSource printAdvertising = LeadSource.printAdvertising;
+  static const LeadSource coldCall = LeadSource.coldCall;
 
   // Lead source labels
   static const String websiteLabel = 'Website';
@@ -27,6 +28,7 @@ class LeadSourceConstants {
   static const String directWalkinLabel = 'Direct Walk-in';
   static const String eventTradeShowLabel = 'Event/Trade Show';
   static const String printAdvertisingLabel = 'Print Advertising';
+  static const String coldCallLabel = 'Cold Call';
 
   // Dropdown items
   static const List<DropdownMenuItem<LeadSource>> dropdownItems = [
@@ -44,6 +46,7 @@ class LeadSourceConstants {
     DropdownMenuItem(value: eventTradeShow, child: Text(eventTradeShowLabel)),
     DropdownMenuItem(
         value: printAdvertising, child: Text(printAdvertisingLabel)),
+    DropdownMenuItem(value: coldCall, child: Text(coldCallLabel)),
   ];
 
   // Search dropdown items (includes null for 'All')
@@ -71,6 +74,7 @@ class LeadSourceConstants {
         value: LeadSource.eventTradeShow, child: Text('Event/Trade Show')),
     DropdownMenuItem(
         value: LeadSource.printAdvertising, child: Text('Print Advertising')),
+    DropdownMenuItem(value: LeadSource.coldCall, child: Text('Cold Call')),
   ];
 
   // All valid values
@@ -85,6 +89,7 @@ class LeadSourceConstants {
     directWalkin,
     eventTradeShow,
     printAdvertising,
+    coldCall,
   ];
 
   // Default value
@@ -113,6 +118,8 @@ class LeadSourceConstants {
         return eventTradeShowLabel;
       case LeadSource.printAdvertising:
         return printAdvertisingLabel;
+      case LeadSource.coldCall:
+        return coldCallLabel;
     }
   }
 
@@ -139,6 +146,8 @@ class LeadSourceConstants {
         return 'Event/Trade Show';
       case LeadSource.printAdvertising:
         return 'Print Advertising';
+      case LeadSource.coldCall:
+        return 'Cold Call';
     }
   }
 
@@ -165,6 +174,8 @@ class LeadSourceConstants {
         return Colors.indigo;
       case LeadSource.printAdvertising:
         return Colors.amber;
+      case LeadSource.coldCall:
+        return Colors.blueGrey;
     }
   }
 
