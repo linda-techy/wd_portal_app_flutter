@@ -4,7 +4,7 @@ class LeadStatusConstants {
   // Lead status values
   static const String newInquiry = 'new_inquiry';
   static const String contacted = 'contacted';
-  static const String qualifiedLead = 'qualified_lead';
+  static const String qualified = 'qualified';
   static const String proposalSent = 'proposal_sent';
   static const String negotiation = 'negotiation';
   static const String projectWon = 'project_won';
@@ -13,7 +13,7 @@ class LeadStatusConstants {
   // Lead status labels
   static const String newInquiryLabel = 'New Inquiry';
   static const String contactedLabel = 'Contacted';
-  static const String qualifiedLeadLabel = 'Qualified Lead';
+  static const String qualifiedLabel = 'Qualified';
   static const String proposalSentLabel = 'Proposal Sent';
   static const String negotiationLabel = 'Negotiation';
   static const String projectWonLabel = 'Project Won';
@@ -23,7 +23,7 @@ class LeadStatusConstants {
   static const List<DropdownMenuItem<String>> dropdownItems = [
     DropdownMenuItem(value: newInquiry, child: Text(newInquiryLabel)),
     DropdownMenuItem(value: contacted, child: Text(contactedLabel)),
-    DropdownMenuItem(value: qualifiedLead, child: Text(qualifiedLeadLabel)),
+    DropdownMenuItem(value: qualified, child: Text(qualifiedLabel)),
     DropdownMenuItem(value: proposalSent, child: Text(proposalSentLabel)),
     DropdownMenuItem(value: negotiation, child: Text(negotiationLabel)),
     DropdownMenuItem(value: projectWon, child: Text(projectWonLabel)),
@@ -35,7 +35,7 @@ class LeadStatusConstants {
     DropdownMenuItem(value: 'All', child: Text('All Statuses')),
     DropdownMenuItem(value: newInquiry, child: Text(newInquiryLabel)),
     DropdownMenuItem(value: contacted, child: Text(contactedLabel)),
-    DropdownMenuItem(value: qualifiedLead, child: Text(qualifiedLeadLabel)),
+    DropdownMenuItem(value: qualified, child: Text(qualifiedLabel)),
     DropdownMenuItem(value: proposalSent, child: Text(proposalSentLabel)),
     DropdownMenuItem(value: negotiation, child: Text(negotiationLabel)),
     DropdownMenuItem(value: projectWon, child: Text(projectWonLabel)),
@@ -46,7 +46,7 @@ class LeadStatusConstants {
   static const List<String> validValues = [
     newInquiry,
     contacted,
-    qualifiedLead,
+    qualified,
     proposalSent,
     negotiation,
     projectWon,
@@ -63,8 +63,8 @@ class LeadStatusConstants {
         return newInquiryLabel;
       case contacted:
         return contactedLabel;
-      case qualifiedLead:
-        return qualifiedLeadLabel;
+      case qualified:
+        return qualifiedLabel;
       case proposalSent:
         return proposalSentLabel;
       case negotiation:

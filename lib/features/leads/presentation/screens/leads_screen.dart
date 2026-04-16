@@ -1752,7 +1752,7 @@ class _LeadsTableState extends State<LeadsTable> {
         return Colors.blue;
       case 'contacted':
         return Colors.orange;
-      case 'qualified_lead':
+      case 'qualified':
         return Colors.purple;
       case 'proposal_sent':
         return Colors.indigo;
