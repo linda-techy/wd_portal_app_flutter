@@ -85,14 +85,14 @@ class CustomersScreen extends StatelessWidget {
         _buildFilterChip(
           context,
           label: 'Individual',
-          isSelected: provider.filters['customerType'] == 'INDIVIDUAL',
-          onTap: () => provider.updateFilter('customerType', 'INDIVIDUAL'),
+          isSelected: provider.filters['customerType'] == 'individual',
+          onTap: () => provider.updateFilter('customerType', 'individual'),
         ),
         _buildFilterChip(
           context,
-          label: 'Corporate',
-          isSelected: provider.filters['customerType'] == 'CORPORATE',
-          onTap: () => provider.updateFilter('customerType', 'CORPORATE'),
+          label: 'Business',
+          isSelected: provider.filters['customerType'] == 'business',
+          onTap: () => provider.updateFilter('customerType', 'business'),
         ),
         const SizedBox(width: 16),
         _buildFilterChip(
