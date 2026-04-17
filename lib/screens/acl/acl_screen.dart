@@ -474,7 +474,7 @@ class _AclScreenState extends State<AclScreen> {
 
   Widget _buildRoleItem(AclRole role) {
     final isSelected = _selectedRole?.id == role.id;
-    return InkWell(
+    final item = InkWell(
       onTap: () {
         _selectRole(role);
         // On narrow, show permissions panel
@@ -552,6 +552,15 @@ class _AclScreenState extends State<AclScreen> {
                           ),
                         ),
                       ),
+                      // Lock badge for ADMIN role
+                      if (role.isAdmin) ...[
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.lock_outline,
+                          size: 11,
+                          color: AppTheme.textTertiary,
+                        ),
+                      ],
                     ],
                   ),
                 ],
@@ -582,6 +591,14 @@ class _AclScreenState extends State<AclScreen> {
         ),
       ),
     );
+
+    if (role.isAdmin) {
+      return Tooltip(
+        message: 'ADMIN role permissions are immutable',
+        child: item,
+      );
+    }
+    return item;
   }
 
   // ── Permission panel ──────────────────────────────────────────────────────
@@ -931,8 +948,14 @@ class _AclScreenState extends State<AclScreen> {
     final actionLabel = perm.actionLabel;
     final color = _actionColor(actionLabel);
 
-    return InkWell(
-      onTap: isAdmin ? null : () => _togglePermission(perm.id),
+    return Tooltip(
+      message: isAdmin ? 'ADMIN role permissions are immutable' : '',
+      child: InkWell(
+      onTap: isAdmin
+          ? () => MotionToast.show(context,
+              message: 'ADMIN role permissions are immutable',
+              variant: ToastVariant.info)
+          : () => _togglePermission(perm.id),
       borderRadius: BorderRadius.circular(6),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
@@ -965,6 +988,7 @@ class _AclScreenState extends State<AclScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
