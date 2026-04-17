@@ -9,7 +9,7 @@ import 'package:admin/widgets/splash_screen.dart';
 import 'package:admin/screens/dashboard/dashboard_screen.dart';
 import 'package:admin/features/leads/presentation/screens/leads_screen.dart';
 import 'package:admin/features/customers/presentation/screens/customers_screen.dart';
-import 'package:admin/screens/customer_projects/customer_projects_screen.dart';
+import 'package:admin/features/projects/presentation/screens/projects_list_screen.dart';
 import 'package:admin/screens/portal_users/portal_users_screen.dart';
 import 'package:admin/screens/quotations/quotations_screen.dart';
 import 'package:admin/screens/contracts/contracts_screen.dart';
@@ -140,7 +140,7 @@ GoRouter buildAppRouter(PortalAuthProvider authProvider) {
           GoRoute(path: '/',             builder: (_, __) => const DashboardScreen()),
           GoRoute(path: '/leads',        builder: (_, __) => const LeadsScreen()),
           GoRoute(path: '/customers',    builder: (_, __) => const CustomersScreen()),
-          GoRoute(path: '/cx-projects',  builder: (_, __) => const CustomerProjectsScreen()),
+          GoRoute(path: '/cx-projects',  builder: (_, __) => const ProjectsListScreen()),
           GoRoute(path: '/users',        builder: (_, __) => const PortalUsersScreen()),
           GoRoute(path: '/quotations',   builder: (_, __) => const QuotationsScreen()),
           GoRoute(path: '/contracts',    builder: (_, __) => const ContractsScreen()),
