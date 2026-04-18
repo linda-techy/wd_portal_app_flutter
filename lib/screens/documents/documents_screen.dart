@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/utils/error_handler.dart';
-import 'package:admin/models/document_models.dart';
+import 'package:admin/models/project_document.dart';
+import 'package:admin/models/document_category.dart';
 import 'package:admin/models/customer_project.dart';
 import 'package:admin/services/document_service.dart';
 import 'package:admin/services/crm_service.dart';
@@ -105,7 +106,8 @@ class DocumentsScreenState extends State<DocumentsScreen> {
     return Colors.grey;
   }
 
-  String _formatFileSize(int bytes) {
+  String _formatFileSize(int? bytes) {
+    if (bytes == null || bytes <= 0) return '0 B';
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
     return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
@@ -213,7 +215,7 @@ class DocumentsScreenState extends State<DocumentsScreen> {
                   const SizedBox(width: 8),
                   _buildStatChip('Categories', _categories.length, infoColor),
                   const SizedBox(width: 8),
-                  _buildStatChip('Total Size', _formatFileSize(_documents.fold(0, (s, d) => s + d.fileSize)), warningColor),
+                  _buildStatChip('Total Size', _formatFileSize(_documents.fold(0, (s, d) => s + (d.fileSize ?? 0))), warningColor),
                 ],
               ),
             if (!_isLoadingDocuments && _documents.isNotEmpty) const SizedBox(height: defaultPadding),
@@ -277,7 +279,7 @@ class DocumentsScreenState extends State<DocumentsScreen> {
                                               DataCell(Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  Icon(_getFileIcon(doc.fileType), size: 20, color: _getFileColor(doc.fileType)),
+                                                  Icon(_getFileIcon(doc.fileType ?? ''), size: 20, color: _getFileColor(doc.fileType ?? '')),
                                                   const SizedBox(width: 8),
                                                   Flexible(
                                                     child: Column(
@@ -304,8 +306,8 @@ class DocumentsScreenState extends State<DocumentsScreen> {
                                               ),
                                               DataCell(Text(_formatFileSize(doc.fileSize), style: const TextStyle(fontSize: 12))),
                                               DataCell(Text(doc.uploadedByName, style: const TextStyle(fontSize: 12))),
-                                              DataCell(Text(doc.uploadDate, style: const TextStyle(fontSize: 12))),
-                                              DataCell(Text('v${doc.version}')),
+                                              DataCell(Text('${doc.uploadDate.day}/${doc.uploadDate.month}/${doc.uploadDate.year}', style: const TextStyle(fontSize: 12))),
+                                              DataCell(Text('v${doc.version ?? 1}')),
                                               DataCell(Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
@@ -369,7 +371,7 @@ class DocumentsScreenState extends State<DocumentsScreen> {
     );
     if (confirmed == true) {
       try {
-        await _documentService.deleteDocument(_selectedProject!.id!, doc.id);
+        await _documentService.deleteDocument(_selectedProject!.id!, doc.id!);
         _loadDocuments();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

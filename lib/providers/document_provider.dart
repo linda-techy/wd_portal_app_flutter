@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:admin/models/document_models.dart';
+import 'package:admin/models/project_document.dart';
+import 'package:admin/models/document_category.dart';
 import 'package:admin/services/document_service.dart';
 
 class DocumentProvider with ChangeNotifier {

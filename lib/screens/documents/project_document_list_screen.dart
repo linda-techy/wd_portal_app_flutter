@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/document_provider.dart';
-import 'package:admin/models/document_models.dart';
+import 'package:admin/models/project_document.dart';
 import 'package:admin/features/shared/universal_file_viewer_screen.dart';
 import 'package:admin/services/document_download_service.dart';
 import 'package:admin/utils/file_download_helper.dart';
@@ -179,9 +179,10 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
   }
 
   Widget _buildDocumentCard(ProjectDocument doc) {
-    final bool isImage = doc.fileType.toLowerCase().contains('image') || 
-                         doc.filename.toLowerCase().endsWith('.jpg') || 
-                         doc.filename.toLowerCase().endsWith('.jpeg') || 
+    final fileType = doc.fileType ?? '';
+    final bool isImage = fileType.toLowerCase().contains('image') ||
+                         doc.filename.toLowerCase().endsWith('.jpg') ||
+                         doc.filename.toLowerCase().endsWith('.jpeg') ||
                          doc.filename.toLowerCase().endsWith('.png');
 
     return Card(
@@ -201,12 +202,12 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: _getFileColor(doc.fileType).withOpacity(0.1),
+                  color: _getFileColor(fileType).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
-                  _getFileIcon(doc.fileType),
-                  color: _getFileColor(doc.fileType),
+                  _getFileIcon(fileType),
+                  color: _getFileColor(fileType),
                   size: 28,
                 ),
               ),
@@ -223,7 +224,7 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "${doc.categoryName} • ${DateFormat('dd MMM yyyy').format(DateTime.parse(doc.uploadDate))}",
+                      "${doc.categoryName} • ${DateFormat('dd MMM yyyy').format(doc.uploadDate)}",
                       style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                     ),
                     const SizedBox(height: 4),
@@ -258,7 +259,7 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
                     ],
                   ),
                   Text(
-                    _formatFileSize(doc.fileSize),
+                    _formatFileSize(doc.fileSize ?? 0),
                     style: TextStyle(fontSize: 10, color: Colors.grey.shade400),
                   ),
                 ],
@@ -303,7 +304,7 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
 
     if (confirmed == true) {
       try {
-        await provider.deleteDocument(widget.projectId, doc.id);
+        await provider.deleteDocument(widget.projectId, doc.id!);
         if (mounted && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Document deleted successfully")),

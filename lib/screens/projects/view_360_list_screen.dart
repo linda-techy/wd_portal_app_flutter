@@ -143,6 +143,20 @@ class _View360ListScreenState extends State<View360ListScreen> {
                       child: Icon(Icons.panorama_fish_eye, color: Colors.white),
                     ),
                   ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: CircleAvatar(
+                      radius: 16,
+                      backgroundColor: Colors.black54,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(Icons.edit, size: 16, color: Colors.white),
+                        tooltip: 'Edit',
+                        onPressed: () => _showEditDialog(tour),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -186,6 +200,90 @@ class _View360ListScreenState extends State<View360ListScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _showEditDialog(View360 tour) async {
+    final titleCtrl = TextEditingController(text: tour.title);
+    final descCtrl = TextEditingController(text: tour.description ?? '');
+    final locationCtrl = TextEditingController(text: tour.location ?? '');
+    bool isSaving = false;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Edit 360° Tour'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Title',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: locationCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Location',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSaving ? null : () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.coralRed, foregroundColor: Colors.white),
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      setDialogState(() => isSaving = true);
+                      try {
+                        await _service.updateTour(tour.id!, {
+                          'title': titleCtrl.text.trim(),
+                          'description': descCtrl.text.trim(),
+                          'location': locationCtrl.text.trim(),
+                        });
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        _fetchTours();
+                      } catch (e) {
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(content: Text('Failed to update: $e'), backgroundColor: Colors.red),
+                          );
+                        }
+                        setDialogState(() => isSaving = false);
+                      }
+                    },
+              child: isSaving
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    titleCtrl.dispose();
+    descCtrl.dispose();
+    locationCtrl.dispose();
   }
 }
 

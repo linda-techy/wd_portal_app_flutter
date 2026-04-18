@@ -91,6 +91,15 @@ class View360Service {
     }
   }
 
+  Future<View360> updateTour(int id, Map<String, dynamic> updates) async {
+    try {
+      final response = await _apiService.put('/api/view360/$id', data: updates);
+      return View360.fromJson(response.data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> deleteTour(int id) async {
     try {
       await _apiService.delete('/api/view360/$id');
