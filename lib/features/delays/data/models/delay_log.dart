@@ -6,6 +6,10 @@ class DelayLog {
   final DateTime fromDate;
   final DateTime? toDate;
   final String? reasonText;
+  final String? reasonCategory;
+  final String? responsibleParty;
+  final int? durationDaysField;
+  final String? impactDescription;
   final DateTime? createdAt;
 
   DelayLog({
@@ -16,6 +20,10 @@ class DelayLog {
     required this.fromDate,
     this.toDate,
     this.reasonText,
+    this.reasonCategory,
+    this.responsibleParty,
+    this.durationDaysField,
+    this.impactDescription,
     this.createdAt,
   });
 
@@ -28,6 +36,10 @@ class DelayLog {
       fromDate: DateTime.parse(json['fromDate']),
       toDate: json['toDate'] != null ? DateTime.parse(json['toDate']) : null,
       reasonText: json['reasonText'],
+      reasonCategory: json['reasonCategory'],
+      responsibleParty: json['responsibleParty'],
+      durationDaysField: json['durationDays'] as int?,
+      impactDescription: json['impactDescription'],
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
     );
   }
@@ -38,9 +50,13 @@ class DelayLog {
       'project': {'id': projectId},
       'phase': phaseId != null ? {'id': phaseId} : null,
       'delayType': delayType,
-      'fromDate': fromDate.toIso8601String().substring(0, 10), // Send YYYY-MM-DD
+      'fromDate': fromDate.toIso8601String().substring(0, 10),
       'toDate': toDate?.toIso8601String().substring(0, 10),
       'reasonText': reasonText,
+      if (reasonCategory != null) 'reasonCategory': reasonCategory,
+      if (responsibleParty != null) 'responsibleParty': responsibleParty,
+      if (durationDaysField != null) 'durationDays': durationDaysField,
+      if (impactDescription != null) 'impactDescription': impactDescription,
     };
   }
 
@@ -56,9 +72,14 @@ class DelayLog {
   /// Start date of delay (alias for fromDate).
   DateTime get startDate => fromDate;
 
-  /// Number of days delayed.
-  int get durationDays => (toDate ?? DateTime.now()).difference(fromDate).inDays;
+  /// Number of days delayed — uses explicit field if set, else computed.
+  int get durationDays =>
+      durationDaysField ?? (toDate ?? DateTime.now()).difference(fromDate).inDays;
 
   /// Severity / type for display (alias for delayType).
   String get severity => delayType;
+
+  /// Display label for the reason category.
+  String get categoryLabel =>
+      (reasonCategory ?? delayType).replaceAll('_', ' ');
 }

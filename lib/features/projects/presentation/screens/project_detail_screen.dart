@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:admin/features/projects/data/models/project_model.dart';
 import 'package:admin/theme/app_theme.dart';
+import 'gantt_screen.dart';
 
 class ProjectDetailScreen extends StatelessWidget {
   final ProjectModel project;
@@ -13,6 +14,22 @@ class ProjectDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(project.code ?? project.name),
+        actions: [
+          if (project.id != null)
+            IconButton(
+              icon: const Icon(Icons.view_timeline_outlined),
+              tooltip: 'Gantt Timeline',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => GanttScreen(
+                    projectId: project.id!,
+                    projectName: project.name,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

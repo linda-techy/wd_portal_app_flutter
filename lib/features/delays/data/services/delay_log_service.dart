@@ -18,7 +18,7 @@ class DelayLogService {
 
   Future<DelayLog> logDelay(DelayLog delay) async {
     final response = await _apiService.post(
-      '/delay-logs',
+      '/api/projects/${delay.projectId}/delays',
       data: delay.toJson(),
     );
 
@@ -27,6 +27,15 @@ class DelayLogService {
     } else {
       throw Exception('Failed to log delay');
     }
+  }
+
+  Future<Map<String, dynamic>> getSummary(int projectId) async {
+    final response =
+        await _apiService.get('/api/projects/$projectId/delays/summary');
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(response.data);
+    }
+    return {};
   }
 
   Future<DelayLog> closeDelay(
