@@ -240,15 +240,39 @@ class _SubcontractWorkOrderDetailScreenState
             case 'terminate':
               _terminateWorkOrder();
               break;
+            case 'edit':
+              _showEditDialog();
+              break;
+            case 'delete':
+              _confirmDelete();
+              break;
           }
         },
         itemBuilder: (ctx) => [
+          if (status == 'DRAFT' || status == 'ISSUED')
+            const PopupMenuItem(
+                value: 'edit',
+                child: ListTile(
+                  leading: Icon(Icons.edit),
+                  title: Text('Edit Work Order'),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                )),
           if (status == 'DRAFT')
             const PopupMenuItem(
                 value: 'issue', child: Text('Issue Work Order')),
           if (status == 'ISSUED' || status == 'IN_PROGRESS')
             const PopupMenuItem(
                 value: 'complete', child: Text('Mark Complete')),
+          if (status == 'DRAFT')
+            const PopupMenuItem(
+                value: 'delete',
+                child: ListTile(
+                  leading: Icon(Icons.delete, color: Colors.red),
+                  title: Text('Delete', style: TextStyle(color: Colors.red)),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                )),
           if (status != 'COMPLETED' && status != 'TERMINATED')
             const PopupMenuItem(
                 value: 'terminate',
@@ -601,6 +625,167 @@ class _SubcontractWorkOrderDetailScreenState
     }
   }
 
+  // ===== EDIT / DELETE =====
+
+  void _showEditDialog() {
+    final scopeCtrl = TextEditingController(text: _summary?.scopeDescription ?? '');
+    final amountCtrl = TextEditingController(
+        text: _summary?.totalContractAmount.toStringAsFixed(0) ?? '');
+    final termsCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit Work Order'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: scopeCtrl,
+                decoration: const InputDecoration(labelText: 'Scope of Work'),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: amountCtrl,
+                decoration: const InputDecoration(
+                    labelText: 'Negotiated Amount', prefixText: '\u20B9 '),
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: termsCtrl,
+                decoration: const InputDecoration(labelText: 'Payment Terms'),
+                maxLines: 2,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                final updates = <String, dynamic>{};
+                if (scopeCtrl.text.isNotEmpty) {
+                  updates['scopeDescription'] = scopeCtrl.text;
+                }
+                final amt = double.tryParse(amountCtrl.text);
+                if (amt != null) updates['negotiatedAmount'] = amt;
+                if (termsCtrl.text.isNotEmpty) {
+                  updates['paymentTerms'] = termsCtrl.text;
+                }
+                await _service.updateWorkOrder(widget.workOrderId, updates);
+                _loadData();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Work order updated'),
+                        backgroundColor: AppTheme.successGreen),
+                  );
+                }
+              } catch (e) {
+                if (mounted) ErrorHandler.showErrorSnackBar(context, e);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDelete() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Work Order'),
+        content: const Text(
+            'This will permanently delete this draft work order. Continue?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.coralRed),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await _service.deleteWorkOrder(widget.workOrderId);
+                if (mounted) Navigator.pop(context);
+              } catch (e) {
+                if (mounted) ErrorHandler.showErrorSnackBar(context, e);
+              }
+            },
+            child:
+                const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===== MEASUREMENT APPROVAL =====
+
+  Future<void> _approveMeasurement(int measurementId) async {
+    try {
+      await _service.approveMeasurementPatch(measurementId);
+      _loadData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Measurement approved'),
+              backgroundColor: AppTheme.successGreen),
+        );
+      }
+    } catch (e) {
+      if (mounted) ErrorHandler.showErrorSnackBar(context, e);
+    }
+  }
+
+  void _showRejectDialog(int measurementId) {
+    final reasonCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reject Measurement'),
+        content: TextField(
+          controller: reasonCtrl,
+          decoration: const InputDecoration(
+              labelText: 'Rejection Reason', hintText: 'Required'),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.coralRed),
+            onPressed: () async {
+              if (reasonCtrl.text.trim().isEmpty) return;
+              Navigator.pop(ctx);
+              try {
+                await _service.rejectMeasurementPatch(
+                    measurementId, reasonCtrl.text.trim());
+                _loadData();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Measurement rejected')),
+                  );
+                }
+              } catch (e) {
+                if (mounted) ErrorHandler.showErrorSnackBar(context, e);
+              }
+            },
+            child:
+                const Text('Reject', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ===== CARD BUILDERS =====
 
   Widget _buildStatCard(
@@ -731,6 +916,28 @@ class _SubcontractWorkOrderDetailScreenState
               'Date: ${_dateFormat.format(measurement.measurementDate)}',
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
+            if (measurement.isPending) ...[
+              const Divider(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton.icon(
+                    icon: const Icon(Icons.close, color: Colors.red, size: 18),
+                    label: const Text('Reject',
+                        style: TextStyle(color: Colors.red)),
+                    onPressed: () => _showRejectDialog(measurement.id!),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.check, size: 18),
+                    label: const Text('Approve'),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.tealAccent),
+                    onPressed: () => _approveMeasurement(measurement.id!),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

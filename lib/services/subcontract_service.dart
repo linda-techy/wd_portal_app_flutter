@@ -211,13 +211,89 @@ class SubcontractService {
     }
   }
 
+  // ===== WORK ORDER CRUD =====
+
+  /// Get a single work order by ID
+  Future<SubcontractWorkOrder> getWorkOrder(int workOrderId) async {
+    try {
+      final response = await _apiService.get('/api/subcontracts/$workOrderId');
+      return SubcontractWorkOrder.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Update a work order (only DRAFT or ISSUED status)
+  Future<SubcontractWorkOrder> updateWorkOrder(
+      int workOrderId, Map<String, dynamic> updates) async {
+    try {
+      final response = await _apiService.put(
+        '/api/subcontracts/$workOrderId',
+        data: updates,
+      );
+      return SubcontractWorkOrder.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Delete a work order (only DRAFT status)
+  Future<void> deleteWorkOrder(int workOrderId) async {
+    try {
+      await _apiService.delete('/api/subcontracts/$workOrderId');
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ===== MEASUREMENT APPROVAL (new endpoints) =====
+
+  /// Approve a measurement (PATCH endpoint)
+  Future<SubcontractMeasurement> approveMeasurementPatch(int measurementId) async {
+    try {
+      final response = await _apiService.dio.patch(
+        '/api/subcontracts/measurements/$measurementId/approve',
+      );
+      return SubcontractMeasurement.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Reject a measurement with reason (PATCH endpoint)
+  Future<SubcontractMeasurement> rejectMeasurementPatch(
+      int measurementId, String rejectionReason) async {
+    try {
+      final response = await _apiService.dio.patch(
+        '/api/subcontracts/measurements/$measurementId/reject',
+        data: {'rejectionReason': rejectionReason},
+      );
+      return SubcontractMeasurement.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ===== RETENTION RELEASES =====
+
+  /// Get retention release history for a work order
+  Future<List<dynamic>> getRetentionReleases(int workOrderId) async {
+    try {
+      final response = await _apiService
+          .get('/api/subcontracts/$workOrderId/retention-releases');
+      return response.data as List;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   // ===== SUMMARIES =====
 
   /// Get work order financial summary
   Future<SubcontractSummary> getWorkOrderSummary(int workOrderId) async {
     try {
       final response = await _apiService
-          .get('/subcontracts/work-orders/$workOrderId/summary');
+          .get('/api/subcontracts/$workOrderId/summary');
       return SubcontractSummary.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
