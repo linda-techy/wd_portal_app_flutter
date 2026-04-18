@@ -199,84 +199,91 @@ class QuotationsScreenState extends State<QuotationsScreen> {
                                 ],
                               ),
                             )
-                          : Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: containerBorder),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: SingleChildScrollView(
-                                  child: SizedBox(
-                                    width: double.infinity,
-                                    child: DataTable(
-                                      headingRowColor: WidgetStateProperty.all(boxSecondary),
-                                      columnSpacing: 16,
-                                      horizontalMargin: 16,
-                                      columns: const [
-                                        DataColumn(label: Text('Quotation #', style: TextStyle(fontWeight: FontWeight.bold))),
-                                        DataColumn(label: Text('Title', style: TextStyle(fontWeight: FontWeight.bold))),
-                                        DataColumn(label: Text('Lead ID', style: TextStyle(fontWeight: FontWeight.bold))),
-                                        DataColumn(label: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold)), numeric: true),
-                                        DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
-                                        DataColumn(label: Text('Valid Days', style: TextStyle(fontWeight: FontWeight.bold)), numeric: true),
-                                        DataColumn(label: Text('Created', style: TextStyle(fontWeight: FontWeight.bold))),
-                                        DataColumn(label: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold))),
-                                      ],
-                                      rows: _quotations.map((q) => DataRow(
-                                        cells: [
-                                          DataCell(Text(q.quotationNumber ?? 'Draft', style: const TextStyle(fontWeight: FontWeight.w500))),
-                                          DataCell(
-                                            ConstrainedBox(
-                                              constraints: const BoxConstraints(maxWidth: 200),
-                                              child: Text(q.title, overflow: TextOverflow.ellipsis),
-                                            ),
-                                          ),
-                                          DataCell(Text('#${q.leadId}')),
-                                          DataCell(Text(q.finalAmount != null ? _currencyFormat.format(q.finalAmount) : '-')),
-                                          DataCell(
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                              decoration: BoxDecoration(
-                                                color: _getStatusColor(q.status).withOpacity(0.1),
-                                                borderRadius: BorderRadius.circular(12),
-                                                border: Border.all(color: _getStatusColor(q.status).withOpacity(0.3)),
+                          : RefreshIndicator(
+                              onRefresh: _loadQuotations,
+                              child: SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: containerBorder),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: SizedBox(
+                                        width: double.infinity,
+                                        child: DataTable(
+                                          headingRowColor: WidgetStateProperty.all(boxSecondary),
+                                          columnSpacing: 16,
+                                          horizontalMargin: 16,
+                                          columns: const [
+                                            DataColumn(label: Text('Quotation #', style: TextStyle(fontWeight: FontWeight.bold))),
+                                            DataColumn(label: Text('Title', style: TextStyle(fontWeight: FontWeight.bold))),
+                                            DataColumn(label: Text('Lead ID', style: TextStyle(fontWeight: FontWeight.bold))),
+                                            DataColumn(label: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold)), numeric: true),
+                                            DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
+                                            DataColumn(label: Text('Valid Days', style: TextStyle(fontWeight: FontWeight.bold)), numeric: true),
+                                            DataColumn(label: Text('Created', style: TextStyle(fontWeight: FontWeight.bold))),
+                                            DataColumn(label: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold))),
+                                          ],
+                                          rows: _quotations.map((q) => DataRow(
+                                            cells: [
+                                              DataCell(Text(q.quotationNumber ?? 'Draft', style: const TextStyle(fontWeight: FontWeight.w500))),
+                                              DataCell(
+                                                ConstrainedBox(
+                                                  constraints: const BoxConstraints(maxWidth: 200),
+                                                  child: Text(q.title, overflow: TextOverflow.ellipsis),
+                                                ),
                                               ),
-                                              child: Row(
+                                              DataCell(Text('#${q.leadId}')),
+                                              DataCell(Text(q.finalAmount != null ? _currencyFormat.format(q.finalAmount) : '-')),
+                                              DataCell(
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                  decoration: BoxDecoration(
+                                                    color: _getStatusColor(q.status).withOpacity(0.1),
+                                                    borderRadius: BorderRadius.circular(12),
+                                                    border: Border.all(color: _getStatusColor(q.status).withOpacity(0.3)),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Icon(_getStatusIcon(q.status), size: 14, color: _getStatusColor(q.status)),
+                                                      const SizedBox(width: 4),
+                                                      Text(q.status, style: TextStyle(fontSize: 12, color: _getStatusColor(q.status))),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(Text('${q.validityDays}d')),
+                                              DataCell(Text(q.createdAt != null ? DateFormat('dd MMM yyyy').format(q.createdAt!) : '-', style: const TextStyle(fontSize: 12))),
+                                              DataCell(Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  Icon(_getStatusIcon(q.status), size: 14, color: _getStatusColor(q.status)),
-                                                  const SizedBox(width: 4),
-                                                  Text(q.status, style: TextStyle(fontSize: 12, color: _getStatusColor(q.status))),
+                                                  if (q.status == 'DRAFT')
+                                                    IconButton(
+                                                      icon: const Icon(Icons.send, size: 18),
+                                                      onPressed: () => _sendQuotation(q),
+                                                      tooltip: 'Send',
+                                                      color: infoColor,
+                                                      splashRadius: 18,
+                                                    ),
+                                                  IconButton(
+                                                    icon: const Icon(Icons.delete_outline, size: 18),
+                                                    onPressed: () => _deleteQuotation(q),
+                                                    tooltip: 'Delete',
+                                                    color: errorColor,
+                                                    splashRadius: 18,
+                                                  ),
                                                 ],
-                                              ),
-                                            ),
-                                          ),
-                                          DataCell(Text('${q.validityDays}d')),
-                                          DataCell(Text(q.createdAt != null ? DateFormat('dd MMM yyyy').format(q.createdAt!) : '-', style: const TextStyle(fontSize: 12))),
-                                          DataCell(Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              if (q.status == 'DRAFT')
-                                                IconButton(
-                                                  icon: const Icon(Icons.send, size: 18),
-                                                  onPressed: () => _sendQuotation(q),
-                                                  tooltip: 'Send',
-                                                  color: infoColor,
-                                                  splashRadius: 18,
-                                                ),
-                                              IconButton(
-                                                icon: const Icon(Icons.delete_outline, size: 18),
-                                                onPressed: () => _deleteQuotation(q),
-                                                tooltip: 'Delete',
-                                                color: errorColor,
-                                                splashRadius: 18,
-                                              ),
+                                              )),
                                             ],
-                                          )),
-                                        ],
-                                      )).toList(),
+                                          )).toList(),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),

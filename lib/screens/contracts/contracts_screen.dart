@@ -228,7 +228,9 @@ class ContractsScreenState extends State<ContractsScreen> {
                                     ],
                                   ),
                                 )
-                              : ListView.builder(
+                              : RefreshIndicator(
+                                  onRefresh: _loadWorkOrders,
+                                  child: ListView.builder(
                                   itemCount: filtered.length,
                                   itemBuilder: (ctx, i) {
                                     final wo = filtered[i];
@@ -298,6 +300,7 @@ class ContractsScreenState extends State<ContractsScreen> {
                                       ),
                                     );
                                   },
+                                ),
                                 ),
             ),
           ],

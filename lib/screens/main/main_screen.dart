@@ -1,4 +1,5 @@
 import 'package:admin/controllers/menu_app_controller.dart';
+import 'package:admin/widgets/offline_banner.dart';
 import 'package:admin/responsive.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/screens/dashboard/dashboard_screen.dart';
@@ -183,30 +184,37 @@ class MainScreenState extends State<MainScreen> {
         ),
       ),
       body: SafeArea(
-        child: Responsive.isDesktop(context)
-            ? Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 1,
-                    child: SideMenu(
-                      onMenuItemClick: _onMenuItemClick,
-                      selectedIndex: selectedIndex,
-                      isDrawer: false,
-                    ),
-                  ),
-                  Expanded(
-                    flex: 5,
-                    child: Container(
-                      constraints: BoxConstraints(
-                        maxWidth: MediaQuery.of(context).size.width,
-                      ),
-                      child: widget.child ?? _screens[selectedIndex],
-                    ),
-                  ),
-                ],
-               )
-             : (widget.child ?? _screens[selectedIndex]),
+        child: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(
+              child: Responsive.isDesktop(context)
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: SideMenu(
+                            onMenuItemClick: _onMenuItemClick,
+                            selectedIndex: selectedIndex,
+                            isDrawer: false,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 5,
+                          child: Container(
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width,
+                            ),
+                            child: widget.child ?? _screens[selectedIndex],
+                          ),
+                        ),
+                      ],
+                    )
+                  : (widget.child ?? _screens[selectedIndex]),
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: ResponsiveUtils.isMobile(context) || ResponsiveUtils.isTablet(context)
           ? BottomNavigationBar(

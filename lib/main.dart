@@ -1,3 +1,4 @@
+import 'package:admin/services/connectivity_service.dart';
 import 'package:admin/controllers/menu_app_controller.dart';
 import 'package:admin/config/app_config.dart';
 import 'package:admin/config/router.dart';
@@ -59,6 +60,9 @@ void main() async {
   if (AppConfig.enableDebugLogging) {
     _testApiConnectionAsync();
   }
+
+  // Initialize offline connectivity detection
+  await ConnectivityService.initialize();
 
   runApp(const MyApp());
 }
