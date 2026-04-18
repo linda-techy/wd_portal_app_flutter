@@ -4,6 +4,7 @@ import 'package:admin/models/stage_payment_models.dart';
 import 'package:admin/services/stage_payment_service.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/utils/error_handler.dart';
+import 'package:admin/services/reports/payment_report.dart';
 
 class StagePaymentScreen extends StatefulWidget {
   final int projectId;
@@ -122,6 +123,15 @@ class _StagePaymentScreenState extends State<StagePaymentScreen> {
     }
   }
 
+  Future<void> _exportPdf() async {
+    try {
+      await PaymentReport.generate(
+          projectName: widget.projectName, stages: _stages);
+    } catch (e) {
+      if (mounted) ErrorHandler.showErrorSnackBar(context, e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,6 +142,10 @@ class _StagePaymentScreenState extends State<StagePaymentScreen> {
         title: Text('Stages — ${widget.projectName}',
             style: const TextStyle(fontSize: 16)),
         actions: [
+          IconButton(
+              icon: const Icon(Icons.picture_as_pdf_outlined),
+              tooltip: 'Export PDF',
+              onPressed: _exportPdf),
           IconButton(
               icon: const Icon(Icons.refresh), onPressed: _load),
         ],

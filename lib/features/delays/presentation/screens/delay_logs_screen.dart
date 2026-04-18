@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/utils/error_handler.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
+import 'package:admin/services/reports/delay_report.dart';
 
 // ─── Category constants ───────────────────────────────────────────────────────
 
@@ -98,6 +99,18 @@ class _DelayLogsScreenState extends State<DelayLogsScreen> {
     }
   }
 
+  Future<void> _exportPdf() async {
+    try {
+      await DelayReport.generate(
+          projectName: 'Project ${widget.projectId}', delays: _delays);
+    } catch (e) {
+      if (mounted) {
+        await ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'PDF export failed');
+      }
+    }
+  }
+
   Future<void> _showAddDialog() async {
     await showDialog(
       context: context,
@@ -144,14 +157,23 @@ class _DelayLogsScreenState extends State<DelayLogsScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Delay Logs', style: AppTheme.headlineMedium),
-                        ElevatedButton.icon(
-                          onPressed: _showAddDialog,
-                          icon: const Icon(Icons.timer_off_outlined),
-                          label: const Text('Log Delay'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.safetyOrange,
-                            foregroundColor: Colors.white,
-                          ),
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.picture_as_pdf_outlined),
+                              tooltip: 'Export PDF',
+                              onPressed: _exportPdf,
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: _showAddDialog,
+                              icon: const Icon(Icons.timer_off_outlined),
+                              label: const Text('Log Delay'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.safetyOrange,
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

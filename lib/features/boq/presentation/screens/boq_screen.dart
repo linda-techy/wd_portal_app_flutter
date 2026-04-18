@@ -8,6 +8,7 @@ import 'package:admin/theme/app_theme.dart';
 import 'package:admin/utils/error_handler.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
 import 'package:admin/providers/permission_provider.dart';
+import 'package:admin/services/reports/boq_report.dart';
 
 class BoqScreen extends StatefulWidget {
   final int projectId;
@@ -157,6 +158,40 @@ class _BoqScreenState extends State<BoqScreen> {
     }
   }
 
+  Future<void> _exportPdf() async {
+    try {
+      final projectName = _items.isNotEmpty ? (_items.first.projectName ?? 'Project') : 'Project';
+      await BoqReport.generate(projectName: projectName, items: _items);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('PDF export failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  void _showExportOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.picture_as_pdf),
+            title: const Text('Export as PDF'),
+            onTap: () { Navigator.pop(ctx); _exportPdf(); },
+          ),
+          ListTile(
+            leading: const Icon(Icons.table_chart),
+            title: const Text('Export as Excel/CSV'),
+            onTap: () { Navigator.pop(ctx); _exportExcel(); },
+          ),
+        ],
+      ),
+    );
+  }
+
   // Filters are applied server-side; _items holds all fetched pages accumulated so far.
   Map<String, List<BoqItem>> get _groupedItems {
     final map = <String, List<BoqItem>>{};
@@ -189,8 +224,8 @@ class _BoqScreenState extends State<BoqScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.download_outlined),
-            onPressed: _isExporting ? null : _exportExcel,
-            tooltip: 'Export to Excel',
+            onPressed: _isExporting ? null : _showExportOptions,
+            tooltip: 'Export',
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
