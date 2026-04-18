@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
@@ -23,7 +22,7 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
   DashboardData _data = DashboardData.empty();
   bool _isLoading = true;
   String? _errorMessage;
-  Timer? _refreshTimer;
+  DateTime? _lastUpdated;
   bool _serviceInitialized = false;
 
   @override
@@ -34,15 +33,7 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
           DashboardService(Provider.of<ApiService>(context, listen: false));
       _serviceInitialized = true;
       _loadData();
-      _refreshTimer =
-          Timer.periodic(const Duration(minutes: 5), (_) => _loadData());
     }
-  }
-
-  @override
-  void dispose() {
-    _refreshTimer?.cancel();
-    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -57,6 +48,7 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
         setState(() {
           _data = data;
           _isLoading = false;
+          _lastUpdated = DateTime.now();
         });
       }
     } catch (e) {
@@ -67,6 +59,14 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
         });
       }
     }
+  }
+
+  String _staleness() {
+    if (_lastUpdated == null) return '';
+    final diff = DateTime.now().difference(_lastUpdated!);
+    if (diff.inMinutes < 1) return 'Updated just now';
+    if (diff.inMinutes == 1) return 'Updated 1 min ago';
+    return 'Updated ${diff.inMinutes} mins ago';
   }
 
   @override
@@ -172,6 +172,11 @@ class _CRMDashboardModernState extends State<CRMDashboardModern> {
               DateFormat('EEEE, d MMM yyyy').format(DateTime.now()),
               style: TextStyle(color: Colors.grey[600], fontSize: 13),
             ),
+            if (_lastUpdated != null)
+              Text(
+                _staleness(),
+                style: TextStyle(color: Colors.grey[400], fontSize: 11),
+              ),
           ],
         ),
         TextButton.icon(
