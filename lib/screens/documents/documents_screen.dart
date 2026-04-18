@@ -215,7 +215,7 @@ class DocumentsScreenState extends State<DocumentsScreen> {
                   const SizedBox(width: 8),
                   _buildStatChip('Categories', _categories.length, infoColor),
                   const SizedBox(width: 8),
-                  _buildStatChip('Total Size', _formatFileSize(_documents.fold(0, (s, d) => s + (d.fileSize ?? 0))), warningColor),
+                  _buildStatChip('Total Size', _formatFileSize(_documents.fold<int>(0, (s, d) => s + (d.fileSize ?? 0))), warningColor),
                 ],
               ),
             if (!_isLoadingDocuments && _documents.isNotEmpty) const SizedBox(height: defaultPadding),
