@@ -29,6 +29,8 @@ import 'package:admin/screens/inventory/inventory_dashboard_screen.dart';
 import 'package:admin/screens/finance/finance_dashboard_screen.dart';
 import 'package:admin/features/partnerships/presentation/screens/partnerships_admin_screen.dart';
 import 'package:admin/screens/acl/acl_screen.dart';
+import 'package:admin/screens/support/support_tickets_screen.dart';
+import 'package:admin/screens/support/support_ticket_detail_screen.dart';
 import 'package:admin/screens/auth/forgot_password_screen.dart';
 import 'package:admin/screens/auth/reset_password_screen.dart';
 
@@ -61,6 +63,7 @@ const Map<String, int> kPathToMenuIndex = {
   '/finance':      20,
   '/partnerships': 21,
   '/acl':          22,
+  '/support':      23,
 };
 
 /// Map a menu index (from [MenuAppController]) to its route path.
@@ -69,7 +72,7 @@ const List<String> kIndexToPath = [
   '/quotations', '/contracts', '/follow-ups', '/site-visits',
   '/tasks', '/team', '/communication', '/documents', '/payments',
   '/reports', '/profile', '/challans', '/procurement', '/labour',
-  '/inventory', '/finance', '/partnerships', '/acl',
+  '/inventory', '/finance', '/partnerships', '/acl', '/support',
 ];
 
 String indexToPath(int index) =>
@@ -160,6 +163,14 @@ GoRouter buildAppRouter(PortalAuthProvider authProvider) {
           GoRoute(path: '/finance',      builder: (_, __) => const FinanceDashboardScreen()),
           GoRoute(path: '/partnerships', builder: (_, __) => const PartnershipsAdminScreen()),
           GoRoute(path: '/acl',          builder: (_, __) => const AclScreen()),
+          GoRoute(path: '/support',      builder: (_, __) => const SupportTicketsScreen()),
+          GoRoute(
+            path: '/support/:ticketId',
+            builder: (_, state) {
+              final ticketId = int.tryParse(state.pathParameters['ticketId'] ?? '') ?? 0;
+              return SupportTicketDetailScreen(ticketId: ticketId);
+            },
+          ),
         ],
       ),
     ],

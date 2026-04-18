@@ -331,6 +331,14 @@ class SideMenu extends StatelessWidget {
       ));
     }
 
+    // SUPPORT TICKETS - Visible to users with ticket permissions
+    menuItems.add(_buildMenuItemWithIcon(
+      context,
+      title: 'Support',
+      icon: Icons.support_agent,
+      index: 23,
+    ));
+
     // ACCESS CONTROL (ACL) - Admin only
     if (permissions.canEditPortalUser) {
       menuItems.add(_buildMenuItemWithIcon(
