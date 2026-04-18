@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../../services/quality_check_service.dart';
+import '../../../../services/reports/quality_report.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../utils/error_handler.dart';
 import '../../../../providers/portal_auth_provider.dart';
@@ -21,6 +22,7 @@ class _QualityChecksScreenState extends State<QualityChecksScreen>
   late TabController _tabController;
   List<QualityCheck> _checks = [];
   bool _isLoading = true;
+  bool _isExporting = false;
 
   @override
   void initState() {
@@ -46,6 +48,24 @@ class _QualityChecksScreenState extends State<QualityChecksScreen>
       return;
     }
     await _loadData();
+  }
+
+  Future<void> _exportPdf() async {
+    setState(() => _isExporting = true);
+    try {
+      await QualityReport.generate(
+        projectName: 'Project',
+        qualityChecks: _checks,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('PDF export failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
+    }
   }
 
   Future<void> _loadData() async {
@@ -93,6 +113,13 @@ class _QualityChecksScreenState extends State<QualityChecksScreen>
           ],
         ),
         actions: [
+          IconButton(
+            icon: _isExporting
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.download_outlined),
+            tooltip: 'Export PDF',
+            onPressed: _isExporting ? null : _exportPdf,
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadData,
