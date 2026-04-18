@@ -9,6 +9,7 @@ import 'package:admin/theme/app_theme.dart';
 import 'package:admin/utils/error_handler.dart';
 import 'package:admin/utils/file_upload_helper.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
+import 'package:admin/services/reports/observation_report.dart';
 import 'dart:io' show File;
 
 class ObservationsScreen extends StatefulWidget {
@@ -27,6 +28,7 @@ class _ObservationsScreenState extends State<ObservationsScreen>
   List<ObservationItem> _active = [];
   List<ObservationItem> _resolved = [];
   bool _isLoading = true;
+  bool _isExporting = false;
 
   @override
   void initState() {
@@ -39,6 +41,25 @@ class _ObservationsScreenState extends State<ObservationsScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _exportPdf() async {
+    setState(() => _isExporting = true);
+    try {
+      await ObservationReport.generate(
+        projectName: 'Project',
+        active: _active,
+        resolved: _resolved,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('PDF export failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
+    }
   }
 
   Future<void> _verifyAuthAndLoadData() async {
@@ -92,6 +113,13 @@ class _ObservationsScreenState extends State<ObservationsScreen>
           ],
         ),
         actions: [
+          IconButton(
+            icon: _isExporting
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.download_outlined),
+            tooltip: 'Export PDF',
+            onPressed: _isExporting ? null : _exportPdf,
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadData,
