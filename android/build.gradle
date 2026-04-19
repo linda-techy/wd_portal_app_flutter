@@ -59,6 +59,12 @@ subprojects { project ->
     }
 }
 
+// Redirect Gradle output to top-level build/ where Flutter tooling looks for APKs.
+rootProject.buildDir = "../build"
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+
 subprojects {
     project.evaluationDependsOn(":app")
 }

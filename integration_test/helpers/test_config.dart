@@ -8,15 +8,15 @@ class TestConfig {
     defaultValue: 'http://10.0.2.2:8080', // Android emulator localhost
   );
 
-  /// Test user credentials (must match TestDataSeeder in portal API)
-  static const String adminEmail = 'admin@test.com';
-  static const String adminPassword = 'password123';
-  static const String pmEmail = 'pm@test.com';
-  static const String pmPassword = 'password123';
-  static const String engineerEmail = 'engineer@test.com';
-  static const String engineerPassword = 'password123';
-  static const String accountsEmail = 'accounts@test.com';
-  static const String accountsPassword = 'password123';
+  /// Test user credentials (seeded in running Portal API — all passwords: Test123$)
+  static const String adminEmail = 'adminwalldot@outlook.com';
+  static const String adminPassword = 'Test123\$';
+  static const String pmEmail = 'pmwalldot@outlook.com';
+  static const String pmPassword = 'Test123\$';
+  static const String engineerEmail = 'siteengwalldot@outlook.com';
+  static const String engineerPassword = 'Test123\$';
+  static const String accountsEmail = 'acctasstwalldot@outlook.com';
+  static const String accountsPassword = 'Test123\$';
 
   /// Timeouts for integration tests
   static const Duration pumpSettleDuration = Duration(seconds: 5);

@@ -33,12 +33,22 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:app_links/app_links.dart';
 import 'package:go_router/go_router.dart';
 
+/// True when the app is launched from an integration test.
+/// Set via: flutter test ... --dart-define=INTEGRATION_TEST=true
+const bool kIntegrationTest =
+    bool.fromEnvironment('INTEGRATION_TEST', defaultValue: false);
+
 void main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Register FCM background handler before runApp()
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  // Heavy platform init is skipped in integration tests — they use a
+  // different test binding and don't need FCM / connectivity watchers, which
+  // can run retry loops that prevent pumpAndSettle from ever idling.
+  if (!kIntegrationTest) {
+    // Register FCM background handler before runApp()
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  }
 
   // Initialize platform-conditional storage (CRITICAL for web)
   await StorageService().initialize();
@@ -56,25 +66,32 @@ void main() async {
   // Set up global error handling for web
   _setupGlobalErrorHandling();
 
-  // Test API connection in development mode (non-blocking)
-  if (AppConfig.enableDebugLogging) {
+  // Test API connection in development mode (non-blocking). Skip in tests —
+  // the pumpAndSettle check treats the pending future as "not idle".
+  if (AppConfig.enableDebugLogging && !kIntegrationTest) {
     _testApiConnectionAsync();
   }
 
-  // Initialize offline connectivity detection
-  await ConnectivityService.initialize();
+  // Initialize offline connectivity detection. Skip in tests — the platform
+  // channel is unavailable and the watcher fires continuously.
+  if (!kIntegrationTest) {
+    await ConnectivityService.initialize();
+  }
 
   runApp(const MyApp());
 }
 
 // Set up global error handling for web
 void _setupGlobalErrorHandling() {
-  // Handle Flutter framework errors
+  // Preserve the existing handler (e.g. the integration_test framework sets
+  // one). Chain to it so tests can still see errors.
+  final FlutterExceptionHandler? previousOnError = FlutterError.onError;
   FlutterError.onError = (FlutterErrorDetails details) {
     if (AppConfig.enableDebugLogging) {
       debugPrint('Flutter Error: ${details.exception}');
       debugPrint('Stack: ${details.stack}');
     }
+    previousOnError?.call(details);
   };
 
   // Handle platform errors (web-specific)
