@@ -261,7 +261,7 @@
     },
     {
       "name": "file",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/file-7.0.1",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/file-7.0.0",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },
@@ -356,6 +356,12 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "flutter_driver",
+      "rootUri": "file:///C:/src/flutter/packages/flutter_driver",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
       "name": "flutter_lints",
       "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_lints-3.0.2",
       "packageUri": "lib/",
@@ -444,6 +450,12 @@
       "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/frontend_server_client-4.0.0",
       "packageUri": "lib/",
       "languageVersion": "3.0"
+    },
+    {
+      "name": "fuchsia_remote_debug_protocol",
+      "rootUri": "file:///C:/src/flutter/packages/fuchsia_remote_debug_protocol",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
     },
     {
       "name": "geolocator",
@@ -582,6 +594,12 @@
       "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/image_picker_windows-0.2.1+1",
       "packageUri": "lib/",
       "languageVersion": "2.19"
+    },
+    {
+      "name": "integration_test",
+      "rootUri": "file:///C:/src/flutter/packages/integration_test",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
     },
     {
       "name": "intl",
@@ -783,7 +801,7 @@
     },
     {
       "name": "platform",
-      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/platform-3.1.6",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/platform-3.1.5",
       "packageUri": "lib/",
       "languageVersion": "3.2"
     },
@@ -810,6 +828,12 @@
       "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/printing-5.14.3",
       "packageUri": "lib/",
       "languageVersion": "3.3"
+    },
+    {
+      "name": "process",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/process-5.0.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
     },
     {
       "name": "provider",
@@ -948,6 +972,12 @@
       "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/string_scanner-1.2.0",
       "packageUri": "lib/",
       "languageVersion": "2.18"
+    },
+    {
+      "name": "sync_http",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/sync_http-0.3.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
     },
     {
       "name": "syncfusion_flutter_core",
@@ -1136,6 +1166,12 @@
       "languageVersion": "3.3"
     },
     {
+      "name": "webdriver",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/webdriver-3.0.3",
+      "packageUri": "lib/",
+      "languageVersion": "2.18"
+    },
+    {
       "name": "win32",
       "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/win32-5.10.1",
       "packageUri": "lib/",
@@ -1172,7 +1208,7 @@
       "languageVersion": "3.5"
     }
   ],
-  "generated": "2026-04-18T19:33:31.698076Z",
+  "generated": "2026-04-18T21:23:23.889647Z",
   "generator": "pub",
   "generatorVersion": "3.5.4",
   "flutterRoot": "file:///C:/src/flutter",
