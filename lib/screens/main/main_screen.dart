@@ -5,7 +5,7 @@ import 'package:admin/constants.dart';
 import 'package:admin/screens/dashboard/dashboard_screen.dart';
 import 'package:admin/features/leads/presentation/screens/leads_screen.dart';
 import 'package:admin/features/customers/presentation/screens/customers_screen.dart';
-import 'package:admin/screens/customer_projects/customer_projects_screen.dart';
+import 'package:admin/features/projects/presentation/screens/projects_list_screen.dart';
 import 'package:admin/screens/portal_users/portal_users_screen.dart';
 import 'package:admin/screens/quotations/quotations_screen.dart';
 import 'package:admin/screens/contracts/contracts_screen.dart';
@@ -85,7 +85,7 @@ class MainScreenState extends State<MainScreen> {
     const DashboardScreen(),        // 0
     const LeadsScreen(),            // 1
     const CustomersScreen(),        // 2
-    const CustomerProjectsScreen(), // 3
+    const ProjectsListScreen(),     // 3
     const PortalUsersScreen(),      // 4
     const QuotationsScreen(),       // 5
     const ContractsScreen(),        // 6
