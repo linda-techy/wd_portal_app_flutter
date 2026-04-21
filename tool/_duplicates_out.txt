@@ -1,0 +1,3 @@
+# total lib/ files scanned: 401
+# duplicate groups (identical ignoring comments+whitespace): 0
+

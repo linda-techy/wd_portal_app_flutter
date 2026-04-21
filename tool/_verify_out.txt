@@ -1,0 +1,131 @@
+# candidates checked: 86
+# zero external references: 60
+# referenced only from other orphan candidates (dead cluster): 23
+# referenced from live files (keep or investigate): 3
+
+## ZERO REFERENCES (strongest delete-candidates):
+  lib/exceptions/api_exception.dart
+  lib/features/change_orders/presentation/screens/change_orders_screen.dart
+  lib/features/leads/presentation/providers/lead_provider.dart
+  lib/features/leads/presentation/screens/lead_crm_page.dart
+  lib/features/leads/presentation/screens/models/edit_lead_form_data.dart
+  lib/features/leads/presentation/screens/validators/lead_form_validators.dart
+  lib/features/procurement/presentation/screens/indent_list_screen.dart
+  lib/features/subcontracting/presentation/screens/retention_dashboard_screen.dart
+  lib/features/warranties/presentation/screens/project_warranties_screen.dart
+  lib/models/portal_auth_models.dart
+  lib/models/task.dart
+  lib/providers/project_variation_provider.dart
+  lib/providers/quality_check_provider.dart
+  lib/screens/dashboard/components/header.dart
+  lib/screens/dashboard/components/lead_dashboard.dart
+  lib/screens/dashboard/components/my_fields.dart
+  lib/screens/documents/approvals_screen.dart
+  lib/screens/documents/documents_screen.dart
+  lib/screens/documents/project_document_list_screen.dart
+  lib/screens/finance/accounts_payable_dashboard.dart
+  lib/screens/finance/vendor_payment_form.dart
+  lib/screens/inventory/inventory_stock_screen.dart
+  lib/screens/inventory/materials_screen.dart
+  lib/screens/invoices/invoices_screen.dart
+  lib/screens/payments/payments_screen.dart
+  lib/screens/procurement/grn_list_screen.dart
+  lib/screens/procurement/material_indents_screen.dart
+  lib/screens/procurement/purchase_orders_screen.dart
+  lib/screens/procurement/record_grn_screen.dart
+  lib/screens/procurement/vendor_quotations_screen.dart
+  lib/screens/projects/cctv_management_screen.dart
+  lib/screens/projects/subcontract_measurement_form.dart
+  lib/screens/projects/subcontracts_screen.dart
+  lib/screens/tasks/task_alert_dashboard_screen.dart
+  lib/services/portal_auth_interceptor.dart
+  lib/services/reports/financial_report.dart
+  lib/services/reports/labour_report.dart
+  lib/services/reports/procurement_report.dart
+  lib/services/reports/site_report_pdf.dart
+  lib/shared/auth/base_auth_provider.dart
+  lib/shared/auth/base_auth_service.dart
+  lib/theme/walldot_colors.dart
+  lib/utils/authenticated_screen_mixin.dart
+  lib/utils/currency_formatter.dart
+  lib/widgets/accessibility/keyboard_navigation.dart
+  lib/widgets/accessibility/semantic_wrapper.dart
+  lib/widgets/animations/page_transition.dart
+  lib/widgets/animations/staggered_list.dart
+  lib/widgets/charts/progress_ring.dart
+  lib/widgets/common/filter_panel_widget.dart
+  lib/widgets/common/paginated_data_table.dart
+  lib/widgets/components/data_card.dart
+  lib/widgets/components/empty_state.dart
+  lib/widgets/components/enhanced_data_table.dart
+  lib/widgets/components/premium_card.dart
+  lib/widgets/components/premium_modal.dart
+  lib/widgets/components/status_indicator.dart
+  lib/widgets/financial/financial_widgets.dart
+  lib/widgets/portal_auth_wrapper.dart
+  lib/widgets/portal_role_based_navigation.dart
+
+## DEAD CLUSTER (candidate only referenced by other orphan candidates):
+  lib/features/change_orders/data/models/change_order.dart
+    ref: lib/features/change_orders/data/services/change_order_service.dart
+    ref: lib/features/change_orders/presentation/screens/change_orders_screen.dart
+  lib/features/change_orders/data/services/change_order_service.dart
+    ref: lib/features/change_orders/presentation/screens/change_orders_screen.dart
+  lib/features/leads/presentation/screens/lead_form.dart
+    ref: lib/features/leads/presentation/screens/lead_crm_page.dart
+  lib/features/procurement/data/models/material_indent.dart
+    ref: lib/features/procurement/data/services/material_indent_service.dart
+    ref: lib/features/procurement/presentation/screens/indent_creation_screen.dart
+    ref: lib/features/procurement/presentation/screens/indent_list_screen.dart
+  lib/features/procurement/data/models/vendor_quotation.dart
+    ref: lib/features/procurement/data/services/material_indent_service.dart
+    ref: lib/features/procurement/presentation/screens/quotation_management_screen.dart
+  lib/features/procurement/data/services/material_indent_service.dart
+    ref: lib/features/procurement/presentation/screens/indent_creation_screen.dart
+    ref: lib/features/procurement/presentation/screens/indent_list_screen.dart
+    ref: lib/features/procurement/presentation/screens/quotation_management_screen.dart
+  lib/features/procurement/presentation/screens/indent_creation_screen.dart
+    ref: lib/features/procurement/presentation/screens/indent_list_screen.dart
+    ref: lib/screens/procurement/material_indents_screen.dart
+  lib/features/procurement/presentation/screens/quotation_management_screen.dart
+    ref: lib/features/procurement/presentation/screens/indent_list_screen.dart
+  lib/models/my_files.dart
+    ref: lib/screens/dashboard/components/file_info_card.dart
+    ref: lib/screens/dashboard/components/my_fields.dart
+  lib/providers/delay_log_provider.dart
+    ref: lib/screens/delays/delay_logs_screen.dart
+  lib/providers/inventory_stock_provider.dart
+    ref: lib/screens/inventory/inventory_stock_screen.dart
+  lib/providers/material_indent_provider.dart
+    ref: lib/screens/procurement/material_indents_screen.dart
+  lib/providers/project_warranty_provider.dart
+    ref: lib/features/warranties/presentation/screens/project_warranties_screen.dart
+  lib/providers/vendor_quotation_provider.dart
+    ref: lib/screens/procurement/vendor_quotations_screen.dart
+  lib/screens/dashboard/components/file_info_card.dart
+    ref: lib/screens/dashboard/components/my_fields.dart
+  lib/screens/projects/cctv_camera_form_screen.dart
+    ref: lib/screens/projects/cctv_management_screen.dart
+  lib/screens/reports/site_report_detail_screen.dart
+    ref: lib/screens/reports/site_reports_screen.dart
+  lib/services/project_variation_service.dart
+    ref: lib/providers/project_variation_provider.dart
+  lib/shared/widgets/custom_text_field.dart
+    ref: lib/features/procurement/presentation/screens/indent_creation_screen.dart
+  lib/widgets/financial/confirm_action_dialog.dart
+    ref: lib/widgets/financial/financial_widgets.dart
+  lib/widgets/financial/deduction_status_chip.dart
+    ref: lib/widgets/financial/financial_widgets.dart
+  lib/widgets/financial/payment_breakdown_card.dart
+    ref: lib/widgets/financial/financial_widgets.dart
+  lib/widgets/financial/vo_status_badge.dart
+    ref: lib/widgets/financial/financial_widgets.dart
+
+## REFERENCED FROM LIVE FILES (keep unless manually cleared):
+  lib/screens/customers/customers_screen.dart
+    ref: lib/config/router.dart
+    ref: lib/screens/main/main_screen.dart
+  lib/screens/delays/delay_logs_screen.dart
+    ref: lib/screens/customer_projects/project_details_screen.dart
+  lib/screens/reports/site_reports_screen.dart
+    ref: lib/screens/customer_projects/project_details_screen.dart
