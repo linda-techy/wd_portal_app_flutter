@@ -42,22 +42,41 @@ class CRMService {
         response, (json) => TeamMember.fromJson(json as Map<String, dynamic>));
   }
 
+  /// Portal API doesn't expose a dedicated /team-members mutation endpoint —
+  /// team members are Portal Users under the hood. Map to /portal-users.
+  Map<String, dynamic> _portalUserPayload(TeamMember t, {String? password}) {
+    return {
+      if (t.email != null) 'email': t.email,
+      if (t.firstName != null) 'first_name': t.firstName,
+      if (t.lastName != null) 'last_name': t.lastName,
+      'enabled': t.isActive ?? true,
+      if (password != null && password.isNotEmpty) 'password': password,
+    };
+  }
+
   Future<TeamMember> saveTeamMember(TeamMember teamMember) async {
-    final response =
-        await _apiService.post('/team-members', data: teamMember.toJson());
+    // New portal users require a password. Callers that omit it fall back to
+    // a generated temporary so the POST doesn't 400.
+    final password = 'Welcome@${DateTime.now().millisecondsSinceEpoch}';
+    final response = await _apiService.post(
+      '/portal-users',
+      data: _portalUserPayload(teamMember, password: password),
+    );
     return _apiService.unwrap<TeamMember>(
         response, (json) => TeamMember.fromJson(json as Map<String, dynamic>));
   }
 
   Future<TeamMember> updateTeamMember(String id, TeamMember teamMember) async {
-    final response =
-        await _apiService.put('/team-members/$id', data: teamMember.toJson());
+    final response = await _apiService.put(
+      '/portal-users/$id',
+      data: _portalUserPayload(teamMember),
+    );
     return _apiService.unwrap<TeamMember>(
         response, (json) => TeamMember.fromJson(json as Map<String, dynamic>));
   }
 
   Future<void> deleteTeamMember(String id) async {
-    final response = await _apiService.delete('/team-members/$id');
+    final response = await _apiService.delete('/portal-users/$id');
     _apiService.unwrap<void>(response, (_) {});
   }
 

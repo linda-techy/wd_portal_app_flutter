@@ -23,6 +23,10 @@ import 'package:admin/features/feedback/presentation/screens/feedback_screen.dar
 import 'package:admin/features/gallery/presentation/screens/gallery_screen.dart';
 import 'package:admin/features/observations/presentation/screens/observations_screen.dart';
 import 'package:admin/screens/projects/view_360_list_screen.dart';
+import 'package:admin/features/variation_orders/presentation/screens/vo_list_screen.dart';
+import 'package:admin/features/stage_payments/presentation/screens/stage_payment_screen.dart';
+import 'package:admin/features/deductions/presentation/screens/deduction_register_screen.dart';
+import 'package:admin/features/final_account/presentation/screens/final_account_screen.dart';
 import 'package:admin/models/team_member.dart';
 import 'package:admin/widgets/animations/entrance_animation.dart';
 import 'package:admin/widgets/animations/motion_button.dart';
@@ -1097,6 +1101,38 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         },
 
       ),
+      _ModuleTile(
+        title: 'Variation Orders',
+        icon: Icons.edit_note_outlined,
+        color: AppTheme.safetyOrange,
+        onTap: () {
+          _navigateToModule('Variation Orders', widget.project);
+        },
+      ),
+      _ModuleTile(
+        title: 'Stage Payments',
+        icon: Icons.payments_outlined,
+        color: AppTheme.primaryBlue,
+        onTap: () {
+          _navigateToModule('Stage Payments', widget.project);
+        },
+      ),
+      _ModuleTile(
+        title: 'Deductions',
+        icon: Icons.remove_circle_outline,
+        color: AppTheme.coralRed,
+        onTap: () {
+          _navigateToModule('Deductions', widget.project);
+        },
+      ),
+      _ModuleTile(
+        title: 'Final Account',
+        icon: Icons.account_balance_outlined,
+        color: AppTheme.safetyYellow,
+        onTap: () {
+          _navigateToModule('Final Account', widget.project);
+        },
+      ),
     ];
 
     return ResponsiveLayout(
@@ -1341,6 +1377,46 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => View360ListScreen(
+            projectId: widget.project.id!,
+            projectName: widget.project.name,
+          ),
+        ),
+      );
+    } else if (moduleName == 'Variation Orders') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VOListScreen(
+            projectId: widget.project.id!,
+            projectName: widget.project.name,
+          ),
+        ),
+      );
+    } else if (moduleName == 'Stage Payments') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => StagePaymentScreen(
+            projectId: widget.project.id!,
+            projectName: widget.project.name,
+          ),
+        ),
+      );
+    } else if (moduleName == 'Deductions') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DeductionRegisterScreen(
+            projectId: widget.project.id!,
+            projectName: widget.project.name,
+          ),
+        ),
+      );
+    } else if (moduleName == 'Final Account') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FinalAccountScreen(
             projectId: widget.project.id!,
             projectName: widget.project.name,
           ),

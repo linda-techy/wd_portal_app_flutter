@@ -47,7 +47,9 @@ class TeamMember {
       joiningDate: json['joiningDate'] != null
           ? DateTime.tryParse(json['joiningDate'])
           : null,
-      isActive: json['isActive'],
+      // Accept both JSON shapes: is_active (current Portal API) and isActive
+      // (older / legacy). Fall back to enabled for PortalUser-shaped rows.
+      isActive: json['is_active'] ?? json['isActive'] ?? json['enabled'],
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'])
           : null,
