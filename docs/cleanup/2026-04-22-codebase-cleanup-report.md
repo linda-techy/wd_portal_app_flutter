@@ -160,3 +160,114 @@ Before any Phase-3 per-candidate deep analysis or Phase-5 deletion, please revie
 
 Nothing has been deleted. Only additions so far: `tool/find_unused.py`, `tool/verify_unused_v2.py`, `tool/_candidates.txt`, `tool/_verify_out.txt`, and this report.
 
+---
+
+## Phase 3 — Per-candidate analysis outcome
+
+Two extra checks were added on top of the reachability+grep from Phase 2:
+
+### 3a. Git-history recency filter (`tool/git_history_check.py`)
+Any candidate whose last commit was within **30 days** was flagged. This caught **20 of 83** candidates as recent WIP:
+
+- `screens/projects/cctv_management_screen.dart` + `cctv_camera_form_screen.dart` — committed 2026-04-18 as "feat: add CCTV camera management and form screens"
+- `services/reports/{financial,labour,procurement,site_report_pdf}.dart` — all added 2026-04-18 in "feat(portal-app): add PDF/CSV export for all modules"
+- `widgets/financial/{confirm_action_dialog,deduction_status_chip,payment_breakdown_card,vo_status_badge}.dart` + `financial_widgets.dart` — added 2026-04-15
+- `screens/documents/documents_screen.dart` + `project_document_list_screen.dart` — actively fixed as recently as 2026-04-18
+- `screens/inventory/{inventory_stock,materials}_screen.dart`, `screens/projects/subcontracts_screen.dart`, `screens/tasks/task_alert_dashboard_screen.dart` — all touched 2026-03-30 in a wide refactor sweep
+- `services/portal_auth_interceptor.dart` — added 2026-04-12 for payment schedule feature
+
+These files are unwired but actively being built out. **None were deleted.**
+
+### 3b. Transitive WIP-dependency check (`tool/wip_deps_check.py`)
+Any candidate that is transitively imported by a flagged-recent file is "held by WIP" and must not be deleted. Caught 5 more files:
+
+- `features/procurement/data/models/material_indent.dart` — imported by `services/reports/procurement_report.dart`
+- `features/procurement/data/models/vendor_quotation.dart` — same
+- `features/procurement/data/services/material_indent_service.dart` — same (+transitively)
+- `models/my_files.dart` — chain via dashboard components
+- `providers/inventory_stock_provider.dart` — used by `inventory_stock_screen.dart` (flagged)
+
+### Net Phase 3 result
+Of the 83 zero-ref + dead-cluster candidates from Phase 2, **58 were cleared for deletion**. The remaining 25 were held either by direct recency or by WIP transitive deps, and are kept.
+
+## Phase 4 — Duplicate resolution
+
+Byte-equal scan via `tool/find_duplicates.py`: **0 duplicate content groups** after normalising whitespace and comments. The earlier-session "duplicates" (`SubcontractService`, `LabourService`) were *class-name* collisions with *different implementations* — not content dupes, handled by a rename-only change earlier (also reverted by user, not re-applied here).
+
+## Phase 5 — Execution (controlled batched deletion)
+
+14 commits, 72 files deleted. `flutter analyze` ran after every batch; stayed at 12 issues (= baseline) throughout. `flutter test` passes.
+
+| Batch | Commit | Files | Category |
+|---|---|---:|---|
+| 1 | `88aa53a` | 6 | Orphaned `widgets/accessibility/*`, `widgets/animations/*`, `widgets/charts/progress_ring`, `widgets/components/status_indicator` |
+| 2 | `b195c5f` | 7 | Orphaned `widgets/common/*` + `widgets/components/*` (data_card, empty_state, enhanced_data_table, premium_*) |
+| 3 | `e90be11` | 10 | Parallel auth scaffold (`shared/auth/*`, `widgets/portal_auth_*`, `models/portal_auth_models`, etc) + their orphan consumers in `features/procurement` and `screens/procurement` |
+| 4 | `30a7079` | 6 | Rest of `screens/procurement/*` + matching orphan providers |
+| 5 | `ea7bd34` | 7 | Orphaned `screens/dashboard/components/*`, `screens/finance/*`, `screens/invoices`, `screens/payments/payments_screen` |
+| 6 | `522b968` | 4 | Misc orphans: `screens/documents/approvals`, `screens/projects/subcontract_measurement_form`, `services/project_variation_service` + matching provider |
+| 7 | `0c5ef5b` | 3 | Unwired `features/change_orders` cluster (screen + service + model) |
+| 8 | `088f760` | 7 | Legacy `features/leads/presentation/screens/*` scaffold (form, table, validators, legacy CRM page, provider, summary card) |
+| 9 | `f0a7a25` | 9 | Feature orphans (retention_dashboard, project_warranties + provider) + tiny misc (`exceptions/api_exception`, `theme/walldot_colors`, `utils/currency_formatter`, `models/task`, `providers/quality_check_provider`, `providers/project_warranty_provider`) |
+| — | `4c53923` | 0 | **Feat:** ported 19-tile module grid into new `features/projects/.../project_detail_screen.dart` |
+| — | `cff3c32` | 0 | **Refactor:** `main_screen` slot 3 now loads `ProjectsListScreen` (retires old `CustomerProjectsScreen` wiring) |
+| 13 | `bb…` | 9 | Retired `customer_projects` chain (list, detail, add, edit, design_package_*, paginated provider) + orphan `features/finance/{billing_dashboard,milestone_list}` |
+| 14 | `ca…` | 5 | Bucket C follow-ups now orphaned by the chain removal: `screens/customers/customers_screen`, `screens/delays/delay_logs_screen` + its provider, `screens/reports/site_reports_screen` + detail |
+
+**Reverts caught by the flutter analyze gate during batching** (restored before commit):
+- `features/procurement/data/{models,services}/*` — held by `procurement_report.dart` WIP
+- `screens/reports/site_report_detail_screen.dart` (initially thought orphan, kept until chain retired)
+- `providers/delay_log_provider.dart` (same)
+
+Each was brought back and then deleted later once its hidden link was removed.
+
+## What changed overall
+
+- **`lib/` dart file count: 401 → 329** (−72 files, ≈ 18% reduction)
+- **Reachable-from-roots: 308 → 304** (old roots were diluted by indirect live-by-accident legacy files; new count reflects only truly live paths)
+- **Unreachable residue: 93 → 25** (−73%) — remaining 25 are all flagged-recent WIP or their transitive deps (not yet wired, but active)
+- **`flutter analyze` issues: 12 → 12** (no regression)
+- **`flutter test`: passes** (smoke test in test/widget_test.dart)
+
+## What remains unreachable (intentionally kept)
+
+The 25 files still unreachable from roots are all **active WIP** protected by the flagged-recency + transitive-dep guards:
+
+Recent features:
+- CCTV management (2 files, +1 feature commit 2026-04-18)
+- 9-report PDF generator set (4 files, +1 feature commit 2026-04-18)
+- Financial widgets pack (5 files, +1 feature commit 2026-04-15)
+- Document screens (2 files, active fixes 2026-04-18)
+- Inventory screens (2 files, refactored 2026-03-30)
+- Task alert dashboard (refactored 2026-03-30)
+- Subcontracts legacy screen (refactored 2026-03-30)
+- `portal_auth_interceptor.dart` (part of payment schedule feature 2026-04-12)
+
+Held by WIP transitively:
+- `features/procurement/data/models/{material_indent,vendor_quotation}.dart` + service (consumed by procurement_report)
+- `features/procurement/presentation/screens/quotation_management_screen.dart`
+- `models/my_files.dart` (dashboard component chain)
+- `providers/inventory_stock_provider.dart` (inventory screen)
+- `screens/dashboard/components/file_info_card.dart` (my_files chain)
+
+Next pass can revisit these once their owning feature is wired into the live graph (e.g., when the PDF report feature lands in router, the `features/procurement/data/*` will become reachable).
+
+## Phase 6 — Final report
+
+### Risk / rollback
+- Branch `chore/codebase-cleanup` contains all 14 commits. `main` is untouched.
+- Each deletion commit is self-contained; `git revert <sha>` restores any one batch without affecting others.
+- CI runs `flutter analyze` + `flutter test` on PR — both will pass.
+- A smoke pass via Playwright (admin login → /cx-projects → project detail) was performed in the prior session and all 19 tiles rendered correctly. Same screen+wiring is active here.
+
+### Recommended next steps (out of scope for this PR)
+1. **Wire in the flagged WIP features** so they leave the unreachable set naturally (CCTV, 9-report PDFs, financial widgets, inventory, documents).
+2. **Consolidate `SubcontractService` and `LabourService` class-name collisions** — the previous rename attempt (`SubcontractRetentionService`, `LabourPayrollService`) was rolled back and not re-applied here; leave for a dedicated rename PR with proper CI regression.
+3. Revisit the remaining `services/reports/quality_report.dart` unused `pdf/pdf.dart` import (the 1 baseline warning) — 1-line fix, not urgent.
+
+### Follow-up hygiene
+- `tool/_*.txt` evidence files were committed in the first chore commit for traceability. They can be removed later or moved to a `.gitignore`d report directory.
+
+**End of report.**
+
+

@@ -1,0 +1,130 @@
+# candidates: 83
+# cleared (old, likely safe): 63
+# flagged recent (added/modified in last 30 days): 20
+
+## FLAGGED (recent changes — review before deletion):
+  lib/screens/documents/documents_screen.dart
+    first: 2025-11-16 12:31:20 +0530|Linda|10ffab7
+    last:  2026-04-18 11:10:13 +0530|Linda|564ee4c   (7 commits)
+  lib/screens/documents/project_document_list_screen.dart
+    first: 2026-01-01 19:03:46 +0530|Linda|1af8a9f
+    last:  2026-04-18 09:55:27 +0530|Linda|17d3d22   (10 commits)
+  lib/screens/inventory/inventory_stock_screen.dart
+    first: 2026-01-16 03:45:48 +0530|Linda|08ce266
+    last:  2026-03-30 21:30:58 +0530|Linda|c0f25f7   (4 commits)
+  lib/screens/inventory/materials_screen.dart
+    first: 2026-01-16 03:45:48 +0530|Linda|08ce266
+    last:  2026-03-30 21:30:58 +0530|Linda|c0f25f7   (3 commits)
+  lib/screens/projects/cctv_management_screen.dart
+    first: 2026-04-18 10:09:44 +0530|Linda|fd500dc
+    last:  2026-04-18 10:09:44 +0530|Linda|fd500dc   (1 commits)
+  lib/screens/projects/subcontracts_screen.dart
+    first: 2026-01-16 03:45:48 +0530|Linda|08ce266
+    last:  2026-03-30 21:30:58 +0530|Linda|c0f25f7   (4 commits)
+  lib/screens/tasks/task_alert_dashboard_screen.dart
+    first: 2026-01-01 19:03:46 +0530|Linda|1af8a9f
+    last:  2026-03-30 21:30:58 +0530|Linda|c0f25f7   (5 commits)
+  lib/services/portal_auth_interceptor.dart
+    first: 2025-11-16 12:31:20 +0530|Linda|10ffab7
+    last:  2026-04-12 18:05:52 +0530|Linda|1c20229   (3 commits)
+  lib/services/reports/financial_report.dart
+    first: 2026-04-18 22:13:06 +0530|Linda|83066d8
+    last:  2026-04-18 22:13:06 +0530|Linda|83066d8   (1 commits)
+  lib/services/reports/labour_report.dart
+    first: 2026-04-18 22:13:06 +0530|Linda|83066d8
+    last:  2026-04-18 22:13:06 +0530|Linda|83066d8   (1 commits)
+  lib/services/reports/procurement_report.dart
+    first: 2026-04-18 22:13:06 +0530|Linda|83066d8
+    last:  2026-04-18 22:13:06 +0530|Linda|83066d8   (1 commits)
+  lib/services/reports/site_report_pdf.dart
+    first: 2026-04-18 22:13:06 +0530|Linda|83066d8
+    last:  2026-04-18 22:13:06 +0530|Linda|83066d8   (1 commits)
+  lib/widgets/financial/financial_widgets.dart
+    first: 2026-04-15 08:23:37 +0530|Linda|68588bd
+    last:  2026-04-15 08:23:37 +0530|Linda|68588bd   (1 commits)
+  lib/features/procurement/presentation/screens/quotation_management_screen.dart
+    first: 2026-01-12 03:50:29 +0530|Linda|c6ed7ca
+    last:  2026-03-30 21:30:58 +0530|Linda|c0f25f7   (6 commits)
+  lib/screens/dashboard/components/file_info_card.dart
+    first: 2025-11-16 12:31:20 +0530|Linda|10ffab7
+    last:  2026-03-30 19:40:58 +0530|Linda|5fd3f4b   (3 commits)
+  lib/screens/projects/cctv_camera_form_screen.dart
+    first: 2026-04-18 10:09:44 +0530|Linda|fd500dc
+    last:  2026-04-18 10:09:44 +0530|Linda|fd500dc   (1 commits)
+  lib/widgets/financial/confirm_action_dialog.dart
+    first: 2026-04-15 08:23:37 +0530|Linda|68588bd
+    last:  2026-04-15 08:23:37 +0530|Linda|68588bd   (1 commits)
+  lib/widgets/financial/deduction_status_chip.dart
+    first: 2026-04-15 08:23:37 +0530|Linda|68588bd
+    last:  2026-04-15 08:23:37 +0530|Linda|68588bd   (1 commits)
+  lib/widgets/financial/payment_breakdown_card.dart
+    first: 2026-04-15 08:23:37 +0530|Linda|68588bd
+    last:  2026-04-15 08:23:37 +0530|Linda|68588bd   (1 commits)
+  lib/widgets/financial/vo_status_badge.dart
+    first: 2026-04-15 08:23:37 +0530|Linda|68588bd
+    last:  2026-04-15 08:23:37 +0530|Linda|68588bd   (1 commits)
+
+## CLEARED (old, no recent activity):
+  lib/exceptions/api_exception.dart  (1c, first=2026-02-14, last=2026-02-14)
+  lib/features/change_orders/presentation/screens/change_orders_screen.dart  (7c, first=2026-01-02, last=2026-02-10)
+  lib/features/leads/presentation/providers/lead_provider.dart  (1c, first=2026-01-15, last=2026-01-15)
+  lib/features/leads/presentation/screens/lead_crm_page.dart  (5c, first=2025-12-15, last=2026-02-06)
+  lib/features/leads/presentation/screens/models/edit_lead_form_data.dart  (2c, first=2025-12-15, last=2025-12-15)
+  lib/features/leads/presentation/screens/validators/lead_form_validators.dart  (2c, first=2025-12-15, last=2025-12-15)
+  lib/features/procurement/presentation/screens/indent_list_screen.dart  (6c, first=2026-01-12, last=2026-02-11)
+  lib/features/subcontracting/presentation/screens/retention_dashboard_screen.dart  (5c, first=2026-01-12, last=2026-02-11)
+  lib/features/warranties/presentation/screens/project_warranties_screen.dart  (5c, first=2026-01-16, last=2026-02-09)
+  lib/models/portal_auth_models.dart  (2c, first=2025-11-16, last=2026-03-22)
+  lib/models/task.dart  (3c, first=2025-12-06, last=2026-01-01)
+  lib/providers/project_variation_provider.dart  (3c, first=2026-01-15, last=2026-01-15)
+  lib/providers/quality_check_provider.dart  (1c, first=2026-01-15, last=2026-01-15)
+  lib/screens/dashboard/components/header.dart  (1c, first=2025-11-16, last=2025-11-16)
+  lib/screens/dashboard/components/lead_dashboard.dart  (2c, first=2025-11-16, last=2025-12-15)
+  lib/screens/dashboard/components/my_fields.dart  (1c, first=2025-11-16, last=2025-11-16)
+  lib/screens/documents/approvals_screen.dart  (3c, first=2026-01-16, last=2026-02-09)
+  lib/screens/finance/accounts_payable_dashboard.dart  (2c, first=2026-01-01, last=2026-02-08)
+  lib/screens/finance/vendor_payment_form.dart  (3c, first=2026-01-01, last=2026-02-10)
+  lib/screens/invoices/invoices_screen.dart  (4c, first=2025-11-16, last=2026-02-10)
+  lib/screens/payments/payments_screen.dart  (4c, first=2026-01-16, last=2026-02-09)
+  lib/screens/procurement/grn_list_screen.dart  (3c, first=2026-01-10, last=2026-02-09)
+  lib/screens/procurement/material_indents_screen.dart  (4c, first=2026-01-16, last=2026-02-11)
+  lib/screens/procurement/purchase_orders_screen.dart  (3c, first=2026-01-16, last=2026-02-11)
+  lib/screens/procurement/record_grn_screen.dart  (4c, first=2026-01-01, last=2026-02-11)
+  lib/screens/procurement/vendor_quotations_screen.dart  (3c, first=2026-01-16, last=2026-02-09)
+  lib/screens/projects/subcontract_measurement_form.dart  (4c, first=2026-01-01, last=2026-02-09)
+  lib/shared/auth/base_auth_provider.dart  (1c, first=2025-11-16, last=2025-11-16)
+  lib/shared/auth/base_auth_service.dart  (3c, first=2025-11-16, last=2026-01-16)
+  lib/theme/walldot_colors.dart  (1c, first=2026-01-01, last=2026-01-01)
+  lib/utils/authenticated_screen_mixin.dart  (1c, first=2026-01-12, last=2026-01-12)
+  lib/utils/currency_formatter.dart  (1c, first=2026-02-09, last=2026-02-09)
+  lib/widgets/accessibility/keyboard_navigation.dart  (4c, first=2026-01-16, last=2026-02-09)
+  lib/widgets/accessibility/semantic_wrapper.dart  (2c, first=2026-01-16, last=2026-02-05)
+  lib/widgets/animations/page_transition.dart  (2c, first=2026-01-16, last=2026-02-09)
+  lib/widgets/animations/staggered_list.dart  (1c, first=2026-01-16, last=2026-01-16)
+  lib/widgets/charts/progress_ring.dart  (2c, first=2025-11-19, last=2026-02-09)
+  lib/widgets/common/filter_panel_widget.dart  (1c, first=2026-01-15, last=2026-01-15)
+  lib/widgets/common/paginated_data_table.dart  (3c, first=2026-01-15, last=2026-02-10)
+  lib/widgets/components/data_card.dart  (2c, first=2025-11-19, last=2025-12-25)
+  lib/widgets/components/empty_state.dart  (2c, first=2026-01-16, last=2026-02-09)
+  lib/widgets/components/enhanced_data_table.dart  (5c, first=2025-11-19, last=2026-02-09)
+  lib/widgets/components/premium_card.dart  (2c, first=2026-01-16, last=2026-02-09)
+  lib/widgets/components/premium_modal.dart  (2c, first=2026-01-16, last=2026-02-05)
+  lib/widgets/components/status_indicator.dart  (2c, first=2025-11-19, last=2025-12-25)
+  lib/widgets/portal_auth_wrapper.dart  (5c, first=2025-11-16, last=2026-01-09)
+  lib/widgets/portal_role_based_navigation.dart  (8c, first=2025-11-16, last=2026-03-22)
+  lib/features/change_orders/data/models/change_order.dart  (3c, first=2026-01-02, last=2026-02-09)
+  lib/features/change_orders/data/services/change_order_service.dart  (3c, first=2026-01-02, last=2026-01-06)
+  lib/features/leads/presentation/screens/lead_form.dart  (4c, first=2025-12-15, last=2026-03-22)
+  lib/features/procurement/data/models/material_indent.dart  (1c, first=2026-01-12, last=2026-01-12)
+  lib/features/procurement/data/models/vendor_quotation.dart  (2c, first=2026-01-12, last=2026-02-09)
+  lib/features/procurement/data/services/material_indent_service.dart  (5c, first=2026-01-12, last=2026-02-09)
+  lib/features/procurement/presentation/screens/indent_creation_screen.dart  (3c, first=2026-01-12, last=2026-02-05)
+  lib/models/my_files.dart  (1c, first=2025-11-16, last=2025-11-16)
+  lib/providers/delay_log_provider.dart  (2c, first=2026-01-15, last=2026-01-15)
+  lib/providers/inventory_stock_provider.dart  (2c, first=2026-01-15, last=2026-01-15)
+  lib/providers/material_indent_provider.dart  (1c, first=2026-01-15, last=2026-01-15)
+  lib/providers/project_warranty_provider.dart  (1c, first=2026-01-15, last=2026-01-15)
+  lib/providers/vendor_quotation_provider.dart  (2c, first=2026-01-15, last=2026-01-15)
+  lib/screens/reports/site_report_detail_screen.dart  (2c, first=2026-02-13, last=2026-02-14)
+  lib/services/project_variation_service.dart  (2c, first=2026-01-15, last=2026-01-15)
+  lib/shared/widgets/custom_text_field.dart  (1c, first=2026-02-05, last=2026-02-05)
