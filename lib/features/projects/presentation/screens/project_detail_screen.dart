@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:admin/features/projects/data/models/project_model.dart';
 import 'package:admin/models/customer_project.dart';
+import 'package:admin/services/customer_project_service.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/theme/responsive_utils.dart';
 import 'gantt_screen.dart';
@@ -28,10 +29,34 @@ import 'package:admin/features/stage_payments/presentation/screens/stage_payment
 import 'package:admin/features/deductions/presentation/screens/deduction_register_screen.dart';
 import 'package:admin/features/final_account/presentation/screens/final_account_screen.dart';
 
-class ProjectDetailScreen extends StatelessWidget {
+class ProjectDetailScreen extends StatefulWidget {
   final ProjectModel project;
 
   const ProjectDetailScreen({super.key, required this.project});
+
+  @override
+  State<ProjectDetailScreen> createState() => _ProjectDetailScreenState();
+}
+
+class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
+  static const List<String> _phases = [
+    'PLANNING',
+    'DESIGN',
+    'CONSTRUCTION',
+    'COMPLETED',
+    'ON_HOLD',
+  ];
+  static const Map<String, String> _phaseLabels = {
+    'PLANNING': 'Planning',
+    'DESIGN': 'Design',
+    'CONSTRUCTION': 'Construction',
+    'COMPLETED': 'Completed',
+    'ON_HOLD': 'On Hold',
+  };
+
+  late ProjectModel project = widget.project;
+  late String? _currentPhase = widget.project.projectPhase;
+  bool _savingPhase = false;
 
   /// Adapter for legacy module screens that still accept CustomerProject.
   CustomerProject _asCustomerProject() => CustomerProject(
@@ -47,6 +72,77 @@ class ProjectDetailScreen extends StatelessWidget {
         code: project.code,
         projectType: project.projectType,
       );
+
+  Future<void> _editPhase() async {
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        return SimpleDialog(
+          title: const Text('Change project phase'),
+          children: _phases.map((p) {
+            final label = _phaseLabels[p] ?? p;
+            final isCurrent = (project.projectPhase ?? '').toUpperCase() == p;
+            return SimpleDialogOption(
+              onPressed: () => Navigator.pop(ctx, p),
+              child: Row(
+                children: [
+                  Icon(
+                    isCurrent ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                    size: 18,
+                    color: isCurrent ? AppTheme.deepSlate : Colors.grey,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(label, style: TextStyle(
+                    fontWeight: isCurrent ? FontWeight.w600 : FontWeight.normal,
+                  )),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+    if (selected == null || selected == (project.projectPhase ?? '').toUpperCase()) return;
+
+    setState(() => _savingPhase = true);
+    try {
+      final cp = _asCustomerProject();
+      // Send only the changed phase plus identifiers; the service's toUpdateJson
+      // serialises the whole CustomerProject — set the new phase first.
+      final updated = await CustomerProjectService().updateProject(
+        project.id!,
+        CustomerProject(
+          id: cp.id,
+          name: cp.name,
+          location: cp.location,
+          startDate: cp.startDate,
+          endDate: cp.endDate,
+          progress: cp.progress,
+          projectPhase: selected,
+          sqfeet: cp.sqfeet,
+          customerId: cp.customerId,
+          code: cp.code,
+          projectType: cp.projectType,
+        ),
+      );
+      if (!mounted) return;
+      setState(() {
+        _currentPhase = updated.projectPhase ?? selected;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Phase changed to ${_phaseLabels[selected] ?? selected}'),
+        backgroundColor: Colors.green,
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Failed to change phase: $e'),
+        backgroundColor: Colors.red,
+      ));
+    } finally {
+      if (mounted) setState(() => _savingPhase = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -117,12 +213,38 @@ class ProjectDetailScreen extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                if (project.projectPhase != null)
-                  _buildChip(
-                    label: project.projectPhase!,
-                    backgroundColor: AppTheme.deepSlate,
-                    textColor: Colors.white,
+                // Tappable: opens phase picker. Edit icon hints at it; while
+                // saving, the chip swaps to a small spinner so users don't
+                // double-tap.
+                InkWell(
+                  onTap: _savingPhase ? null : _editPhase,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.deepSlate,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _phaseLabels[(_currentPhase ?? '').toUpperCase()] ??
+                              _currentPhase ?? 'Set phase',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(width: 6),
+                        if (_savingPhase)
+                          const SizedBox(
+                            width: 12, height: 12,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        else
+                          const Icon(Icons.edit, size: 12, color: Colors.white70),
+                      ],
+                    ),
                   ),
+                ),
                 if (project.projectStatus != null)
                   _buildChip(
                     label: project.projectStatus!,
