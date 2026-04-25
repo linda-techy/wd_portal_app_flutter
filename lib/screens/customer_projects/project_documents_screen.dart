@@ -430,6 +430,9 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
                   case 'view':
                     _openDocument(doc);
                     break;
+                  case 'delete':
+                    _confirmAndDeleteDocument(doc);
+                    break;
                 }
               },
               itemBuilder: (context) => [
@@ -450,6 +453,17 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
                       Icon(Icons.download, size: 20),
                       SizedBox(width: 8),
                       Text('Download'),
+                    ],
+                  ),
+                ),
+                const PopupMenuDivider(),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Delete', style: TextStyle(color: Colors.red)),
                     ],
                   ),
                 ),
@@ -474,6 +488,31 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmAndDeleteDocument(ProjectDocument doc) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => _DeleteDocumentDialog(filename: doc.filename),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await _moduleService.deleteDocument(widget.project.id!, doc.id!);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Deleted "${doc.filename}"'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      await _loadData();
+    } catch (e) {
+      if (!mounted) return;
+      await ErrorHandler.handleApiError(context, e,
+          defaultMessage: 'Failed to delete document');
+    }
   }
 
   Future<void> _downloadDocument(ProjectDocument doc) async {
@@ -650,4 +689,104 @@ class _CategorySelectionDialog extends StatelessWidget {
   }
 }
 
+/// Type-to-confirm delete dialog. The user must retype the filename
+/// exactly before the Delete button activates — prevents accidental
+/// destructive clicks on hard-to-recover documents.
+class _DeleteDocumentDialog extends StatefulWidget {
+  final String filename;
+  const _DeleteDocumentDialog({required this.filename});
 
+  @override
+  State<_DeleteDocumentDialog> createState() => _DeleteDocumentDialogState();
+}
+
+class _DeleteDocumentDialogState extends State<_DeleteDocumentDialog> {
+  final TextEditingController _controller = TextEditingController();
+  bool _matches = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(() {
+      final next = _controller.text == widget.filename;
+      if (next != _matches) {
+        setState(() => _matches = next);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Row(
+        children: [
+          Icon(Icons.warning_amber_rounded, color: Colors.red),
+          SizedBox(width: 8),
+          Text('Delete document?'),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'This action cannot be undone. To confirm, type the filename exactly:',
+            style: TextStyle(fontSize: 13),
+          ),
+          const SizedBox(height: 12),
+          // Filename shown above the text field, selectable so users
+          // can copy/paste if they prefer.
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: SelectableText(
+              widget.filename,
+              style: const TextStyle(
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: 'Type filename to confirm',
+              border: const OutlineInputBorder(),
+              isDense: true,
+              suffixIcon: _matches
+                  ? const Icon(Icons.check_circle, color: Colors.green)
+                  : null,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _matches ? () => Navigator.pop(context, true) : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('Delete'),
+        ),
+      ],
+    );
+  }
+}

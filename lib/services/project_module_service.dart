@@ -124,6 +124,15 @@ class ProjectModuleService {
     }
   }
 
+  // Delete a document
+  Future<void> deleteDocument(int projectId, int documentId) async {
+    try {
+      await _apiService.delete('/customer-projects/$projectId/documents/$documentId');
+    } catch (e) {
+      throw Exception('Failed to delete document: $e');
+    }
+  }
+
   // Get download URL
   String getDownloadUrl(String filePath) {
     return '${AppConfig.fullApiUrl}/api/storage/$filePath';
