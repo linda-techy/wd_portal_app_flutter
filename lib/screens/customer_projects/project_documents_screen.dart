@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -32,11 +33,18 @@ class ProjectDocumentsScreen extends StatefulWidget {
 
 class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
   final ProjectModuleService _moduleService = ProjectModuleService();
+  final ScrollController _categoryScrollController = ScrollController();
   List<ProjectDocument> _documents = [];
   List<DocumentCategory> _categories = [];
   DocumentCategory? _selectedCategory;
   bool _isPageLoading = true;
   bool _isUploading = false;
+
+  @override
+  void dispose() {
+    _categoryScrollController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -240,20 +248,45 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Category Chips (Horizontal Scroll)
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            _buildCategoryChip('All', null),
-                            const SizedBox(width: AppTheme.spacingSM),
-                            ..._categories.map((category) => Padding(
-                                  padding: const EdgeInsets.only(
-                                      right: AppTheme.spacingSM),
-                                  child: _buildCategoryChip(
-                                      category.name, category),
-                                )),
-                          ],
+                      // Category Chips — horizontally scrollable on web/tablet/mobile.
+                      // ScrollConfiguration enables mouse-drag (web) + touch (mobile).
+                      // Listener translates vertical mouse-wheel ticks into horizontal
+                      // scroll so a normal scroll wheel works without holding Shift.
+                      SizedBox(
+                        height: 44,
+                        child: Listener(
+                          onPointerSignal: (event) {
+                            if (event is PointerScrollEvent) {
+                              final dx = event.scrollDelta.dy.abs() >
+                                      event.scrollDelta.dx.abs()
+                                  ? event.scrollDelta.dy
+                                  : event.scrollDelta.dx;
+                              final next = (_categoryScrollController.offset + dx)
+                                  .clamp(
+                                      0.0,
+                                      _categoryScrollController
+                                          .position.maxScrollExtent);
+                              _categoryScrollController.jumpTo(next);
+                            }
+                          },
+                          child: ScrollConfiguration(
+                            behavior: const _DragScrollBehavior(),
+                            child: ListView(
+                              controller: _categoryScrollController,
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              children: [
+                                _buildCategoryChip('All', null),
+                                const SizedBox(width: AppTheme.spacingSM),
+                                ..._categories.map((category) => Padding(
+                                      padding: const EdgeInsets.only(
+                                          right: AppTheme.spacingSM),
+                                      child: _buildCategoryChip(
+                                          category.name, category),
+                                    )),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: AppTheme.spacingMD),
@@ -789,4 +822,20 @@ class _DeleteDocumentDialogState extends State<_DeleteDocumentDialog> {
       ],
     );
   }
+}
+
+/// ScrollBehavior that allows mouse-drag in addition to touch — needed for
+/// horizontal chip rows on Flutter web/desktop where the default behavior
+/// only listens to touch and trackpad pointer kinds.
+class _DragScrollBehavior extends MaterialScrollBehavior {
+  const _DragScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+        PointerDeviceKind.stylus,
+        PointerDeviceKind.invertedStylus,
+      };
 }
