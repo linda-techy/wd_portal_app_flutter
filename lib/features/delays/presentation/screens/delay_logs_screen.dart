@@ -453,11 +453,14 @@ class _AddDelayDialogState extends State<AddDelayDialog> {
   final _responsibleController = TextEditingController();
   final _impactController = TextEditingController();
   final _durationController = TextEditingController();
+  final _customerSummaryController = TextEditingController();
   final DelayLogService _service = DelayLogService();
 
   String _category = 'WEATHER';
   DateTime _fromDate = DateTime.now();
   bool _isSaving = false;
+  bool _customerVisible = false;
+  String _impactOnHandover = 'NONE'; // NONE | MINOR | MATERIAL
 
   @override
   void dispose() {
@@ -465,6 +468,7 @@ class _AddDelayDialogState extends State<AddDelayDialog> {
     _responsibleController.dispose();
     _impactController.dispose();
     _durationController.dispose();
+    _customerSummaryController.dispose();
     super.dispose();
   }
 
@@ -484,6 +488,7 @@ class _AddDelayDialogState extends State<AddDelayDialog> {
 
     try {
       final durationText = _durationController.text.trim();
+      final customerSummary = _customerSummaryController.text.trim();
       final newDelay = DelayLog(
         projectId: widget.projectId,
         delayType: _category,
@@ -500,6 +505,9 @@ class _AddDelayDialogState extends State<AddDelayDialog> {
         impactDescription: _impactController.text.trim().isEmpty
             ? null
             : _impactController.text.trim(),
+        customerVisible: _customerVisible,
+        customerSummary: customerSummary.isEmpty ? null : customerSummary,
+        impactOnHandover: _customerVisible ? _impactOnHandover : null,
       );
 
       await _service.logDelay(newDelay);
@@ -608,15 +616,81 @@ class _AddDelayDialogState extends State<AddDelayDialog> {
                 ),
                 const SizedBox(height: 12),
 
-                // Impact description
+                // Impact description (internal)
                 TextFormField(
                   controller: _impactController,
                   decoration: const InputDecoration(
-                      labelText: 'Impact Description',
+                      labelText: 'Impact Description (internal)',
                       border: OutlineInputBorder(),
-                      hintText: 'Describe effect on schedule or cost'),
+                      hintText: 'Describe effect on schedule or cost — not shown to customer'),
                   maxLines: 3,
                 ),
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 8),
+
+                // ─── Customer-visible section ───────────────────────────
+                Row(
+                  children: [
+                    const Icon(Icons.visibility_outlined, size: 18),
+                    const SizedBox(width: 6),
+                    const Text('Share with customer',
+                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    const Spacer(),
+                    Switch(
+                      value: _customerVisible,
+                      onChanged: (v) => setState(() => _customerVisible = v),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'When enabled, the customer sees the summary + impact below. '
+                  'The internal fields above remain private.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 12),
+
+                if (_customerVisible) ...[
+                  // Customer summary (curated)
+                  TextFormField(
+                    controller: _customerSummaryController,
+                    decoration: const InputDecoration(
+                        labelText: 'Customer Summary',
+                        border: OutlineInputBorder(),
+                        hintText:
+                            'e.g. "Pour rescheduled due to heavy rainfall; no impact on handover."'),
+                    maxLines: 3,
+                    validator: (v) {
+                      if (_customerVisible && (v == null || v.trim().isEmpty)) {
+                        return 'Required when shared with customer';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Impact on handover dropdown
+                  DropdownButtonFormField<String>(
+                    value: _impactOnHandover,
+                    decoration: const InputDecoration(
+                        labelText: 'Impact on Handover Date',
+                        border: OutlineInputBorder()),
+                    items: const [
+                      DropdownMenuItem(
+                          value: 'NONE',
+                          child: Text('None — handover date unchanged')),
+                      DropdownMenuItem(
+                          value: 'MINOR',
+                          child: Text('Minor — under 1 week slip')),
+                      DropdownMenuItem(
+                          value: 'MATERIAL',
+                          child: Text('Material — handover date changes')),
+                    ],
+                    onChanged: (val) =>
+                        setState(() => _impactOnHandover = val ?? 'NONE'),
+                  ),
+                ],
               ],
             ),
           ),

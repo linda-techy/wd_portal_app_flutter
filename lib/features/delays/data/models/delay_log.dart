@@ -10,6 +10,10 @@ class DelayLog {
   final String? responsibleParty;
   final int? durationDaysField;
   final String? impactDescription;
+  // Curated customer-facing fields (V58) — only shown in customer app.
+  final bool customerVisible;
+  final String? customerSummary;
+  final String? impactOnHandover; // NONE | MINOR | MATERIAL
   final DateTime? createdAt;
 
   DelayLog({
@@ -24,6 +28,9 @@ class DelayLog {
     this.responsibleParty,
     this.durationDaysField,
     this.impactDescription,
+    this.customerVisible = false,
+    this.customerSummary,
+    this.impactOnHandover,
     this.createdAt,
   });
 
@@ -40,6 +47,9 @@ class DelayLog {
       responsibleParty: json['responsibleParty'],
       durationDaysField: json['durationDays'] as int?,
       impactDescription: json['impactDescription'],
+      customerVisible: json['customerVisible'] ?? false,
+      customerSummary: json['customerSummary'] as String?,
+      impactOnHandover: json['impactOnHandover'] as String?,
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
     );
   }
@@ -57,6 +67,9 @@ class DelayLog {
       if (responsibleParty != null) 'responsibleParty': responsibleParty,
       if (durationDaysField != null) 'durationDays': durationDaysField,
       if (impactDescription != null) 'impactDescription': impactDescription,
+      'customerVisible': customerVisible,
+      if (customerSummary != null) 'customerSummary': customerSummary,
+      if (impactOnHandover != null) 'impactOnHandover': impactOnHandover,
     };
   }
 
