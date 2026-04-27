@@ -544,6 +544,18 @@ final List<_MenuGroupData> _menuGroups = [
         index: 22,
         isVisible: (p) => p.canEditPortalUser,
       ),
+      _MenuItem(
+        title: 'DPC Templates',
+        icon: Icons.layers_outlined,
+        index: 24,
+        isVisible: (p) => p.canManageDpcTemplates,
+      ),
+      _MenuItem(
+        title: 'DPC Customizations',
+        icon: Icons.tune,
+        index: 26,
+        isVisible: (p) => p.canManageDpcCustomizationCatalog,
+      ),
       const _MenuItem(
         title: 'Profile',
         svgSrc: 'assets/icons/menu_profile.svg',

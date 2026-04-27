@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:printing/printing.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/utils/error_handler.dart';
+import 'package:admin/utils/file_download_helper.dart';
+import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/features/leads/data/models/lead_quotation.dart';
 import 'package:admin/features/leads/data/services/lead_quotation_service.dart';
+import 'package:admin/features/leads/data/services/lead_service.dart';
+import 'package:admin/features/leads/presentation/screens/add_quotation_screen.dart';
+import 'package:admin/features/quotation_catalog/presentation/screens/quotation_catalog_picker_dialog.dart';
+import 'package:admin/screens/quotations/widgets/quotation_row_actions.dart';
 import 'package:intl/intl.dart';
 
 class QuotationsScreen extends StatefulWidget {
@@ -102,7 +110,32 @@ class QuotationsScreenState extends State<QuotationsScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text("Quotations Management", style: Theme.of(context).textTheme.headlineMedium),
-                IconButton(icon: const Icon(Icons.refresh), onPressed: _loadQuotations, tooltip: 'Refresh'),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('New Quotation'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: _openLeadPickerForNewQuotation,
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.inventory_2_outlined, size: 16),
+                      label: const Text('Manage Catalog'),
+                      onPressed: () => context.go('/quotation-catalog'),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: _loadQuotations,
+                      tooltip: 'Refresh',
+                    ),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: defaultPadding),
@@ -230,6 +263,10 @@ class QuotationsScreenState extends State<QuotationsScreen> {
                                             DataColumn(label: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold))),
                                           ],
                                           rows: _quotations.map((q) => DataRow(
+                                            onSelectChanged: q.id == null
+                                                ? null
+                                                : (_) => context
+                                                    .go('/quotations/${q.id}'),
                                             cells: [
                                               DataCell(Text(q.quotationNumber ?? 'Draft', style: const TextStyle(fontWeight: FontWeight.w500))),
                                               DataCell(
@@ -260,25 +297,32 @@ class QuotationsScreenState extends State<QuotationsScreen> {
                                               ),
                                               DataCell(Text('${q.validityDays}d')),
                                               DataCell(Text(q.createdAt != null ? DateFormat('dd MMM yyyy').format(q.createdAt!) : '-', style: const TextStyle(fontSize: 12))),
-                                              DataCell(Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  if (q.status == 'DRAFT')
-                                                    IconButton(
-                                                      icon: const Icon(Icons.send, size: 18),
-                                                      onPressed: () => _sendQuotation(q),
-                                                      tooltip: 'Send',
-                                                      color: infoColor,
-                                                      splashRadius: 18,
-                                                    ),
-                                                  IconButton(
-                                                    icon: const Icon(Icons.delete_outline, size: 18),
-                                                    onPressed: () => _deleteQuotation(q),
-                                                    tooltip: 'Delete',
-                                                    color: errorColor,
-                                                    splashRadius: 18,
-                                                  ),
-                                                ],
+                                              DataCell(QuotationRowActions(
+                                                quotation: q,
+                                                onView: q.id == null
+                                                    ? null
+                                                    : () => context
+                                                        .go('/quotations/${q.id}'),
+                                                onEdit: q.id == null
+                                                    ? null
+                                                    : () => _editQuotation(q),
+                                                onAddFromCatalog: q.id == null
+                                                    ? null
+                                                    : () =>
+                                                        _openCatalogPicker(q),
+                                                onSend: () => _sendQuotation(q),
+                                                onAccept: () =>
+                                                    _acceptQuotation(q),
+                                                onReject: () =>
+                                                    _rejectQuotation(q),
+                                                onPreviewPdf: q.id == null
+                                                    ? null
+                                                    : () => _previewPdf(q),
+                                                onDownloadPdf: q.id == null
+                                                    ? null
+                                                    : () => _downloadPdf(q),
+                                                onDelete: () =>
+                                                    _deleteQuotation(q),
                                               )),
                                             ],
                                           )).toList(),
@@ -316,6 +360,39 @@ class QuotationsScreenState extends State<QuotationsScreen> {
     );
   }
 
+  Future<void> _openCatalogPicker(LeadQuotation q) async {
+    if (q.id == null) return;
+    await showDialog<void>(
+      context: context,
+      builder: (_) => QuotationCatalogPickerDialog(
+        quotationId: q.id!,
+        onItemAdded: (_) {
+          // No detail screen on this list — give the user a hint to open the
+          // quotation to see updated totals (acceptance criterion in the spec).
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Item added — open quotation to view'),
+                backgroundColor: successColor,
+              ),
+            );
+          }
+        },
+        onAddCustomRequested: () {
+          // No existing custom-item form on this screen; surface a hint.
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'Open the quotation in the lead detail to add a custom item'),
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+
   Future<void> _sendQuotation(LeadQuotation q) async {
     try {
       await _quotationService.sendQuotation(q.id!);
@@ -327,6 +404,329 @@ class QuotationsScreenState extends State<QuotationsScreen> {
       }
     } catch (e) {
       if (mounted) {
+        ErrorHandler.showErrorSnackBar(context, e);
+      }
+    }
+  }
+
+  /// Show a lead picker — when a lead is chosen, push the existing
+  /// AddQuotationScreen so the user can fill title / validity / items.
+  /// On return, refresh the quotations list.
+  Future<void> _openLeadPickerForNewQuotation() async {
+    final leadService = LeadService();
+    List<Lead> leads = const [];
+    String? loadError;
+    try {
+      leads = await leadService.getAllLeads();
+    } catch (e) {
+      loadError = e.toString();
+    }
+    if (!mounted) return;
+
+    final picked = await showDialog<Lead>(
+      context: context,
+      builder: (ctx) {
+        final searchCtrl = TextEditingController();
+        String query = '';
+        return StatefulBuilder(
+          builder: (ctx, setLocal) {
+            final filtered = query.isEmpty
+                ? leads
+                : leads.where((l) {
+                    final hay = '${l.name} ${l.email} ${l.phone}'.toLowerCase();
+                    return hay.contains(query.toLowerCase());
+                  }).toList();
+            return Dialog(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600, maxHeight: 600),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.request_quote_outlined,
+                              color: primaryColor, size: 26),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text('New Quotation',
+                                style: Theme.of(ctx)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold)),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Pick the lead this quotation is for. The next screen '
+                        'lets you fill title, validity and line items.',
+                        style: TextStyle(color: Colors.black54, fontSize: 13),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: searchCtrl,
+                        decoration: const InputDecoration(
+                          prefixIcon: Icon(Icons.search, size: 20),
+                          hintText: 'Search by name, email or phone',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                        ),
+                        onChanged: (v) => setLocal(() => query = v),
+                      ),
+                      const Divider(height: 24),
+                      Expanded(
+                        child: loadError != null
+                            ? Center(
+                                child: Text('Failed to load leads: $loadError',
+                                    style: const TextStyle(color: Colors.red)))
+                            : filtered.isEmpty
+                                ? const Center(
+                                    child: Text('No matching leads.',
+                                        style:
+                                            TextStyle(color: Colors.black54)))
+                                : ListView.separated(
+                                    itemCount: filtered.length,
+                                    separatorBuilder: (_, __) =>
+                                        const Divider(height: 1),
+                                    itemBuilder: (_, i) {
+                                      final l = filtered[i];
+                                      return ListTile(
+                                        leading: CircleAvatar(
+                                          backgroundColor: primaryColor
+                                              .withOpacity(0.1),
+                                          child: const Icon(Icons.person,
+                                              color: primaryColor),
+                                        ),
+                                        title: Text(
+                                          l.name.isNotEmpty
+                                              ? l.name
+                                              : 'Lead #${l.leadId}',
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w600),
+                                        ),
+                                        subtitle: Text(
+                                          [
+                                            if (l.email.isNotEmpty) l.email,
+                                            if (l.phone.isNotEmpty) l.phone,
+                                          ].join('  ·  '),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        trailing: const Icon(
+                                            Icons.arrow_forward_ios,
+                                            size: 16),
+                                        onTap: () => Navigator.pop(ctx, l),
+                                      );
+                                    },
+                                  ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (picked != null && mounted) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => AddQuotationScreen(lead: picked),
+        ),
+      );
+      _loadQuotations();
+    }
+  }
+
+  Future<void> _editQuotation(LeadQuotation q) async {
+    if (q.id == null) return;
+    // Need the parent lead to push the AddQuotationScreen edit flow.
+    Lead lead;
+    try {
+      lead = await LeadService().getLeadById(q.leadId.toString());
+    } catch (e) {
+      if (mounted) {
+        ErrorHandler.showErrorSnackBar(context, e);
+      }
+      return;
+    }
+    if (!mounted) return;
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) =>
+            AddQuotationScreen(lead: lead, quotationToEdit: q),
+      ),
+    );
+    if (saved == true) {
+      _loadQuotations();
+    }
+  }
+
+  Future<void> _acceptQuotation(LeadQuotation q) async {
+    if (q.id == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Accept Quotation'),
+        content: Text(
+            'Mark quotation ${q.quotationNumber ?? q.title} as accepted?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: successColor, foregroundColor: Colors.white),
+            child: const Text('Accept'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await _quotationService.acceptQuotation(q.id!);
+      _loadQuotations();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Quotation accepted'),
+              backgroundColor: successColor),
+        );
+      }
+    } catch (e) {
+      if (mounted) ErrorHandler.showErrorSnackBar(context, e);
+    }
+  }
+
+  Future<void> _rejectQuotation(LeadQuotation q) async {
+    if (q.id == null) return;
+    final reasonCtrl = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reject Quotation'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Reject quotation ${q.quotationNumber ?? q.title}?'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: reasonCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Reason (optional)',
+                border: OutlineInputBorder(),
+              ),
+              minLines: 2,
+              maxLines: 4,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: errorColor, foregroundColor: Colors.white),
+            child: const Text('Reject'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await _quotationService.rejectQuotation(
+        q.id!,
+        reason: reasonCtrl.text.trim().isEmpty ? null : reasonCtrl.text.trim(),
+      );
+      _loadQuotations();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Quotation rejected'),
+              backgroundColor: warningColor),
+        );
+      }
+    } catch (e) {
+      if (mounted) ErrorHandler.showErrorSnackBar(context, e);
+    }
+  }
+
+  /// Open a fullscreen PDF preview for [q] using the printing package.
+  /// `PdfPreview.build` lazily fetches the bytes when first rendered.
+  Future<void> _previewPdf(LeadQuotation q) async {
+    if (q.id == null) return;
+    final id = q.id!;
+    final number = q.quotationNumber ?? 'Quotation';
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (ctx) => Scaffold(
+          appBar: AppBar(
+            title: Text('Preview - $number'),
+            leading: IconButton(
+              icon: const Icon(Icons.close),
+              tooltip: 'Close',
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+          ),
+          body: PdfPreview(
+            build: (_) async => await _quotationService.downloadQuotationPdf(id),
+            allowPrinting: true,
+            allowSharing: true,
+            canChangePageFormat: false,
+            canChangeOrientation: false,
+            canDebug: false,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _downloadPdf(LeadQuotation q) async {
+    if (q.id == null) return;
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => const Center(child: CircularProgressIndicator()),
+      );
+      final bytes = await _quotationService.downloadQuotationPdf(q.id!);
+      final filename =
+          'Quotation_${q.quotationNumber?.replaceAll("/", "_") ?? q.id}.pdf';
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+      if (mounted) {
+        await FileDownloadHelper.downloadAndShareFile(
+          bytes: bytes,
+          fileName: filename,
+          mimeType: 'application/pdf',
+          shareText: 'Quotation - ${q.quotationNumber}',
+        );
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('PDF downloaded'),
+              backgroundColor: successColor),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop();
         ErrorHandler.showErrorSnackBar(context, e);
       }
     }

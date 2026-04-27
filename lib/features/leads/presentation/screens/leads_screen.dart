@@ -990,8 +990,10 @@ class _LeadsScreenState extends State<LeadsScreen> {
             ? lead.location
             : (lead.district.isNotEmpty ? lead.district : lead.state));
 
+    // Coerce to a known dropdown value — the lead's stored projectType may be
+    // legacy/uppercase (e.g. "RESIDENTIAL") which has no matching DropdownMenuItem.
     String projectType = lead.projectType.isNotEmpty
-        ? lead.projectType
+        ? ProjectType.fromValue(lead.projectType).value
         : ProjectTypeConstants.defaultValue;
     DateTime selectedDate = DateTime.now();
 

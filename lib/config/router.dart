@@ -33,6 +33,13 @@ import 'package:admin/screens/support/support_tickets_screen.dart';
 import 'package:admin/screens/support/support_ticket_detail_screen.dart';
 import 'package:admin/screens/auth/forgot_password_screen.dart';
 import 'package:admin/screens/auth/reset_password_screen.dart';
+import 'package:admin/features/dpc/presentation/screens/dpc_builder_screen.dart';
+import 'package:admin/features/dpc/presentation/screens/dpc_revisions_screen.dart';
+import 'package:admin/features/dpc/presentation/screens/dpc_templates_admin_screen.dart';
+import 'package:admin/features/dpc/presentation/screens/dpc_template_edit_screen.dart';
+import 'package:admin/features/leads/presentation/screens/lead_quotation_detail_screen.dart';
+import 'package:admin/features/quotation_catalog/presentation/screens/quotation_catalog_admin_screen.dart';
+import 'package:admin/features/dpc_customization_catalog/presentation/screens/dpc_customization_catalog_admin_screen.dart';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -43,7 +50,7 @@ const Map<String, int> kPathToMenuIndex = {
   '/':             0,
   '/leads':        1,
   '/customers':    2,
-  '/cx-projects':  3,
+  '/projects':     3,
   '/users':        4,
   '/quotations':   5,
   '/contracts':    6,
@@ -64,15 +71,21 @@ const Map<String, int> kPathToMenuIndex = {
   '/partnerships': 21,
   '/acl':          22,
   '/support':      23,
+  '/dpc/templates':24,
+  '/quotation-catalog':25,
+  '/dpc-customization-catalog':26,
 };
 
 /// Map a menu index (from [MenuAppController]) to its route path.
 const List<String> kIndexToPath = [
-  '/', '/leads', '/customers', '/cx-projects', '/users',
+  '/', '/leads', '/customers', '/projects', '/users',
   '/quotations', '/contracts', '/follow-ups', '/site-visits',
   '/tasks', '/team', '/communication', '/documents', '/payments',
   '/reports', '/profile', '/challans', '/procurement', '/labour',
   '/inventory', '/finance', '/partnerships', '/acl', '/support',
+  '/dpc/templates',
+  '/quotation-catalog',
+  '/dpc-customization-catalog',
 ];
 
 String indexToPath(int index) =>
@@ -143,7 +156,7 @@ GoRouter buildAppRouter(PortalAuthProvider authProvider) {
           GoRoute(path: '/',             builder: (_, __) => const DashboardScreen()),
           GoRoute(path: '/leads',        builder: (_, __) => const LeadsScreen()),
           GoRoute(path: '/customers',    builder: (_, __) => const CustomersScreen()),
-          GoRoute(path: '/cx-projects',  builder: (_, __) => const ProjectsListScreen()),
+          GoRoute(path: '/projects',     builder: (_, __) => const ProjectsListScreen()),
           GoRoute(path: '/users',        builder: (_, __) => const PortalUsersScreen()),
           GoRoute(path: '/quotations',   builder: (_, __) => const QuotationsScreen()),
           GoRoute(path: '/contracts',    builder: (_, __) => const ContractsScreen()),
@@ -170,6 +183,56 @@ GoRouter buildAppRouter(PortalAuthProvider authProvider) {
               final ticketId = int.tryParse(state.pathParameters['ticketId'] ?? '') ?? 0;
               return SupportTicketDetailScreen(ticketId: ticketId);
             },
+          ),
+
+          // DPC (Detailed Project Costing)
+          GoRoute(
+            path: '/dpc/builder/:projectId',
+            builder: (_, state) {
+              final projectId =
+                  int.tryParse(state.pathParameters['projectId'] ?? '') ?? 0;
+              return DpcBuilderScreen(projectId: projectId);
+            },
+          ),
+          GoRoute(
+            path: '/dpc/revisions/:projectId',
+            builder: (_, state) {
+              final projectId =
+                  int.tryParse(state.pathParameters['projectId'] ?? '') ?? 0;
+              return DpcRevisionsScreen(projectId: projectId);
+            },
+          ),
+          GoRoute(
+            path: '/dpc/templates',
+            builder: (_, __) => const DpcTemplatesAdminScreen(),
+          ),
+          GoRoute(
+            path: '/dpc/templates/:id',
+            builder: (_, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+              return DpcTemplateEditScreen(templateId: id);
+            },
+          ),
+
+          // Quotation detail (deep-linkable per-row route)
+          GoRoute(
+            path: '/quotations/:id',
+            builder: (_, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+              return LeadQuotationDetailScreen(quotationId: id);
+            },
+          ),
+
+          // Quotation Item Catalog (admin)
+          GoRoute(
+            path: '/quotation-catalog',
+            builder: (_, __) => const QuotationCatalogAdminScreen(),
+          ),
+
+          // DPC Customization Catalog (admin)
+          GoRoute(
+            path: '/dpc-customization-catalog',
+            builder: (_, __) => const DpcCustomizationCatalogAdminScreen(),
           ),
         ],
       ),

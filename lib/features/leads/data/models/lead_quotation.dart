@@ -178,6 +178,12 @@ class LeadQuotationItem {
   final double totalPrice;
   final String? notes;
 
+  /// FK to the master quotation-catalog row this line was sourced from.
+  /// `null` means the line was authored ad-hoc (custom) and is therefore a
+  /// candidate for "Promote to catalog". The backend GET endpoint exposes
+  /// this as `catalogItemId` (see LeadQuotationController#mapItem).
+  final int? catalogItemId;
+
   LeadQuotationItem({
     this.id,
     this.quotationId,
@@ -187,6 +193,7 @@ class LeadQuotationItem {
     required this.unitPrice,
     required this.totalPrice,
     this.notes,
+    this.catalogItemId,
   });
 
   factory LeadQuotationItem.fromJson(Map<String, dynamic> json) {
@@ -199,6 +206,7 @@ class LeadQuotationItem {
       unitPrice: (json['unitPrice'] ?? json['unit_price'] as num).toDouble(),
       totalPrice: (json['totalPrice'] ?? json['total_price'] as num).toDouble(),
       notes: json['notes'],
+      catalogItemId: (json['catalogItemId'] ?? json['catalog_item_id']) as int?,
     );
   }
 
@@ -211,6 +219,7 @@ class LeadQuotationItem {
       'unitPrice': unitPrice,
       'totalPrice': totalPrice,
       'notes': notes,
+      'catalogItemId': catalogItemId,
     };
   }
 }

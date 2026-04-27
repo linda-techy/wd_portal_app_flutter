@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/features/leads/data/models/lead_quotation.dart';
 import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/features/leads/data/services/lead_quotation_service.dart';
 import 'package:admin/features/leads/presentation/providers/lead_quotation_provider.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
+import 'package:admin/screens/quotations/widgets/quotation_row_actions.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/utils/motion_toast.dart';
@@ -17,7 +19,12 @@ class LeadQuotationsScreen extends StatelessWidget {
   final Lead? lead;
   final int? leadId;
 
-  const LeadQuotationsScreen({super.key, this.lead, this.leadId});
+  /// When true, suppress the screen's own AppBar — used when this widget
+  /// is hosted inside a parent's TabBarView (e.g. EditLeadScreen tabs).
+  final bool embedded;
+
+  const LeadQuotationsScreen(
+      {super.key, this.lead, this.leadId, this.embedded = false});
 
   Future<void> _downloadPdf(
       BuildContext context, LeadQuotation quotation) async {
@@ -76,6 +83,44 @@ class LeadQuotationsScreen extends StatelessWidget {
       },
       child: Consumer<LeadQuotationProvider>(
         builder: (context, provider, _) {
+          final body = Column(
+            children: [
+              if (embedded && lead != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Quotations for ${lead!.name}',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                      Consumer<PermissionProvider>(
+                        builder: (context, permissionProvider, _) {
+                          if (permissionProvider.hasPermission('lead:edit')) {
+                            return ElevatedButton.icon(
+                              icon: const Icon(Icons.add, size: 18),
+                              label: const Text('New Quotation'),
+                              onPressed: () => _navigateToCreate(context),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              _buildSearchAndFilters(context, provider),
+              Expanded(child: _buildQuotationList(context, provider)),
+              if (provider.totalPages > 1)
+                _buildPagination(context, provider),
+            ],
+          );
+
+          if (embedded) {
+            return body;
+          }
           return Scaffold(
             appBar: AppBar(
               title: Text(lead != null
@@ -96,14 +141,7 @@ class LeadQuotationsScreen extends StatelessWidget {
                 ),
               ],
             ),
-            body: Column(
-              children: [
-                _buildSearchAndFilters(context, provider),
-                Expanded(child: _buildQuotationList(context, provider)),
-                if (provider.totalPages > 1)
-                  _buildPagination(context, provider),
-              ],
-            ),
+            body: body,
           );
         },
       ),
@@ -278,64 +316,21 @@ class LeadQuotationsScreen extends StatelessWidget {
                     ),
                   ),
                   _buildStatusBadge(quotation.status),
-                  PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert),
-                    onSelected: (value) {
-                      if (value == 'view') {
-                        _navigateToDetail(context, quotation);
-                      } else if (value == 'edit' &&
-                          quotation.status == 'DRAFT') {
-                        if (lead != null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AddQuotationScreen(
-                                lead: lead!,
-                                quotationToEdit: quotation,
-                              ),
-                            ),
-                          ).then((result) {
-                            if (result == true && context.mounted) {
-                              final provider =
-                                  Provider.of<LeadQuotationProvider>(context,
-                                      listen: false);
-                              provider.fetch();
-                            }
-                          });
-                        }
-                      } else if (value == 'pdf') {
-                        _downloadPdf(context, quotation);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'view',
-                        child: Row(children: [
-                          Icon(Icons.visibility, size: 20),
-                          SizedBox(width: 8),
-                          Text('View Details')
-                        ]),
-                      ),
-                      const PopupMenuItem(
-                        value: 'pdf',
-                        child: Row(children: [
-                          Icon(Icons.picture_as_pdf,
-                              size: 20, color: Colors.red),
-                          SizedBox(width: 8),
-                          Text('Export PDF',
-                              style: TextStyle(color: Colors.red))
-                        ]),
-                      ),
-                      if (quotation.status == 'DRAFT' && lead != null)
-                        const PopupMenuItem(
-                          value: 'edit',
-                          child: Row(children: [
-                            Icon(Icons.edit, size: 20),
-                            SizedBox(width: 8),
-                            Text('Edit')
-                          ]),
-                        ),
-                    ],
+                  QuotationRowActions(
+                    quotation: quotation,
+                    onView: () => _navigateToDetail(context, quotation),
+                    onEdit: lead != null
+                        ? () => _editQuotation(context, quotation)
+                        : null,
+                    // Add-from-catalog requires a quotation detail context;
+                    // surface a hint pointing the user to the detail screen.
+                    onAddFromCatalog: () => _hintOpenDetail(context),
+                    onSend: () => _sendQuotation(context, quotation),
+                    onAccept: () => _acceptQuotation(context, quotation),
+                    onReject: () => _rejectQuotation(context, quotation),
+                    onPreviewPdf: () => _previewPdf(context, quotation),
+                    onDownloadPdf: () => _downloadPdf(context, quotation),
+                    onDelete: () => _deleteQuotation(context, quotation),
                   ),
                 ],
               ),
@@ -494,6 +489,225 @@ class LeadQuotationsScreen extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  void _editQuotation(BuildContext context, LeadQuotation quotation) {
+    if (lead == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddQuotationScreen(
+          lead: lead!,
+          quotationToEdit: quotation,
+        ),
+      ),
+    ).then((result) {
+      if (result == true && context.mounted) {
+        Provider.of<LeadQuotationProvider>(context, listen: false).fetch();
+      }
+    });
+  }
+
+  void _hintOpenDetail(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Open the quotation detail to add items from catalog'),
+      ),
+    );
+  }
+
+  Future<void> _sendQuotation(
+      BuildContext context, LeadQuotation quotation) async {
+    if (quotation.id == null) return;
+    try {
+      await LeadQuotationService().sendQuotation(quotation.id!);
+      if (context.mounted) {
+        Provider.of<LeadQuotationProvider>(context, listen: false).fetch();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Quotation sent'),
+              backgroundColor: AppTheme.statusSuccess),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        await ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'Failed to send quotation');
+      }
+    }
+  }
+
+  Future<void> _acceptQuotation(
+      BuildContext context, LeadQuotation quotation) async {
+    if (quotation.id == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Accept Quotation'),
+        content: Text(
+            'Mark quotation ${quotation.quotationNumber ?? quotation.title} as accepted?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.statusSuccess,
+                foregroundColor: Colors.white),
+            child: const Text('Accept'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await LeadQuotationService().acceptQuotation(quotation.id!);
+      if (context.mounted) {
+        Provider.of<LeadQuotationProvider>(context, listen: false).fetch();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Quotation accepted'),
+              backgroundColor: AppTheme.statusSuccess),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        await ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'Failed to accept quotation');
+      }
+    }
+  }
+
+  Future<void> _rejectQuotation(
+      BuildContext context, LeadQuotation quotation) async {
+    if (quotation.id == null) return;
+    final reasonCtrl = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reject Quotation'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+                'Reject quotation ${quotation.quotationNumber ?? quotation.title}?'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: reasonCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Reason (optional)',
+                border: OutlineInputBorder(),
+              ),
+              minLines: 2,
+              maxLines: 4,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.statusError,
+                foregroundColor: Colors.white),
+            child: const Text('Reject'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await LeadQuotationService().rejectQuotation(
+        quotation.id!,
+        reason:
+            reasonCtrl.text.trim().isEmpty ? null : reasonCtrl.text.trim(),
+      );
+      if (context.mounted) {
+        Provider.of<LeadQuotationProvider>(context, listen: false).fetch();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Quotation rejected')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        await ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'Failed to reject quotation');
+      }
+    }
+  }
+
+  Future<void> _previewPdf(
+      BuildContext context, LeadQuotation quotation) async {
+    if (quotation.id == null) return;
+    final id = quotation.id!;
+    final number = quotation.quotationNumber ?? 'Quotation';
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (ctx) => Scaffold(
+          appBar: AppBar(
+            title: Text('Preview - $number'),
+            leading: IconButton(
+              icon: const Icon(Icons.close),
+              tooltip: 'Close',
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+          ),
+          body: PdfPreview(
+            build: (_) async =>
+                await LeadQuotationService().downloadQuotationPdf(id),
+            allowPrinting: true,
+            allowSharing: true,
+            canChangePageFormat: false,
+            canChangeOrientation: false,
+            canDebug: false,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteQuotation(
+      BuildContext context, LeadQuotation quotation) async {
+    if (quotation.id == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Quotation'),
+        content: Text(
+            'Delete quotation ${quotation.quotationNumber ?? quotation.title}?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.statusError,
+                foregroundColor: Colors.white),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await LeadQuotationService().deleteQuotation(quotation.id!);
+      if (context.mounted) {
+        Provider.of<LeadQuotationProvider>(context, listen: false).fetch();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Quotation deleted')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        await ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'Failed to delete quotation');
+      }
+    }
   }
 
   void _navigateToDetail(BuildContext context, LeadQuotation quotation) {

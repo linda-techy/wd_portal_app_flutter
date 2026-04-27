@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/utils/error_handler.dart';
 import 'package:admin/models/project_document.dart';
@@ -128,7 +129,14 @@ class DocumentsScreenState extends State<DocumentsScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text("Documents Management", style: Theme.of(context).textTheme.headlineMedium),
-                IconButton(icon: const Icon(Icons.refresh), onPressed: _loadDocuments, tooltip: 'Refresh'),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildGenerateDocumentButton(),
+                    const SizedBox(width: 8),
+                    IconButton(icon: const Icon(Icons.refresh), onPressed: _loadDocuments, tooltip: 'Refresh'),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: defaultPadding),
@@ -328,6 +336,54 @@ class DocumentsScreenState extends State<DocumentsScreen> {
                                   ),
                                 ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGenerateDocumentButton() {
+    final hasProject = _selectedProject?.id != null;
+    return PopupMenuButton<String>(
+      enabled: hasProject,
+      tooltip: hasProject
+          ? 'Generate a document for this project'
+          : 'Select a project first',
+      itemBuilder: (ctx) => const [
+        PopupMenuItem<String>(
+          value: 'dpc',
+          child: Row(
+            children: [
+              Icon(Icons.calculate_outlined, size: 18, color: primaryColor),
+              SizedBox(width: 8),
+              Text('Detailed Project Costing'),
+            ],
+          ),
+        ),
+      ],
+      onSelected: (val) {
+        if (val == 'dpc' && _selectedProject?.id != null) {
+          context.go('/dpc/builder/${_selectedProject!.id}');
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: hasProject ? primaryColor : textMuted,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.add, size: 16, color: Colors.white),
+            SizedBox(width: 6),
+            Text(
+              'Generate Document',
+              style: TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.w600),
+            ),
+            SizedBox(width: 4),
+            Icon(Icons.arrow_drop_down, size: 18, color: Colors.white),
           ],
         ),
       ),

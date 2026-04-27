@@ -248,6 +248,27 @@ class BoqPaymentService {
         .toList();
   }
 
+  /// Alias for [getProjectDocuments] — matches the naming used by the
+  /// document-management screen.
+  Future<List<BoqDocumentModel>> listForProject(int projectId) =>
+      getProjectDocuments(projectId);
+
+  /// Create a new DRAFT BoQ document for [projectId]. Backend rejects with
+  /// 409 if a DRAFT already exists for the project.
+  Future<BoqDocumentModel> createDocument(int projectId) async {
+    final res = await _api.dio
+        .post('/api/boq-documents', data: {'projectId': projectId});
+    _checkSuccess(res.data, 'Failed to create BOQ document');
+    return BoqDocumentModel.fromJson(res.data['data']);
+  }
+
+  /// Fetch a single BoQ document by id.
+  Future<BoqDocumentModel> getDocument(int id) async {
+    final res = await _api.dio.get('/api/boq-documents/$id');
+    _checkSuccess(res.data, 'Failed to load BOQ document');
+    return BoqDocumentModel.fromJson(res.data['data']);
+  }
+
   Future<BoqDocumentModel> submitDocument(int documentId) async {
     final res =
         await _api.dio.patch('/api/boq-documents/$documentId/submit');
@@ -259,6 +280,36 @@ class BoqPaymentService {
     final res = await _api.dio
         .patch('/api/boq-documents/$documentId/approve-internal');
     _checkSuccess(res.data, 'Failed to approve BOQ document');
+    return BoqDocumentModel.fromJson(res.data['data']);
+  }
+
+  /// Reject a BoQ document with a free-text reason. Allowed for DRAFT and
+  /// PENDING_APPROVAL statuses.
+  Future<BoqDocumentModel> rejectDocument(int id, String reason) async {
+    final res = await _api.dio
+        .patch('/api/boq-documents/$id/reject', data: {'reason': reason});
+    _checkSuccess(res.data, 'Failed to reject BOQ document');
+    return BoqDocumentModel.fromJson(res.data['data']);
+  }
+
+  /// Customer-approve the document. [stages] is a list of `(name, percentage)`
+  /// records where `percentage` is a fraction (e.g. 0.10 for 10%) and the sum
+  /// MUST equal 1.0. Backend auto-generates payment stages on success and
+  /// flips status to APPROVED.
+  Future<BoqDocumentModel> customerApproveDocument(
+    int id,
+    int customerSignedById,
+    List<({String name, double percentage})> stages,
+  ) async {
+    final body = {
+      'customerSignedById': customerSignedById,
+      'stages': stages
+          .map((s) => {'name': s.name, 'percentage': s.percentage})
+          .toList(),
+    };
+    final res = await _api.dio
+        .patch('/api/boq-documents/$id/customer-approve', data: body);
+    _checkSuccess(res.data, 'Failed to customer-approve BOQ document');
     return BoqDocumentModel.fromJson(res.data['data']);
   }
 

@@ -9,6 +9,7 @@ import 'package:admin/constants/project_type_constants.dart';
 import 'components/lead_activity_timeline.dart';
 import 'components/lead_tasks_tab.dart';
 import 'components/lead_documents_tab.dart';
+import 'lead_quotations_screen.dart';
 import 'package:admin/features/partnerships/data/services/partnership_admin_service.dart';
 import 'package:admin/features/partnerships/presentation/screens/partner_admin_detail_screen.dart';
 
@@ -140,7 +141,7 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 4, // Updated to 4
+      length: 5,
       child: Scaffold(
         appBar: AppBar(
           title: Text('${EditLeadConstants.appBarTitle}: ${widget.lead.name}'),
@@ -152,6 +153,7 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
               Tab(text: 'Details'),
               Tab(text: 'Tasks'),
               Tab(text: 'Documents'),
+              Tab(text: 'Quotations'),
               Tab(text: 'History'),
             ],
             labelColor: primaryColor,
@@ -242,7 +244,13 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
             LeadTasksTab(leadId: widget.lead.leadId),
             // Tab 3: Documents
             LeadDocumentsTab(leadId: widget.lead.leadId),
-            // Tab 4: History
+            // Tab 4: Quotations
+            LeadQuotationsScreen(
+              lead: widget.lead,
+              leadId: int.tryParse(widget.lead.leadId),
+              embedded: true,
+            ),
+            // Tab 5: History
             LeadActivityTimeline(leadId: widget.lead.leadId),
           ],
         ),
@@ -256,7 +264,13 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
     final TextEditingController startDateController = TextEditingController(text: DateTime.now().toString().substring(0, 10));
     final TextEditingController locationController = TextEditingController(text: widget.lead.location.isNotEmpty ? widget.lead.location : (widget.lead.district.isNotEmpty ? widget.lead.district : widget.lead.state));
 
-    String projectType = widget.lead.projectType.isNotEmpty ? widget.lead.projectType : ProjectTypeConstants.defaultValue;
+    // Coerce to a known dropdown value. The lead's stored projectType may be
+    // legacy/uppercase (e.g. "RESIDENTIAL") which has no matching DropdownMenuItem
+    // and would crash the DropdownButton. fromValue() falls back to the default
+    // when the stored string doesn't match any enum value.
+    String projectType = widget.lead.projectType.isNotEmpty
+        ? ProjectType.fromValue(widget.lead.projectType).value
+        : ProjectTypeConstants.defaultValue;
     DateTime selectedDate = DateTime.now();
 
     final result = await showDialog<Map<String, dynamic>>(

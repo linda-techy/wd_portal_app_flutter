@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:admin/features/projects/data/models/project_model.dart';
 import 'package:admin/models/customer_project.dart';
+import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/services/customer_project_service.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/theme/responsive_utils.dart';
@@ -28,6 +31,7 @@ import 'package:admin/features/variation_orders/presentation/screens/vo_list_scr
 import 'package:admin/features/stage_payments/presentation/screens/stage_payment_screen.dart';
 import 'package:admin/features/deductions/presentation/screens/deduction_register_screen.dart';
 import 'package:admin/features/final_account/presentation/screens/final_account_screen.dart';
+import 'package:admin/features/projects/presentation/screens/project_members_screen.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final ProjectModel project;
@@ -394,10 +398,14 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   // ─── Project Modules grid ──────────────────────────────────────────────────
 
   Widget _buildModulesSection(BuildContext context) {
+    final perms = context.watch<PermissionProvider>();
     final modules = <_ModuleTile>[
       _ModuleTile(title: 'Documents',        icon: Icons.description_outlined,    color: AppTheme.primaryBlue,        onTap: () => _navigateToModule(context, 'Documents')),
       _ModuleTile(title: 'Payments',         icon: Icons.payment_outlined,        color: AppTheme.statusSuccess,      onTap: () => _navigateToModule(context, 'Payments')),
       _ModuleTile(title: 'BoQ',              icon: Icons.receipt_long_outlined,   color: AppTheme.safetyOrange,       onTap: () => _navigateToModule(context, 'BoQ')),
+      _ModuleTile(title: 'Members',          icon: Icons.group_outlined,          color: AppTheme.primaryBlue,        onTap: () => _navigateToModule(context, 'Members')),
+      if (perms.canViewDpc)
+        _ModuleTile(title: 'Detailed Project Costing', icon: Icons.receipt_long_outlined, color: const Color(0xFFEF5D4A), onTap: () => _navigateToModule(context, 'DPC')),
       _ModuleTile(title: 'Payment Schedule', icon: Icons.calendar_month_outlined, color: AppTheme.statusSuccess,      onTap: () => _navigateToModule(context, 'Payment Schedule')),
       _ModuleTile(title: 'BOQ Invoices',     icon: Icons.receipt_outlined,        color: AppTheme.primaryBlue,        onTap: () => _navigateToModule(context, 'BOQ Invoices')),
       _ModuleTile(title: 'Change Orders',    icon: Icons.edit_note_outlined,      color: AppTheme.coralRed,           onTap: () => _navigateToModule(context, 'Change Orders')),
@@ -448,6 +456,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     final id = project.id;
     if (id == null) return;
 
+    // Special-case: DPC uses go_router so the URL updates and back-navigation
+    // works the same way as the rest of the DPC flow.
+    if (moduleName == 'DPC') {
+      context.go('/dpc/builder/$id');
+      return;
+    }
+
     MaterialPageRoute<dynamic>? route;
     switch (moduleName) {
       case 'Documents':
@@ -474,6 +489,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         route = MaterialPageRoute(builder: (_) => SubcontractWorkOrdersScreen(projectId: id, projectName: project.name)); break;
       case 'BoQ':
         route = MaterialPageRoute(builder: (_) => BoqScreen(projectId: id)); break;
+      case 'Members':
+        route = MaterialPageRoute(builder: (_) => ProjectMembersScreen(
+          projectId: id,
+          projectName: project.name,
+        )); break;
       case 'Site Reports':
         route = MaterialPageRoute(builder: (_) => SiteReportsScreen(projectId: id)); break;
       case 'Quality Check':

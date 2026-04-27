@@ -168,6 +168,20 @@ class PermissionProvider with ChangeNotifier {
   bool get canEditBoq => canEdit('BOQ');
   bool get canDeleteBoq => canDelete('BOQ');
   bool get canApproveBoq => hasPermission('BOQ_APPROVE');
+  bool get canSubmitBoqDoc => hasPermission('BOQ_APPROVE');
+  bool get canCustomerApproveBoq => hasPermission('BOQ_APPROVE');
+  bool get canCorrectBoq => hasPermission('BOQ_CORRECT');
+
+  // DPC (Detailed Project Costing) permissions
+  bool get canViewDpc => hasPermission('DPC_VIEW');
+  bool get canCreateDpc => hasPermission('DPC_CREATE');
+  bool get canEditDpc => hasPermission('DPC_EDIT');
+  bool get canIssueDpc => hasPermission('DPC_ISSUE');
+  bool get canManageDpcTemplates => hasPermission('DPC_TEMPLATE_MANAGE');
+  bool get canViewDpcCustomizationCatalog =>
+      hasPermission('DPC_CUSTOMIZATION_CATALOG_VIEW');
+  bool get canManageDpcCustomizationCatalog =>
+      hasPermission('DPC_CUSTOMIZATION_CATALOG_MANAGE');
 
   // Site Report permissions
   bool get canViewSiteReports => canView('SITE_REPORT');

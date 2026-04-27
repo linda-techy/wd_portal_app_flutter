@@ -9,6 +9,9 @@ import 'package:admin/utils/error_handler.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
 import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/services/reports/boq_report.dart';
+import 'package:admin/features/boq/presentation/screens/boq_audit_log_dialog.dart';
+import 'package:admin/features/boq/presentation/screens/boq_categories_dialog.dart';
+import 'package:admin/features/boq/presentation/screens/boq_document_management_screen.dart';
 
 class BoqScreen extends StatefulWidget {
   final int projectId;
@@ -228,6 +231,18 @@ class _BoqScreenState extends State<BoqScreen> {
             tooltip: 'Export',
           ),
           IconButton(
+            icon: const Icon(Icons.description_outlined),
+            tooltip: 'BoQ Documents',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => BoqDocumentManagementScreen(
+                      projectId: widget.projectId),
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadData,
           ),
@@ -419,12 +434,42 @@ class _BoqScreenState extends State<BoqScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          // Category/Work Type filter
-          if (_categories.isNotEmpty || _workTypes.isNotEmpty)
-            SingleChildScrollView(
+          // Category/Work Type filter row — includes the "Manage Categories"
+          // affordance for users with BoQ create/edit permission. The
+          // affordance shows even when no categories exist yet, so staff
+          // can bootstrap the first category from the UI.
+          Builder(builder: (context) {
+            final perms = context.watch<PermissionProvider>();
+            final canManageCategories =
+                perms.canCreateBoq || perms.canEditBoq;
+            if (_categories.isEmpty &&
+                _workTypes.isEmpty &&
+                !canManageCategories) {
+              return const SizedBox.shrink();
+            }
+            return SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
+                  if (canManageCategories) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.category, size: 16),
+                        label: const Text('Categories'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.deepSlate,
+                          side: const BorderSide(
+                              color: AppTheme.deepSlate, width: 1),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 4),
+                          textStyle: const TextStyle(fontSize: 12),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        onPressed: _openCategoriesManager,
+                      ),
+                    ),
+                  ],
                   if (_categories.isNotEmpty) ...[
                     ..._categories.where((c) => c.isTopLevel).map((cat) => _buildFilterChip(
                           cat.name,
@@ -453,10 +498,26 @@ class _BoqScreenState extends State<BoqScreen> {
                   ],
                 ],
               ),
-            ),
+            );
+          }),
         ],
       ),
     );
+  }
+
+  /// Opens the BoQ Categories management dialog. After it closes, refresh
+  /// the screen so newly-added/removed categories appear in the filter
+  /// strip and in the create/edit item dialog.
+  Future<void> _openCategoriesManager() async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => BoqCategoriesDialog(projectId: widget.projectId),
+    );
+    if (!mounted) return;
+    // Refresh categories (and the rest) so any add/edit/delete is reflected
+    // immediately in the BoQ filter chips and forms.
+    await _loadData();
   }
 
   Widget _buildFilterChip(String label, bool isSelected, VoidCallback onTap) {
@@ -935,6 +996,31 @@ class _BoqScreenState extends State<BoqScreen> {
                           Colors.green,
                           () => _markComplete(item),
                         ),
+                      if (perms.canCorrectBoq && item.executedQuantity > 0)
+                        _buildActionButton(
+                          'Correct Execution',
+                          Icons.tune,
+                          Colors.purple,
+                          () {
+                            Navigator.pop(context);
+                            _showCorrectExecutionDialog(item);
+                          },
+                        ),
+                      _buildActionButton(
+                        'View Audit Log',
+                        Icons.history,
+                        AppTheme.deepSlate,
+                        () {
+                          Navigator.pop(context);
+                          showDialog<void>(
+                            context: context,
+                            builder: (_) => BoqAuditLogDialog(
+                              itemId: item.id,
+                              itemDescription: item.description,
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   );
                 }),
@@ -1318,6 +1404,161 @@ class _BoqScreenState extends State<BoqScreen> {
             defaultMessage: 'Failed to lock item');
       }
     }
+  }
+
+  /// Manual correction of an item's executed quantity. Visible only to users
+  /// with BOQ_CORRECT and only when the item has at least one execution
+  /// recorded. Posts to /api/boq/{id}/correct-execution and reloads on
+  /// success.
+  Future<void> _showCorrectExecutionDialog(BoqItem item) async {
+    final qtyController = TextEditingController(
+        text: item.executedQuantity
+            .toStringAsFixed(2)
+            .replaceAll(RegExp(r'\.?0+$'), ''));
+    final reasonController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.tune, color: Colors.purple),
+            SizedBox(width: 8),
+            Text('Correct Execution'),
+          ],
+        ),
+        content: SizedBox(
+          width: 460,
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Item: ${item.description}',
+                    style: const TextStyle(fontSize: 13)),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _readOnlyRow('Current executed',
+                          '${item.executedQuantity} ${item.unit}'),
+                      const SizedBox(height: 4),
+                      _readOnlyRow(
+                          'Unit rate', _currencyFormat.format(item.unitRate)),
+                      const SizedBox(height: 4),
+                      _readOnlyRow('Planned quantity',
+                          '${item.quantity} ${item.unit}'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: qtyController,
+                  decoration: InputDecoration(
+                    labelText: 'New executed quantity *',
+                    suffixText: item.unit,
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true),
+                  autofocus: true,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Quantity is required';
+                    }
+                    final n = double.tryParse(v.trim());
+                    if (n == null || n < 0) {
+                      return 'Enter a non-negative number';
+                    }
+                    if (n > item.quantity) {
+                      return 'Cannot exceed planned quantity '
+                          '(${item.quantity})';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: reasonController,
+                  decoration: const InputDecoration(
+                    labelText: 'Reason *',
+                    hintText: 'Why is this correction needed?',
+                    alignLabelWithHint: true,
+                  ),
+                  minLines: 3,
+                  maxLines: 5,
+                  validator: (v) {
+                    if (v == null || v.trim().length < 10) {
+                      return 'Please provide a reason (min 10 characters)';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                Navigator.pop(ctx, true);
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+            child: const Text('Correct',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && mounted) {
+      final newQty = double.tryParse(qtyController.text.trim()) ?? 0;
+      final reason = reasonController.text.trim();
+      try {
+        await _service.correctBoqExecution(item.id, newQty, reason);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Execution corrected'),
+              backgroundColor: AppTheme.successGreen,
+            ),
+          );
+        }
+        await _loadData();
+      } catch (e) {
+        if (mounted) {
+          await ErrorHandler.handleApiError(context, e,
+              defaultMessage: 'Failed to correct execution');
+        }
+      }
+    }
+  }
+
+  Widget _readOnlyRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                fontSize: 12, color: AppTheme.textSecondary)),
+        Text(value,
+            style:
+                const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+      ],
+    );
   }
 
   Future<void> _showCreateDialog() async {

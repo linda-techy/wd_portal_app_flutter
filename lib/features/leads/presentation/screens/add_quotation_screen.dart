@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/features/leads/data/models/lead_quotation.dart';
 import 'package:admin/features/leads/data/services/lead_quotation_service.dart';
+import 'package:admin/features/quotation_catalog/data/models/quotation_catalog_item.dart';
+import 'package:admin/features/quotation_catalog/data/services/quotation_catalog_service.dart';
+import 'package:admin/features/quotation_catalog/presentation/screens/quotation_catalog_picker_dialog.dart';
 
 class AddQuotationScreen extends StatefulWidget {
   final Lead lead;
@@ -17,6 +20,7 @@ class AddQuotationScreen extends StatefulWidget {
 class _AddQuotationScreenState extends State<AddQuotationScreen> {
   final _formKey = GlobalKey<FormState>();
   final LeadQuotationService _service = LeadQuotationService();
+  final QuotationCatalogService _catalogService = QuotationCatalogService();
   bool _isSaving = false;
 
   final TextEditingController _titleController = TextEditingController();
@@ -80,6 +84,43 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
     });
   }
 
+  /// Build the row description for a catalog-sourced line, mirroring the
+  /// backend's `LeadQuotationService#addItemFromCatalog` formatting so what
+  /// the user sees in the form matches what the server would produce.
+  String _buildCatalogDescription(QuotationCatalogItem cat) {
+    final desc = cat.description;
+    if (desc == null || desc.trim().isEmpty) return cat.name;
+    final truncated = desc.length > 500 ? desc.substring(0, 500) : desc;
+    return '${cat.name} - $truncated';
+  }
+
+  /// Open the catalog picker in preview mode — the picked row is appended
+  /// locally; persistence to the server happens at form-save via a second
+  /// `addItemFromCatalog` call (the inline `createQuotation` body does NOT
+  /// persist `catalog_item_id` for nested items).
+  Future<void> _openCatalogPicker() async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => QuotationCatalogPickerDialog(
+        // quotationId omitted — preview mode.
+        onPreviewItemAdded: (cat, {quantity, unitPriceOverride}) {
+          final qty = quantity ?? 1.0;
+          final price = unitPriceOverride ?? cat.defaultUnitPrice;
+          setState(() {
+            _items.add(LeadQuotationItem(
+              itemNumber: _items.length + 1,
+              description: _buildCatalogDescription(cat),
+              quantity: qty,
+              unitPrice: price,
+              totalPrice: qty * price,
+              catalogItemId: cat.id,
+            ));
+          });
+        },
+      ),
+    );
+  }
+
   void _removeItem(int index) {
     setState(() {
       _items.removeAt(index);
@@ -105,23 +146,75 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
     try {
       final leadIdInt = int.parse(widget.lead.leadId);
 
-      final quotation = LeadQuotation(
-        id: widget.quotationToEdit?.id,
-        leadId: leadIdInt,
-        title: _titleController.text,
-        description: _descriptionController.text,
-        validityDays: int.tryParse(_validityController.text) ?? 30,
-        totalAmount: _currentTotal,
-        finalAmount:
-            _currentTotal, // Assuming no tax/discount logic yet for simplicity
-        items: _items,
-        status: widget.quotationToEdit?.status ?? 'DRAFT',
-      );
+      // Split items: catalog-sourced rows must be persisted via
+      // `addItemFromCatalog` so the FK link is recorded — the inline
+      // create body ignores `catalogItemId`.
+      final adHocItems =
+          _items.where((it) => it.catalogItemId == null).toList();
+      final catalogItems =
+          _items.where((it) => it.catalogItemId != null).toList();
 
       if (widget.quotationToEdit != null) {
+        // Edit path — preserve existing behaviour (single update call).
+        // Catalog-link preservation on edit is out-of-scope for this slice;
+        // existing rows that already have catalogItemId remain linked
+        // because the backend uses the request's items list verbatim, but
+        // newly-added catalog rows during edit will lose the link. The
+        // primary "Add from catalog" UX is on create, where it fully works.
+        final quotation = LeadQuotation(
+          id: widget.quotationToEdit!.id,
+          leadId: leadIdInt,
+          title: _titleController.text,
+          description: _descriptionController.text,
+          validityDays: int.tryParse(_validityController.text) ?? 30,
+          totalAmount: _currentTotal,
+          finalAmount: _currentTotal,
+          items: _items,
+          status: widget.quotationToEdit!.status,
+        );
         await _service.updateQuotation(quotation.id!, quotation);
       } else {
-        await _service.createQuotation(quotation);
+        // Create path — two-phase when catalog rows are present.
+        // Re-number ad-hoc items 1..N before sending.
+        final renumberedAdHoc = <LeadQuotationItem>[];
+        for (var i = 0; i < adHocItems.length; i++) {
+          final r = adHocItems[i];
+          renumberedAdHoc.add(LeadQuotationItem(
+            itemNumber: i + 1,
+            description: r.description,
+            quantity: r.quantity,
+            unitPrice: r.unitPrice,
+            totalPrice: r.totalPrice,
+            notes: r.notes,
+          ));
+        }
+
+        // If there are no ad-hoc items at all but only catalog rows, we
+        // still need a quotation skeleton — backend allows empty items
+        // on create (calculateTotals only runs when items present).
+        final initial = LeadQuotation(
+          leadId: leadIdInt,
+          title: _titleController.text,
+          description: _descriptionController.text,
+          validityDays: int.tryParse(_validityController.text) ?? 30,
+          totalAmount: 0,
+          finalAmount: 0,
+          items: renumberedAdHoc,
+          status: 'DRAFT',
+        );
+        final created = await _service.createQuotation(initial);
+
+        // Phase 2 — append catalog-linked items via the dedicated endpoint.
+        if (catalogItems.isNotEmpty && created.id != null) {
+          for (final c in catalogItems) {
+            await _catalogService.addItemFromCatalog(
+              quotationId: created.id!,
+              catalogItemId: c.catalogItemId!,
+              quantity: c.quantity,
+              unitPriceOverride: c.unitPrice,
+            );
+          }
+        }
       }
 
       if (mounted) {
@@ -196,13 +289,26 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Items Section
-                    const Text('Line Items',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    // Items Section header — title on the left, catalog
+                    // shortcut on the right so the user can pick from
+                    // catalog without first saving the quotation.
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Line Items',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.inventory_2_outlined,
+                              size: 18),
+                          label: const Text('Add from catalog'),
+                          onPressed: _isSaving ? null : _openCatalogPicker,
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 8),
 
-                    // Add Item Form
+                    // Add Item Form (ad-hoc / custom items)
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -250,7 +356,7 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                               const SizedBox(width: 8),
                               ElevatedButton(
                                 onPressed: _addItem,
-                                child: const Text('Add'),
+                                child: const Text('Add Item'),
                               ),
                             ],
                           ),

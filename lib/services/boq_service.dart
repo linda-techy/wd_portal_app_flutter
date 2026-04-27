@@ -544,6 +544,31 @@ class BoqService {
     throw Exception(response.data['message'] ?? 'Failed to create category');
   }
 
+  Future<BoqCategory> updateCategory(
+    int categoryId, {
+    String? name,
+    String? description,
+    int? displayOrder,
+    int? parentId,
+    bool clearParent = false,
+  }) async {
+    final body = <String, dynamic>{};
+    if (name != null) body['name'] = name;
+    if (description != null) body['description'] = description;
+    if (displayOrder != null) body['displayOrder'] = displayOrder;
+    if (clearParent) {
+      body['parentId'] = null;
+    } else if (parentId != null) {
+      body['parentId'] = parentId;
+    }
+    final response =
+        await _api.dio.put('/api/boq/categories/$categoryId', data: body);
+    if (response.statusCode == 200 && response.data['success'] == true) {
+      return BoqCategory.fromJson(response.data['data']);
+    }
+    throw Exception(response.data['message'] ?? 'Failed to update category');
+  }
+
   Future<void> deleteCategory(int categoryId) async {
     final response = await _api.dio.delete('/api/boq/categories/$categoryId');
     if (response.statusCode != 200 || response.data['success'] != true) {
@@ -590,6 +615,42 @@ class BoqService {
       (json) => PaginatedResponse.fromJson(
           json as Map<String, dynamic>, BoqItem.fromJson),
     );
+  }
+
+  /// Fetches the audit log entries for a single BoQ item.
+  ///
+  /// Returns the raw list of audit-log payloads as `Map<String, dynamic>`.
+  /// Each entry is expected to carry at least a timestamp, actor, and action;
+  /// optional before/after diff fields render as a value-change row.
+  Future<List<Map<String, dynamic>>> getBoqItemAuditLog(int itemId) async {
+    final response = await _api.dio.get('/api/boq/$itemId/audit-log');
+    if (response.statusCode == 200 && response.data['success'] == true) {
+      final List<dynamic> data = response.data['data'] ?? [];
+      return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    }
+    throw Exception(response.data['message'] ?? 'Failed to load audit log');
+  }
+
+  /// Records a manual correction to a BoQ item's executed quantity.
+  ///
+  /// Posts to `/api/boq/{id}/correct-execution` with the new quantity and
+  /// a free-text reason. Backend enforces `BOQ_CORRECT` permission.
+  Future<void> correctBoqExecution(
+    int itemId,
+    double newExecutedQuantity,
+    String reason,
+  ) async {
+    final response = await _api.dio.post(
+      '/api/boq/$itemId/correct-execution',
+      data: {
+        'newExecutedQuantity': newExecutedQuantity,
+        'reason': reason,
+      },
+    );
+    if (response.statusCode != 200 || response.data['success'] != true) {
+      throw Exception(
+          response.data['message'] ?? 'Failed to correct execution');
+    }
   }
 
   /// Downloads the BOQ Excel export for [projectId] and returns the local [File].

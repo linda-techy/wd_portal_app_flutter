@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/features/leads/data/models/lead_quotation.dart';
 import 'package:admin/features/leads/data/services/lead_quotation_service.dart';
+import 'package:admin/features/quotation_catalog/data/models/quotation_catalog_item.dart';
+import 'package:admin/features/quotation_catalog/presentation/screens/promote_to_catalog_dialog.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/utils/motion_toast.dart';
@@ -228,29 +231,71 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
     }
   }
 
+  /// Show the rendered PDF inline in a fullscreen modal. Uses
+  /// [LeadQuotationService.downloadQuotationPdf] which already returns
+  /// raw bytes — `PdfPreview.build` renders them without re-fetching.
+  Future<void> _previewPdf() async {
+    if (_quotation == null) return;
+    final id = _quotation!.id;
+    if (id == null) return;
+    final number = _quotation!.quotationNumber ?? 'Quotation';
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (ctx) => Scaffold(
+          appBar: AppBar(
+            title: Text('Preview - $number'),
+            leading: IconButton(
+              icon: const Icon(Icons.close),
+              tooltip: 'Close',
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+          ),
+          body: PdfPreview(
+            build: (_) async => await _service.downloadQuotationPdf(id),
+            allowPrinting: true,
+            allowSharing: true,
+            canChangePageFormat: false,
+            canChangeOrientation: false,
+            canDebug: false,
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _downloadPdf() async {
     if (_quotation == null) return;
 
-    try {
-      // Show loading indicator
-      if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) => const Center(child: CircularProgressIndicator()),
-        );
-      }
+    bool loaderOpen = false;
+    if (mounted) {
+      loaderOpen = true;
+      // Fire-and-forget: dialog future resolves when popped.
+      // ignore: unawaited_futures
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        useRootNavigator: true,
+        builder: (ctx) => const Center(child: CircularProgressIndicator()),
+      ).whenComplete(() => loaderOpen = false);
+    }
 
+    void closeLoader() {
+      if (loaderOpen && mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        loaderOpen = false;
+      }
+    }
+
+    try {
       final bytes = await _service.downloadQuotationPdf(_quotation!.id!);
       final filename =
           'Quotation_${_quotation!.quotationNumber?.replaceAll("/", "_") ?? _quotation!.id}.pdf';
 
-      // Close loading dialog
-      if (mounted) {
-        Navigator.of(context).pop(); // Close loading dialog
-      }
+      // Close loader before triggering the browser save dialog so the spinner
+      // doesn't sit on top of the download UX.
+      closeLoader();
 
-      // Download and share PDF using cross-platform helper
       if (mounted) {
         await FileDownloadHelper.downloadAndShareFile(
           bytes: bytes,
@@ -264,12 +309,15 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
             message: 'PDF downloaded successfully');
       }
     } catch (e) {
-      // Close loading dialog if still open
+      closeLoader();
       if (mounted) {
-        Navigator.of(context).pop(); // Close loading dialog
         await ErrorHandler.handleApiError(context, e,
             defaultMessage: 'Failed to download PDF');
       }
+    } finally {
+      // Defensive: guarantee the loader is always closed even if the success
+      // path threw between fetch and `closeLoader()`.
+      closeLoader();
     }
   }
 
@@ -316,6 +364,89 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
         Navigator.of(context).pop();
         await ErrorHandler.handleApiError(context, e,
             defaultMessage: 'Failed to load lead details');
+      }
+    }
+  }
+
+  /// Open the promote-to-catalog dialog for an ad-hoc line item.
+  ///
+  /// On success the dialog returns the freshly-created [QuotationCatalogItem];
+  /// we then refresh the quotation so the row's `catalogItemId` updates and
+  /// the "Promote to catalog" menu entry disappears.
+  Future<void> _promoteItemToCatalog(LeadQuotationItem item) async {
+    if (item.id == null) return;
+    final result = await showDialog<QuotationCatalogItem?>(
+      context: context,
+      builder: (_) => PromoteToCatalogDialog(
+        itemId: item.id!,
+        sourceDescription: item.description,
+        sourceUnitPrice: item.unitPrice,
+      ),
+    );
+    if (!mounted) return;
+    if (result != null) {
+      MotionToast.showSuccess(
+        context,
+        message: 'Promoted to catalog (code: ${result.code})',
+      );
+      _loadQuotation();
+    }
+  }
+
+  /// Delete a single line item from the quotation by re-saving the quotation
+  /// with that row removed. Backend has no per-item delete endpoint, but
+  /// `updateQuotation` rebuilds the items collection from the request body
+  /// when items are provided.
+  Future<void> _deleteLineItem(LeadQuotationItem item) async {
+    if (_quotation == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove Line Item'),
+        content: Text('Remove "${item.description}" from this quotation?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      final remaining = _quotation!.items.where((i) => i.id != item.id).toList();
+      // Re-number for tidy display, mirroring backend create flow.
+      final renumbered = <LeadQuotationItem>[];
+      for (var i = 0; i < remaining.length; i++) {
+        final r = remaining[i];
+        renumbered.add(LeadQuotationItem(
+          id: r.id,
+          quotationId: r.quotationId,
+          itemNumber: i + 1,
+          description: r.description,
+          quantity: r.quantity,
+          unitPrice: r.unitPrice,
+          totalPrice: r.totalPrice,
+          notes: r.notes,
+          catalogItemId: r.catalogItemId,
+        ));
+      }
+      final updated = _quotation!.copyWith(items: renumbered);
+      await _service.updateQuotation(_quotation!.id!, updated);
+      if (mounted) {
+        MotionToast.showSuccess(context, message: 'Item removed');
+        _loadQuotation();
+      }
+    } catch (e) {
+      if (mounted) {
+        await ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'Failed to remove item');
       }
     }
   }
@@ -380,6 +511,11 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
       appBar: AppBar(
         title: Text('Quotation: ${quotation.quotationNumber}'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.visibility_outlined),
+            tooltip: 'Preview PDF',
+            onPressed: _previewPdf,
+          ),
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
             tooltip: 'Download PDF',
@@ -573,12 +709,15 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
                       )
                     else
                       Table(
+                        defaultVerticalAlignment:
+                            TableCellVerticalAlignment.middle,
                         columnWidths: const {
                           0: FlexColumnWidth(1),
                           1: FlexColumnWidth(2),
                           2: FlexColumnWidth(1),
                           3: FlexColumnWidth(1),
                           4: FlexColumnWidth(1.5),
+                          5: FixedColumnWidth(48),
                         },
                         children: [
                           const TableRow(
@@ -608,6 +747,7 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
                                   child: Text('Total',
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold))),
+                              SizedBox.shrink(),
                             ],
                           ),
                           ...quotation.items.map((item) => TableRow(
@@ -617,21 +757,30 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
                                       child: Text(item.itemNumber.toString())),
                                   Padding(
                                       padding: const EdgeInsets.all(8),
-                                      child: Text(item.description)),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(item.description),
+                                          const SizedBox(height: 4),
+                                          _buildSourcePill(
+                                              item.catalogItemId != null),
+                                        ],
+                                      )),
                                   Padding(
                                       padding: const EdgeInsets.all(8),
                                       child: Text(
                                           item.quantity.toStringAsFixed(2))),
                                   Padding(
                                       padding: const EdgeInsets.all(8),
-                                      child: Text(
-                                          '₹${item.unitPrice.toStringAsFixed(2)}')),
+                                      child: Text(_formatINR(item.unitPrice))),
                                   Padding(
                                       padding: const EdgeInsets.all(8),
                                       child: Text(
-                                          '₹${item.totalPrice.toStringAsFixed(2)}',
+                                          _formatINR(item.totalPrice),
                                           style: const TextStyle(
                                               fontWeight: FontWeight.bold))),
+                                  _buildItemActionsMenu(quotation, item),
                                 ],
                               )),
                         ],
@@ -691,6 +840,84 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
     );
   }
 
+  /// Per-row action menu for a line item.
+  ///
+  /// - **Edit** / **Delete** — only when the quotation is still DRAFT.
+  ///   Edit defers to the existing whole-quotation edit screen (no per-item
+  ///   inline edit endpoint exists). Delete uses `updateQuotation` with the
+  ///   row filtered out (backend has no per-item delete endpoint).
+  /// - **Promote to catalog** — only when the row is ad-hoc
+  ///   (`catalogItemId == null`) and the user has either `lead:edit` or
+  ///   `QUOTATION_CATALOG_MANAGE` permission.
+  Widget _buildItemActionsMenu(LeadQuotation quotation, LeadQuotationItem item) {
+    return Consumer<PermissionProvider>(
+      builder: (context, perms, _) {
+        final isDraft = quotation.status == 'DRAFT';
+        final canPromote = item.catalogItemId == null &&
+            (perms.hasPermission('lead:edit') ||
+                perms.hasPermission('QUOTATION_CATALOG_MANAGE'));
+
+        final entries = <PopupMenuEntry<String>>[];
+        if (isDraft) {
+          entries.add(const PopupMenuItem<String>(
+            value: 'edit',
+            child: Row(children: [
+              Icon(Icons.edit, size: 18),
+              SizedBox(width: 8),
+              Text('Edit'),
+            ]),
+          ));
+        }
+        if (canPromote) {
+          entries.add(const PopupMenuItem<String>(
+            value: 'promote',
+            child: Row(children: [
+              Icon(Icons.inventory_2_outlined,
+                  size: 18, color: AppTheme.primaryColor),
+              SizedBox(width: 8),
+              Text('Promote to catalog'),
+            ]),
+          ));
+        }
+        if (isDraft) {
+          entries.add(const PopupMenuItem<String>(
+            value: 'delete',
+            child: Row(children: [
+              Icon(Icons.delete, size: 18, color: Colors.red),
+              SizedBox(width: 8),
+              Text('Delete'),
+            ]),
+          ));
+        }
+
+        if (entries.isEmpty) return const SizedBox.shrink();
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, size: 18),
+            tooltip: 'Actions',
+            padding: EdgeInsets.zero,
+            onSelected: (value) {
+              switch (value) {
+                case 'edit':
+                  _editQuotation();
+                  break;
+                case 'promote':
+                  _promoteItemToCatalog(item);
+                  break;
+                case 'delete':
+                  _deleteLineItem(item);
+                  break;
+              }
+            },
+            itemBuilder: (_) => entries,
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -717,7 +944,7 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
                   fontSize: isTotal ? 16 : 14,
                   fontWeight: isTotal ? FontWeight.bold : FontWeight.normal)),
           Text(
-            '${isDiscount ? '-' : ''}₹${amount.toStringAsFixed(2)}',
+            '${isDiscount ? '-' : ''}${_formatINR(amount)}',
             style: TextStyle(
               fontSize: isTotal ? 18 : 14,
               fontWeight: FontWeight.bold,
@@ -725,6 +952,30 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  static final NumberFormat _inr =
+      NumberFormat.currency(locale: 'en_IN', symbol: '\u20B9', decimalDigits: 2);
+
+  String _formatINR(num? amount) =>
+      amount == null ? '' : _inr.format(amount);
+
+  Widget _buildSourcePill(bool fromCatalog) {
+    final label = fromCatalog ? 'Catalog' : 'Custom';
+    final bg = fromCatalog ? Colors.blue.shade50 : Colors.grey.shade200;
+    final fg = fromCatalog ? Colors.blue.shade700 : Colors.grey.shade700;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+            fontSize: 11, color: fg, fontWeight: FontWeight.w600),
       ),
     );
   }

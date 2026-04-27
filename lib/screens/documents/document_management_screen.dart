@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/responsive_utils.dart';
+import '../../services/crm_service.dart';
+import '../../models/customer_project.dart';
 import 'create_document_screen.dart';
 import 'design_agreement_screen.dart';
 import 'approval_center_screen.dart';
@@ -45,6 +48,11 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
       'title': 'Completion Certificate',
       'icon': Icons.verified_outlined,
       'color': Colors.purple,
+    },
+    {
+      'title': 'Detailed Project Costing',
+      'icon': Icons.receipt_long_outlined,
+      'color': Color(0xFFEF5D4A),
     },
   ];
 
@@ -187,6 +195,109 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
     );
   }
 
+  /// Show a list of projects so the user can pick which project's DPC to
+  /// open. Navigates to /dpc/builder/{projectId} on tap.
+  Future<void> _openDpcProjectPicker() async {
+    final crm = CRMService();
+    List<CustomerProject> projects = const [];
+    String? loadError;
+    try {
+      projects = await crm.getAllCustomerProjects();
+    } catch (e) {
+      loadError = e.toString();
+    }
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => Dialog(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600, maxHeight: 560),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.receipt_long_outlined,
+                        color: Color(0xFFEF5D4A), size: 28),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text('Detailed Project Costing',
+                          style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold)),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Pick a project — the DPC builder opens with a draft '
+                  'pre-filled from that project\'s approved BoQ.',
+                  style: TextStyle(color: Colors.black54, fontSize: 13),
+                ),
+                const Divider(height: 24),
+                Expanded(
+                  child: loadError != null
+                      ? Center(
+                          child: Text('Failed to load projects: $loadError',
+                              style: const TextStyle(color: Colors.red)))
+                      : projects.isEmpty
+                          ? const Center(
+                              child: Text('No projects found.',
+                                  style: TextStyle(color: Colors.black54)))
+                          : ListView.separated(
+                              itemCount: projects.length,
+                              separatorBuilder: (_, __) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (_, i) {
+                                final p = projects[i];
+                                return ListTile(
+                                  leading: const CircleAvatar(
+                                    backgroundColor: Color(0xFFFEE2E2),
+                                    child: Icon(Icons.home_work_outlined,
+                                        color: Color(0xFFEF5D4A)),
+                                  ),
+                                  title: Text(
+                                    p.projectName.isNotEmpty
+                                        ? p.projectName
+                                        : 'Project #${p.id}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                  subtitle: Text(
+                                    [
+                                      if ((p.code ?? '').isNotEmpty) p.code!,
+                                      if (p.location.isNotEmpty) p.location,
+                                    ].join('  ·  '),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  trailing: const Icon(Icons.arrow_forward_ios,
+                                      size: 16),
+                                  onTap: () {
+                                    Navigator.pop(ctx);
+                                    if (p.id != null) {
+                                      context
+                                          .go('/dpc/builder/${p.id}');
+                                    }
+                                  },
+                                );
+                              },
+                            ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDocumentTypeCard(Map<String, dynamic> docType) {
     return Card(
       elevation: 2,
@@ -203,6 +314,8 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
                 builder: (context) => const DesignAgreementScreen(),
               ),
             );
+          } else if (docType['title'] == 'Detailed Project Costing') {
+            _openDpcProjectPicker();
           } else {
             Navigator.push(
               context,
