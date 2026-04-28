@@ -171,8 +171,12 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Quotation'),
+        // Soft-delete is recoverable for 5 seconds via the snackbar Undo
+        // button. The dialog copy reflects that — the previous "cannot
+        // be undone" wording was true under hard-delete but is wrong
+        // post-V74.
         content: Text(
-            'Are you sure you want to delete "${_quotation!.quotationNumber}"? This action cannot be undone.'),
+            'Delete "${_quotation!.quotationNumber}"? You will have a few seconds to undo.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -188,12 +192,39 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
     );
 
     if (confirmed == true && mounted) {
+      final quotationId = _quotation!.id!;
+      final quotationNumber = _quotation!.quotationNumber ?? 'quotation';
       try {
-        await _service.deleteQuotation(_quotation!.id!);
-        if (mounted) {
-          MotionToast.showSuccess(context, message: 'Quotation deleted');
-          Navigator.pop(context, true);
-        }
+        await _service.deleteQuotation(quotationId);
+        if (!mounted) return;
+        // Pop back to the list, then surface the Undo snackbar in the
+        // list's scaffold context. We can't keep the snackbar attached
+        // to *this* screen because we're popping it.
+        final messenger = ScaffoldMessenger.of(context);
+        Navigator.pop(context, true);
+        // The list-screen's didPop should refresh; once it has, our
+        // snackbar action can call restore + the list refreshes again.
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Deleted $quotationNumber'),
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () async {
+                try {
+                  await LeadQuotationService().restoreQuotation(quotationId);
+                  messenger.showSnackBar(
+                    SnackBar(content: Text('Restored $quotationNumber')),
+                  );
+                } catch (_) {
+                  messenger.showSnackBar(
+                    const SnackBar(content: Text('Could not restore — refresh and try again')),
+                  );
+                }
+              },
+            ),
+          ),
+        );
       } catch (e) {
         if (mounted) {
           await ErrorHandler.handleApiError(context, e,

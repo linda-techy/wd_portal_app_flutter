@@ -735,8 +735,34 @@ class LeadQuotationsScreen extends StatelessWidget {
       await LeadQuotationService().deleteQuotation(quotation.id!);
       if (context.mounted) {
         Provider.of<LeadQuotationProvider>(context, listen: false).fetch();
+        // Soft-delete on the backend means the row is recoverable for a
+        // 5-second window — surface a clear Undo affordance. After the
+        // window closes, the row stays tombstoned and falls off all
+        // future queries (the @SQLRestriction filter takes care of it).
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Quotation deleted')),
+          SnackBar(
+            content: Text('Deleted ${quotation.quotationNumber ?? "quotation"}'),
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () async {
+                try {
+                  await LeadQuotationService().restoreQuotation(quotation.id!);
+                  if (context.mounted) {
+                    Provider.of<LeadQuotationProvider>(context, listen: false)
+                        .fetch();
+                    MotionToast.showSuccess(context,
+                        message: 'Restored');
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    await ErrorHandler.handleApiError(context, e,
+                        defaultMessage: 'Failed to restore quotation');
+                  }
+                }
+              },
+            ),
+          ),
         );
       }
     } catch (e) {

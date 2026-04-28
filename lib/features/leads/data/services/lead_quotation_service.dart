@@ -62,6 +62,14 @@ class LeadQuotationService {
     }
   }
 
+  /// Restore a soft-deleted quotation. Used by the Undo snackbar after
+  /// a delete on the list / detail screen. Backend clears the deleted_at
+  /// tombstone and returns the restored row; we ignore the body and
+  /// just check for success.
+  Future<void> restoreQuotation(int id) async {
+    await _apiService.post('/leads/quotations/$id/restore', data: {});
+  }
+
   /// Pipeline summary — feeds the list screen's hero card.
   /// Returns a raw JSON map; the calling provider parses it into typed
   /// fields. Backend shape matches PipelineSummaryResponse.java.

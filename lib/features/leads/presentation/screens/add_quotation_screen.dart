@@ -242,6 +242,105 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
     _markDirty();
   }
 
+  /// Inline edit dialog for an existing line item. Three fields,
+  /// total recomputed on save. Catalog-link is preserved across edits
+  /// (the catalogItemId rides with the row so the backend's catalog
+  /// promotion / FK semantics keep working).
+  Future<void> _editItem(int index) async {
+    final original = _items[index];
+    final descCtrl = TextEditingController(text: original.description);
+    final qtyCtrl = TextEditingController(
+        text: original.quantity.toString());
+    final priceCtrl = TextEditingController(
+        text: original.unitPrice.toString());
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit Item'),
+        content: SizedBox(
+          width: 360,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: descCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                ),
+                autofocus: true,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: qtyCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Quantity',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: priceCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Unit Price (₹)',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Save')),
+        ],
+      ),
+    );
+
+    descCtrl.dispose();
+    qtyCtrl.dispose();
+    priceCtrl.dispose();
+
+    if (saved != true || !mounted) return;
+    final newDesc = descCtrl.text.trim().isEmpty
+        ? original.description
+        : descCtrl.text.trim();
+    final newQty = double.tryParse(qtyCtrl.text.trim()) ?? original.quantity;
+    final newPrice =
+        double.tryParse(priceCtrl.text.trim()) ?? original.unitPrice;
+
+    setState(() {
+      _items[index] = LeadQuotationItem(
+        id: original.id,
+        quotationId: original.quotationId,
+        itemNumber: original.itemNumber,
+        description: newDesc,
+        quantity: newQty,
+        unitPrice: newPrice,
+        totalPrice: newQty * newPrice,
+        notes: original.notes,
+        catalogItemId: original.catalogItemId,
+      );
+    });
+    _markDirty();
+  }
+
   /// Subtotal = sum of line-item totals. The "₹X" before tax/discount.
   double get _subtotal => _items.fold(0.0, (sum, item) => sum + item.totalPrice);
 
@@ -702,6 +801,11 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                                   decoration: const InputDecoration(
                                       labelText: 'Unit Price', isDense: true),
                                   keyboardType: TextInputType.number,
+                                  // Enter on the last field of the line-add
+                                  // form commits the item — keyboards stay
+                                  // up so the next item is one tap away.
+                                  textInputAction: TextInputAction.done,
+                                  onSubmitted: (_) => _addItem(),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -735,6 +839,10 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                           return Card(
                             margin: const EdgeInsets.only(bottom: 8),
                             child: ListTile(
+                              // Tap the row to edit qty / price / description
+                              // inline. Was: delete-and-re-add, ~8 taps per
+                              // typo. Now: 3 taps to fix a misplaced decimal.
+                              onTap: () => _editItem(index),
                               title: Text(item.description),
                               subtitle:
                                   Text('${item.quantity} x ₹${item.unitPrice}'),
@@ -745,6 +853,12 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                                     '₹${item.totalPrice}',
                                     style: const TextStyle(
                                         fontWeight: FontWeight.bold),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_outlined,
+                                        size: 20),
+                                    tooltip: 'Edit',
+                                    onPressed: () => _editItem(index),
                                   ),
                                   IconButton(
                                     icon: const Icon(Icons.delete,
