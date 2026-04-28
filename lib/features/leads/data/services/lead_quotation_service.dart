@@ -70,6 +70,20 @@ class LeadQuotationService {
     await _apiService.post('/leads/quotations/$id/restore', data: {});
   }
 
+  /// Walldot's 16 standard scope rows (Excavation → Hand Rails) that the
+  /// SQFT_RATE add screen uses to seed a fresh quotation. Backend returns
+  /// a List<{itemNumber, particulars, description}>; we keep the JSON
+  /// shape raw because the only consumer (the add screen) maps it
+  /// directly into LeadQuotationItem rows.
+  Future<List<Map<String, dynamic>>> getStandardScopes() async {
+    final response = await _apiService.get('/leads/quotations/standard-scopes');
+    final data = _apiService.unwrap<List<dynamic>>(
+        response, (json) => json as List<dynamic>);
+    return data
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+  }
+
   /// Pipeline summary — feeds the list screen's hero card.
   /// Returns a raw JSON map; the calling provider parses it into typed
   /// fields. Backend shape matches PipelineSummaryResponse.java.

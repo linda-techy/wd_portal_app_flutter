@@ -8,6 +8,7 @@ import 'package:admin/features/leads/data/services/lead_quotation_service.dart';
 import 'package:admin/features/quotation_catalog/data/models/quotation_catalog_item.dart';
 import 'package:admin/features/quotation_catalog/data/services/quotation_catalog_service.dart';
 import 'package:admin/features/quotation_catalog/presentation/screens/quotation_catalog_picker_dialog.dart';
+import 'package:admin/utils/error_handler.dart';
 
 class AddQuotationScreen extends StatefulWidget {
   final Lead lead;
@@ -257,6 +258,61 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
       // Re-number ? Optional
     });
     _markDirty();
+  }
+
+  /// Pull the 16-row Walldot standard scope library from the backend
+  /// and seed the items list. Asks first when items already exist —
+  /// loading would otherwise wipe the staff member's typed work. The
+  /// items become scope-spec rows (description = particulars,
+  /// notes = full Walldot description) so the SQFT_RATE PDF picks
+  /// them up directly.
+  Future<void> _loadStandardScopes() async {
+    if (_items.isNotEmpty) {
+      final replace = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Replace existing scopes?'),
+          content: Text(
+              'You have ${_items.length} item${_items.length == 1 ? '' : 's'}. '
+              'Loading the Walldot defaults will replace them. Continue?'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel')),
+            ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Replace')),
+          ],
+        ),
+      );
+      if (replace != true || !mounted) return;
+    }
+
+    try {
+      final scopes = await _service.getStandardScopes();
+      if (!mounted) return;
+      setState(() {
+        _items = scopes
+            .map((s) => LeadQuotationItem(
+                  itemNumber: (s['itemNumber'] as num).toInt(),
+                  description: s['particulars'] as String,
+                  quantity: 1.0,
+                  unitPrice: 0.0,
+                  totalPrice: 0.0,
+                  notes: s['description'] as String?,
+                ))
+            .toList();
+      });
+      _markDirty();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Loaded ${scopes.length} Walldot scopes')),
+      );
+    } catch (e) {
+      if (mounted) {
+        await ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'Failed to load standard scopes');
+      }
+    }
   }
 
   /// Inline edit dialog for an existing line item. Three fields,
@@ -858,21 +914,33 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Items Section header — title on the left, catalog
-                    // shortcut on the right so the user can pick from
-                    // catalog without first saving the quotation.
+                    // Items section header — title on the left, mode-aware
+                    // shortcut on the right. SQFT_RATE shows "Load Walldot
+                    // scopes" (seed the 16 standard rows); LINE_ITEM shows
+                    // the catalog picker (pull from priced master catalog).
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Line Items',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
-                        OutlinedButton.icon(
-                          icon: const Icon(Icons.inventory_2_outlined,
-                              size: 18),
-                          label: const Text('Add from catalog'),
-                          onPressed: _isSaving ? null : _openCatalogPicker,
+                        Text(
+                          _pricingMode == 'SQFT_RATE'
+                              ? 'Scope of Work'
+                              : 'Line Items',
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
                         ),
+                        if (_pricingMode == 'SQFT_RATE')
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.auto_awesome, size: 18),
+                            label: const Text('Load Walldot scopes'),
+                            onPressed: _isSaving ? null : _loadStandardScopes,
+                          )
+                        else
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.inventory_2_outlined,
+                                size: 18),
+                            label: const Text('Add from catalog'),
+                            onPressed: _isSaving ? null : _openCatalogPicker,
+                          ),
                       ],
                     ),
                     const SizedBox(height: 8),
