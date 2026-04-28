@@ -41,6 +41,14 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
   /// Backend rejects values exceeding the subtotal.
   final TextEditingController _discountController = TextEditingController();
 
+  /// SQFT_RATE pricing mode — Walldot's actual customer-facing quotation
+  /// shape (₹X/sqft × area = total, items become scope specs). New
+  /// customer-facing quotations default to this; legacy LINE_ITEM stays
+  /// available behind the segmented toggle for back-compat.
+  String _pricingMode = 'SQFT_RATE';
+  final TextEditingController _ratePerSqftController =
+      TextEditingController(text: '2050');
+
   List<LeadQuotationItem> _items = [];
 
   // ── Autosave state ────────────────────────────────────────────────────
@@ -65,23 +73,28 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
   void initState() {
     super.initState();
     if (widget.quotationToEdit != null) {
-      _titleController.text = widget.quotationToEdit!.title;
-      _descriptionController.text = widget.quotationToEdit!.description ?? '';
-      _validityController.text =
-          widget.quotationToEdit!.validityDays.toString();
+      final src = widget.quotationToEdit!;
+      _titleController.text = src.title;
+      _descriptionController.text = src.description ?? '';
+      _validityController.text = src.validityDays.toString();
       // Tax-rate field: blank entry keeps backend default. Show the existing
       // rate (if any) so staff can see what's set; an existing null on the
       // server means legacy "manual mode" which we surface as blank.
-      final existingRate = widget.quotationToEdit!.taxRatePercent;
-      _taxRateController.text = existingRate != null
-          ? existingRate.toStringAsFixed(2)
-          : '';
-      final existingDiscount = widget.quotationToEdit!.discountAmount;
-      _discountController.text = existingDiscount != null && existingDiscount > 0
-          ? existingDiscount.toStringAsFixed(2)
-          : '';
-      // clone items
-      _items = List.from(widget.quotationToEdit!.items);
+      final existingRate = src.taxRatePercent;
+      _taxRateController.text =
+          existingRate != null ? existingRate.toStringAsFixed(2) : '';
+      final existingDiscount = src.discountAmount;
+      _discountController.text =
+          existingDiscount != null && existingDiscount > 0
+              ? existingDiscount.toStringAsFixed(2)
+              : '';
+      // Carry the source quotation's pricing mode + rate forward so editing
+      // a SQFT_RATE quote stays SQFT_RATE, and a LINE_ITEM stays LINE_ITEM.
+      _pricingMode = src.pricingMode;
+      if (src.ratePerSqft != null && src.ratePerSqft! > 0) {
+        _ratePerSqftController.text = src.ratePerSqft!.toStringAsFixed(2);
+      }
+      _items = List.from(src.items);
     }
     // 30-second autosave heartbeat. Each tick checks `_formDirty` and saves
     // silently when the form is non-trivial. Marking dirty happens via
@@ -98,6 +111,7 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
     _validityController.dispose();
     _taxRateController.dispose();
     _discountController.dispose();
+    _ratePerSqftController.dispose();
     _itemDescController.dispose();
     _itemQtyController.dispose();
     _itemPriceController.dispose();
@@ -131,6 +145,7 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
       final discountText = _discountController.text.trim();
       final discount =
           discountText.isEmpty ? null : double.tryParse(discountText);
+      final ratePerSqft = _liveRatePerSqft;
 
       // Pre-existing edit target wins; otherwise we attach to the screen's
       // own auto-created draft so we keep updating the same row.
@@ -145,6 +160,8 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
         taxRatePercent: taxRate,
         discountAmount: discount,
         finalAmount: _liveFinal,
+        pricingMode: _pricingMode,
+        ratePerSqft: ratePerSqft,
         items: _items.where((it) => it.catalogItemId == null).toList(),
         status: 'DRAFT',
       );
@@ -341,8 +358,29 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
     _markDirty();
   }
 
-  /// Subtotal = sum of line-item totals. The "₹X" before tax/discount.
-  double get _subtotal => _items.fold(0.0, (sum, item) => sum + item.totalPrice);
+  /// Per-sqft rate as the user has it typed (null = empty).
+  double? get _liveRatePerSqft {
+    final t = _ratePerSqftController.text.trim();
+    if (t.isEmpty) return null;
+    return double.tryParse(t);
+  }
+
+  /// Subtotal source — branches on pricing mode, mirroring the backend's
+  /// LeadQuotationService.computeSubtotal so the live footer never lies.
+  ///
+  /// SQFT_RATE: lead.projectSqftArea × ratePerSqft (lead may not expose
+  /// sqft on the form-side; in that case the live preview shows 0 and the
+  /// staff-entered rate × area is computed server-side at save time).
+  ///
+  /// LINE_ITEM: sum of item.totalPrice.
+  double get _subtotal {
+    if (_pricingMode == 'SQFT_RATE') {
+      final rate = _liveRatePerSqft ?? 0.0;
+      final sqft = widget.lead.projectSqftArea ?? 0.0;
+      return sqft * rate;
+    }
+    return _items.fold(0.0, (sum, item) => sum + item.totalPrice);
+  }
 
   /// Discount value as the user has it typed right now (0 if blank/invalid).
   double get _liveDiscount {
@@ -430,6 +468,46 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Segmented control switching between Walldot's customer-facing
+  /// `SQFT_RATE` format and the legacy `LINE_ITEM` format. Switching
+  /// mode marks the form dirty so autosave picks it up.
+  Widget _buildPricingModeToggle() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 6, right: 12),
+          child: Text(
+            'Pricing',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+        ),
+        Expanded(
+          child: SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(
+                value: 'SQFT_RATE',
+                label: Text('Per sq.ft.'),
+                icon: Icon(Icons.square_foot, size: 18),
+              ),
+              ButtonSegment(
+                value: 'LINE_ITEM',
+                label: Text('Line items'),
+                icon: Icon(Icons.list_alt, size: 18),
+              ),
+            ],
+            selected: {_pricingMode},
+            showSelectedIcon: false,
+            onSelectionChanged: (s) {
+              setState(() => _pricingMode = s.first);
+              _markDirty();
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -550,6 +628,8 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
           taxRatePercent: taxRate,
           discountAmount: discount,
           finalAmount: _currentTotal,
+          pricingMode: _pricingMode,
+          ratePerSqft: _liveRatePerSqft,
           items: _items,
           status: widget.quotationToEdit!.status,
         );
@@ -582,6 +662,8 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
           taxRatePercent: taxRate,
           discountAmount: discount,
           finalAmount: 0,
+          pricingMode: _pricingMode,
+          ratePerSqft: _liveRatePerSqft,
           items: renumberedAdHoc,
           status: 'DRAFT',
         );
@@ -668,6 +750,43 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                       maxLines: 2,
                     ),
                     const SizedBox(height: 16),
+                    // Pricing-mode toggle. Walldot's actual customer doc is
+                    // SQFT_RATE; LINE_ITEM stays available for back-compat
+                    // with existing quotations and edge cases (BoQ-style
+                    // bills with explicit quantities).
+                    _buildPricingModeToggle(),
+                    const SizedBox(height: 16),
+                    // Per-sqft rate field — only relevant in SQFT_RATE mode.
+                    if (_pricingMode == 'SQFT_RATE')
+                      TextFormField(
+                        controller: _ratePerSqftController,
+                        onChanged: (_) {
+                          setState(() {});
+                          _markDirty();
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Rate per sq.ft. (₹)',
+                          helperText: widget.lead.projectSqftArea != null &&
+                                  widget.lead.projectSqftArea! > 0
+                              ? 'Lead area: ${widget.lead.projectSqftArea} sq.ft.'
+                              : 'Set built-up area on the lead first '
+                                  'to see the live total.',
+                          border: const OutlineInputBorder(),
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        validator: (v) {
+                          if (_pricingMode != 'SQFT_RATE') return null;
+                          if (v == null || v.trim().isEmpty) {
+                            return 'Required for sq.ft.-rate quotations';
+                          }
+                          final parsed = double.tryParse(v.trim());
+                          if (parsed == null) return 'Must be a number';
+                          if (parsed <= 0) return 'Must be > 0';
+                          return null;
+                        },
+                      ),
+                    if (_pricingMode == 'SQFT_RATE') const SizedBox(height: 16),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

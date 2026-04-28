@@ -22,6 +22,20 @@ class LeadQuotation {
   final double? taxRatePercent;
   final double? discountAmount;
   final double? finalAmount;
+
+  /// Pricing mode — drives both the Flutter form layout and the customer
+  /// PDF shape:
+  ///   * `LINE_ITEM` — legacy: items have qty + unit price, subtotal sums.
+  ///   * `SQFT_RATE` — Walldot's actual customer doc: subtotal is computed
+  ///     server-side as `lead.projectSqftArea × ratePerSqft`. Items are
+  ///     scope specs (description + notes) without prices.
+  ///
+  /// New customer-facing quotations should be created with `SQFT_RATE`;
+  /// existing rows were backfilled to `LINE_ITEM` in V75.
+  final String pricingMode;
+
+  /// Per-sqft headline rate for `SQFT_RATE` mode. Null otherwise.
+  final double? ratePerSqft;
   final int validityDays;
   final String status;
   final DateTime? sentAt;
@@ -48,6 +62,8 @@ class LeadQuotation {
     this.finalAmount,
     this.validityDays = 30,
     this.status = 'DRAFT',
+    this.pricingMode = 'LINE_ITEM',
+    this.ratePerSqft,
     this.sentAt,
     this.viewedAt,
     this.respondedAt,
@@ -80,6 +96,10 @@ class LeadQuotation {
           (json['finalAmount'] ?? json['final_amount'] as num?)?.toDouble(),
       validityDays: json['validityDays'] ?? json['validity_days'] ?? 30,
       status: json['status'] ?? 'DRAFT',
+      pricingMode:
+          json['pricingMode'] ?? json['pricing_mode'] ?? 'LINE_ITEM',
+      ratePerSqft:
+          (json['ratePerSqft'] ?? json['rate_per_sqft'] as num?)?.toDouble(),
       sentAt: json['sentAt'] != null
           ? DateTime.parse(json['sentAt'])
           : (json['sent_at'] != null ? DateTime.parse(json['sent_at']) : null),
@@ -128,6 +148,8 @@ class LeadQuotation {
       'finalAmount': finalAmount,
       'validityDays': validityDays,
       'status': status,
+      'pricingMode': pricingMode,
+      'ratePerSqft': ratePerSqft,
       'notes': notes,
       'items': items.map((i) => i.toJson()).toList(),
     };
@@ -144,6 +166,8 @@ class LeadQuotation {
       'discountAmount': discountAmount,
       'finalAmount': finalAmount,
       'validityDays': validityDays,
+      'pricingMode': pricingMode,
+      'ratePerSqft': ratePerSqft,
       'notes': notes,
       'items': items.map((i) => i.toJson()).toList(),
     };
@@ -163,6 +187,8 @@ class LeadQuotation {
     double? finalAmount,
     int? validityDays,
     String? status,
+    String? pricingMode,
+    double? ratePerSqft,
     List<LeadQuotationItem>? items,
   }) {
     return LeadQuotation(
@@ -179,6 +205,8 @@ class LeadQuotation {
       finalAmount: finalAmount ?? this.finalAmount,
       validityDays: validityDays ?? this.validityDays,
       status: status ?? this.status,
+      pricingMode: pricingMode ?? this.pricingMode,
+      ratePerSqft: ratePerSqft ?? this.ratePerSqft,
       items: items ?? this.items,
       sentAt: sentAt,
       viewedAt: viewedAt,
