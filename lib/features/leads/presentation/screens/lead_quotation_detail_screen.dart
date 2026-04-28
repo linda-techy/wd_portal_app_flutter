@@ -139,55 +139,27 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
   Future<void> _rejectQuotation() async {
     if (_quotation == null) return;
 
-    final reasonController = TextEditingController();
-    final confirmed = await showDialog<bool>(
+    // Structured reasons let the team answer "why are we losing?" — the
+    // single most important question for a sales pipeline. Free-text alone
+    // is unsearchable; a category prefix on every reason makes it queryable
+    // without a backend schema change. The category is concatenated into
+    // the same `reason` field the backend already stores.
+    final result = await showDialog<_RejectResult>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Reject Quotation'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Enter rejection reason (optional):'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: reasonController,
-              decoration: const InputDecoration(
-                hintText: 'Reason for rejection',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Reject'),
-          ),
-        ],
-      ),
+      builder: (_) => const _StructuredRejectDialog(),
     );
+    if (result == null || !mounted) return;
 
-    if (confirmed == true && mounted) {
-      try {
-        await _service.rejectQuotation(_quotation!.id!,
-            reason: reasonController.text.isNotEmpty
-                ? reasonController.text
-                : null);
-        if (mounted) {
-          MotionToast.showSuccess(context, message: 'Quotation rejected');
-          _loadQuotation();
-        }
-      } catch (e) {
-        if (mounted) {
-          await ErrorHandler.handleApiError(context, e,
-              defaultMessage: 'Failed to reject quotation');
-        }
+    try {
+      await _service.rejectQuotation(_quotation!.id!, reason: result.combined);
+      if (mounted) {
+        MotionToast.showSuccess(context, message: 'Quotation rejected');
+        _loadQuotation();
+      }
+    } catch (e) {
+      if (mounted) {
+        await ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'Failed to reject quotation');
       }
     }
   }
@@ -656,6 +628,13 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 12),
+
+            // Primary action row — the most common, most important action for
+            // the current status, hoisted out of the 3-dot menu so staff can
+            // do it in one tap. The 3-dot menu still hosts secondary actions
+            // (Edit, Delete, Resend) for completeness.
+            _buildPrimaryActionRow(quotation),
             const SizedBox(height: 16),
 
             // Details Card
@@ -844,6 +823,104 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
     );
   }
 
+  /// Status-aware primary action row. The most common next-step lives here
+  /// as a one-tap button instead of being buried in a popup menu.
+  Widget _buildPrimaryActionRow(LeadQuotation quotation) {
+    return Consumer<PermissionProvider>(
+      builder: (context, perms, _) {
+        if (!perms.hasPermission('lead:edit')) {
+          return const SizedBox.shrink();
+        }
+        switch (quotation.status) {
+          case 'DRAFT':
+            return Row(children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.send),
+                  label: const Text('Send to Customer'),
+                  onPressed: _sendQuotation,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.edit),
+                label: const Text('Edit'),
+                onPressed: _editQuotation,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 18, vertical: 14),
+                ),
+              ),
+            ]);
+          case 'SENT':
+          case 'VIEWED':
+            return Row(children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.check_circle),
+                  label: const Text('Mark Accepted'),
+                  onPressed: _acceptQuotation,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    backgroundColor: AppTheme.statusSuccess,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.cancel_outlined),
+                label: const Text('Reject'),
+                onPressed: _rejectQuotation,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 18, vertical: 14),
+                  foregroundColor: AppTheme.statusError,
+                  side: const BorderSide(color: AppTheme.statusError),
+                ),
+              ),
+            ]);
+          case 'ACCEPTED':
+            return Row(children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: const Text('Download PDF'),
+                  onPressed: _downloadPdf,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            ]);
+          case 'REJECTED':
+          case 'EXPIRED':
+            return Row(children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Create new revision'),
+                  onPressed: _editQuotation,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+            ]);
+          default:
+            return const SizedBox.shrink();
+        }
+      },
+    );
+  }
+
   /// Per-row action menu for a line item.
   ///
   /// - **Edit** / **Delete** — only when the quotation is still DRAFT.
@@ -988,6 +1065,128 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
         style: TextStyle(
             fontSize: 11, color: fg, fontWeight: FontWeight.w600),
       ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Structured rejection dialog
+// ──────────────────────────────────────────────────────────────────────────
+
+/// Categories surface the most common "why we lost" answers in residential
+/// construction sales. Order matches Indian-residential pipeline frequency.
+enum _RejectCategory {
+  price('Price', 'Quote was too high or competitor was cheaper'),
+  timeline('Timeline', 'Project duration or start date didn\'t fit'),
+  scope('Scope', 'Inclusions or exclusions didn\'t match expectations'),
+  trust('Trust', 'Concerns about reliability, references, or process'),
+  competitor('Competitor', 'Customer chose another builder'),
+  familyDecision('Family decision', 'Joint family deferred or postponed'),
+  other('Other', 'Reason not in this list');
+
+  final String label;
+  final String hint;
+  const _RejectCategory(this.label, this.hint);
+}
+
+/// Combined payload returned by [_StructuredRejectDialog]. The category and
+/// the optional free-text are concatenated into a single `reason` string
+/// (e.g. "PRICE: customer found a cheaper quote across the road") so the
+/// existing backend endpoint can store it without a schema change.
+class _RejectResult {
+  final _RejectCategory category;
+  final String? notes;
+  _RejectResult({required this.category, this.notes});
+
+  String get combined {
+    final prefix = category.name.toUpperCase();
+    if (notes == null || notes!.trim().isEmpty) {
+      return '$prefix: ${category.label}';
+    }
+    return '$prefix: ${notes!.trim()}';
+  }
+}
+
+class _StructuredRejectDialog extends StatefulWidget {
+  const _StructuredRejectDialog();
+
+  @override
+  State<_StructuredRejectDialog> createState() =>
+      _StructuredRejectDialogState();
+}
+
+class _StructuredRejectDialogState extends State<_StructuredRejectDialog> {
+  _RejectCategory? _selected;
+  final TextEditingController _notesCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _notesCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Why was this quotation rejected?'),
+      content: SizedBox(
+        width: 420,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Pick the closest match — this powers the win/loss report.',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              const SizedBox(height: 12),
+              ..._RejectCategory.values.map((c) => RadioListTile<_RejectCategory>(
+                    value: c,
+                    groupValue: _selected,
+                    onChanged: (v) => setState(() => _selected = v),
+                    title: Text(c.label,
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
+                    subtitle: Text(c.hint,
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey[600])),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                  )),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _notesCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Notes (optional)',
+                  hintText: 'Add context — what specifically pushed them away?',
+                  border: OutlineInputBorder(),
+                ),
+                minLines: 2,
+                maxLines: 4,
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _selected == null
+              ? null
+              : () => Navigator.of(context).pop(_RejectResult(
+                    category: _selected!,
+                    notes: _notesCtrl.text,
+                  )),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red.shade600,
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('Reject quotation'),
+        ),
+      ],
     );
   }
 }

@@ -367,12 +367,7 @@ class LeadQuotationsScreen extends StatelessWidget {
                       color: Colors.blue,
                     ),
                   if (quotation.createdAt != null)
-                    _buildInfoChip(
-                      icon: Icons.event_available,
-                      label: 'Valid: ${quotation.validityDays} days',
-                      color: _getValidityColor(quotation.createdAt!
-                          .add(Duration(days: quotation.validityDays))),
-                    ),
+                    _buildValidityChip(quotation),
                 ],
               ),
             ],
@@ -479,12 +474,41 @@ class LeadQuotationsScreen extends StatelessWidget {
     }
   }
 
-  Color _getValidityColor(DateTime date) {
-    final now = DateTime.now();
-    final diff = date.difference(now).inDays;
-    if (diff < 0) return AppTheme.statusError;
-    if (diff <= 7) return AppTheme.safetyOrange;
-    return Colors.grey;
+  /// Validity chip with countdown copy ("X days left", "Expired"), colored
+  /// by urgency. Replaces the static "Valid: 30 days" copy which leaked the
+  /// configured window instead of the actionable "deadline" the staff member
+  /// wants to see when scanning the list.
+  Widget _buildValidityChip(LeadQuotation quotation) {
+    if (quotation.createdAt == null) return const SizedBox.shrink();
+    final expiry =
+        quotation.createdAt!.add(Duration(days: quotation.validityDays));
+    final daysLeft = expiry.difference(DateTime.now()).inDays;
+
+    final IconData icon;
+    final String label;
+    final Color color;
+    if (quotation.status == 'EXPIRED' || daysLeft < 0) {
+      icon = Icons.event_busy;
+      label = 'Expired';
+      color = AppTheme.statusError;
+    } else if (daysLeft == 0) {
+      icon = Icons.timer;
+      label = 'Expires today';
+      color = AppTheme.statusError;
+    } else if (daysLeft <= 3) {
+      icon = Icons.timer;
+      label = '$daysLeft days left';
+      color = AppTheme.statusError;
+    } else if (daysLeft <= 7) {
+      icon = Icons.event_available;
+      label = '$daysLeft days left';
+      color = AppTheme.safetyOrange;
+    } else {
+      icon = Icons.event_available;
+      label = '$daysLeft days left';
+      color = Colors.grey[600]!;
+    }
+    return _buildInfoChip(icon: icon, label: label, color: color);
   }
 
   String _formatDate(DateTime date) {

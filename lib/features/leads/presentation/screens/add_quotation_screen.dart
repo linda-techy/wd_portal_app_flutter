@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/features/leads/data/models/lead_quotation.dart';
 import 'package:admin/features/leads/data/services/lead_quotation_service.dart';
@@ -151,8 +152,121 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
     });
   }
 
-  double get _currentTotal {
-    return _items.fold(0, (sum, item) => sum + item.totalPrice);
+  /// Subtotal = sum of line-item totals. The "₹X" before tax/discount.
+  double get _subtotal => _items.fold(0.0, (sum, item) => sum + item.totalPrice);
+
+  /// Discount value as the user has it typed right now (0 if blank/invalid).
+  double get _liveDiscount {
+    final t = _discountController.text.trim();
+    if (t.isEmpty) return 0.0;
+    return double.tryParse(t) ?? 0.0;
+  }
+
+  /// Tax rate as the user has it typed (null = "leave blank, backend default").
+  double? get _liveTaxRate {
+    final t = _taxRateController.text.trim();
+    if (t.isEmpty) return null;
+    return double.tryParse(t);
+  }
+
+  /// Mirrors LeadQuotationService.calculateTotals — discounted base after
+  /// clamping discount to subtotal so a typo can't produce a negative.
+  double get _liveDiscountedBase {
+    final base = _subtotal - _liveDiscount;
+    return base < 0 ? 0.0 : base;
+  }
+
+  /// Live tax projection. Uses the entered rate; when blank, falls back to
+  /// 18% so staff see the most likely customer-facing figure during entry.
+  double get _liveTax {
+    final rate = _liveTaxRate ?? 18.0;
+    return _liveDiscountedBase * rate / 100.0;
+  }
+
+  /// What the customer will see as Final Amount on the PDF.
+  double get _liveFinal => _liveDiscountedBase + _liveTax;
+
+  /// Backwards-compatibility alias kept until the rest of the file is fully
+  /// migrated; reads as "this screen's primary number" for legacy callers.
+  double get _currentTotal => _subtotal;
+
+  /// Indian-grouping rupee formatter (e.g. 4728200 → "₹47,28,200").
+  static final NumberFormat _inr = NumberFormat.currency(
+      locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+
+  /// Live total footer — mirrors LeadQuotationService.calculateTotals so
+  /// what staff sees here is what the customer sees on the PDF.
+  Widget _buildLiveTotalFooter(BuildContext context) {
+    final hasDiscount = _liveDiscount > 0;
+    final hasTax = _liveTaxRate != 0; // null treated as default 18%
+    final showBreakdown = hasDiscount || hasTax;
+    final rateLabel = _liveTaxRate != null
+        ? 'GST (${_formatRate(_liveTaxRate!)}%)'
+        : 'GST (18% default)';
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        border: const Border(top: BorderSide(color: Colors.blue)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (showBreakdown) ...[
+            _footerRow('Subtotal', _inr.format(_subtotal)),
+            if (hasDiscount)
+              _footerRow('Discount', '− ${_inr.format(_liveDiscount)}'),
+            _footerRow(rateLabel, '+ ${_inr.format(_liveTax)}'),
+            const Divider(height: 14),
+          ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Final Amount',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87)),
+              Text(
+                _inr.format(_liveFinal),
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _footerRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+          Text(value,
+              style: const TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+
+  /// 18.00 → "18", 12.50 → "12.5". Avoids stray trailing zeros in the chip.
+  String _formatRate(double rate) {
+    if (rate == rate.roundToDouble()) return rate.toStringAsFixed(0);
+    return rate
+        .toStringAsFixed(2)
+        .replaceAll(RegExp(r'0+$'), '')
+        .replaceAll(RegExp(r'\.$'), '');
   }
 
   Future<void> _saveQuotation() async {
@@ -333,6 +447,9 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: _taxRateController,
+                            // Trigger a rebuild so the live footer math reflects
+                            // the typed rate as the user types.
+                            onChanged: (_) => setState(() {}),
                             decoration: const InputDecoration(
                               labelText: 'GST Rate (%)',
                               helperText: 'Default 18%. Leave blank for none.',
@@ -355,6 +472,7 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: _discountController,
+                            onChanged: (_) => setState(() {}),
                             decoration: const InputDecoration(
                               labelText: 'Discount (₹)',
                               helperText: 'Optional fixed amount.',
@@ -497,27 +615,12 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
               ),
             ),
 
-            // Footer (Total)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                border: const Border(top: BorderSide(color: Colors.blue)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Total Amount:', style: TextStyle(fontSize: 18)),
-                  Text(
-                    '₹$_currentTotal',
-                    style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue),
-                  ),
-                ],
-              ),
-            ),
+            // Sticky footer — mirrors the customer-facing PDF math live so
+            // staff can see what the customer will actually see *before*
+            // hitting Send. Previously this only summed line items, which
+            // led to "wait, why is the customer's total different?"
+            // moments after sending.
+            _buildLiveTotalFooter(context),
           ],
         ),
       ),
