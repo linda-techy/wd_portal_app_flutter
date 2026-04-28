@@ -513,6 +513,9 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
                     case 'reject':
                       _rejectQuotation();
                       break;
+                    case 'duplicate':
+                      _duplicateQuotation();
+                      break;
                     case 'delete':
                       _deleteQuotation();
                       break;
@@ -555,6 +558,17 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
                       ]),
                     ),
                   ],
+                  // Duplicate is always reachable — re-quoting the same villa
+                  // for a new lead, or starting a revision after a scope
+                  // change, is the most-requested missing CRM action.
+                  const PopupMenuItem(
+                    value: 'duplicate',
+                    child: Row(children: [
+                      Icon(Icons.content_copy, size: 20),
+                      SizedBox(width: 8),
+                      Text('Duplicate')
+                    ]),
+                  ),
                   if (canEdit)
                     const PopupMenuItem(
                       value: 'delete',
@@ -629,6 +643,13 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
               ),
             ),
             const SizedBox(height: 12),
+
+            // Status timeline — visual stepper of the lifecycle the
+            // quotation is moving through. Replaces the previous "scattered
+            // timestamps in the Details card" reading: now staff see at a
+            // glance whether the customer has viewed it.
+            _buildStatusTimeline(quotation),
+            const SizedBox(height: 14),
 
             // Primary action row — the most common, most important action for
             // the current status, hoisted out of the 3-dot menu so staff can
@@ -821,6 +842,183 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
         ),
       ),
     );
+  }
+
+  /// Visual lifecycle stepper — DRAFT → SENT → VIEWED → ACCEPTED.
+  /// Active steps glow in brand color; future steps stay grey. Rejected /
+  /// expired quotes get their own collapsed indicator.
+  Widget _buildStatusTimeline(LeadQuotation quotation) {
+    final isRejected = quotation.status == 'REJECTED';
+    final isExpired = quotation.status == 'EXPIRED';
+    if (isRejected || isExpired) {
+      final color = isRejected ? AppTheme.statusError : Colors.grey[700]!;
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: (isRejected ? AppTheme.statusError : Colors.grey).withOpacity(0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(children: [
+          Icon(isRejected ? Icons.cancel : Icons.event_busy,
+              size: 18, color: color),
+          const SizedBox(width: 8),
+          Text(
+            isRejected ? 'Quotation rejected' : 'Quotation expired',
+            style: TextStyle(
+                color: color, fontWeight: FontWeight.w600, fontSize: 13),
+          ),
+          const Spacer(),
+          if (quotation.respondedAt != null)
+            Text(_formatDate(quotation.respondedAt),
+                style: TextStyle(color: color, fontSize: 12)),
+        ]),
+      );
+    }
+
+    // Index in the canonical lifecycle reached by this quotation.
+    final reached = switch (quotation.status) {
+      'DRAFT' => 0,
+      'SENT' => 1,
+      'VIEWED' => 2,
+      'ACCEPTED' => 3,
+      _ => 0,
+    };
+    const stages = [
+      ('Draft', Icons.edit_note),
+      ('Sent', Icons.send),
+      ('Viewed', Icons.visibility),
+      ('Accepted', Icons.check_circle),
+    ];
+    final dates = [
+      quotation.createdAt,
+      quotation.sentAt,
+      quotation.viewedAt,
+      quotation.respondedAt,
+    ];
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: List.generate(stages.length, (i) {
+          final isReached = i <= reached;
+          final isCurrent = i == reached;
+          final color = isReached ? AppTheme.primaryColor : Colors.grey.shade400;
+          final fillColor = isReached
+              ? (isCurrent ? AppTheme.primaryColor : AppTheme.primaryColor.withOpacity(0.85))
+              : Colors.grey.shade100;
+          return Expanded(
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    if (i > 0)
+                      Expanded(
+                        child: Container(
+                          height: 2,
+                          color: i <= reached
+                              ? AppTheme.primaryColor
+                              : Colors.grey.shade300,
+                        ),
+                      ),
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        color: fillColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: color, width: 1.5),
+                      ),
+                      child: Icon(
+                        stages[i].$2,
+                        size: 14,
+                        color: isReached ? Colors.white : Colors.grey,
+                      ),
+                    ),
+                    if (i < stages.length - 1)
+                      Expanded(
+                        child: Container(
+                          height: 2,
+                          color: i < reached
+                              ? AppTheme.primaryColor
+                              : Colors.grey.shade300,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  stages[i].$1,
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
+                      color: isReached ? AppTheme.primaryColor : Colors.grey),
+                ),
+                if (dates[i] != null && isReached)
+                  Text(
+                    _formatShortDate(dates[i]!),
+                    style: TextStyle(
+                        fontSize: 9, color: Colors.grey[600]),
+                  ),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  String _formatShortDate(DateTime d) =>
+      DateFormat('dd MMM').format(d);
+
+  /// Duplicate this quotation as a fresh DRAFT — backend regenerates the
+  /// number, copies header + items + pricing, resets the lifecycle. Used
+  /// for repeat customers / similar-villa quotes / re-quote after a scope
+  /// change.
+  Future<void> _duplicateQuotation() async {
+    if (_quotation == null) return;
+    final id = _quotation!.id;
+    if (id == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Duplicate quotation?'),
+        content: Text(
+            'Create a fresh DRAFT copy of "${_quotation!.quotationNumber}" with the same items and pricing? You can edit it before sending.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Duplicate'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      final copy = await _service.duplicateQuotation(id);
+      if (!mounted) return;
+      MotionToast.showSuccess(context,
+          message: 'Created ${copy.quotationNumber ?? "copy"}');
+      // Pop with `true` so the caller list refreshes; subsequent screens
+      // can navigate to the new draft if they want.
+      if (copy.id != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => LeadQuotationDetailScreen(quotationId: copy.id!),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        await ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'Failed to duplicate quotation');
+      }
+    }
   }
 
   /// Status-aware primary action row. The most common next-step lives here

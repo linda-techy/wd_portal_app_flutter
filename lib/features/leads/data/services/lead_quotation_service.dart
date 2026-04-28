@@ -62,6 +62,26 @@ class LeadQuotationService {
     }
   }
 
+  /// Pipeline summary — feeds the list screen's hero card.
+  /// Returns a raw JSON map; the calling provider parses it into typed
+  /// fields. Backend shape matches PipelineSummaryResponse.java.
+  Future<Map<String, dynamic>> getPipelineSummary() async {
+    final response = await _apiService.get('/leads/quotations/pipeline-summary');
+    return _apiService.unwrap<Map<String, dynamic>>(
+        response, (json) => json as Map<String, dynamic>);
+  }
+
+  /// Duplicate an existing quotation as a fresh DRAFT. Returns the new
+  /// quotation. Backend regenerates the quotation number and resets the
+  /// lifecycle (no sentAt/respondedAt) but copies header, pricing, items.
+  Future<LeadQuotation> duplicateQuotation(int sourceId) async {
+    final response = await _apiService.post(
+        '/leads/quotations/$sourceId/duplicate',
+        data: {});
+    return _apiService.unwrap<LeadQuotation>(
+        response, (json) => LeadQuotation.fromJson(json as Map<String, dynamic>));
+  }
+
   /// Download quotation PDF for client presentation
   Future<Uint8List> downloadQuotationPdf(int id) async {
     final response = await _apiService.get(

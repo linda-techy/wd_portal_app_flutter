@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/features/leads/data/models/lead_quotation.dart';
@@ -85,6 +86,10 @@ class LeadQuotationsScreen extends StatelessWidget {
         builder: (context, provider, _) {
           final body = Column(
             children: [
+              // Pipeline hero — open vs accepted value, win rate, avg close.
+              // Suppressed in embedded mode (the lead-detail tabs already
+              // give project context, and a per-lead pipeline isn't useful).
+              if (!embedded) const _PipelineHeroCard(),
               if (embedded && lead != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -771,5 +776,210 @@ class LeadQuotationsScreen extends StatelessWidget {
         provider.fetch();
       }
     });
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Pipeline hero card
+// ──────────────────────────────────────────────────────────────────────────
+
+/// Compact dashboard at the top of the lead-quotations list:
+/// open value · accepted value (last 90 days) · win rate · avg close days.
+///
+/// Reads from the new {@code GET /leads/quotations/pipeline-summary}
+/// endpoint. Self-managed FutureBuilder; pull-to-refresh on the list does
+/// not currently re-trigger this card — staff can pull-to-refresh and the
+/// card updates next time the screen rebuilds, which is fine for a
+/// progress-anchor (not a real-time monitor).
+class _PipelineHeroCard extends StatefulWidget {
+  const _PipelineHeroCard();
+
+  @override
+  State<_PipelineHeroCard> createState() => _PipelineHeroCardState();
+}
+
+class _PipelineHeroCardState extends State<_PipelineHeroCard> {
+  late Future<Map<String, dynamic>> _future;
+
+  static final NumberFormat _inrCompact = NumberFormat.compactCurrency(
+      locale: 'en_IN', symbol: '₹', decimalDigits: 1);
+
+  @override
+  void initState() {
+    super.initState();
+    _future = LeadQuotationService().getPipelineSummary();
+  }
+
+  void _refresh() {
+    setState(() {
+      _future = LeadQuotationService().getPipelineSummary();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _future,
+      builder: (ctx, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: SizedBox(
+              height: 96,
+              child: Card(
+                child: Center(
+                  child: SizedBox(
+                    height: 22,
+                    width: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+        if (snap.hasError || snap.data == null) {
+          // Don't block the screen — pipeline is a nice-to-have. If the
+          // endpoint fails, the list below still works.
+          return const SizedBox.shrink();
+        }
+        final data = snap.data!;
+        final openCount = _readInt(data['openCount']);
+        final openValue = _readDouble(data['openValue']);
+        final acceptedCount = _readInt(data['acceptedCount']);
+        final acceptedValue = _readDouble(data['acceptedValue']);
+        final winRate = _readDouble(data['winRatePercent']);
+        final avgClose = data['avgCloseDays'] != null
+            ? _readDouble(data['avgCloseDays'])
+            : null;
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Card(
+            elevation: 1,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: BorderSide(color: Colors.grey.shade200),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Pipeline this quarter',
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[700],
+                            letterSpacing: 0.6),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.refresh, size: 18),
+                        tooltip: 'Refresh',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: _refresh,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _stat('Open',
+                          _inrCompact.format(openValue),
+                          '$openCount quote${openCount == 1 ? '' : 's'}',
+                          Colors.blue.shade700),
+                      _vDivider(),
+                      _stat('Accepted',
+                          _inrCompact.format(acceptedValue),
+                          '$acceptedCount in 90d',
+                          AppTheme.statusSuccess),
+                      _vDivider(),
+                      _stat('Win rate',
+                          '${winRate.toStringAsFixed(0)}%',
+                          (acceptedCount + _rejectedFallback(snap.data!)) > 0
+                              ? 'across ${acceptedCount + _rejectedFallback(snap.data!)} closes'
+                              : 'no closes yet',
+                          AppTheme.primaryColor),
+                      _vDivider(),
+                      _stat('Avg close',
+                          avgClose != null
+                              ? '${avgClose.toStringAsFixed(0)} d'
+                              : '—',
+                          'sent → response',
+                          Colors.grey[700]!),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 90d-rejected count isn't on the response; back-derive it from win rate
+  /// only when sample is non-zero. Fallback to 0 keeps the helper text safe.
+  int _rejectedFallback(Map<String, dynamic> data) {
+    final acc = _readInt(data['acceptedCount']);
+    final winRate = _readDouble(data['winRatePercent']);
+    if (acc == 0 || winRate == 0) return 0;
+    // acc / total = winRate/100 → total = acc * 100 / winRate; rejected = total - acc
+    final total = (acc * 100 / winRate).round();
+    return (total - acc).clamp(0, 9999);
+  }
+
+  Widget _stat(String label, String big, String hint, Color color) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label,
+                style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[600],
+                    letterSpacing: 0.4,
+                    fontWeight: FontWeight.w600)),
+            const SizedBox(height: 2),
+            Text(big,
+                style: TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+            const SizedBox(height: 2),
+            Text(hint,
+                style:
+                    TextStyle(fontSize: 10, color: Colors.grey[500]),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _vDivider() => Container(
+        width: 1,
+        height: 38,
+        color: Colors.grey.shade200,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+      );
+
+  static int _readInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is num) return v.toInt();
+    return int.tryParse(v.toString()) ?? 0;
+  }
+
+  static double _readDouble(dynamic v) {
+    if (v == null) return 0.0;
+    if (v is num) return v.toDouble();
+    return double.tryParse(v.toString()) ?? 0.0;
   }
 }
