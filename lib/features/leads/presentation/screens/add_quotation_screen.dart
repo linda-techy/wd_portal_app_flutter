@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:admin/features/leads/data/models/lead.dart';
@@ -41,6 +43,17 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
 
   List<LeadQuotationItem> _items = [];
 
+  // ── Autosave state ────────────────────────────────────────────────────
+  // Timer fires every 30s while the screen is open; the next tick saves
+  // a DRAFT silently if the form is non-trivial (title set, ≥1 item).
+  // First successful save flips the screen from create-mode to edit-mode
+  // by stamping `_autoCreatedId`, so subsequent ticks PUT instead of POST.
+  Timer? _autosaveTimer;
+  int? _autoCreatedId;
+  DateTime? _lastAutosaveAt;
+  bool _autosaveInFlight = false;
+  bool _formDirty = false;
+
   // Controllers for the item being added
   final TextEditingController _itemDescController = TextEditingController();
   final TextEditingController _itemQtyController =
@@ -70,10 +83,16 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
       // clone items
       _items = List.from(widget.quotationToEdit!.items);
     }
+    // 30-second autosave heartbeat. Each tick checks `_formDirty` and saves
+    // silently when the form is non-trivial. Marking dirty happens via
+    // `_markDirty()` from text-field onChanged + add/remove-item actions.
+    _autosaveTimer = Timer.periodic(
+        const Duration(seconds: 30), (_) => _autosaveIfNeeded());
   }
 
   @override
   void dispose() {
+    _autosaveTimer?.cancel();
     _titleController.dispose();
     _descriptionController.dispose();
     _validityController.dispose();
@@ -83,6 +102,75 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
     _itemQtyController.dispose();
     _itemPriceController.dispose();
     super.dispose();
+  }
+
+  /// Mark the form dirty so the next autosave tick fires. Called from text
+  /// field onChanged handlers and item add/remove actions.
+  void _markDirty() {
+    if (!_formDirty) setState(() => _formDirty = true);
+  }
+
+  /// One autosave attempt. Skips when:
+  ///   - a manual save is already in progress (`_isSaving`),
+  ///   - an autosave is in flight (`_autosaveInFlight`),
+  ///   - the form hasn't changed since the last save (`_formDirty == false`),
+  ///   - the form isn't substantive yet (title empty or no items).
+  /// First successful tick stamps `_autoCreatedId` so subsequent ticks PUT
+  /// instead of POST — same flow the manual Save button uses.
+  Future<void> _autosaveIfNeeded() async {
+    if (!mounted || _isSaving || _autosaveInFlight) return;
+    if (!_formDirty) return;
+    final title = _titleController.text.trim();
+    if (title.isEmpty || _items.isEmpty) return;
+
+    setState(() => _autosaveInFlight = true);
+    try {
+      final leadIdInt = int.parse(widget.lead.leadId);
+      final taxRateText = _taxRateController.text.trim();
+      final taxRate = taxRateText.isEmpty ? null : double.tryParse(taxRateText);
+      final discountText = _discountController.text.trim();
+      final discount =
+          discountText.isEmpty ? null : double.tryParse(discountText);
+
+      // Pre-existing edit target wins; otherwise we attach to the screen's
+      // own auto-created draft so we keep updating the same row.
+      final targetId = widget.quotationToEdit?.id ?? _autoCreatedId;
+      final draft = LeadQuotation(
+        id: targetId,
+        leadId: leadIdInt,
+        title: title,
+        description: _descriptionController.text,
+        validityDays: int.tryParse(_validityController.text) ?? 30,
+        totalAmount: _subtotal,
+        taxRatePercent: taxRate,
+        discountAmount: discount,
+        finalAmount: _liveFinal,
+        items: _items.where((it) => it.catalogItemId == null).toList(),
+        status: 'DRAFT',
+      );
+
+      if (targetId == null) {
+        final created = await _service.createQuotation(draft);
+        if (!mounted) return;
+        setState(() {
+          _autoCreatedId = created.id;
+          _lastAutosaveAt = DateTime.now();
+          _formDirty = false;
+        });
+      } else {
+        await _service.updateQuotation(targetId, draft);
+        if (!mounted) return;
+        setState(() {
+          _lastAutosaveAt = DateTime.now();
+          _formDirty = false;
+        });
+      }
+    } catch (_) {
+      // Autosave failures are silent — the user gets to retry on the next
+      // tick or via manual Save. Don't bother them with a snackbar.
+    } finally {
+      if (mounted) setState(() => _autosaveInFlight = false);
+    }
   }
 
   void _addItem() {
@@ -106,6 +194,7 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
       _itemQtyController.text = '1';
       _itemPriceController.text = '0';
     });
+    _markDirty();
   }
 
   /// Build the row description for a catalog-sourced line, mirroring the
@@ -150,6 +239,7 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
       _items.removeAt(index);
       // Re-number ? Optional
     });
+    _markDirty();
   }
 
   /// Subtotal = sum of line-item totals. The "₹X" before tax/discount.
@@ -239,6 +329,49 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  /// Tiny AppBar badge that surfaces autosave state without ever stealing
+  /// focus. Shows a 14px spinner while a save is in flight, then collapses
+  /// to "Saved · HH:mm" once the last save succeeded. Stays empty when no
+  /// save has happened yet so we don't lie about persistence state.
+  Widget _buildAutosaveBadge() {
+    if (_autosaveInFlight) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+            SizedBox(width: 6),
+            Text('Saving…',
+                style: TextStyle(fontSize: 12, color: Colors.white)),
+          ],
+        ),
+      );
+    }
+    if (_lastAutosaveAt == null) return const SizedBox.shrink();
+    final hh = _lastAutosaveAt!.hour.toString().padLeft(2, '0');
+    final mm = _lastAutosaveAt!.minute.toString().padLeft(2, '0');
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.cloud_done_outlined, size: 16, color: Colors.white),
+          const SizedBox(width: 6),
+          Text('Saved · $hh:$mm',
+              style: const TextStyle(fontSize: 12, color: Colors.white)),
         ],
       ),
     );
@@ -394,6 +527,10 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
             ? 'Edit Quotation'
             : 'New Quotation'),
         actions: [
+          // Autosave indicator — quietly tells the user their work is safe
+          // without ever interrupting them. Three states: in-flight (small
+          // spinner), saved (clock icon + HH:mm), or absent (no save yet).
+          _buildAutosaveBadge(),
           IconButton(
             icon: const Icon(Icons.save),
             onPressed: _isSaving ? null : _saveQuotation,
@@ -413,6 +550,7 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                     // Header
                     TextFormField(
                       controller: _titleController,
+                      onChanged: (_) => _markDirty(),
                       decoration: const InputDecoration(
                         labelText: 'Quotation Title',
                         border: OutlineInputBorder(),
@@ -423,6 +561,7 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _descriptionController,
+                      onChanged: (_) => _markDirty(),
                       decoration: const InputDecoration(
                         labelText: 'Description (Optional)',
                         border: OutlineInputBorder(),
@@ -436,6 +575,7 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: _validityController,
+                            onChanged: (_) => _markDirty(),
                             decoration: const InputDecoration(
                               labelText: 'Validity (Days)',
                               border: OutlineInputBorder(),
@@ -448,8 +588,12 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                           child: TextFormField(
                             controller: _taxRateController,
                             // Trigger a rebuild so the live footer math reflects
-                            // the typed rate as the user types.
-                            onChanged: (_) => setState(() {}),
+                            // the typed rate as the user types; mark dirty so
+                            // autosave picks the change up at the next tick.
+                            onChanged: (_) {
+                              setState(() {});
+                              _markDirty();
+                            },
                             decoration: const InputDecoration(
                               labelText: 'GST Rate (%)',
                               helperText: 'Default 18%. Leave blank for none.',
@@ -472,7 +616,10 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: _discountController,
-                            onChanged: (_) => setState(() {}),
+                            onChanged: (_) {
+                              setState(() {});
+                              _markDirty();
+                            },
                             decoration: const InputDecoration(
                               labelText: 'Discount (₹)',
                               helperText: 'Optional fixed amount.',

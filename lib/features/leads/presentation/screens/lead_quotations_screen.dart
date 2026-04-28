@@ -302,18 +302,26 @@ class LeadQuotationsScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Customer name leads now (was internal lead ID).
+                        // Falls back to "Lead #N" only when the server didn't
+                        // populate leadName — a defensive safety net, not the
+                        // primary surface.
                         Text(
-                          quotation.quotationNumber ?? 'N/A',
+                          quotation.leadName != null && quotation.leadName!.isNotEmpty
+                              ? quotation.leadName!
+                              : 'Lead #${quotation.leadId}',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Lead ID: ${quotation.leadId}',
+                          quotation.quotationNumber ?? 'N/A',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             color: Colors.grey[600],
                           ),
                         ),

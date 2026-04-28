@@ -1,6 +1,13 @@
 class LeadQuotation {
   final int? id;
   final int leadId;
+
+  /// Customer name resolved server-side (transient field on the entity,
+  /// batch-loaded after the page query). Lets list cards show
+  /// "Mr. Joseph" instead of leaking "Lead ID: 47". Nullable when the
+  /// underlying lead is missing (orphaned quotation) or for endpoints
+  /// that don't populate it.
+  final String? leadName;
   final String? quotationNumber;
   final int version;
   final String title;
@@ -29,6 +36,7 @@ class LeadQuotation {
   LeadQuotation({
     this.id,
     required this.leadId,
+    this.leadName,
     this.quotationNumber,
     this.version = 1,
     required this.title,
@@ -54,6 +62,7 @@ class LeadQuotation {
     return LeadQuotation(
       id: json['id'],
       leadId: json['leadId'] ?? json['lead_id'],
+      leadName: json['leadName'] ?? json['lead_name'],
       quotationNumber: json['quotationNumber'] ?? json['quotation_number'],
       version: json['version'] ?? 1,
       title: json['title'],
