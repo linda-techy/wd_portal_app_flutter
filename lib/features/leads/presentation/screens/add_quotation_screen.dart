@@ -28,6 +28,16 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
   final TextEditingController _validityController =
       TextEditingController(text: '30');
 
+  /// Tax rate as % (e.g. 18.00 for 18% GST). Empty string means
+  /// "use the backend default" — currently 18%. Setting to 0 means "no tax".
+  /// The backend computes taxAmount = (subtotal − discount) × rate / 100.
+  final TextEditingController _taxRateController =
+      TextEditingController(text: '18.00');
+
+  /// Optional fixed-rupee discount applied to the subtotal before GST.
+  /// Backend rejects values exceeding the subtotal.
+  final TextEditingController _discountController = TextEditingController();
+
   List<LeadQuotationItem> _items = [];
 
   // Controllers for the item being added
@@ -45,6 +55,17 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
       _descriptionController.text = widget.quotationToEdit!.description ?? '';
       _validityController.text =
           widget.quotationToEdit!.validityDays.toString();
+      // Tax-rate field: blank entry keeps backend default. Show the existing
+      // rate (if any) so staff can see what's set; an existing null on the
+      // server means legacy "manual mode" which we surface as blank.
+      final existingRate = widget.quotationToEdit!.taxRatePercent;
+      _taxRateController.text = existingRate != null
+          ? existingRate.toStringAsFixed(2)
+          : '';
+      final existingDiscount = widget.quotationToEdit!.discountAmount;
+      _discountController.text = existingDiscount != null && existingDiscount > 0
+          ? existingDiscount.toStringAsFixed(2)
+          : '';
       // clone items
       _items = List.from(widget.quotationToEdit!.items);
     }
@@ -55,6 +76,8 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
     _titleController.dispose();
     _descriptionController.dispose();
     _validityController.dispose();
+    _taxRateController.dispose();
+    _discountController.dispose();
     _itemDescController.dispose();
     _itemQtyController.dispose();
     _itemPriceController.dispose();
@@ -146,6 +169,16 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
     try {
       final leadIdInt = int.parse(widget.lead.leadId);
 
+      // Resolve the optional financial knobs once for both create and edit.
+      // Empty string means "let the backend keep its default" (currently 18%
+      // for new entities). A typed `0` means "0% tax / no discount" — those
+      // are valid and explicitly different from "default".
+      final taxRateText = _taxRateController.text.trim();
+      final taxRate = taxRateText.isEmpty ? null : double.tryParse(taxRateText);
+      final discountText = _discountController.text.trim();
+      final discount =
+          discountText.isEmpty ? null : double.tryParse(discountText);
+
       // Split items: catalog-sourced rows must be persisted via
       // `addItemFromCatalog` so the FK link is recorded — the inline
       // create body ignores `catalogItemId`.
@@ -168,6 +201,8 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
           description: _descriptionController.text,
           validityDays: int.tryParse(_validityController.text) ?? 30,
           totalAmount: _currentTotal,
+          taxRatePercent: taxRate,
+          discountAmount: discount,
           finalAmount: _currentTotal,
           items: _items,
           status: widget.quotationToEdit!.status,
@@ -198,6 +233,8 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
           description: _descriptionController.text,
           validityDays: int.tryParse(_validityController.text) ?? 30,
           totalAmount: 0,
+          taxRatePercent: taxRate,
+          discountAmount: discount,
           finalAmount: 0,
           items: renumberedAdHoc,
           status: 'DRAFT',
@@ -279,13 +316,62 @@ class _AddQuotationScreenState extends State<AddQuotationScreen> {
                       maxLines: 2,
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _validityController,
-                      decoration: const InputDecoration(
-                        labelText: 'Validity (Days)',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _validityController,
+                            decoration: const InputDecoration(
+                              labelText: 'Validity (Days)',
+                              border: OutlineInputBorder(),
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _taxRateController,
+                            decoration: const InputDecoration(
+                              labelText: 'GST Rate (%)',
+                              helperText: 'Default 18%. Leave blank for none.',
+                              border: OutlineInputBorder(),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) return null;
+                              final parsed = double.tryParse(v.trim());
+                              if (parsed == null) return 'Must be a number';
+                              if (parsed < 0 || parsed > 100) {
+                                return 'Must be 0–100';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _discountController,
+                            decoration: const InputDecoration(
+                              labelText: 'Discount (₹)',
+                              helperText: 'Optional fixed amount.',
+                              border: OutlineInputBorder(),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) return null;
+                              final parsed = double.tryParse(v.trim());
+                              if (parsed == null) return 'Must be a number';
+                              if (parsed < 0) return 'Must be ≥ 0';
+                              return null;
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 24),
 

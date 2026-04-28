@@ -7,6 +7,12 @@ class LeadQuotation {
   final String? description;
   final double? totalAmount;
   final double? taxAmount;
+
+  /// Tax rate as a percentage (e.g. 18.0 = 18% GST). When non-null the
+  /// backend auto-computes [taxAmount] as `(subtotal − discount) × rate / 100`
+  /// — the canonical Indian-GST tax base. When null, [taxAmount] is treated
+  /// as a manual override and used as-is. New quotations default to 18.0.
+  final double? taxRatePercent;
   final double? discountAmount;
   final double? finalAmount;
   final int validityDays;
@@ -29,6 +35,7 @@ class LeadQuotation {
     this.description,
     this.totalAmount,
     this.taxAmount,
+    this.taxRatePercent,
     this.discountAmount,
     this.finalAmount,
     this.validityDays = 30,
@@ -54,6 +61,9 @@ class LeadQuotation {
       totalAmount:
           (json['totalAmount'] ?? json['total_amount'] as num?)?.toDouble(),
       taxAmount: (json['taxAmount'] ?? json['tax_amount'] as num?)?.toDouble(),
+      taxRatePercent:
+          (json['taxRatePercent'] ?? json['tax_rate_percent'] as num?)
+              ?.toDouble(),
       discountAmount:
           (json['discountAmount'] ?? json['discount_amount'] as num?)
               ?.toDouble(),
@@ -104,6 +114,7 @@ class LeadQuotation {
       'description': description,
       'totalAmount': totalAmount,
       'taxAmount': taxAmount,
+      'taxRatePercent': taxRatePercent,
       'discountAmount': discountAmount,
       'finalAmount': finalAmount,
       'validityDays': validityDays,
@@ -120,6 +131,7 @@ class LeadQuotation {
       'description': description,
       'totalAmount': totalAmount,
       'taxAmount': taxAmount,
+      'taxRatePercent': taxRatePercent,
       'discountAmount': discountAmount,
       'finalAmount': finalAmount,
       'validityDays': validityDays,
@@ -137,6 +149,7 @@ class LeadQuotation {
     String? description,
     double? totalAmount,
     double? taxAmount,
+    double? taxRatePercent,
     double? discountAmount,
     double? finalAmount,
     int? validityDays,
@@ -152,6 +165,7 @@ class LeadQuotation {
       description: description ?? this.description,
       totalAmount: totalAmount ?? this.totalAmount,
       taxAmount: taxAmount ?? this.taxAmount,
+      taxRatePercent: taxRatePercent ?? this.taxRatePercent,
       discountAmount: discountAmount ?? this.discountAmount,
       finalAmount: finalAmount ?? this.finalAmount,
       validityDays: validityDays ?? this.validityDays,

@@ -803,12 +803,16 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
                             fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
                     _buildAmountRow('Subtotal', quotation.totalAmount),
-                    if (quotation.taxAmount != null && quotation.taxAmount! > 0)
-                      _buildAmountRow('Tax', quotation.taxAmount),
                     if (quotation.discountAmount != null &&
                         quotation.discountAmount! > 0)
                       _buildAmountRow('Discount', quotation.discountAmount,
                           isDiscount: true),
+                    if (quotation.taxAmount != null && quotation.taxAmount! > 0)
+                      _buildAmountRow(
+                          quotation.taxRatePercent != null
+                              ? 'GST (${_formatRate(quotation.taxRatePercent!)}%)'
+                              : 'Tax',
+                          quotation.taxAmount),
                     const Divider(),
                     _buildAmountRow('Final Amount', quotation.finalAmount,
                         isTotal: true),
@@ -961,6 +965,13 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
 
   String _formatINR(num? amount) =>
       amount == null ? '' : _inr.format(amount);
+
+  /// Render a GST rate cleanly: 18.00 → "18", 12.50 → "12.5".
+  String _formatRate(double rate) {
+    if (rate == rate.roundToDouble()) return rate.toStringAsFixed(0);
+    return rate.toStringAsFixed(2).replaceAll(RegExp(r'0+$'), '')
+        .replaceAll(RegExp(r'\.$'), '');
+  }
 
   Widget _buildSourcePill(bool fromCatalog) {
     final label = fromCatalog ? 'Catalog' : 'Custom';
