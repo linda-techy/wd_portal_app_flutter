@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/utils/error_handler.dart';
 import 'package:admin/models/team_member.dart';
+import 'package:admin/models/role.dart';
 import 'package:admin/services/crm_service.dart';
 
 class TeamMembersScreen extends StatefulWidget {
@@ -15,6 +16,7 @@ class TeamMembersScreenState extends State<TeamMembersScreen> {
   final CRMService _crmService = CRMService();
   List<TeamMember> _allMembers = [];
   List<TeamMember> _filteredMembers = [];
+  List<PortalRole> _roles = [];
   bool _isLoading = true;
   String? _error;
   String _searchQuery = '';
@@ -25,7 +27,17 @@ class TeamMembersScreenState extends State<TeamMembersScreen> {
   @override
   void initState() {
     super.initState();
+    _loadRoles();
     _loadTeamMembers();
+  }
+
+  Future<void> _loadRoles() async {
+    try {
+      final roles = await _crmService.getPortalRoles();
+      if (mounted) setState(() { _roles = roles; });
+    } catch (e) {
+      debugPrint("Failed to load roles: $e");
+    }
   }
 
   @override
@@ -361,8 +373,7 @@ class TeamMembersScreenState extends State<TeamMembersScreen> {
     final emailCtrl = TextEditingController(text: member?.email ?? '');
     final phoneCtrl = TextEditingController(text: member?.phone ?? '');
     final whatsappCtrl = TextEditingController(text: member?.whatsapp ?? '');
-    final designationCtrl = TextEditingController(text: member?.designation ?? '');
-    final departmentCtrl = TextEditingController(text: member?.department ?? '');
+    int? selectedRoleId = member?.roleId;
     bool isActive = member?.isActive ?? true;
     final formKey = GlobalKey<FormState>();
 
@@ -423,22 +434,12 @@ class TeamMembersScreenState extends State<TeamMembersScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: designationCtrl,
-                            decoration: const InputDecoration(labelText: 'Designation', border: OutlineInputBorder()),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextFormField(
-                            controller: departmentCtrl,
-                            decoration: const InputDecoration(labelText: 'Department', border: OutlineInputBorder()),
-                          ),
-                        ),
-                      ],
+                    DropdownButtonFormField<int>(
+                      value: selectedRoleId,
+                      decoration: const InputDecoration(labelText: 'Role *', border: OutlineInputBorder()),
+                      items: _roles.map((r) => DropdownMenuItem(value: r.id, child: Text(r.name))).toList(),
+                      onChanged: (v) => setDialogState(() => selectedRoleId = v),
+                      validator: (v) => v == null ? 'Required' : null,
                     ),
                     const SizedBox(height: 12),
                     SwitchListTile(
@@ -464,8 +465,7 @@ class TeamMembersScreenState extends State<TeamMembersScreen> {
                   email: emailCtrl.text.trim(),
                   phone: phoneCtrl.text.trim().isNotEmpty ? phoneCtrl.text.trim() : null,
                   whatsapp: whatsappCtrl.text.trim().isNotEmpty ? whatsappCtrl.text.trim() : null,
-                  designation: designationCtrl.text.trim().isNotEmpty ? designationCtrl.text.trim() : null,
-                  department: departmentCtrl.text.trim().isNotEmpty ? departmentCtrl.text.trim() : null,
+                  roleId: selectedRoleId,
                   isActive: isActive,
                 );
                 try {

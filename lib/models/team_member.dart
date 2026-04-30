@@ -13,6 +13,8 @@ class TeamMember {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final String? type; // "PORTAL" or "CUSTOMER"
+  final int? roleId;
+  final String? roleName;
 
   TeamMember({
     this.id,
@@ -29,6 +31,8 @@ class TeamMember {
     this.createdAt,
     this.updatedAt,
     this.type,
+    this.roleId,
+    this.roleName,
   });
 
   String get fullName => '${firstName ?? ''} ${lastName ?? ''}'.trim();
@@ -57,6 +61,10 @@ class TeamMember {
           ? DateTime.tryParse(json['updatedAt'])
           : null,
       type: json['type'],
+      roleId: json['role_id'] != null 
+          ? (json['role_id'] is int ? json['role_id'] : int.tryParse(json['role_id'].toString()))
+          : null,
+      roleName: json['role_name'],
     );
   }
 
@@ -76,6 +84,8 @@ class TeamMember {
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'type': type,
+      if (roleId != null) 'role_id': roleId,
+      if (roleName != null) 'role_name': roleName,
     };
   }
 
@@ -94,6 +104,8 @@ class TeamMember {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? type,
+    int? roleId,
+    String? roleName,
   }) {
     return TeamMember(
       id: id ?? this.id,
@@ -110,6 +122,8 @@ class TeamMember {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       type: type ?? this.type,
+      roleId: roleId ?? this.roleId,
+      roleName: roleName ?? this.roleName,
     );
   }
   @override

@@ -53,6 +53,7 @@ class CRMService {
       if (t.lastName != null) 'last_name': t.lastName,
       'enabled': t.isActive ?? true,
       if (password != null && password.isNotEmpty) 'password': password,
+      if (t.roleId != null) 'role_id': t.roleId,
     };
   }
 
