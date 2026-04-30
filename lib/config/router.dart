@@ -110,9 +110,8 @@ GoRouter buildAppRouter(PortalAuthProvider authProvider) {
       final onResetPassword = state.matchedLocation.startsWith('/reset-password');
 
       if (!auth.isAuthenticated) {
-        return (onLogin || onLoading || onForgotPassword || onResetPassword)
-            ? null
-            : '/login';
+        if (onLogin || onForgotPassword || onResetPassword) return null;
+        return '/login';
       }
       // Authenticated
       if (onLogin || onLoading) return '/';

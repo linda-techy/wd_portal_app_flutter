@@ -32,6 +32,7 @@ import 'package:admin/features/stage_payments/presentation/screens/stage_payment
 import 'package:admin/features/deductions/presentation/screens/deduction_register_screen.dart';
 import 'package:admin/features/final_account/presentation/screens/final_account_screen.dart';
 import 'package:admin/features/projects/presentation/screens/project_members_screen.dart';
+import 'package:admin/features/projects/presentation/widgets/project_gps_card.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final ProjectModel project;
@@ -185,6 +186,19 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             if (project.budget != null || project.sqfeet != null) ...[
               const SizedBox(height: 16),
               _buildFinancialsCard(context),
+            ],
+            if (project.id != null) ...[
+              const SizedBox(height: 16),
+              // V82: site GPS card. Override is gated on the ADMIN role —
+              // permission_provider exposes role checks via hasRole.
+              Consumer<PermissionProvider>(
+                builder: (context, perms, _) => ProjectGpsCard(
+                  projectId: project.id!,
+                  // ADMIN bypass is the existing convention for this kind of
+                  // privileged action — the provider already exposes it.
+                  canOverride: perms.roleCode == 'ADMIN',
+                ),
+              ),
             ],
             if (project.id != null) ...[
               const SizedBox(height: 24),

@@ -32,6 +32,13 @@ class CustomerProject {
   final double? latitude;
   final double? longitude;
 
+  /// V82: when the site GPS was first stamped. null = not yet captured.
+  /// Once non-null, the coords are "locked" and only ADMIN can re-set.
+  final DateTime? gpsLockedAt;
+  final int? gpsLockedByUserId;
+
+  bool get isGpsLocked => gpsLockedAt != null;
+
   CustomerProject({
     this.id,
     required this.name,
@@ -63,6 +70,8 @@ class CustomerProject {
     this.projectManagerId,
     this.latitude,
     this.longitude,
+    this.gpsLockedAt,
+    this.gpsLockedByUserId,
   });
 
   String get projectName => name;
@@ -161,6 +170,14 @@ class CustomerProject {
               ? json['longitude']
               : double.tryParse(json['longitude'].toString()))
           : null,
+      gpsLockedAt: (json['gpsLockedAt'] ?? json['gps_locked_at']) != null
+          ? DateTime.tryParse(
+              (json['gpsLockedAt'] ?? json['gps_locked_at']).toString())
+          : null,
+      gpsLockedByUserId: (json['gpsLockedByUserId'] ?? json['gps_locked_by_user_id']) is int
+          ? (json['gpsLockedByUserId'] ?? json['gps_locked_by_user_id']) as int
+          : int.tryParse(
+              (json['gpsLockedByUserId'] ?? json['gps_locked_by_user_id'])?.toString() ?? ''),
     );
   }
 
@@ -253,6 +270,8 @@ class CustomerProject {
     String? projectDescription,
     double? latitude,
     double? longitude,
+    DateTime? gpsLockedAt,
+    int? gpsLockedByUserId,
   }) {
     return CustomerProject(
       id: id ?? this.id,
@@ -286,6 +305,8 @@ class CustomerProject {
       projectManagerId: projectManagerId ?? projectManagerId,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
+      gpsLockedAt: gpsLockedAt ?? this.gpsLockedAt,
+      gpsLockedByUserId: gpsLockedByUserId ?? this.gpsLockedByUserId,
     );
   }
 }

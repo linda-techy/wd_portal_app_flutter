@@ -24,8 +24,10 @@ class CRMService {
   // TEAM MEMBERS
   // =====================================================
 
+  /// Returns only internal portal staff (company employees).
+  /// Uses /users/portal-staff to exclude customer accounts from the list.
   Future<List<TeamMemberSimple>> getTeamMembersForAssignment() async {
-    final response = await _apiService.get('/users/team-members');
+    final response = await _apiService.get('/users/portal-staff');
     return _apiService.unwrapList<TeamMemberSimple>(
         response, (json) => TeamMemberSimple.fromJson(json));
   }
@@ -264,9 +266,22 @@ class CRMService {
   }
 
   Future<List<CustomerProject>> getAllCustomerProjects() async {
-    final response = await _apiService.get('/customer-projects');
-    return _apiService.unwrapList<CustomerProject>(
-        response, (json) => CustomerProject.fromJson(json));
+    final response = await _apiService.get(
+      '/customer-projects',
+      queryParams: {'page': '0', 'size': '500', 'sort': 'id,asc'},
+    );
+    // The endpoint returns a paginated wrapper; extract the content list.
+    return _apiService.unwrap<List<CustomerProject>>(response, (json) {
+      if (json is Map<String, dynamic> && json.containsKey('content')) {
+        final content = json['content'] as List;
+        return content.map((item) => CustomerProject.fromJson(item)).toList();
+      }
+      // Fallback: if the response is already a flat list (legacy)
+      if (json is List) {
+        return json.map((item) => CustomerProject.fromJson(item)).toList();
+      }
+      return <CustomerProject>[];
+    });
   }
 
   Future<PaginatedResponse<CustomerProject>> getCustomerProjectsPaginated({

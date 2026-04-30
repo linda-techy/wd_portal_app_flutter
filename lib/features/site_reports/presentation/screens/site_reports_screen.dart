@@ -30,6 +30,12 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
   bool _isPageLoading = true;
   final Set<DateTime> _expandedDates = {};
 
+  /// Lazy-loaded "you have N reports on other projects" hint for the
+  /// empty state. Fixes the support call where an admin files a report
+  /// against the wrong project from a similar-named dropdown entry, then
+  /// can't find it on the project they expected.
+  Map<int, _ProjectReportCount>? _otherProjectsSummary;
+
   @override
   void initState() {
     super.initState();
@@ -122,29 +128,97 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
     );
   }
 
+  /// Lazy fetch: search across ALL accessible reports (no projectId
+  /// filter), tally by project. Surfaced as the empty-state hint when
+  /// the current project has zero reports but the user has reports
+  /// elsewhere — the support call that motivated this is "I submitted
+  /// a report and it's not showing up" → it's on a different project.
+  Future<void> _loadOtherProjectsSummary() async {
+    if (_otherProjectsSummary != null) return;
+    try {
+      final page = await _service.searchSiteReports(
+        page: 0,
+        size: 200,
+        sortBy: 'reportDate',
+        sortDirection: 'desc',
+      );
+      final tally = <int, _ProjectReportCount>{};
+      for (final r in page.content) {
+        final pid = r.projectId;
+        if (pid == widget.projectId) continue; // skip current project
+        final existing = tally[pid];
+        tally[pid] = _ProjectReportCount(
+          projectId: pid,
+          projectName: r.projectName ?? existing?.projectName,
+          count: (existing?.count ?? 0) + 1,
+        );
+      }
+      if (mounted) setState(() => _otherProjectsSummary = tally);
+    } catch (_) {
+      if (mounted) setState(() => _otherProjectsSummary = const {});
+    }
+  }
+
   Widget _buildEmptyState() {
+    if (_otherProjectsSummary == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadOtherProjectsSummary());
+    }
+    final others = (_otherProjectsSummary ?? <int, _ProjectReportCount>{}).values.toList();
+    final totalElsewhere = others.fold<int>(0, (int s, r) => s + r.count);
+
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.assignment_outlined, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          const Text('No site reports yet',
-              style: TextStyle(fontSize: 16, color: Colors.grey)),
-          const SizedBox(height: 8),
-          const Text('Tap + to create your first report',
-              style: TextStyle(fontSize: 13, color: Colors.grey)),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _navigateToCreate,
-            icon: const Icon(Icons.add_a_photo),
-            label: const Text('Create Report'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.coralRed,
-              foregroundColor: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.assignment_outlined, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            const Text('No site reports yet',
+                style: TextStyle(fontSize: 16, color: Colors.grey)),
+            const SizedBox(height: 8),
+            const Text('Tap + to create your first report',
+                style: TextStyle(fontSize: 13, color: Colors.grey)),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _navigateToCreate,
+              icon: const Icon(Icons.add_a_photo),
+              label: const Text('Create Report'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.coralRed,
+                foregroundColor: Colors.white,
+              ),
             ),
-          ),
-        ],
+            if (totalElsewhere > 0) ...[
+              const SizedBox(height: 24),
+              const Divider(),
+              const SizedBox(height: 12),
+              Text(
+                'Looking for a report you just submitted? '
+                'You have $totalElsewhere report${totalElsewhere == 1 ? '' : 's'} '
+                'on other project${others.length == 1 ? '' : 's'}:',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              ...others.map((r) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Text(
+                      '• ${r.projectName ?? "Project #${r.projectId}"} — ${r.count} report${r.count == 1 ? '' : 's'}',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                  )),
+              const SizedBox(height: 8),
+              const Text(
+                'Open that project to view its reports — '
+                'or check the project picker on the create screen.',
+                style: TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -1579,4 +1653,18 @@ class _FullScreenPhotoViewerState extends State<_FullScreenPhotoViewer> {
       ),
     );
   }
+}
+
+/// Tally row for the empty-state hint that surfaces the
+/// "you have N reports on other projects" message when the user
+/// is looking at a project with zero reports.
+class _ProjectReportCount {
+  final int projectId;
+  final String? projectName;
+  final int count;
+  const _ProjectReportCount({
+    required this.projectId,
+    this.projectName,
+    required this.count,
+  });
 }

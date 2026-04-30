@@ -25,6 +25,27 @@ class AppConfig {
     return isProduction ? _prodPortalUrl : _devPortalUrl;
   }
 
+  // Customer-facing share-link base URL (V77).
+  // Quotation share links are composed as `$customerShareBaseUrl/q/{token}`.
+  // The website (Next.js) is expected to host a route at `/q/[token]` that
+  // calls `GET $apiBaseUrl/public/quotations/{token}` and renders the
+  // customer view. Override via:
+  //   --dart-define=CUSTOMER_SHARE_BASE_URL=https://walldotbuilders.com
+  static const String _devCustomerUrl = 'http://localhost:3000';
+  static const String _prodCustomerUrl = 'https://walldotbuilders.com';
+
+  static String get customerShareBaseUrl {
+    const String env = String.fromEnvironment('CUSTOMER_SHARE_BASE_URL');
+    if (env.isNotEmpty) return env;
+    return isProduction ? _prodCustomerUrl : _devCustomerUrl;
+  }
+
+  /// Convenience: build the customer-facing URL for a public_view_token.
+  static String buildQuotationShareUrl(String token, {String? source}) {
+    final base = '$customerShareBaseUrl/q/$token';
+    return source != null ? '$base?source=$source' : base;
+  }
+
   // Get API URL from environment variable (dart-define) or use defaults
   // In production (kReleaseMode), this will use the dart-define value or production URL
   // In development, this will use the dart-define value or localhost

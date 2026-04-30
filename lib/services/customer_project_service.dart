@@ -79,6 +79,24 @@ class CustomerProjectService {
     }
   }
 
+  /// Stamp the project's site GPS coordinates (V82). First-time set
+  /// works for any user with PROJECT_EDIT; subsequent overrides require
+  /// ADMIN. Returns the updated project.
+  Future<CustomerProject> lockProjectGps(int projectId, double latitude,
+      double longitude) async {
+    final response = await _apiService.post(
+      '/customer-projects/$projectId/gps',
+      data: {
+        'latitude': latitude,
+        'longitude': longitude,
+      },
+    );
+    if (response.data != null && response.data['data'] != null) {
+      return CustomerProject.fromJson(response.data['data']);
+    }
+    throw Exception('Invalid response format');
+  }
+
   /// Update existing project
   Future<CustomerProject> updateProject(int id, CustomerProject project) async {
     try {

@@ -23,7 +23,7 @@ class TaskListScreen extends StatelessWidget {
               actions: [
                 Consumer<PermissionProvider>(
                   builder: (context, permissionProvider, _) {
-                    if (permissionProvider.hasPermission('task:create')) {
+                    if (permissionProvider.canCreateTask) {
                       return IconButton(
                         icon: const Icon(Icons.add),
                         onPressed: () => _navigateToCreate(context),

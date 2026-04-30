@@ -6,6 +6,7 @@ import 'package:admin/features/leads/data/models/lead_quotation.dart';
 import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/features/leads/data/services/lead_quotation_service.dart';
 import 'package:admin/features/leads/presentation/providers/lead_quotation_provider.dart';
+import 'package:admin/features/leads/presentation/screens/budgetary_quotation_form_screen.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/screens/quotations/widgets/quotation_row_actions.dart';
 import 'package:admin/theme/app_theme.dart';
@@ -797,18 +798,63 @@ class LeadQuotationsScreen extends StatelessWidget {
       );
       return;
     }
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddQuotationScreen(lead: lead!),
+    // V76: staff picks the stage. BUDGETARY = lead-enquiry artefact (no
+    // totals, tier ranges, scope confidence). DETAILED = legacy form.
+    showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'What kind of quotation?',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.handshake_outlined),
+              title: const Text('Budgetary (lead enquiry)'),
+              subtitle: const Text(
+                  'Tier ranges, scope, payment shape — no grand total. Best when area / plan are not finalised.'),
+              onTap: () => Navigator.pop(ctx, 'BUDGETARY'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.description_outlined),
+              title: const Text('Detailed (legacy form)'),
+              subtitle: const Text(
+                  'Line items, qty × rate, grand total. Use after the site visit when the scope is firm.'),
+              onTap: () => Navigator.pop(ctx, 'DETAILED'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
-    ).then((result) {
-      // Refresh the list when returning from create screen
-      if (result == true && context.mounted) {
-        final provider =
-            Provider.of<LeadQuotationProvider>(context, listen: false);
-        provider.fetch();
-      }
+    ).then((stage) {
+      if (stage == null || !context.mounted) return;
+      final pushed = stage == 'BUDGETARY'
+          ? Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    BudgetaryQuotationFormScreen(lead: lead!),
+              ),
+            )
+          : Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AddQuotationScreen(lead: lead!),
+              ),
+            );
+      pushed.then((result) {
+        if (result != null && context.mounted) {
+          final provider =
+              Provider.of<LeadQuotationProvider>(context, listen: false);
+          provider.fetch();
+        }
+      });
     });
   }
 }

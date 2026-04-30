@@ -13,6 +13,7 @@ import 'package:admin/utils/error_handler.dart';
 import 'package:admin/utils/file_download_helper.dart';
 import 'package:admin/features/leads/data/services/lead_service.dart';
 import 'add_quotation_screen.dart';
+import 'package:admin/features/leads/presentation/widgets/quotation/quotation_share_sheet.dart';
 
 class LeadQuotationDetailScreen extends StatefulWidget {
   final int quotationId;
@@ -524,6 +525,21 @@ class _LeadQuotationDetailScreenState extends State<LeadQuotationDetailScreen> {
             tooltip: 'Download PDF',
             onPressed: _downloadPdf,
           ),
+          // V77: customer-facing share-link sheet (WhatsApp / email / copy +
+          // view count + token rotation). Hidden for DRAFTs since the
+          // customer endpoint refuses DRAFT tokens anyway.
+          if (quotation.status != 'DRAFT')
+            IconButton(
+              icon: const Icon(Icons.share_outlined),
+              tooltip: 'Share with customer',
+              // Phone resolution is deferred — the share sheet falls back
+              // to a phone-less wa.me link when null, which still lets
+              // staff paste the customer's number into WhatsApp directly.
+              onPressed: () => QuotationShareSheet.show(
+                context,
+                quotation: quotation,
+              ),
+            ),
           Consumer<PermissionProvider>(
             builder: (context, permissionProvider, _) {
               if (!permissionProvider.hasPermission('lead:edit')) {

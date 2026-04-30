@@ -1,12 +1,9 @@
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/services/gallery_service.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/utils/error_handler.dart';
-import 'package:admin/utils/file_upload_helper.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
 import 'package:admin/widgets/authenticated_image.dart';
 
@@ -24,7 +21,6 @@ class _GalleryScreenState extends State<GalleryScreen> {
   List<GalleryImage> _images = [];
   bool _isLoading = true;
   bool _isGridView = true;
-  bool _isUploading = false;
 
   @override
   void initState() {
@@ -95,32 +91,34 @@ class _GalleryScreenState extends State<GalleryScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _isUploading ? null : _uploadImage,
-        icon: _isUploading
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Colors.white))
-            : const Icon(Icons.add_a_photo_outlined),
-        label: Text(_isUploading ? 'Uploading...' : 'Upload Photo'),
-        backgroundColor: AppTheme.deepSlate,
-        foregroundColor: Colors.white,
-      ),
+      // Gallery is read-only (V79). Photos are added automatically when
+      // site reports are submitted — there is no manual upload path.
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _images.isEmpty
-              ? const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.photo_library_outlined,
-                          size: 48, color: Colors.grey),
-                      SizedBox(height: 12),
-                      Text('No photos yet',
-                          style: TextStyle(fontSize: 16, color: Colors.grey)),
-                    ],
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.photo_library_outlined,
+                            size: 48, color: Colors.grey),
+                        const SizedBox(height: 12),
+                        const Text('No photos yet',
+                            style:
+                                TextStyle(fontSize: 16, color: Colors.grey)),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Photos appear here automatically when site reports are submitted.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                              fontStyle: FontStyle.italic),
+                        ),
+                      ],
+                    ),
                   ),
                 )
               : RefreshIndicator(
@@ -393,113 +391,6 @@ class _GalleryScreenState extends State<GalleryScreen> {
         ],
       ),
     );
-  }
-
-  Future<void> _uploadImage() async {
-    // Pick file (supports web, mobile, desktop)
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      withData: kIsWeb, // on web we need bytes; on mobile we use path
-    );
-    if (result == null || !mounted) return;
-
-    FileUploadData uploadData;
-    try {
-      uploadData = FileUploadHelper.extractFileData(result.files.single);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Could not read file: $e'),
-              backgroundColor: AppTheme.errorRed),
-        );
-      }
-      return;
-    }
-
-    // Optional metadata dialog
-    final captionController = TextEditingController();
-    final locationController = TextEditingController();
-    bool confirmed = false;
-    if (mounted) {
-      confirmed = await showDialog<bool>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Upload Photo'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    uploadData.fileName,
-                    style: const TextStyle(
-                        fontSize: 12, color: AppTheme.textSecondary),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: captionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Caption (optional)',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: locationController,
-                    decoration: const InputDecoration(
-                      labelText: 'Location tag (optional)',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                      hintText: 'e.g. Living Room, 2nd Floor',
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    child: const Text('Cancel')),
-                ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx, true),
-                    child: const Text('Upload')),
-              ],
-            ),
-          ) ??
-          false;
-    }
-
-    if (!confirmed || !mounted) return;
-
-    setState(() => _isUploading = true);
-    try {
-      await _service.uploadImage(
-        projectId: widget.projectId,
-        file: uploadData.file,
-        bytes: uploadData.bytes,
-        fileName: uploadData.fileName,
-        caption: captionController.text.trim().isNotEmpty
-            ? captionController.text.trim()
-            : null,
-        locationTag: locationController.text.trim().isNotEmpty
-            ? locationController.text.trim()
-            : null,
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Photo uploaded successfully'),
-              backgroundColor: AppTheme.successGreen),
-        );
-        await _loadData();
-      }
-    } catch (e) {
-      if (mounted) {
-        await ErrorHandler.handleApiError(context, e,
-            defaultMessage: 'Failed to upload photo');
-      }
-    } finally {
-      if (mounted) setState(() => _isUploading = false);
-    }
   }
 
   Future<void> _confirmDelete(GalleryImage image) async {

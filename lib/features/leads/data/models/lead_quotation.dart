@@ -1,3 +1,8 @@
+import 'package:admin/features/leads/data/models/quotation_assumption.dart';
+import 'package:admin/features/leads/data/models/quotation_exclusion.dart';
+import 'package:admin/features/leads/data/models/quotation_inclusion.dart';
+import 'package:admin/features/leads/data/models/quotation_payment_milestone.dart';
+
 class LeadQuotation {
   final int? id;
   final int leadId;
@@ -37,6 +42,52 @@ class LeadQuotation {
   /// Per-sqft headline rate for `SQFT_RATE` mode. Null otherwise.
   final double? ratePerSqft;
   final int validityDays;
+
+  // ── V76 redesign fields ────────────────────────────────────────────────
+
+  /// Sales-stage discriminator: BUDGETARY (lead enquiry, no totals),
+  /// DETAILED (post-site-visit estimate), or CONTRACT_BOQ (signed
+  /// contract). Defaults to DETAILED on legacy rows.
+  final String quotationType;
+
+  /// Predecessor in the BUDGETARY → DETAILED → CONTRACT_BOQ chain.
+  final int? parentQuotationId;
+
+  /// Finish tier — ECONOMY / STANDARD / PREMIUM. Null for legacy rows.
+  final String? tier;
+
+  /// Lower / upper bound of the per-sqft rate range — used by BUDGETARY
+  /// and DETAILED PDFs to render "₹1,950–2,150/sqft" instead of a single
+  /// number. Both null for CONTRACT_BOQ.
+  final double? ratePerSqftMin;
+  final double? ratePerSqftMax;
+
+  /// Lower / upper bound of estimated built-up area (sqft) for DETAILED.
+  final double? estimatedAreaMin;
+  final double? estimatedAreaMax;
+
+  /// Estimated construction duration in months, as a range.
+  final int? durationMonthsMin;
+  final int? durationMonthsMax;
+
+  /// Absolute expiry date — replaces validityDays as the source of truth.
+  /// "Pricing locked till 04 May 2026" reads better than "30 days from when?"
+  final DateTime? validUntil;
+
+  /// When false, the rendered PDF must suppress every grand-total figure.
+  /// New BUDGETARY rows default to false.
+  final bool showGrandTotal;
+
+  /// Random UUID for the customer-facing tracked link
+  /// (`/public/quotations/{token}`). Null until "Send" is clicked.
+  final String? publicViewToken;
+
+  /// V76 sub-resources — populated by GET /leads/quotations/{id}.
+  final List<QuotationInclusion> inclusions;
+  final List<QuotationExclusion> exclusions;
+  final List<QuotationAssumption> assumptions;
+  final List<QuotationPaymentMilestone> paymentMilestones;
+
   final String status;
   final DateTime? sentAt;
   final DateTime? viewedAt;
@@ -72,6 +123,24 @@ class LeadQuotation {
     this.updatedAt,
     this.notes,
     this.items = const [],
+    // V76 redesign defaults — DETAILED keeps legacy semantics; new
+    // BUDGETARY rows must override quotationType + showGrandTotal=false.
+    this.quotationType = 'DETAILED',
+    this.parentQuotationId,
+    this.tier,
+    this.ratePerSqftMin,
+    this.ratePerSqftMax,
+    this.estimatedAreaMin,
+    this.estimatedAreaMax,
+    this.durationMonthsMin,
+    this.durationMonthsMax,
+    this.validUntil,
+    this.showGrandTotal = true,
+    this.publicViewToken,
+    this.inclusions = const [],
+    this.exclusions = const [],
+    this.assumptions = const [],
+    this.paymentMilestones = const [],
   });
 
   factory LeadQuotation.fromJson(Map<String, dynamic> json) {
@@ -130,7 +199,68 @@ class LeadQuotation {
               .map((i) => LeadQuotationItem.fromJson(i))
               .toList()
           : [],
+      // V76 fields. Server sends camelCase; legacy snake_case fallbacks
+      // keep older snapshots / fixtures decoding cleanly.
+      quotationType: (json['quotationType'] ?? json['quotation_type'])
+              as String? ??
+          'DETAILED',
+      parentQuotationId:
+          (json['parentQuotationId'] ?? json['parent_quotation_id']) as int?,
+      tier: json['tier'] as String?,
+      ratePerSqftMin: (json['ratePerSqftMin'] ?? json['rate_per_sqft_min']
+              as num?)
+          ?.toDouble(),
+      ratePerSqftMax: (json['ratePerSqftMax'] ?? json['rate_per_sqft_max']
+              as num?)
+          ?.toDouble(),
+      estimatedAreaMin: (json['estimatedAreaMin'] ?? json['estimated_area_min']
+              as num?)
+          ?.toDouble(),
+      estimatedAreaMax: (json['estimatedAreaMax'] ?? json['estimated_area_max']
+              as num?)
+          ?.toDouble(),
+      durationMonthsMin:
+          (json['durationMonthsMin'] ?? json['duration_months_min']) as int?,
+      durationMonthsMax:
+          (json['durationMonthsMax'] ?? json['duration_months_max']) as int?,
+      validUntil: _parseDate(json['validUntil'] ?? json['valid_until']),
+      showGrandTotal:
+          (json['showGrandTotal'] ?? json['show_grand_total']) as bool? ?? true,
+      publicViewToken:
+          (json['publicViewToken'] ?? json['public_view_token']) as String?,
+      inclusions: (json['inclusions'] as List?)
+              ?.map((i) =>
+                  QuotationInclusion.fromJson(i as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      exclusions: (json['exclusions'] as List?)
+              ?.map((i) =>
+                  QuotationExclusion.fromJson(i as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      assumptions: (json['assumptions'] as List?)
+              ?.map((i) =>
+                  QuotationAssumption.fromJson(i as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      paymentMilestones: (json['paymentMilestones'] as List?)
+              ?.map((i) => QuotationPaymentMilestone.fromJson(
+                  i as Map<String, dynamic>))
+              .toList() ??
+          const [],
     );
+  }
+
+  /// Tolerant ISO-8601 / yyyy-MM-dd date parser. Accepts the bare LocalDate
+  /// shape (`"2026-05-04"`) the backend serialises validUntil as, plus
+  /// full timestamps for safety in case the column is migrated to
+  /// TIMESTAMP WITH TIME ZONE later.
+  static DateTime? _parseDate(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is String && raw.isNotEmpty) {
+      return DateTime.tryParse(raw);
+    }
+    return null;
   }
 
   Map<String, dynamic> toJson() {
@@ -170,6 +300,21 @@ class LeadQuotation {
       'ratePerSqft': ratePerSqft,
       'notes': notes,
       'items': items.map((i) => i.toJson()).toList(),
+      // V76 — only emit non-null fields so legacy DETAILED creates stay
+      // backwards-compatible with older API snapshots.
+      'quotationType': quotationType,
+      if (parentQuotationId != null) 'parentQuotationId': parentQuotationId,
+      if (tier != null) 'tier': tier,
+      if (ratePerSqftMin != null) 'ratePerSqftMin': ratePerSqftMin,
+      if (ratePerSqftMax != null) 'ratePerSqftMax': ratePerSqftMax,
+      if (estimatedAreaMin != null) 'estimatedAreaMin': estimatedAreaMin,
+      if (estimatedAreaMax != null) 'estimatedAreaMax': estimatedAreaMax,
+      if (durationMonthsMin != null) 'durationMonthsMin': durationMonthsMin,
+      if (durationMonthsMax != null) 'durationMonthsMax': durationMonthsMax,
+      if (validUntil != null)
+        'validUntil':
+            '${validUntil!.year.toString().padLeft(4, '0')}-${validUntil!.month.toString().padLeft(2, '0')}-${validUntil!.day.toString().padLeft(2, '0')}',
+      'showGrandTotal': showGrandTotal,
     };
   }
 
@@ -190,10 +335,27 @@ class LeadQuotation {
     String? pricingMode,
     double? ratePerSqft,
     List<LeadQuotationItem>? items,
+    String? quotationType,
+    int? parentQuotationId,
+    String? tier,
+    double? ratePerSqftMin,
+    double? ratePerSqftMax,
+    double? estimatedAreaMin,
+    double? estimatedAreaMax,
+    int? durationMonthsMin,
+    int? durationMonthsMax,
+    DateTime? validUntil,
+    bool? showGrandTotal,
+    String? publicViewToken,
+    List<QuotationInclusion>? inclusions,
+    List<QuotationExclusion>? exclusions,
+    List<QuotationAssumption>? assumptions,
+    List<QuotationPaymentMilestone>? paymentMilestones,
   }) {
     return LeadQuotation(
       id: id ?? this.id,
       leadId: leadId ?? this.leadId,
+      leadName: leadName,
       quotationNumber: quotationNumber ?? this.quotationNumber,
       version: version ?? this.version,
       title: title ?? this.title,
@@ -215,6 +377,22 @@ class LeadQuotation {
       createdAt: createdAt,
       updatedAt: updatedAt,
       notes: notes,
+      quotationType: quotationType ?? this.quotationType,
+      parentQuotationId: parentQuotationId ?? this.parentQuotationId,
+      tier: tier ?? this.tier,
+      ratePerSqftMin: ratePerSqftMin ?? this.ratePerSqftMin,
+      ratePerSqftMax: ratePerSqftMax ?? this.ratePerSqftMax,
+      estimatedAreaMin: estimatedAreaMin ?? this.estimatedAreaMin,
+      estimatedAreaMax: estimatedAreaMax ?? this.estimatedAreaMax,
+      durationMonthsMin: durationMonthsMin ?? this.durationMonthsMin,
+      durationMonthsMax: durationMonthsMax ?? this.durationMonthsMax,
+      validUntil: validUntil ?? this.validUntil,
+      showGrandTotal: showGrandTotal ?? this.showGrandTotal,
+      publicViewToken: publicViewToken ?? this.publicViewToken,
+      inclusions: inclusions ?? this.inclusions,
+      exclusions: exclusions ?? this.exclusions,
+      assumptions: assumptions ?? this.assumptions,
+      paymentMilestones: paymentMilestones ?? this.paymentMilestones,
     );
   }
 }

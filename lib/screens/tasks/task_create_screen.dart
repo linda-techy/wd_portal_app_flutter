@@ -70,7 +70,12 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
   }
 
   Future<void> _createTask() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate() || _selectedDueDate == null) {
+      if (_selectedDueDate == null) {
+        setState(() {}); // Trigger rebuild to show error on due date field
+      }
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -201,11 +206,20 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
                         labelText: 'Project (Optional)',
                         border: OutlineInputBorder(),
                       ),
-                      hint: const Text('Select a project'),
+                      hint: _isLoadingData
+                          ? const Text('Loading projects...')
+                          : _projects.isEmpty
+                              ? const Text('No projects available')
+                              : const Text('Select a project'),
                       items: _projects
                           .map((project) => DropdownMenuItem(
                                 value: project.id!,
-                                child: Text(project.name),
+                                child: Text(
+                                  project.code != null && project.code!.isNotEmpty
+                                      ? '[${project.code}] ${project.name}'
+                                      : project.name,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ))
                           .toList(),
                       onChanged: (value) => setState(() => _selectedProjectId = value),
@@ -219,11 +233,20 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
                         labelText: 'Assign To (Optional)',
                         border: OutlineInputBorder(),
                       ),
-                      hint: const Text('Select team member'),
+                      hint: _isLoadingData
+                          ? const Text('Loading staff...')
+                          : _teamMembers.isEmpty
+                              ? const Text('No staff available')
+                              : const Text('Select team member'),
                       items: _teamMembers
                           .map((member) => DropdownMenuItem(
                                 value: member.id,
-                                child: Text(member.fullName),
+                                child: Text(
+                                  member.fullName.isNotEmpty
+                                      ? member.fullName
+                                      : '${member.firstName} ${member.lastName}'.trim(),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ))
                           .toList(),
                       onChanged: (value) => setState(() => _selectedAssigneeId = value),
@@ -234,10 +257,13 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
                     InkWell(
                       onTap: _selectDate,
                       child: InputDecorator(
-                        decoration: const InputDecoration(
-                          labelText: 'Due Date (Optional)',
-                          border: OutlineInputBorder(),
-                          suffixIcon: Icon(Icons.calendar_today),
+                        decoration: InputDecoration(
+                          labelText: 'Due Date *',
+                          border: const OutlineInputBorder(),
+                          suffixIcon: const Icon(Icons.calendar_today),
+                          errorText: _selectedDueDate == null && _formKey.currentState?.validate() == false 
+                              ? 'Please select a due date' 
+                              : null,
                         ),
                         child: Text(
                           _selectedDueDate == null

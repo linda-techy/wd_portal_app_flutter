@@ -35,12 +35,18 @@ enum ReportType {
       'OTHER': ReportType.other,
     };
 
-    return map[json] ?? 
-           // Try camelCase match if backend sends camelCase
-           ReportType.values.firstWhere(
-             (e) => e.name == json,
-             orElse: () => ReportType.other, // Safer default than dailyProgress to avoid masking errors
-           );
+    final mapped = map[json];
+    if (mapped != null) return mapped;
+    // Try camelCase match if backend sends camelCase
+    final camel = ReportType.values.where((e) => e.name == json);
+    if (camel.isNotEmpty) return camel.first;
+    // Unknown value — log so backend/app schema drift is visible instead
+    // of silently collapsing to OTHER. Common cause: backend added a new
+    // ReportType enum and the app hasn't shipped yet.
+    // ignore: avoid_print
+    print('[ReportType.fromJson] Unknown report type from backend: $json — '
+        'falling back to OTHER. App may be out of date.');
+    return ReportType.other;
   }
 
   // Convert to backend SCREAMING_SNAKE_CASE
@@ -113,6 +119,7 @@ class SiteReportPhoto {
 class SiteReport {
   final int? id;
   final int projectId;
+  final String? _projectName;
   final String title;
   final String? description;
   final DateTime reportDate;
@@ -129,6 +136,7 @@ class SiteReport {
   SiteReport({
     this.id,
     required this.projectId,
+    String? projectName,
     required this.title,
     this.description,
     required this.reportDate,
@@ -141,7 +149,7 @@ class SiteReport {
     this.longitude,
     this.locationAccuracy,
     this.distanceFromProject,
-  });
+  }) : _projectName = projectName;
 
   factory SiteReport.fromJson(Map<String, dynamic> json) {
     // Determine report date from multiple possible fields
@@ -149,32 +157,53 @@ class SiteReport {
     if (json['reportDate'] != null) parsedDate = DateTime.tryParse(json['reportDate'].toString());
     parsedDate ??= json['createdAt'] != null ? DateTime.tryParse(json['createdAt'].toString()) : null;
 
+    // The /search endpoint now returns the flat DTO shape
+    // (projectId/projectName/submittedByName as direct fields). Some legacy
+    // endpoints still return the entity shape (project: {id, name},
+    // submittedBy: {firstName, lastName}). Read flat first, then fall back
+    // to nested so both shapes parse cleanly.
+    int? flatProjectId = json['projectId'] as int?;
+    int parsedProjectId = flatProjectId
+        ?? (json['project'] is Map ? (json['project']['id'] as int? ?? 0) : 0);
+    String? parsedProjectName = json['projectName'] as String?
+        ?? (json['project'] is Map ? json['project']['name'] as String? : null);
+
+    String? parsedSubmittedByName = json['submittedByName'] as String?;
+    if ((parsedSubmittedByName == null || parsedSubmittedByName.isEmpty)
+        && json['submittedBy'] is Map) {
+      final sb = json['submittedBy'] as Map;
+      parsedSubmittedByName = ('${sb['firstName'] ?? ''} ${sb['lastName'] ?? ''}').trim();
+      if (parsedSubmittedByName.isEmpty) parsedSubmittedByName = null;
+    }
+
+    int? parsedSiteVisitId = json['siteVisitId'] as int?
+        ?? (json['siteVisit'] is Map ? json['siteVisit']['id'] as int? : null);
+
     return SiteReport(
       id: json['id'] as int?,
-      projectId: json['project'] != null ? (json['project']['id'] as int? ?? 0) : 0,
+      projectId: parsedProjectId,
+      projectName: parsedProjectName,
       title: json['title'] as String? ?? 'Untitled Report',
       description: json['description'] as String?,
       reportDate: parsedDate ?? DateTime.now(),
       status: json['status'] as String? ?? 'SUBMITTED',
       reportType: ReportType.fromJson(json['reportType']),
-      siteVisitId: json['siteVisit'] != null ? (json['siteVisit']['id'] as int?) : null,
+      siteVisitId: parsedSiteVisitId,
       photos: (json['photos'] as List? ?? [])
           .map((p) => SiteReportPhoto.fromJson(p))
           .toList(),
-      submittedByName: json['submittedBy'] != null 
-          ? '${json['submittedBy']['firstName'] ?? ''} ${json['submittedBy']['lastName'] ?? ''}'.trim()
-          : null,
-      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
-      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
-      locationAccuracy: json['locationAccuracy'] != null ? (json['locationAccuracy'] as num).toDouble() : null,
-      distanceFromProject: json['distanceFromProject'] != null ? (json['distanceFromProject'] as num).toDouble() : null,
+      submittedByName: parsedSubmittedByName,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      locationAccuracy: (json['locationAccuracy'] as num?)?.toDouble(),
+      distanceFromProject: (json['distanceFromProject'] as num?)?.toDouble(),
     );
   }
 
   String get formattedDate => DateFormat('dd MMM yyyy, hh:mm a').format(reportDate);
 
-  /// Project name when provided by API (e.g. from expanded project).
-  String? get projectName => null;
+  /// Project name when provided by API (DTO shape) or null (legacy entity shape).
+  String? get projectName => _projectName;
 
   /// Alias for description (used by site_reports_screen).
   String? get summary => description;
