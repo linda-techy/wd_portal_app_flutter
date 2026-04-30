@@ -373,6 +373,8 @@ class TeamMembersScreenState extends State<TeamMembersScreen> {
     final emailCtrl = TextEditingController(text: member?.email ?? '');
     final phoneCtrl = TextEditingController(text: member?.phone ?? '');
     final whatsappCtrl = TextEditingController(text: member?.whatsapp ?? '');
+    final designationCtrl = TextEditingController(text: member?.designation ?? '');
+    final departmentCtrl = TextEditingController(text: member?.department ?? '');
     int? selectedRoleId = member?.roleId;
     bool isActive = member?.isActive ?? true;
     final formKey = GlobalKey<FormState>();
@@ -442,6 +444,24 @@ class TeamMembersScreenState extends State<TeamMembersScreen> {
                       validator: (v) => v == null ? 'Required' : null,
                     ),
                     const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: designationCtrl,
+                            decoration: const InputDecoration(labelText: 'Designation (e.g. Senior PM)', border: OutlineInputBorder()),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextFormField(
+                            controller: departmentCtrl,
+                            decoration: const InputDecoration(labelText: 'Department (e.g. Civil)', border: OutlineInputBorder()),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
                     SwitchListTile(
                       title: const Text('Active'),
                       value: isActive,
@@ -465,6 +485,8 @@ class TeamMembersScreenState extends State<TeamMembersScreen> {
                   email: emailCtrl.text.trim(),
                   phone: phoneCtrl.text.trim().isNotEmpty ? phoneCtrl.text.trim() : null,
                   whatsapp: whatsappCtrl.text.trim().isNotEmpty ? whatsappCtrl.text.trim() : null,
+                  designation: designationCtrl.text.trim().isNotEmpty ? designationCtrl.text.trim() : null,
+                  department: departmentCtrl.text.trim().isNotEmpty ? departmentCtrl.text.trim() : null,
                   roleId: selectedRoleId,
                   isActive: isActive,
                 );

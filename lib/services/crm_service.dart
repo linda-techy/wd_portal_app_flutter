@@ -54,6 +54,10 @@ class CRMService {
       'enabled': t.isActive ?? true,
       if (password != null && password.isNotEmpty) 'password': password,
       if (t.roleId != null) 'role_id': t.roleId,
+      if (t.phone != null) 'phone': t.phone,
+      if (t.whatsapp != null) 'whatsapp': t.whatsapp,
+      if (t.designation != null) 'designation': t.designation,
+      if (t.department != null) 'department': t.department,
     };
   }
 
