@@ -3,6 +3,7 @@ import 'package:admin/constants.dart';
 import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/features/leads/data/models/lead_interaction.dart';
 import 'package:admin/features/leads/data/services/lead_service.dart';
+import 'package:admin/features/leads/presentation/screens/components/add_interaction_dialog.dart';
 import 'package:intl/intl.dart';
 
 class FollowUpsScreen extends StatefulWidget {
@@ -230,6 +231,20 @@ class FollowUpsScreenState extends State<FollowUpsScreen> with SingleTickerProvi
             margin: const EdgeInsets.only(bottom: 8),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             child: ListTile(
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AddInteractionDialog(
+                    leadId: int.tryParse(lead.leadId) ?? 0,
+                    onSave: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Interaction logged successfully')),
+                      );
+                      _loadOverdueFollowUps();
+                    },
+                  ),
+                );
+              },
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               leading: CircleAvatar(
                 backgroundColor: errorColor.withOpacity(0.1),
