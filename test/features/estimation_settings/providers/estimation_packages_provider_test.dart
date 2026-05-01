@@ -85,4 +85,36 @@ void main() {
     expect(provider.showInactive, isTrue);
     expect(calledWithIncludeInactive, isTrue);
   });
+
+  test('create() handles success:false 200 envelope (plain Exception path)', () async {
+    adapter.mock('POST', '/api/estimation/packages', (_) {
+      return ResponseBody.fromString(
+        '{"success":false,"message":"Internal name already taken"}',
+        200,
+        headers: {'content-type': ['application/json']},
+      );
+    });
+
+    final result = await provider.create(
+      internalName: 'STANDARD',
+      marketingName: 'Foo',
+      displayOrder: 10,
+    );
+    expect(result, isNull);
+    expect(provider.errorMessage, contains('Internal name already taken'));
+  });
+
+  test('delete() humanizes 404 as a friendly message', () async {
+    adapter.mock('DELETE', '/api/estimation/packages/u1', (_) {
+      return ResponseBody.fromString(
+        '{"success":false,"message":"Not found"}',
+        404,
+        headers: {'content-type': ['application/json']},
+      );
+    });
+
+    final ok = await provider.delete('u1');
+    expect(ok, isFalse);
+    expect(provider.errorMessage, contains('not found'));
+  });
 }

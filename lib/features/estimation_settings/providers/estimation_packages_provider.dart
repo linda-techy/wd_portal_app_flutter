@@ -63,6 +63,10 @@ class EstimationPackagesProvider extends ChangeNotifier {
       _errorMessage = _humanizeDioError(e);
       notifyListeners();
       return null;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return null;
     }
   }
 
@@ -89,6 +93,10 @@ class EstimationPackagesProvider extends ChangeNotifier {
       _errorMessage = _humanizeDioError(e);
       notifyListeners();
       return null;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return null;
     }
   }
 
@@ -101,17 +109,29 @@ class EstimationPackagesProvider extends ChangeNotifier {
       _errorMessage = _humanizeDioError(e);
       notifyListeners();
       return false;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return false;
     }
   }
 
   String _humanizeDioError(DioException e) {
-    if (e.response?.statusCode == 401) return 'Not signed in. Please log in again.';
-    if (e.response?.statusCode == 403) return 'You do not have permission to perform this action.';
-    if (e.response?.statusCode == 400) {
+    final status = e.response?.statusCode;
+    if (status == 401) return 'Not signed in. Please log in again.';
+    if (status == 403) return 'You do not have permission to perform this action.';
+    if (status == 400) {
       final data = e.response?.data;
       if (data is Map && data['message'] is String) return data['message'] as String;
       return 'Invalid request.';
     }
+    if (status == 404) return 'Package not found.';
+    if (status == 409) {
+      final data = e.response?.data;
+      if (data is Map && data['message'] is String) return data['message'] as String;
+      return 'Conflict — the operation could not be completed.';
+    }
+    if (status != null && status >= 500) return 'Server error. Please try again later.';
     return e.message ?? 'Network error.';
   }
 }
