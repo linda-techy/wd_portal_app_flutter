@@ -38,7 +38,7 @@ class _PackagesListScreenState extends State<PackagesListScreen> {
             IconButton(
               icon: const Icon(Icons.add),
               tooltip: 'New package',
-              onPressed: () => _onCreate(context),
+              onPressed: _onCreate,
             ),
             IconButton(
               icon: const Icon(Icons.refresh),
@@ -92,10 +92,12 @@ class _PackagesListScreenState extends State<PackagesListScreen> {
                             PopupMenuItem(value: 'delete', child: Text('Delete')),
                           ],
                           onSelected: (action) {
-                            if (action == 'edit') _onEdit(context, pkg);
-                            if (action == 'delete') _onDelete(context, pkg);
+                            if (action == 'edit') _onEdit(pkg);
+                            if (action == 'delete') _onDelete(pkg);
                           },
                         ),
+                        // PopupMenuButton intentionally stays enabled even when the tile is "disabled"
+                        // (greyed out for inactive packages) — admins need to edit/reactivate them.
                         enabled: pkg.active,
                       );
                     },
@@ -123,7 +125,7 @@ class _PackagesListScreenState extends State<PackagesListScreen> {
     );
   }
 
-  Future<void> _onCreate(BuildContext context) async {
+  Future<void> _onCreate() async {
     final form = await PackageEditDialog.show(context);
     if (form == null) return;
     final created = await _provider.create(
@@ -133,14 +135,14 @@ class _PackagesListScreenState extends State<PackagesListScreen> {
       description: form['description'] as String?,
       displayOrder: form['displayOrder'] as int,
     );
-    if (created != null && context.mounted) {
+    if (created != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Package "${created.marketingName}" created')),
       );
     }
   }
 
-  Future<void> _onEdit(BuildContext context, EstimationPackage pkg) async {
+  Future<void> _onEdit(EstimationPackage pkg) async {
     final form = await PackageEditDialog.show(context, existing: pkg);
     if (form == null) return;
     final updated = await _provider.update(
@@ -151,14 +153,14 @@ class _PackagesListScreenState extends State<PackagesListScreen> {
       displayOrder: form['displayOrder'] as int,
       active: form['active'] as bool,
     );
-    if (updated != null && context.mounted) {
+    if (updated != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Package "${updated.marketingName}" updated')),
       );
     }
   }
 
-  Future<void> _onDelete(BuildContext context, EstimationPackage pkg) async {
+  Future<void> _onDelete(EstimationPackage pkg) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -179,7 +181,7 @@ class _PackagesListScreenState extends State<PackagesListScreen> {
     );
     if (confirm != true) return;
     final ok = await _provider.delete(pkg.id);
-    if (ok && context.mounted) {
+    if (ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Package "${pkg.marketingName}" deleted')),
       );
