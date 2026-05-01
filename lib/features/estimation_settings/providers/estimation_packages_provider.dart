@@ -29,7 +29,7 @@ class EstimationPackagesProvider extends ChangeNotifier {
     } on DioException catch (e) {
       _errorMessage = _humanizeDioError(e);
     } catch (e) {
-      _errorMessage = 'Unexpected error: $e';
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
     } finally {
       _isLoading = false;
       notifyListeners();

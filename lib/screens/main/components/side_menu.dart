@@ -558,7 +558,7 @@ final List<_MenuGroupData> _menuGroups = [
       ),
       _MenuItem(
         title: 'Estimation Settings',
-        icon: Icons.tune,
+        icon: Icons.calculate_outlined,
         index: 27,
         isVisible: (p) => p.canManageEstimationSettings,
       ),
