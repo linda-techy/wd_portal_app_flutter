@@ -21,7 +21,8 @@ class RateVersionsProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  /// Set the (package, projectType) pair. Triggers a load when both are set.
+  /// Update the (packageId, projectType) selection. Triggers [load] whenever
+  /// `_packageId` is non-null after the change; otherwise just notifies listeners.
   Future<void> select({String? packageId, ProjectType? projectType}) async {
     bool changed = false;
     if (packageId != null && packageId != _packageId) {
