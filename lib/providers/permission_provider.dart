@@ -172,6 +172,9 @@ class PermissionProvider with ChangeNotifier {
   bool get canCustomerApproveBoq => hasPermission('BOQ_APPROVE');
   bool get canCorrectBoq => hasPermission('BOQ_CORRECT');
 
+  // Estimation Settings permissions
+  bool get canManageEstimationSettings => hasPermission('ESTIMATION_SETTINGS_MANAGE');
+
   // DPC (Detailed Project Costing) permissions
   bool get canViewDpc => hasPermission('DPC_VIEW');
   bool get canCreateDpc => hasPermission('DPC_CREATE');

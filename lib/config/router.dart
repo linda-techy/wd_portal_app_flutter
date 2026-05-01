@@ -40,6 +40,8 @@ import 'package:admin/features/dpc/presentation/screens/dpc_template_edit_screen
 import 'package:admin/features/leads/presentation/screens/lead_quotation_detail_screen.dart';
 import 'package:admin/features/quotation_catalog/presentation/screens/quotation_catalog_admin_screen.dart';
 import 'package:admin/features/dpc_customization_catalog/presentation/screens/dpc_customization_catalog_admin_screen.dart';
+import 'package:admin/features/estimation_settings/presentation/screens/estimation_settings_hub_screen.dart';
+import 'package:admin/features/estimation_settings/presentation/screens/packages_list_screen.dart';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -74,6 +76,8 @@ const Map<String, int> kPathToMenuIndex = {
   '/dpc/templates':24,
   '/quotation-catalog':25,
   '/dpc-customization-catalog':26,
+  '/settings/estimation':     27,
+  '/settings/estimation/packages': 28,
 };
 
 /// Map a menu index (from [MenuAppController]) to its route path.
@@ -86,6 +90,8 @@ const List<String> kIndexToPath = [
   '/dpc/templates',
   '/quotation-catalog',
   '/dpc-customization-catalog',
+  '/settings/estimation',
+  '/settings/estimation/packages',
 ];
 
 String indexToPath(int index) =>
@@ -232,6 +238,16 @@ GoRouter buildAppRouter(PortalAuthProvider authProvider) {
           GoRoute(
             path: '/dpc-customization-catalog',
             builder: (_, __) => const DpcCustomizationCatalogAdminScreen(),
+          ),
+
+          // Estimation Settings
+          GoRoute(
+            path: '/settings/estimation',
+            builder: (_, __) => const EstimationSettingsHubScreen(),
+          ),
+          GoRoute(
+            path: '/settings/estimation/packages',
+            builder: (_, __) => const PackagesListScreen(),
           ),
         ],
       ),

@@ -556,6 +556,12 @@ final List<_MenuGroupData> _menuGroups = [
         index: 26,
         isVisible: (p) => p.canManageDpcCustomizationCatalog,
       ),
+      _MenuItem(
+        title: 'Estimation Settings',
+        icon: Icons.tune,
+        index: 27,
+        isVisible: (p) => p.canManageEstimationSettings,
+      ),
       const _MenuItem(
         title: 'Profile',
         svgSrc: 'assets/icons/menu_profile.svg',
