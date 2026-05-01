@@ -11,9 +11,9 @@ class PackageRateVersion {
   final String id;
   final String packageId;
   final ProjectType projectType;
-  final num materialRate;
-  final num labourRate;
-  final num overheadRate;
+  final double materialRate;
+  final double labourRate;
+  final double overheadRate;
   final DateTime effectiveFrom;
   final DateTime? effectiveTo;
 
@@ -25,7 +25,7 @@ class PackageRateVersion {
     required this.labourRate,
     required this.overheadRate,
     required this.effectiveFrom,
-    required this.effectiveTo,
+    this.effectiveTo,
   });
 
   /// True when `effectiveTo` is null — the open-ended row is the currently-active version.
@@ -39,9 +39,9 @@ class PackageRateVersion {
       id: json['id'] as String,
       packageId: json['packageId'] as String,
       projectType: ProjectType.values.byName(json['projectType'] as String),
-      materialRate: json['materialRate'] as num,
-      labourRate: json['labourRate'] as num,
-      overheadRate: json['overheadRate'] as num,
+      materialRate: (json['materialRate'] as num).toDouble(),
+      labourRate: (json['labourRate'] as num).toDouble(),
+      overheadRate: (json['overheadRate'] as num).toDouble(),
       effectiveFrom: DateTime.parse(json['effectiveFrom'] as String),
       effectiveTo: json['effectiveTo'] != null
           ? DateTime.parse(json['effectiveTo'] as String)
@@ -54,9 +54,9 @@ class PackageRateVersion {
   static Map<String, dynamic> createPayload({
     required String packageId,
     required ProjectType projectType,
-    required num materialRate,
-    required num labourRate,
-    required num overheadRate,
+    required double materialRate,
+    required double labourRate,
+    required double overheadRate,
     DateTime? effectiveFrom,
   }) {
     return {

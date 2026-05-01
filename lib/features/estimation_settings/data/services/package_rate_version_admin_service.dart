@@ -65,9 +65,9 @@ class PackageRateVersionAdminService {
   Future<PackageRateVersion> create({
     required String packageId,
     required ProjectType projectType,
-    required num materialRate,
-    required num labourRate,
-    required num overheadRate,
+    required double materialRate,
+    required double labourRate,
+    required double overheadRate,
     DateTime? effectiveFrom,
   }) async {
     final response = await _dio.post(
