@@ -94,7 +94,7 @@ class _PackageEditDialogState extends State<PackageEditDialog> {
                   decoration: const InputDecoration(labelText: 'Marketing Name *'),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) return 'Required';
-                    if (v.length > 100) return 'Max 100 characters';
+                    if (v.trim().length > 100) return 'Max 100 characters';
                     return null;
                   },
                 ),
@@ -155,7 +155,7 @@ class _PackageEditDialogState extends State<PackageEditDialog> {
       'tagline': _tagline.text.trim().isEmpty ? null : _tagline.text.trim(),
       'description': _description.text.trim().isEmpty ? null : _description.text.trim(),
       'displayOrder': int.parse(_displayOrder.text),
-      'active': _active,
+      if (_isEdit) 'active': _active,
     };
     Navigator.of(context).pop(result);
   }
