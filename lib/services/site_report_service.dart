@@ -8,10 +8,22 @@ import 'dart:convert';
 class SiteReportService {
   final ApiService _apiService = ApiService();
 
+  /// Reports for a single project, ordered newest first.
+  ///
+  /// Switched off the {@code @Deprecated /api/site-reports/project/{id}}
+  /// endpoint to {@code /api/site-reports/search?projectId=…}. The new
+  /// endpoint returns the canonical {@code Page<SiteReportDto>} shape,
+  /// supports server-side pagination, and is the only one the audit
+  /// flagged as safe to keep.
   Future<List<SiteReport>> getReportsByProject(int projectId) async {
-    final response = await _apiService.get('/api/site-reports/project/$projectId');
-    return _apiService.unwrapList(
-        response, (json) => SiteReport.fromJson(json));
+    final page = await searchSiteReports(
+      page: 0,
+      size: 200,
+      sortBy: 'reportDate',
+      sortDirection: 'desc',
+      filters: {'projectId': projectId},
+    );
+    return page.content;
   }
 
   Future<List<SiteReport>> getMyReports() async {
