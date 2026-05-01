@@ -1,0 +1,76 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:admin/features/estimation_settings/data/services/estimation_package_admin_service.dart';
+import 'package:admin/features/estimation_settings/providers/estimation_packages_provider.dart';
+
+class _MockDioAdapter implements HttpClientAdapter {
+  final Map<String, ResponseBody Function(RequestOptions)> _handlers = {};
+  void mock(String method, String path, ResponseBody Function(RequestOptions) handler) {
+    _handlers['$method $path'] = handler;
+  }
+
+  @override
+  Future<ResponseBody> fetch(RequestOptions options, Stream<List<int>>? requestStream, Future<dynamic>? cancelFuture) async {
+    final handler = _handlers['${options.method} ${options.path}'];
+    if (handler == null) throw StateError('No mock for ${options.method} ${options.path}');
+    return handler(options);
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+const _threePackagesJson = '''{
+  "success": true,
+  "data": [
+    {"id":"u1","internalName":"BASIC","marketingName":"Foundation Series","displayOrder":10,"active":true},
+    {"id":"u2","internalName":"STANDARD","marketingName":"Signature","displayOrder":20,"active":true},
+    {"id":"u3","internalName":"PREMIUM","marketingName":"Luxe","displayOrder":30,"active":true}
+  ]
+}''';
+
+void main() {
+  testWidgets('list renders the 3 packages from the API', (tester) async {
+    final dio = Dio(BaseOptions(baseUrl: 'http://test/api'));
+    final adapter = _MockDioAdapter();
+    dio.httpClientAdapter = adapter;
+    adapter.mock('GET', '/api/estimation/packages', (_) {
+      return ResponseBody.fromString(
+        _threePackagesJson, 200,
+        headers: {'content-type': ['application/json']},
+      );
+    });
+
+    await tester.pumpWidget(MaterialApp(
+      home: ChangeNotifierProvider<EstimationPackagesProvider>(
+        create: (_) => EstimationPackagesProvider(
+          service: EstimationPackageAdminService(dio: dio),
+        )..load(),
+        child: Scaffold(
+          appBar: AppBar(title: const Text('Estimation Packages')),
+          body: Consumer<EstimationPackagesProvider>(
+            builder: (context, p, _) {
+              if (p.isLoading) return const Center(child: CircularProgressIndicator());
+              return ListView(
+                children: p.packages
+                    .map((pkg) => ListTile(
+                          leading: CircleAvatar(child: Text('#${pkg.displayOrder}')),
+                          title: Text('${pkg.internalName}  —  ${pkg.marketingName}'),
+                        ))
+                    .toList(),
+              );
+            },
+          ),
+        ),
+      ),
+    ));
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('BASIC  —  Foundation Series'), findsOneWidget);
+    expect(find.text('STANDARD  —  Signature'), findsOneWidget);
+    expect(find.text('PREMIUM  —  Luxe'), findsOneWidget);
+  });
+}
