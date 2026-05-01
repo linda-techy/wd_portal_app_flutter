@@ -4,29 +4,35 @@ import 'package:admin/features/estimation_settings/data/models/estimation_packag
 
 /// Admin API for /api/estimation/packages.
 ///
-/// All methods throw DioException on HTTP errors; callers should catch and surface
-/// to the UI as snackbars or inline errors.
+/// All methods go through [ApiService.unwrap] / [ApiService.unwrapList] so that
+/// `success: false` envelopes throw and DioExceptions are rewritten to
+/// user-friendly messages via [ApiService._handleError].
 class EstimationPackageAdminService {
-  final Dio _dio;
+  final ApiService _api;
+  final Dio? _injectedDio;
 
-  EstimationPackageAdminService({Dio? dio}) : _dio = dio ?? ApiService().dio;
+  EstimationPackageAdminService({ApiService? api, Dio? dio})
+      : _api = api ?? ApiService(),
+        _injectedDio = dio;
+
+  Dio get _dio => _injectedDio ?? _api.dio;
 
   /// GET /api/estimation/packages?includeInactive={includeInactive}
   Future<List<EstimationPackage>> list({bool includeInactive = false}) async {
     final response = await _dio.get(
-      '/estimation/packages',
+      '/api/estimation/packages',
       queryParameters: {'includeInactive': includeInactive},
     );
-    final data = response.data['data'] as List<dynamic>;
-    return data
-        .map((json) => EstimationPackage.fromJson(json as Map<String, dynamic>))
-        .toList();
+    return _api.unwrapList(response, EstimationPackage.fromJson);
   }
 
   /// GET /api/estimation/packages/{id}
   Future<EstimationPackage> get(String id) async {
-    final response = await _dio.get('/estimation/packages/$id');
-    return EstimationPackage.fromJson(response.data['data'] as Map<String, dynamic>);
+    final response = await _dio.get('/api/estimation/packages/$id');
+    return _api.unwrap<EstimationPackage>(
+      response,
+      (json) => EstimationPackage.fromJson(json as Map<String, dynamic>),
+    );
   }
 
   /// POST /api/estimation/packages
@@ -38,7 +44,7 @@ class EstimationPackageAdminService {
     required int displayOrder,
   }) async {
     final response = await _dio.post(
-      '/estimation/packages',
+      '/api/estimation/packages',
       data: EstimationPackage.createPayload(
         internalName: internalName,
         marketingName: marketingName,
@@ -47,7 +53,10 @@ class EstimationPackageAdminService {
         displayOrder: displayOrder,
       ),
     );
-    return EstimationPackage.fromJson(response.data['data'] as Map<String, dynamic>);
+    return _api.unwrap<EstimationPackage>(
+      response,
+      (json) => EstimationPackage.fromJson(json as Map<String, dynamic>),
+    );
   }
 
   /// PUT /api/estimation/packages/{id}
@@ -60,20 +69,24 @@ class EstimationPackageAdminService {
     required bool active,
   }) async {
     final response = await _dio.put(
-      '/estimation/packages/$id',
-      data: {
-        'marketingName': marketingName,
-        if (tagline != null) 'tagline': tagline,
-        if (description != null) 'description': description,
-        'displayOrder': displayOrder,
-        'active': active,
-      },
+      '/api/estimation/packages/$id',
+      data: EstimationPackage.updatePayload(
+        marketingName: marketingName,
+        tagline: tagline,
+        description: description,
+        displayOrder: displayOrder,
+        active: active,
+      ),
     );
-    return EstimationPackage.fromJson(response.data['data'] as Map<String, dynamic>);
+    return _api.unwrap<EstimationPackage>(
+      response,
+      (json) => EstimationPackage.fromJson(json as Map<String, dynamic>),
+    );
   }
 
   /// DELETE /api/estimation/packages/{id}
   Future<void> delete(String id) async {
-    await _dio.delete('/estimation/packages/$id');
+    final response = await _dio.delete('/api/estimation/packages/$id');
+    _api.unwrap<void>(response, (_) {});
   }
 }

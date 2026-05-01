@@ -51,7 +51,7 @@ class EstimationPackage {
 
   /// Update payload — used by PUT /api/estimation/packages/{id}
   /// Note: internalName is intentionally excluded (immutable post-creation).
-  Map<String, dynamic> updatePayload({
+  static Map<String, dynamic> updatePayload({
     required String marketingName,
     String? tagline,
     String? description,

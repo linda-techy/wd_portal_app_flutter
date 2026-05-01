@@ -40,7 +40,7 @@ void main() {
   });
 
   test('list parses ApiResponse envelope and returns models', () async {
-    adapter.mock('GET', '/estimation/packages', (_) {
+    adapter.mock('GET', '/api/estimation/packages', (_) {
       return ResponseBody.fromString(
         '{"success":true,"message":"OK","data":[{"id":"u1","internalName":"STANDARD","marketingName":"Signature","displayOrder":20,"active":true}]}',
         200,
@@ -55,7 +55,7 @@ void main() {
   });
 
   test('create POSTs the right payload and returns the response model', () async {
-    adapter.mock('POST', '/estimation/packages', (options) {
+    adapter.mock('POST', '/api/estimation/packages', (options) {
       final body = options.data as Map<String, dynamic>;
       expect(body['internalName'], 'PREMIUM');
       expect(body['marketingName'], 'Luxe');
@@ -78,7 +78,7 @@ void main() {
   });
 
   test('update PUTs without internalName field', () async {
-    adapter.mock('PUT', '/estimation/packages/u1', (options) {
+    adapter.mock('PUT', '/api/estimation/packages/u1', (options) {
       final body = options.data as Map<String, dynamic>;
       expect(body.containsKey('internalName'), isFalse,
           reason: 'internalName must NOT be in update payload (immutable)');
@@ -102,7 +102,7 @@ void main() {
 
   test('delete sends DELETE request', () async {
     var called = false;
-    adapter.mock('DELETE', '/estimation/packages/u1', (_) {
+    adapter.mock('DELETE', '/api/estimation/packages/u1', (_) {
       called = true;
       return ResponseBody.fromString(
         '{"success":true,"message":"Package deleted"}',
