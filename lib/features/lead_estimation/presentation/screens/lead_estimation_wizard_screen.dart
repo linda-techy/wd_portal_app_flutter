@@ -1,0 +1,273 @@
+/// Lead Estimation Wizard — 5-step Material Stepper.
+///
+/// Steps:
+///   1. Package + Project Type selection
+///   2. Floor dimensions (length × width per floor, semi-covered + open-terrace areas)
+///   3. Customisations  — MVP placeholder (skip-able; endpoints not yet available)
+///   4. Add-ons & Fees  — MVP placeholder (skip-able; endpoints not yet available)
+///   5. Review + live preview → Save
+///
+/// Steps 3 and 4 are intentional "Coming soon" placeholders that pass empty
+/// arrays to the backend.  Future sub-projects will wire real customisation /
+/// add-on endpoints once `GET /api/estimation/customisation-categories` etc.
+/// are implemented.
+library;
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:admin/features/estimation_settings/data/models/package_rate_version.dart';
+import 'package:admin/features/estimation_settings/providers/estimation_packages_provider.dart';
+import 'package:admin/features/lead_estimation/providers/lead_estimations_provider.dart';
+import 'package:admin/features/lead_estimation/presentation/widgets/wizard_step_1_package.dart';
+import 'package:admin/features/lead_estimation/presentation/widgets/wizard_step_2_dimensions.dart';
+import 'package:admin/features/lead_estimation/presentation/widgets/wizard_step_3_customisations.dart';
+import 'package:admin/features/lead_estimation/presentation/widgets/wizard_step_4_addons_fees.dart';
+import 'package:admin/features/lead_estimation/presentation/widgets/wizard_step_5_review.dart';
+
+// ---------------------------------------------------------------------------
+// Wizard draft model — public so step widgets can reference the types
+// ---------------------------------------------------------------------------
+
+class WizardFloorInput {
+  String name = '';
+  double length = 0;
+  double width = 0;
+}
+
+class WizardDraft {
+  // Step 1
+  String? packageId;
+  ProjectType projectType = ProjectType.NEW_BUILD;
+
+  // Step 2
+  List<WizardFloorInput> floors = [WizardFloorInput()];
+  double semiCoveredArea = 0;
+  double openTerraceArea = 0;
+
+  // Step 3 — empty until future endpoint is available
+  List<Map<String, String>> customisations = [];
+
+  // Step 4 — empty until future endpoint is available
+  List<String> siteFeeIds = [];
+  List<String> addOnIds = [];
+  List<String> govtFeeIds = [];
+
+  // Step 5 — all optional (backend supplies defaults)
+  double? discountPercent;
+  double? gstRate;
+  DateTime? validUntil;
+
+  Map<String, dynamic> toPreviewPayload() {
+    return {
+      'projectType': projectType.name,
+      'packageId': packageId,
+      'dimensions': {
+        'floors': floors
+            .map((f) => {
+                  'floorName': f.name,
+                  'length': f.length,
+                  'width': f.width,
+                })
+            .toList(),
+        'semiCoveredArea': semiCoveredArea,
+        'openTerraceArea': openTerraceArea,
+      },
+      'customisations': customisations,
+      'siteFees': siteFeeIds.map((id) => {'id': id}).toList(),
+      'addOns': addOnIds.map((id) => {'id': id}).toList(),
+      'govtFees': govtFeeIds.map((id) => {'id': id}).toList(),
+      if (discountPercent != null) 'discountPercent': discountPercent,
+      if (gstRate != null) 'gstRate': gstRate,
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Screen widget
+// ---------------------------------------------------------------------------
+
+class LeadEstimationWizardScreen extends StatefulWidget {
+  final int leadId;
+
+  const LeadEstimationWizardScreen({super.key, required this.leadId});
+
+  @override
+  State<LeadEstimationWizardScreen> createState() =>
+      _LeadEstimationWizardScreenState();
+}
+
+class _LeadEstimationWizardScreenState
+    extends State<LeadEstimationWizardScreen> {
+  late final EstimationPackagesProvider _packagesProvider;
+  late final LeadEstimationsProvider _estimationsProvider;
+
+  final _draft = WizardDraft();
+  int _currentStep = 0;
+
+  // Per-step form keys for validation
+  final _step1Key = GlobalKey<FormState>();
+  final _step2Key = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _packagesProvider = EstimationPackagesProvider();
+    _estimationsProvider = LeadEstimationsProvider();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future.wait([
+        _packagesProvider.load(),
+        _estimationsProvider.loadForLead(widget.leadId),
+      ]);
+    });
+  }
+
+  @override
+  void dispose() {
+    _packagesProvider.dispose();
+    _estimationsProvider.dispose();
+    super.dispose();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Navigation helpers
+  // ---------------------------------------------------------------------------
+
+  void _goNext() {
+    if (_currentStep == 0) {
+      if (!(_step1Key.currentState?.validate() ?? false)) return;
+      if (_draft.packageId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a package.')),
+        );
+        return;
+      }
+    } else if (_currentStep == 1) {
+      if (!(_step2Key.currentState?.validate() ?? false)) return;
+    }
+    // Steps 2 (index 2 = customisations) and 3 (add-ons) are skip-able
+    if (_currentStep < 4) {
+      setState(() => _currentStep++);
+    }
+  }
+
+  void _goBack() {
+    if (_currentStep > 0) setState(() => _currentStep--);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<EstimationPackagesProvider>.value(
+            value: _packagesProvider),
+        ChangeNotifierProvider<LeadEstimationsProvider>.value(
+            value: _estimationsProvider),
+      ],
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('New Estimation — Lead #${widget.leadId}'),
+        ),
+        body: Stepper(
+          type: StepperType.vertical,
+          currentStep: _currentStep,
+          onStepTapped: (i) {
+            // Allow tapping back to already-visited steps; block forward jumps
+            if (i < _currentStep) setState(() => _currentStep = i);
+          },
+          controlsBuilder: _buildControls,
+          steps: [
+            Step(
+              title: const Text('Package'),
+              isActive: _currentStep >= 0,
+              state: _currentStep > 0 ? StepState.complete : StepState.indexed,
+              content: Form(
+                key: _step1Key,
+                child: WizardStep1Package(
+                  draft: _draft,
+                  packagesProvider: _packagesProvider,
+                  onChanged: () => setState(() {}),
+                ),
+              ),
+            ),
+            Step(
+              title: const Text('Dimensions'),
+              isActive: _currentStep >= 1,
+              state: _currentStep > 1 ? StepState.complete : StepState.indexed,
+              content: Form(
+                key: _step2Key,
+                child: WizardStep2Dimensions(
+                  draft: _draft,
+                  onChanged: () => setState(() {}),
+                ),
+              ),
+            ),
+            Step(
+              title: const Text('Customisations'),
+              isActive: _currentStep >= 2,
+              state: _currentStep > 2 ? StepState.complete : StepState.indexed,
+              content: WizardStep3Customisations(
+                draft: _draft,
+                onChanged: () => setState(() {}),
+              ),
+            ),
+            Step(
+              title: const Text('Add-ons & Fees'),
+              isActive: _currentStep >= 3,
+              state: _currentStep > 3 ? StepState.complete : StepState.indexed,
+              content: WizardStep4AddOnsFees(
+                draft: _draft,
+                onChanged: () => setState(() {}),
+              ),
+            ),
+            Step(
+              title: const Text('Review & Save'),
+              isActive: _currentStep >= 4,
+              state: StepState.indexed,
+              content: WizardStep5Review(
+                draft: _draft,
+                estimationsProvider: _estimationsProvider,
+                onChanged: () => setState(() {}),
+                onSaved: (created) => Navigator.of(context).pop(created),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildControls(BuildContext context, ControlsDetails details) {
+    // Step 5 manages its own Save button; the stepper controls are hidden there.
+    if (_currentStep == 4) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Row(
+        children: [
+          FilledButton(
+            onPressed: _goNext,
+            child: Text(_currentStep == 3 ? 'Continue to Review' : 'Next'),
+          ),
+          const SizedBox(width: 12),
+          if (_currentStep > 0)
+            OutlinedButton(
+              onPressed: _goBack,
+              child: const Text('Back'),
+            ),
+          // Steps 3 + 4 show a Skip shortcut for clarity
+          if (_currentStep == 2 || _currentStep == 3) ...[
+            const SizedBox(width: 12),
+            TextButton(
+              onPressed: _goNext,
+              child: const Text('Skip'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
