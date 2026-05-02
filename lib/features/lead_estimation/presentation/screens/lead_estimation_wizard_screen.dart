@@ -3,20 +3,16 @@
 /// Steps:
 ///   1. Package + Project Type selection
 ///   2. Floor dimensions (length × width per floor, semi-covered + open-terrace areas)
-///   3. Customisations  — MVP placeholder (skip-able; endpoints not yet available)
-///   4. Add-ons & Fees  — MVP placeholder (skip-able; endpoints not yet available)
+///   3. Customisations  — real selectors from EstimationOptionsProvider
+///   4. Add-ons & Fees  — real selectors from EstimationOptionsProvider
 ///   5. Review + live preview → Save
-///
-/// Steps 3 and 4 are intentional "Coming soon" placeholders that pass empty
-/// arrays to the backend.  Future sub-projects will wire real customisation /
-/// add-on endpoints once `GET /api/estimation/customisation-categories` etc.
-/// are implemented.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/features/estimation_settings/data/models/package_rate_version.dart';
 import 'package:admin/features/estimation_settings/providers/estimation_packages_provider.dart';
+import 'package:admin/features/lead_estimation/providers/estimation_options_provider.dart';
 import 'package:admin/features/lead_estimation/providers/lead_estimations_provider.dart';
 import 'package:admin/features/lead_estimation/presentation/widgets/wizard_step_1_package.dart';
 import 'package:admin/features/lead_estimation/presentation/widgets/wizard_step_2_dimensions.dart';
@@ -100,6 +96,7 @@ class _LeadEstimationWizardScreenState
     extends State<LeadEstimationWizardScreen> {
   late final EstimationPackagesProvider _packagesProvider;
   late final LeadEstimationsProvider _estimationsProvider;
+  late final EstimationOptionsProvider _optionsProvider;
 
   final _draft = WizardDraft();
   int _currentStep = 0;
@@ -113,6 +110,7 @@ class _LeadEstimationWizardScreenState
     super.initState();
     _packagesProvider = EstimationPackagesProvider();
     _estimationsProvider = LeadEstimationsProvider();
+    _optionsProvider = EstimationOptionsProvider();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await Future.wait([
         _packagesProvider.load(),
@@ -125,6 +123,7 @@ class _LeadEstimationWizardScreenState
   void dispose() {
     _packagesProvider.dispose();
     _estimationsProvider.dispose();
+    _optionsProvider.dispose();
     super.dispose();
   }
 
@@ -141,6 +140,8 @@ class _LeadEstimationWizardScreenState
         );
         return;
       }
+      // Trigger catalog load now that packageId is known.
+      _optionsProvider.loadForPackage(_draft.packageId);
     } else if (_currentStep == 1) {
       if (!(_step2Key.currentState?.validate() ?? false)) return;
     }
@@ -166,6 +167,8 @@ class _LeadEstimationWizardScreenState
             value: _packagesProvider),
         ChangeNotifierProvider<LeadEstimationsProvider>.value(
             value: _estimationsProvider),
+        ChangeNotifierProvider<EstimationOptionsProvider>.value(
+            value: _optionsProvider),
       ],
       child: Scaffold(
         appBar: AppBar(
@@ -212,6 +215,7 @@ class _LeadEstimationWizardScreenState
               content: WizardStep3Customisations(
                 draft: _draft,
                 onChanged: () => setState(() {}),
+                optionsProvider: _optionsProvider,
               ),
             ),
             Step(
@@ -221,6 +225,7 @@ class _LeadEstimationWizardScreenState
               content: WizardStep4AddOnsFees(
                 draft: _draft,
                 onChanged: () => setState(() {}),
+                optionsProvider: _optionsProvider,
               ),
             ),
             Step(
