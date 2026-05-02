@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:admin/features/estimation_settings/data/models/package_rate_version.dart';
+import 'package:admin/features/lead_estimation/data/models/estimation_sub_resource.dart';
 
 enum LeadEstimationStatus { DRAFT }
 
@@ -97,6 +98,10 @@ class LeadEstimationDetail {
   final DateTime? validUntil;
   final DateTime createdAt;
   final List<LeadEstimationLineItem> lineItems;
+  final List<EstimationSubResource> inclusions;
+  final List<EstimationSubResource> exclusions;
+  final List<EstimationSubResource> assumptions;
+  final List<EstimationSubResource> paymentMilestones;
 
   const LeadEstimationDetail({
     required this.id,
@@ -114,6 +119,10 @@ class LeadEstimationDetail {
     this.validUntil,
     required this.createdAt,
     required this.lineItems,
+    this.inclusions = const [],
+    this.exclusions = const [],
+    this.assumptions = const [],
+    this.paymentMilestones = const [],
   });
 
   factory LeadEstimationDetail.fromJson(Map<String, dynamic> json) {
@@ -136,6 +145,18 @@ class LeadEstimationDetail {
       createdAt: DateTime.parse(json['createdAt'] as String),
       lineItems: (json['lineItems'] as List<dynamic>)
           .map((j) => LeadEstimationLineItem.fromJson(j as Map<String, dynamic>))
+          .toList(),
+      inclusions: ((json['inclusions'] as List<dynamic>?) ?? [])
+          .map((j) => EstimationSubResource.fromJson(j as Map<String, dynamic>))
+          .toList(),
+      exclusions: ((json['exclusions'] as List<dynamic>?) ?? [])
+          .map((j) => EstimationSubResource.fromJson(j as Map<String, dynamic>))
+          .toList(),
+      assumptions: ((json['assumptions'] as List<dynamic>?) ?? [])
+          .map((j) => EstimationSubResource.fromJson(j as Map<String, dynamic>))
+          .toList(),
+      paymentMilestones: ((json['paymentMilestones'] as List<dynamic>?) ?? [])
+          .map((j) => EstimationSubResource.fromJson(j as Map<String, dynamic>))
           .toList(),
     );
   }
