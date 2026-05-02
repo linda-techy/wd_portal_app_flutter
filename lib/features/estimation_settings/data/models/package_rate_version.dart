@@ -32,7 +32,7 @@ class PackageRateVersion {
   bool get isActive => effectiveTo == null;
 
   /// Convenience: sum of the three rate components in ₹/sqft.
-  num get totalRate => materialRate + labourRate + overheadRate;
+  double get totalRate => materialRate + labourRate + overheadRate;
 
   factory PackageRateVersion.fromJson(Map<String, dynamic> json) {
     return PackageRateVersion(

@@ -43,6 +43,10 @@ void main() {
       );
     });
 
+    // The `..load()` cascade inside the create callback (rather than
+    // awaiting before pumpWidget) is intentional: awaiting an async load
+    // outside the test pump cycle deadlocks Flutter test's fake-async
+    // scheduler. See B'.Task 6 rate_card_screen_test for the same pattern.
     await tester.pumpWidget(MaterialApp(
       home: ChangeNotifierProvider<EstimationPackagesProvider>(
         create: (_) => EstimationPackagesProvider(
