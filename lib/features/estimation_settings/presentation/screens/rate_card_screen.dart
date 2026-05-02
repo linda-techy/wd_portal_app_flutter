@@ -6,7 +6,15 @@ import 'package:admin/features/estimation_settings/providers/estimation_packages
 import 'package:admin/features/estimation_settings/providers/rate_versions_provider.dart';
 
 class RateCardScreen extends StatefulWidget {
-  const RateCardScreen({super.key});
+  /// Optional injected providers — used by tests. Production callers omit them.
+  final EstimationPackagesProvider? packagesProviderOverride;
+  final RateVersionsProvider? versionsProviderOverride;
+
+  const RateCardScreen({
+    super.key,
+    this.packagesProviderOverride,
+    this.versionsProviderOverride,
+  });
 
   @override
   State<RateCardScreen> createState() => _RateCardScreenState();
@@ -19,15 +27,17 @@ class _RateCardScreenState extends State<RateCardScreen> {
   @override
   void initState() {
     super.initState();
-    _packagesProvider = EstimationPackagesProvider();
-    _versionsProvider = RateVersionsProvider();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _packagesProvider.load();
-      // Default-select the first active package once they're loaded
-      if (_packagesProvider.packages.isNotEmpty) {
-        await _versionsProvider.select(packageId: _packagesProvider.packages.first.id);
-      }
-    });
+    _packagesProvider = widget.packagesProviderOverride ?? EstimationPackagesProvider();
+    _versionsProvider = widget.versionsProviderOverride ?? RateVersionsProvider();
+    if (widget.packagesProviderOverride == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await _packagesProvider.load();
+        // Default-select the first active package once they're loaded
+        if (_packagesProvider.packages.isNotEmpty) {
+          await _versionsProvider.select(packageId: _packagesProvider.packages.first.id);
+        }
+      });
+    }
   }
 
   @override

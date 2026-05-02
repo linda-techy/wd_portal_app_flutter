@@ -6,7 +6,10 @@ import 'package:admin/features/estimation_settings/providers/market_index_provid
 import 'package:admin/providers/permission_provider.dart';
 
 class MarketIndexScreen extends StatefulWidget {
-  const MarketIndexScreen({super.key});
+  /// Optional injected provider — used by tests. Production callers omit it.
+  final MarketIndexProvider? providerOverride;
+
+  const MarketIndexScreen({super.key, this.providerOverride});
 
   @override
   State<MarketIndexScreen> createState() => _MarketIndexScreenState();
@@ -18,8 +21,10 @@ class _MarketIndexScreenState extends State<MarketIndexScreen> {
   @override
   void initState() {
     super.initState();
-    _provider = MarketIndexProvider();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _provider.load());
+    _provider = widget.providerOverride ?? MarketIndexProvider();
+    if (widget.providerOverride == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _provider.load());
+    }
   }
 
   @override

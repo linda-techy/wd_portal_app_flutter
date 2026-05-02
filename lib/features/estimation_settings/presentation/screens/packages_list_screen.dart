@@ -5,7 +5,10 @@ import 'package:admin/features/estimation_settings/presentation/dialogs/package_
 import 'package:admin/features/estimation_settings/providers/estimation_packages_provider.dart';
 
 class PackagesListScreen extends StatefulWidget {
-  const PackagesListScreen({super.key});
+  /// Optional injected provider — used by tests. Production callers omit it.
+  final EstimationPackagesProvider? providerOverride;
+
+  const PackagesListScreen({super.key, this.providerOverride});
 
   @override
   State<PackagesListScreen> createState() => _PackagesListScreenState();
@@ -17,8 +20,10 @@ class _PackagesListScreenState extends State<PackagesListScreen> {
   @override
   void initState() {
     super.initState();
-    _provider = EstimationPackagesProvider();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _provider.load());
+    _provider = widget.providerOverride ?? EstimationPackagesProvider();
+    if (widget.providerOverride == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _provider.load());
+    }
   }
 
   @override
