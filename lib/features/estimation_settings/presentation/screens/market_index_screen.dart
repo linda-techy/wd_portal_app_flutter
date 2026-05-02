@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:admin/features/estimation_settings/data/models/market_index_snapshot.dart';
 import 'package:admin/features/estimation_settings/presentation/dialogs/new_market_index_dialog.dart';
 import 'package:admin/features/estimation_settings/providers/market_index_provider.dart';
+import 'package:admin/providers/permission_provider.dart';
 
 class MarketIndexScreen extends StatefulWidget {
   const MarketIndexScreen({super.key});
@@ -42,10 +43,20 @@ class _MarketIndexScreenState extends State<MarketIndexScreen> {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: FilledButton.icon(
-                onPressed: _onPublish,
-                icon: const Icon(Icons.add),
-                label: const Text('New Snapshot'),
+              child: Consumer<PermissionProvider>(
+                builder: (context, perms, _) {
+                  final canPublish = perms.canPublishMarketIndex;
+                  return Tooltip(
+                    message: canPublish
+                        ? 'Publish a new snapshot'
+                        : 'You do not have permission to publish snapshots',
+                    child: FilledButton.icon(
+                      onPressed: canPublish ? _onPublish : null,
+                      icon: const Icon(Icons.add),
+                      label: const Text('New Snapshot'),
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -101,10 +112,12 @@ class _MarketIndexScreenState extends State<MarketIndexScreen> {
   Widget _buildSnapshotTile(MarketIndexSnapshot s) {
     final date = s.snapshotDate.toIso8601String().substring(0, 10);
     final composite = s.compositeIndex.toStringAsFixed(4);
-    final pctOverBaseline = ((s.compositeIndex - 1.0) * 100).toStringAsFixed(2);
+    final pctDelta = ((s.compositeIndex - 1.0) * 100);
     final compositeHint = s.compositeIndex == 1.0
         ? '(baseline)'
-        : '($pctOverBaseline% over baseline)';
+        : pctDelta > 0
+            ? '(${pctDelta.toStringAsFixed(2)}% above baseline)'
+            : '(${(-pctDelta).toStringAsFixed(2)}% below baseline)';
     final ratesLine =
         'steel ₹${s.steelRate}/kg · cement ₹${s.cementRate}/bag · '
         'sand ₹${s.sandRate}/m³';
