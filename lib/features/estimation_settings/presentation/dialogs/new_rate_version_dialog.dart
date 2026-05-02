@@ -42,7 +42,7 @@ class _NewRateVersionDialogState extends State<NewRateVersionDialog> {
 
   String? _validateRate(String? v) {
     if (v == null || v.trim().isEmpty) return 'Required';
-    final n = double.tryParse(v);
+    final n = double.tryParse(v.trim());
     if (n == null) return 'Must be a number';
     if (n < 0.01 || n > 99999.99) return 'Must be between 0.01 and 99999.99';
     return null;

@@ -53,4 +53,18 @@ void main() {
     expect(result!['overheadRate'], 320);
     expect(result!.containsKey('effectiveFrom'), isFalse);
   });
+
+  testWidgets('cancel returns null without validating', (tester) async {
+    Map<String, dynamic>? result = <String, dynamic>{'sentinel': true};
+    await tester.pumpWidget(_wrap((r) => result = r));
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(result, isNull);
+    expect(find.text('Required'), findsNothing,
+        reason: 'Cancel must not trigger form validation');
+  });
 }
