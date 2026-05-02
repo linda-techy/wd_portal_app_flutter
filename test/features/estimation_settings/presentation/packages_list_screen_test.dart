@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:admin/features/estimation_settings/data/services/estimation_package_admin_service.dart';
 import 'package:admin/features/estimation_settings/providers/estimation_packages_provider.dart';
 
-import '../test_helpers/mock_dio_adapter.dart';
+import '../../../test_helpers/mock_dio_adapter.dart';
 
 const _threePackagesJson = '''{
   "success": true,

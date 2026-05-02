@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:admin/features/estimation_settings/data/services/market_index_admin_service.dart';
 import 'package:admin/features/estimation_settings/providers/market_index_provider.dart';
 
-import '../test_helpers/mock_dio_adapter.dart';
+import '../../../test_helpers/mock_dio_adapter.dart';
 
 void main() {
   testWidgets('list renders 2 snapshots with ACTIVE chip on the open row + composite index', (tester) async {

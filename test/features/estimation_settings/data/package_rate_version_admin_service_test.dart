@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:admin/features/estimation_settings/data/models/package_rate_version.dart';
 import 'package:admin/features/estimation_settings/data/services/package_rate_version_admin_service.dart';
 
-import '../test_helpers/mock_dio_adapter.dart';
+import '../../../test_helpers/mock_dio_adapter.dart';
 
 void main() {
   late Dio dio;

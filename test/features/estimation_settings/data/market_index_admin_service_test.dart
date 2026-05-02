@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:admin/features/estimation_settings/data/services/market_index_admin_service.dart';
 
-import '../test_helpers/mock_dio_adapter.dart';
+import '../../../test_helpers/mock_dio_adapter.dart';
 
 const _v101SnapshotJson =
     '{"id":"33333333-3333-3333-3333-333333333301","snapshotDate":"2026-04-30",'

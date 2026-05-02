@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:admin/features/estimation_settings/data/services/package_rate_version_admin_service.dart';
 import 'package:admin/features/estimation_settings/providers/rate_versions_provider.dart';
 
-import '../test_helpers/mock_dio_adapter.dart';
+import '../../../test_helpers/mock_dio_adapter.dart';
 
 void main() {
   testWidgets('list renders 2 rate versions with ACTIVE badge on the open-ended row', (tester) async {
