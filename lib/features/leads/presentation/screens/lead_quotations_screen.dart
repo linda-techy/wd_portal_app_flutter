@@ -14,10 +14,13 @@ import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/utils/motion_toast.dart';
 import 'package:admin/utils/error_handler.dart';
 import 'package:admin/utils/file_download_helper.dart';
+import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart';
+import 'package:admin/features/lead_estimation/presentation/screens/lead_estimation_wizard_screen.dart';
+import 'package:admin/features/lead_estimation/providers/lead_estimations_provider.dart';
 import 'add_quotation_screen.dart';
 import 'lead_quotation_detail_screen.dart';
 
-class LeadQuotationsScreen extends StatelessWidget {
+class LeadQuotationsScreen extends StatefulWidget {
   final Lead? lead;
   final int? leadId;
 
@@ -27,6 +30,13 @@ class LeadQuotationsScreen extends StatelessWidget {
 
   const LeadQuotationsScreen(
       {super.key, this.lead, this.leadId, this.embedded = false});
+
+  @override
+  State<LeadQuotationsScreen> createState() => _LeadQuotationsScreenState();
+}
+
+class _LeadQuotationsScreenState extends State<LeadQuotationsScreen> {
+  int _refreshKey = 0;
 
   Future<void> _downloadPdf(
       BuildContext context, LeadQuotation quotation) async {
@@ -71,14 +81,33 @@ class LeadQuotationsScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _generateEstimation(BuildContext context) async {
+    final leadId = widget.leadId;
+    if (leadId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No lead selected')),
+      );
+      return;
+    }
+    final created = await Navigator.of(context).push<LeadEstimationDetail>(
+      MaterialPageRoute(
+        builder: (_) => LeadEstimationWizardScreen(leadId: leadId),
+        fullscreenDialog: true,
+      ),
+    );
+    if (created != null && mounted) {
+      setState(() => _refreshKey++);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) {
         final provider = LeadQuotationProvider();
         // If leadId is provided, filter by that lead
-        if (leadId != null) {
-          provider.filterByLeadId(leadId);
+        if (widget.leadId != null) {
+          provider.filterByLeadId(widget.leadId);
         }
         provider.fetch();
         return provider;
@@ -90,25 +119,36 @@ class LeadQuotationsScreen extends StatelessWidget {
               // Pipeline hero — open vs accepted value, win rate, avg close.
               // Suppressed in embedded mode (the lead-detail tabs already
               // give project context, and a per-lead pipeline isn't useful).
-              if (!embedded) const _PipelineHeroCard(),
-              if (embedded && lead != null)
+              if (!widget.embedded) const _PipelineHeroCard(),
+              if (widget.embedded && widget.lead != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   child: Row(
                     children: [
                       Expanded(
                         child: Text(
-                          'Quotations for ${lead!.name}',
+                          'Quotations for ${widget.lead!.name}',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ),
                       Consumer<PermissionProvider>(
                         builder: (context, permissionProvider, _) {
                           if (permissionProvider.hasPermission('lead:edit')) {
-                            return ElevatedButton.icon(
-                              icon: const Icon(Icons.add, size: 18),
-                              label: const Text('New Quotation'),
-                              onPressed: () => _navigateToCreate(context),
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ElevatedButton.icon(
+                                  icon: const Icon(Icons.calculate_outlined, size: 18),
+                                  label: const Text('Generate Estimation'),
+                                  onPressed: () => _generateEstimation(context),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton.icon(
+                                  icon: const Icon(Icons.add, size: 18),
+                                  label: const Text('New Quotation'),
+                                  onPressed: () => _navigateToCreate(context),
+                                ),
+                              ],
                             );
                           }
                           return const SizedBox.shrink();
@@ -117,6 +157,13 @@ class LeadQuotationsScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+              // Estimations section — shown above legacy quotation list when
+              // this screen is embedded inside a lead-detail tab and a leadId is known.
+              if (widget.embedded && widget.leadId != null)
+                _LeadEstimationsSection(
+                  leadId: widget.leadId!,
+                  refreshKey: _refreshKey,
+                ),
               _buildSearchAndFilters(context, provider),
               Expanded(child: _buildQuotationList(context, provider)),
               if (provider.totalPages > 1)
@@ -124,19 +171,19 @@ class LeadQuotationsScreen extends StatelessWidget {
             ],
           );
 
-          if (embedded) {
+          if (widget.embedded) {
             return body;
           }
           return Scaffold(
             appBar: AppBar(
-              title: Text(lead != null
-                  ? 'Quotations: ${lead!.name}'
+              title: Text(widget.lead != null
+                  ? 'Quotations: ${widget.lead!.name}'
                   : 'Lead Quotations'),
               actions: [
                 Consumer<PermissionProvider>(
                   builder: (context, permissionProvider, _) {
                     if (permissionProvider.hasPermission('lead:edit') &&
-                        lead != null) {
+                        widget.lead != null) {
                       return IconButton(
                         icon: const Icon(Icons.add),
                         onPressed: () => _navigateToCreate(context),
@@ -333,7 +380,7 @@ class LeadQuotationsScreen extends StatelessWidget {
                   QuotationRowActions(
                     quotation: quotation,
                     onView: () => _navigateToDetail(context, quotation),
-                    onEdit: lead != null
+                    onEdit: widget.lead != null
                         ? () => _editQuotation(context, quotation)
                         : null,
                     // Add-from-catalog requires a quotation detail context;
@@ -530,12 +577,12 @@ class LeadQuotationsScreen extends StatelessWidget {
   }
 
   void _editQuotation(BuildContext context, LeadQuotation quotation) {
-    if (lead == null) return;
+    if (widget.lead == null) return;
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => AddQuotationScreen(
-          lead: lead!,
+          lead: widget.lead!,
           quotationToEdit: quotation,
         ),
       ),
@@ -792,7 +839,7 @@ class LeadQuotationsScreen extends StatelessWidget {
   }
 
   void _navigateToCreate(BuildContext context) {
-    if (lead == null) {
+    if (widget.lead == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a lead first')),
       );
@@ -839,13 +886,13 @@ class LeadQuotationsScreen extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (_) =>
-                    BudgetaryQuotationFormScreen(lead: lead!),
+                    BudgetaryQuotationFormScreen(lead: widget.lead!),
               ),
             )
           : Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => AddQuotationScreen(lead: lead!),
+                builder: (_) => AddQuotationScreen(lead: widget.lead!),
               ),
             );
       pushed.then((result) {
@@ -1061,5 +1108,121 @@ class _PipelineHeroCardState extends State<_PipelineHeroCard> {
     if (v == null) return 0.0;
     if (v is num) return v.toDouble();
     return double.tryParse(v.toString()) ?? 0.0;
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Estimations section
+// ──────────────────────────────────────────────────────────────────────────
+
+class _LeadEstimationsSection extends StatelessWidget {
+  final int leadId;
+  final int refreshKey;
+
+  const _LeadEstimationsSection({
+    required this.leadId,
+    required this.refreshKey,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: ChangeNotifierProvider<LeadEstimationsProvider>(
+        key: ValueKey(refreshKey),
+        create: (_) => LeadEstimationsProvider()..loadForLead(leadId),
+        child: ExpansionTile(
+          initiallyExpanded: true,
+          title: const Text('Estimations',
+              style: TextStyle(fontWeight: FontWeight.w600)),
+          children: [
+            Consumer<LeadEstimationsProvider>(
+              builder: (context, p, _) {
+                if (p.isLoading && p.estimations.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                if (p.errorMessage != null) {
+                  return Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        Text(p.errorMessage!,
+                            style: const TextStyle(color: Colors.red)),
+                        const SizedBox(height: 8),
+                        FilledButton(
+                            onPressed: p.load, child: const Text('Retry')),
+                      ],
+                    ),
+                  );
+                }
+                if (p.estimations.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      'No estimations yet — click "Generate Estimation" to create one.',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  );
+                }
+                return ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: p.estimations.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, i) {
+                    final e = p.estimations[i];
+                    final created =
+                        e.createdAt.toIso8601String().substring(0, 10);
+                    return ListTile(
+                      leading: const CircleAvatar(
+                          child: Icon(Icons.receipt_long)),
+                      title: Text(e.estimationNo),
+                      subtitle: Text(
+                        '${e.projectType.name} \u00b7 \u20b9${e.grandTotal.toStringAsFixed(2)} \u00b7 $created',
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        tooltip: 'Delete',
+                        onPressed: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                              title: const Text('Delete estimation?'),
+                              content:
+                                  Text('Soft-delete ${e.estimationNo}?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                FilledButton.tonal(
+                                  onPressed: () =>
+                                      Navigator.pop(context, true),
+                                  style: FilledButton.styleFrom(
+                                      backgroundColor:
+                                          Colors.red.shade100),
+                                  child: const Text('Delete'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirm == true) {
+                            await p.delete(e.id);
+                          }
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
