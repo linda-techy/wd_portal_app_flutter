@@ -5,27 +5,12 @@ import 'package:provider/provider.dart';
 import 'package:admin/features/estimation_settings/data/services/package_rate_version_admin_service.dart';
 import 'package:admin/features/estimation_settings/providers/rate_versions_provider.dart';
 
-class _MockDioAdapter implements HttpClientAdapter {
-  final Map<String, ResponseBody Function(RequestOptions)> _handlers = {};
-  void mock(String method, String path, ResponseBody Function(RequestOptions) handler) {
-    _handlers['$method $path'] = handler;
-  }
-
-  @override
-  Future<ResponseBody> fetch(RequestOptions options, Stream<List<int>>? requestStream, Future<dynamic>? cancelFuture) async {
-    final handler = _handlers['${options.method} ${options.path}'];
-    if (handler == null) throw StateError('No mock for ${options.method} ${options.path}');
-    return handler(options);
-  }
-
-  @override
-  void close({bool force = false}) {}
-}
+import '../test_helpers/mock_dio_adapter.dart';
 
 void main() {
   testWidgets('list renders 2 rate versions with ACTIVE badge on the open-ended row', (tester) async {
     final dio = Dio(BaseOptions(baseUrl: 'http://test/api'));
-    final adapter = _MockDioAdapter();
+    final adapter = MockDioAdapter();
     dio.httpClientAdapter = adapter;
     adapter.mock('GET', '/api/estimation/rate-versions', (_) {
       return ResponseBody.fromString(

@@ -5,22 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:admin/features/estimation_settings/data/services/estimation_package_admin_service.dart';
 import 'package:admin/features/estimation_settings/providers/estimation_packages_provider.dart';
 
-class _MockDioAdapter implements HttpClientAdapter {
-  final Map<String, ResponseBody Function(RequestOptions)> _handlers = {};
-  void mock(String method, String path, ResponseBody Function(RequestOptions) handler) {
-    _handlers['$method $path'] = handler;
-  }
-
-  @override
-  Future<ResponseBody> fetch(RequestOptions options, Stream<List<int>>? requestStream, Future<dynamic>? cancelFuture) async {
-    final handler = _handlers['${options.method} ${options.path}'];
-    if (handler == null) throw StateError('No mock for ${options.method} ${options.path}');
-    return handler(options);
-  }
-
-  @override
-  void close({bool force = false}) {}
-}
+import '../test_helpers/mock_dio_adapter.dart';
 
 const _threePackagesJson = '''{
   "success": true,
@@ -34,7 +19,7 @@ const _threePackagesJson = '''{
 void main() {
   testWidgets('list renders the 3 packages from the API', (tester) async {
     final dio = Dio(BaseOptions(baseUrl: 'http://test/api'));
-    final adapter = _MockDioAdapter();
+    final adapter = MockDioAdapter();
     dio.httpClientAdapter = adapter;
     adapter.mock('GET', '/api/estimation/packages', (_) {
       return ResponseBody.fromString(
