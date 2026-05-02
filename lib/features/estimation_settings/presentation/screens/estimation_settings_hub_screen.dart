@@ -29,13 +29,13 @@ class EstimationSettingsHubScreen extends StatelessWidget {
               onTap: () => context.go('/settings/estimation/rate-card'),
             ),
           ),
-          const Card(
+          Card(
             child: ListTile(
-              leading: Icon(Icons.trending_up_outlined),
-              title: Text('Market Index'),
-              subtitle: Text('Coming soon — use the API directly for now'),
-              trailing: Icon(Icons.lock_outline),
-              enabled: false,
+              leading: const Icon(Icons.trending_up_outlined),
+              title: const Text('Market Index'),
+              subtitle: const Text('Publish commodity-rate snapshots; composite index computed server-side'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.go('/settings/estimation/market-index'),
             ),
           ),
         ],

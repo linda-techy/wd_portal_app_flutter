@@ -174,6 +174,7 @@ class PermissionProvider with ChangeNotifier {
 
   // Estimation Settings permissions
   bool get canManageEstimationSettings => hasPermission('ESTIMATION_SETTINGS_MANAGE');
+  bool get canPublishMarketIndex => hasPermission('ESTIMATION_MARKET_INDEX_PUBLISH');
 
   // DPC (Detailed Project Costing) permissions
   bool get canViewDpc => hasPermission('DPC_VIEW');
