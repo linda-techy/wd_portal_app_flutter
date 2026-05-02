@@ -77,8 +77,8 @@ void main() {
       expect(body['cementRate'], 415.0);
       // Weights serialized as Map<String, String>
       expect(body['weights'], isA<Map>());
-      expect(body['weights']['steel'], '0.30');
-      expect(body['weights']['cement'], '0.20');
+      expect(double.parse(body['weights']['steel'] as String), closeTo(0.30, 0.0001));
+      expect(double.parse(body['weights']['cement'] as String), closeTo(0.20, 0.0001));
       // snapshotDate omitted → backend defaults to today
       expect(body.containsKey('snapshotDate'), isFalse);
 

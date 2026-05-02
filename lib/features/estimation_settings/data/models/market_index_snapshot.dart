@@ -102,7 +102,7 @@ class MarketIndexSnapshot {
       'tilesRate': tilesRate,
       'electricalRate': electricalRate,
       'paintsRate': paintsRate,
-      'weights': weights.map((k, v) => MapEntry(k, v.toStringAsFixed(2))),
+      'weights': weights.map((k, v) => MapEntry(k, v.toString())),
       if (snapshotDate != null)
         'snapshotDate': snapshotDate.toIso8601String().substring(0, 10),
     };
