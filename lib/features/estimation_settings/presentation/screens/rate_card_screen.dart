@@ -182,8 +182,10 @@ class _RateCardScreenState extends State<RateCardScreen> {
           : const CircleAvatar(child: Icon(Icons.history, size: 18)),
       title: Text('$from → $to'),
       subtitle: Text(
-        'Material ₹${v.materialRate} / Labour ₹${v.labourRate} / Overhead ₹${v.overheadRate}'
-        '   =   ₹${v.totalRate}/sqft',
+        'Material ₹${v.materialRate.toStringAsFixed(2)} / '
+        'Labour ₹${v.labourRate.toStringAsFixed(2)} / '
+        'Overhead ₹${v.overheadRate.toStringAsFixed(2)}'
+        '   =   ₹${v.totalRate.toStringAsFixed(2)}/sqft',
       ),
       trailing: v.isActive
           ? const Chip(
@@ -199,14 +201,14 @@ class _RateCardScreenState extends State<RateCardScreen> {
     final form = await NewRateVersionDialog.show(context);
     if (form == null) return;
     final created = await _versionsProvider.createNewVersion(
-      materialRate: form['materialRate'] as double,
-      labourRate: form['labourRate'] as double,
-      overheadRate: form['overheadRate'] as double,
+      materialRate: (form['materialRate'] as num).toDouble(),
+      labourRate: (form['labourRate'] as num).toDouble(),
+      overheadRate: (form['overheadRate'] as num).toDouble(),
       effectiveFrom: form['effectiveFrom'] as DateTime?,
     );
     if (created != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('New rate version created (₹${created.totalRate}/sqft)')),
+        SnackBar(content: Text('New rate version created (₹${created.totalRate.toStringAsFixed(2)}/sqft)')),
       );
     }
   }
