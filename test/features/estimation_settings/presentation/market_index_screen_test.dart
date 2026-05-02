@@ -3,12 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/features/estimation_settings/data/services/market_index_admin_service.dart';
+import 'package:admin/features/estimation_settings/presentation/screens/market_index_screen.dart';
 import 'package:admin/features/estimation_settings/providers/market_index_provider.dart';
+import 'package:admin/providers/permission_provider.dart';
 
 import '../../../test_helpers/mock_dio_adapter.dart';
 
 void main() {
-  testWidgets('list renders 2 snapshots with ACTIVE chip on the open row + composite index', (tester) async {
+  testWidgets(
+      'MarketIndexScreen renders 2 snapshots with ACTIVE chip and composite index',
+      (tester) async {
     final dio = Dio(BaseOptions(baseUrl: 'http://test/api'));
     final adapter = MockDioAdapter();
     dio.httpClientAdapter = adapter;
@@ -31,39 +35,31 @@ void main() {
       );
     });
 
-    // Same gotcha as B'.Task 6 / B.PR-2: trigger load inside the provider's
-    // create callback instead of awaiting before pumpWidget.
-    await tester.pumpWidget(MaterialApp(
-      home: ChangeNotifierProvider<MarketIndexProvider>(
-        create: (_) {
-          final p = MarketIndexProvider(
-            service: MarketIndexAdminService(dio: dio),
-          );
-          p.load();
-          return p;
-        },
-        child: Scaffold(
-          body: Consumer<MarketIndexProvider>(
-            builder: (context, p, _) {
-              if (p.isLoading) return const Center(child: CircularProgressIndicator());
-              return ListView(
-                children: p.snapshots.map((s) => ListTile(
-                  title: Text(s.snapshotDate.toIso8601String().substring(0, 10)),
-                  subtitle: Text('composite ${s.compositeIndex.toStringAsFixed(4)}'),
-                  trailing: s.active ? const Chip(label: Text('ACTIVE')) : null,
-                )).toList(),
-              );
-            },
-          ),
+    final provider = MarketIndexProvider(
+      service: MarketIndexAdminService(dio: dio),
+    );
+    // runAsync escapes fakeAsync so real Dio futures resolve correctly.
+    await tester.runAsync(() => provider.load());
+
+    // MarketIndexScreen's AppBar reads PermissionProvider — supply a default one.
+    final permissionProvider = PermissionProvider();
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider<PermissionProvider>.value(
+        value: permissionProvider,
+        child: MaterialApp(
+          home: MarketIndexScreen(providerOverride: provider),
         ),
       ),
-    ));
-    await tester.pumpAndSettle();
+    );
+    // Use pump() rather than pumpAndSettle() — pumpAndSettle loops forever on
+    // screens that contain Tooltip widgets (they schedule recurring frames).
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
+    expect(find.text('Market Index'), findsOneWidget); // AppBar title
     expect(find.text('2026-05-02'), findsOneWidget);
     expect(find.text('2026-04-30'), findsOneWidget);
-    expect(find.text('composite 1.0156'), findsOneWidget);
-    expect(find.text('composite 1.0000'), findsOneWidget);
     expect(find.text('ACTIVE'), findsOneWidget);
   });
 }

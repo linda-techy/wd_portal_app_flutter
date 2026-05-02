@@ -1,18 +1,37 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
+import 'package:admin/features/estimation_settings/data/services/estimation_package_admin_service.dart';
 import 'package:admin/features/estimation_settings/data/services/package_rate_version_admin_service.dart';
+import 'package:admin/features/estimation_settings/presentation/screens/rate_card_screen.dart';
+import 'package:admin/features/estimation_settings/providers/estimation_packages_provider.dart';
 import 'package:admin/features/estimation_settings/providers/rate_versions_provider.dart';
 
 import '../../../test_helpers/mock_dio_adapter.dart';
 
 void main() {
-  testWidgets('list renders 2 rate versions with ACTIVE badge on the open-ended row', (tester) async {
-    final dio = Dio(BaseOptions(baseUrl: 'http://test/api'));
-    final adapter = MockDioAdapter();
-    dio.httpClientAdapter = adapter;
-    adapter.mock('GET', '/api/estimation/rate-versions', (_) {
+  testWidgets(
+      'RateCardScreen renders the package dropdown and 2 rate versions with ACTIVE badge',
+      (tester) async {
+    // --- packages mock ---
+    final packagesDio = Dio(BaseOptions(baseUrl: 'http://test/api'));
+    final packagesAdapter = MockDioAdapter();
+    packagesDio.httpClientAdapter = packagesAdapter;
+    packagesAdapter.mock('GET', '/api/estimation/packages', (_) {
+      return ResponseBody.fromString(
+        '''{"success":true,"data":[
+          {"id":"p1","internalName":"BASIC","marketingName":"Foundation Series","displayOrder":10,"active":true}
+        ]}''',
+        200,
+        headers: {'content-type': ['application/json']},
+      );
+    });
+
+    // --- rate versions mock ---
+    final versionsDio = Dio(BaseOptions(baseUrl: 'http://test/api'));
+    final versionsAdapter = MockDioAdapter();
+    versionsDio.httpClientAdapter = versionsAdapter;
+    versionsAdapter.mock('GET', '/api/estimation/rate-versions', (_) {
       return ResponseBody.fromString(
         '''{"success":true,"data":[
           {"id":"v1","packageId":"p1","projectType":"NEW_BUILD","materialRate":1500,"labourRate":550,"overheadRate":300,"effectiveFrom":"2026-04-01","effectiveTo":null},
@@ -23,36 +42,37 @@ void main() {
       );
     });
 
-    // Mirror the B.PR-2 packages_list_screen_test pattern: trigger the load
-    // inside the provider's create callback, then pumpAndSettle waits for it.
-    // (Awaiting the load before pumpWidget hangs flutter_test's fake-async
-    // scheduler — see B.PR-2 packages_list_screen_test for the same shape.)
+    // Pre-populate both providers via runAsync (escapes fakeAsync so Dio futures resolve).
+    final packagesProvider = EstimationPackagesProvider(
+      service: EstimationPackageAdminService(dio: packagesDio),
+    );
+    await tester.runAsync(() => packagesProvider.load());
+
+    final versionsProvider = RateVersionsProvider(
+      service: PackageRateVersionAdminService(dio: versionsDio),
+    );
+    await tester.runAsync(() => versionsProvider.select(packageId: 'p1'));
+
+    // Use a wider viewport so the 3-widget selector row doesn't overflow.
+    tester.view.physicalSize = const Size(1440, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
     await tester.pumpWidget(MaterialApp(
-      home: ChangeNotifierProvider<RateVersionsProvider>(
-        create: (_) {
-          final p = RateVersionsProvider(
-            service: PackageRateVersionAdminService(dio: dio),
-          );
-          p.select(packageId: 'p1');
-          return p;
-        },
-        child: Scaffold(
-          body: Consumer<RateVersionsProvider>(
-            builder: (context, p, _) {
-              if (p.isLoading) return const Center(child: CircularProgressIndicator());
-              return ListView(
-                children: p.versions.map((v) => ListTile(
-                  title: Text('${v.effectiveFrom.toIso8601String().substring(0, 10)} → ${v.effectiveTo == null ? 'present' : v.effectiveTo!.toIso8601String().substring(0, 10)}'),
-                  trailing: v.isActive ? const Chip(label: Text('ACTIVE')) : null,
-                )).toList(),
-              );
-            },
-          ),
-        ),
+      home: RateCardScreen(
+        packagesProviderOverride: packagesProvider,
+        versionsProviderOverride: versionsProvider,
       ),
     ));
-    await tester.pumpAndSettle();
+    // Use pump() rather than pumpAndSettle() — pumpAndSettle loops forever on
+    // screens that contain Tooltip/Dropdown animation widgets.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
+    expect(find.text('Package Rate Card'), findsOneWidget); // AppBar title
     expect(find.text('2026-04-01 → present'), findsOneWidget);
     expect(find.text('2026-01-01 → 2026-03-31'), findsOneWidget);
     expect(find.text('ACTIVE'), findsOneWidget);
