@@ -20,13 +20,13 @@ class EstimationSettingsHubScreen extends StatelessWidget {
               onTap: () => context.go('/settings/estimation/packages'),
             ),
           ),
-          const Card(
+          Card(
             child: ListTile(
-              leading: Icon(Icons.price_change_outlined),
-              title: Text('Package Rate Card'),
-              subtitle: Text('Coming soon — use the API directly for now'),
-              trailing: Icon(Icons.lock_outline),
-              enabled: false,
+              leading: const Icon(Icons.price_change_outlined),
+              title: const Text('Package Rate Card'),
+              subtitle: const Text('Manage per-package per-project-type rate version history'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.go('/settings/estimation/rate-card'),
             ),
           ),
           const Card(
