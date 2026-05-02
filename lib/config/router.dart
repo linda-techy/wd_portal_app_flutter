@@ -37,8 +37,6 @@ import 'package:admin/features/dpc/presentation/screens/dpc_builder_screen.dart'
 import 'package:admin/features/dpc/presentation/screens/dpc_revisions_screen.dart';
 import 'package:admin/features/dpc/presentation/screens/dpc_templates_admin_screen.dart';
 import 'package:admin/features/dpc/presentation/screens/dpc_template_edit_screen.dart';
-import 'package:admin/features/leads/presentation/screens/lead_quotation_detail_screen.dart';
-import 'package:admin/features/quotation_catalog/presentation/screens/quotation_catalog_admin_screen.dart';
 import 'package:admin/features/dpc_customization_catalog/presentation/screens/dpc_customization_catalog_admin_screen.dart';
 import 'package:admin/features/estimation_settings/presentation/screens/estimation_settings_hub_screen.dart';
 import 'package:admin/features/estimation_settings/presentation/screens/packages_list_screen.dart';
@@ -76,12 +74,11 @@ const Map<String, int> kPathToMenuIndex = {
   '/acl':          22,
   '/support':      23,
   '/dpc/templates':24,
-  '/quotation-catalog':25,
-  '/dpc-customization-catalog':26,
-  '/settings/estimation':     27,
-  '/settings/estimation/packages': 28,
-  '/settings/estimation/rate-card': 29,
-  '/settings/estimation/market-index': 30,
+  '/dpc-customization-catalog':25,
+  '/settings/estimation':     26,
+  '/settings/estimation/packages': 27,
+  '/settings/estimation/rate-card': 28,
+  '/settings/estimation/market-index': 29,
 };
 
 /// Map a menu index (from [MenuAppController]) to its route path.
@@ -92,7 +89,6 @@ const List<String> kIndexToPath = [
   '/reports', '/profile', '/challans', '/procurement', '/labour',
   '/inventory', '/finance', '/partnerships', '/acl', '/support',
   '/dpc/templates',
-  '/quotation-catalog',
   '/dpc-customization-catalog',
   '/settings/estimation',
   '/settings/estimation/packages',
@@ -223,21 +219,6 @@ GoRouter buildAppRouter(PortalAuthProvider authProvider) {
               final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
               return DpcTemplateEditScreen(templateId: id);
             },
-          ),
-
-          // Quotation detail (deep-linkable per-row route)
-          GoRoute(
-            path: '/quotations/:id',
-            builder: (_, state) {
-              final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
-              return LeadQuotationDetailScreen(quotationId: id);
-            },
-          ),
-
-          // Quotation Item Catalog (admin)
-          GoRoute(
-            path: '/quotation-catalog',
-            builder: (_, __) => const QuotationCatalogAdminScreen(),
           ),
 
           // DPC Customization Catalog (admin)
