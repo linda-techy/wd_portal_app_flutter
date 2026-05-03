@@ -8,6 +8,7 @@ import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart'
 import 'package:admin/features/lead_estimation/presentation/screens/lead_estimation_wizard_screen.dart';
 import 'package:admin/features/lead_estimation/presentation/widgets/revision_diff_sheet.dart';
 import 'package:admin/features/lead_estimation/providers/estimation_detail_provider.dart';
+import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/utils/file_download_helper.dart';
 
 class EstimationDetailScreen extends StatefulWidget {
@@ -320,6 +321,10 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
                 ],
               ),
             ],
+            if (detail.discountApprovalStatus != null) ...[
+              const SizedBox(height: 12),
+              _DiscountApprovalBanner(detail: detail),
+            ],
             _buildTransitionButtons(context, detail),
           ],
         ),
@@ -368,13 +373,23 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
 
     switch (detail.status) {
       case LeadEstimationStatus.DRAFT:
-        buttons.add(FilledButton(
-          onPressed: () => doTransition(
-            confirmMessage: 'Mark this estimation as Sent?',
-            action: p.markSent,
-            successMessage: 'Estimation marked as Sent.',
+        // O — Mark Sent is gated when discount > threshold and not yet approved.
+        final blocked = detail.discountApprovalStatus == DiscountApprovalStatus.PENDING ||
+            detail.discountApprovalStatus == DiscountApprovalStatus.REJECTED;
+        buttons.add(Tooltip(
+          message: blocked
+              ? 'Discount needs approval before this can be sent.'
+              : '',
+          child: FilledButton(
+            onPressed: blocked
+                ? null
+                : () => doTransition(
+                      confirmMessage: 'Mark this estimation as Sent?',
+                      action: p.markSent,
+                      successMessage: 'Estimation marked as Sent.',
+                    ),
+            child: const Text('Mark as Sent'),
           ),
-          child: const Text('Mark as Sent'),
         ));
         break;
       case LeadEstimationStatus.SENT:
@@ -922,6 +937,168 @@ class _StatusChip extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 enum _MoreAction { regenerateToken }
+
+class _DiscountApprovalBanner extends StatelessWidget {
+  final LeadEstimationDetail detail;
+  const _DiscountApprovalBanner({required this.detail});
+
+  @override
+  Widget build(BuildContext context) {
+    final status = detail.discountApprovalStatus!;
+    final pct = ((detail.discountPercent ?? 0) * 100);
+    final pctLabel = pct.toStringAsFixed(pct.truncateToDouble() == pct ? 0 : 2);
+    final canApprove = context
+        .watch<PermissionProvider>()
+        .hasPermission('ESTIMATION_DISCOUNT_APPROVE');
+
+    final (color, icon, header, body) = switch (status) {
+      DiscountApprovalStatus.PENDING => (
+        Colors.amber,
+        Icons.hourglass_top,
+        'Discount $pctLabel% pending approval',
+        'A user with discount-approval permission must approve before this estimation can be sent.',
+      ),
+      DiscountApprovalStatus.APPROVED => (
+        Colors.green,
+        Icons.verified,
+        'Discount $pctLabel% approved',
+        'Approved by user #${detail.discountApprovedByUserId} on '
+            '${detail.discountApprovedAt?.toIso8601String().substring(0, 16) ?? "—"}'
+            '${(detail.discountApprovalNotes ?? "").isNotEmpty ? "\nNote: ${detail.discountApprovalNotes}" : ""}',
+      ),
+      DiscountApprovalStatus.REJECTED => (
+        Colors.red,
+        Icons.block,
+        'Discount $pctLabel% rejected',
+        '${detail.discountApprovalNotes ?? "No reason given."}\nRevise the estimation with a lower discount before retrying.',
+      ),
+    };
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        border: Border.all(color: color.withOpacity(0.5)),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color.shade800, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(header,
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: color.shade800)),
+                    const SizedBox(height: 4),
+                    Text(body,
+                        style: const TextStyle(fontSize: 13)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (status == DiscountApprovalStatus.PENDING && canApprove) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                FilledButton.icon(
+                  icon: const Icon(Icons.check, size: 18),
+                  label: const Text('Approve'),
+                  style: FilledButton.styleFrom(backgroundColor: Colors.green),
+                  onPressed: () => _showApproveDialog(context),
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.close, size: 18),
+                  label: const Text('Reject'),
+                  onPressed: () => _showRejectDialog(context),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showApproveDialog(BuildContext context) async {
+    final controller = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Approve discount'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Note (optional)',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: FilledButton.styleFrom(backgroundColor: Colors.green),
+              child: const Text('Approve')),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    final p = context.read<EstimationDetailProvider>();
+    final success = await p.approveDiscount(notes: controller.text.trim());
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(success ? 'Discount approved.' : (p.errorMessage ?? 'Approval failed.'))));
+    }
+  }
+
+  Future<void> _showRejectDialog(BuildContext context) async {
+    final controller = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Reject discount'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Reason (required)',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Reject')),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    final notes = controller.text.trim();
+    if (notes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('A reason is required to reject.')));
+      return;
+    }
+    final p = context.read<EstimationDetailProvider>();
+    final success = await p.rejectDiscount(notes: notes);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(success ? 'Discount rejected.' : (p.errorMessage ?? 'Rejection failed.'))));
+    }
+  }
+}
 
 class _ConfidencePill extends StatelessWidget {
   final EstimationConfidenceLevel level;

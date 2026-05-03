@@ -95,6 +95,30 @@ class LeadEstimationService {
     );
   }
 
+  /// O — POST /api/lead-estimations/{id}/approve-discount. Notes optional.
+  Future<LeadEstimationDetail> approveDiscount(String id, {String? notes}) async {
+    final response = await _dio.post(
+      '/api/lead-estimations/$id/approve-discount',
+      data: notes != null && notes.isNotEmpty ? {'notes': notes} : <String, dynamic>{},
+    );
+    return _api.unwrap<LeadEstimationDetail>(
+      response,
+      (json) => LeadEstimationDetail.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// O — POST /api/lead-estimations/{id}/reject-discount. Notes required (server-side).
+  Future<LeadEstimationDetail> rejectDiscount(String id, {required String notes}) async {
+    final response = await _dio.post(
+      '/api/lead-estimations/$id/reject-discount',
+      data: {'notes': notes},
+    );
+    return _api.unwrap<LeadEstimationDetail>(
+      response,
+      (json) => LeadEstimationDetail.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
   /// PATCH /api/lead-estimations/{id}/regenerate-token — rotates the public view token.
   Future<LeadEstimationDetail> regenerateToken(String id) async {
     final response =

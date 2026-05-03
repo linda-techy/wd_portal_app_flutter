@@ -115,6 +115,11 @@ class EstimationDetailProvider extends ChangeNotifier {
       isCurrent: d.isCurrent,
       dimensionsJson: d.dimensionsJson,
       confidenceLevel: d.confidenceLevel,
+      discountPercent: d.discountPercent,
+      discountApprovalStatus: d.discountApprovalStatus,
+      discountApprovedByUserId: d.discountApprovedByUserId,
+      discountApprovedAt: d.discountApprovedAt,
+      discountApprovalNotes: d.discountApprovalNotes,
     );
   }
 
@@ -230,6 +235,13 @@ class EstimationDetailProvider extends ChangeNotifier {
 
   Future<bool> markSent() => _transition(
       () => _estimationService.markSent(_detail!.id));
+
+  // O — discount approval transitions.
+  Future<bool> approveDiscount({String? notes}) => _transition(
+      () => _estimationService.approveDiscount(_detail!.id, notes: notes));
+
+  Future<bool> rejectDiscount({required String notes}) => _transition(
+      () => _estimationService.rejectDiscount(_detail!.id, notes: notes));
 
   Future<bool> markAccepted() => _transition(
       () => _estimationService.markAccepted(_detail!.id));

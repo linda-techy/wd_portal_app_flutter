@@ -12,6 +12,9 @@ enum EstimationPricingMode { BUDGETARY, LINE_ITEM }
 /// around (area × baseRate). LOW=±10%, MEDIUM=±5%, HIGH=±3%.
 enum EstimationConfidenceLevel { LOW, MEDIUM, HIGH }
 
+/// O — discount approval lifecycle. Null when discount is at or below threshold.
+enum DiscountApprovalStatus { PENDING, APPROVED, REJECTED }
+
 @immutable
 class LeadEstimationLineItem {
   final String lineType;
@@ -70,6 +73,8 @@ class LeadEstimationSummary {
   final bool isCurrent;
   // P — sales-set confidence on budgetary rows; null on line-item rows.
   final EstimationConfidenceLevel? confidenceLevel;
+  // O — discount approval status (null when no approval needed).
+  final DiscountApprovalStatus? discountApprovalStatus;
 
   const LeadEstimationSummary({
     required this.id,
@@ -89,6 +94,7 @@ class LeadEstimationSummary {
     this.grandTotalMax,
     this.isCurrent = false,
     this.confidenceLevel,
+    this.discountApprovalStatus,
   });
 
   factory LeadEstimationSummary.fromJson(Map<String, dynamic> json) {
@@ -115,6 +121,9 @@ class LeadEstimationSummary {
       isCurrent: json['isCurrent'] as bool? ?? false,
       confidenceLevel: json['confidenceLevel'] != null
           ? EstimationConfidenceLevel.values.byName(json['confidenceLevel'] as String)
+          : null,
+      discountApprovalStatus: json['discountApprovalStatus'] != null
+          ? DiscountApprovalStatus.values.byName(json['discountApprovalStatus'] as String)
           : null,
     );
   }
@@ -156,6 +165,12 @@ class LeadEstimationDetail {
   final Map<String, dynamic>? dimensionsJson;
   // P — sales-set confidence on budgetary rows; null on line-item rows.
   final EstimationConfidenceLevel? confidenceLevel;
+  // O — discount approval trail (all 5 fields null when discount ≤ threshold).
+  final double? discountPercent;
+  final DiscountApprovalStatus? discountApprovalStatus;
+  final int? discountApprovedByUserId;
+  final DateTime? discountApprovedAt;
+  final String? discountApprovalNotes;
 
   const LeadEstimationDetail({
     required this.id,
@@ -186,6 +201,11 @@ class LeadEstimationDetail {
     this.isCurrent = false,
     this.dimensionsJson,
     this.confidenceLevel,
+    this.discountPercent,
+    this.discountApprovalStatus,
+    this.discountApprovedByUserId,
+    this.discountApprovedAt,
+    this.discountApprovalNotes,
   });
 
   factory LeadEstimationDetail.fromJson(Map<String, dynamic> json) {
@@ -234,6 +254,15 @@ class LeadEstimationDetail {
       confidenceLevel: json['confidenceLevel'] != null
           ? EstimationConfidenceLevel.values.byName(json['confidenceLevel'] as String)
           : null,
+      discountPercent: (json['discountPercent'] as num?)?.toDouble(),
+      discountApprovalStatus: json['discountApprovalStatus'] != null
+          ? DiscountApprovalStatus.values.byName(json['discountApprovalStatus'] as String)
+          : null,
+      discountApprovedByUserId: (json['discountApprovedByUserId'] as num?)?.toInt(),
+      discountApprovedAt: json['discountApprovedAt'] != null
+          ? DateTime.parse(json['discountApprovedAt'] as String)
+          : null,
+      discountApprovalNotes: json['discountApprovalNotes'] as String?,
     );
   }
 
