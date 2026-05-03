@@ -72,6 +72,38 @@ class LeadEstimationsProvider extends ChangeNotifier {
     }
   }
 
+  /// Create a revision of an existing estimation via POST /{parentId}/revise.
+  /// After success, refreshes the list.
+  Future<LeadEstimationDetail?> reviseEstimation({
+    required String parentId,
+    required Map<String, dynamic> previewPayload,
+    DateTime? validUntil,
+  }) async {
+    if (_leadId == null) {
+      _errorMessage = 'Select a lead first.';
+      notifyListeners();
+      return null;
+    }
+    try {
+      final created = await _service.revise(
+        parentId: parentId,
+        leadId: _leadId!,
+        previewPayload: previewPayload,
+        validUntil: validUntil,
+      );
+      await load();
+      return created;
+    } on DioException catch (e) {
+      _errorMessage = _humanizeDioError(e);
+      notifyListeners();
+      return null;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return null;
+    }
+  }
+
   Future<bool> delete(String id) async {
     try {
       await _service.delete(id);
@@ -98,6 +130,11 @@ class LeadEstimationsProvider extends ChangeNotifier {
       return 'Invalid request.';
     }
     if (status == 404) return 'Estimation not found.';
+    if (status == 422) {
+      final data = e.response?.data;
+      if (data is Map && data['message'] is String) return data['message'] as String;
+      return 'This estimation cannot be revised (it may be Accepted or Rejected).';
+    }
     if (status == 409) {
       final data = e.response?.data;
       if (data is Map && data['message'] is String) return data['message'] as String;

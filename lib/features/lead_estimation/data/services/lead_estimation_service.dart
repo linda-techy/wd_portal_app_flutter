@@ -105,6 +105,28 @@ class LeadEstimationService {
     );
   }
 
+  /// POST /api/lead-estimations/{parentId}/revise
+  /// Returns the newly-created child estimation linked to parent.
+  Future<LeadEstimationDetail> revise({
+    required String parentId,
+    required int leadId,
+    required Map<String, dynamic> previewPayload,
+    DateTime? validUntil,
+  }) async {
+    final response = await _dio.post(
+      '/api/lead-estimations/$parentId/revise',
+      data: LeadEstimationDetail.createPayload(
+        leadId: leadId,
+        previewPayload: previewPayload,
+        validUntil: validUntil,
+      ),
+    );
+    return _api.unwrap<LeadEstimationDetail>(
+      response,
+      (json) => LeadEstimationDetail.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
   /// GET /api/lead-estimations/{id}/pdf — returns raw PDF bytes.
   Future<List<int>> downloadPdf(String id) async {
     final response = await _dio.get<List<int>>(
