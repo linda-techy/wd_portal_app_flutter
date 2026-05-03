@@ -112,6 +112,7 @@ class EstimationDetailProvider extends ChangeNotifier {
       estimatedAreaSqft: d.estimatedAreaSqft,
       grandTotalMin: d.grandTotalMin,
       grandTotalMax: d.grandTotalMax,
+      isCurrent: d.isCurrent,
     );
   }
 

@@ -81,6 +81,7 @@ class _LeadQuotationsScreenState extends State<LeadQuotationsScreen> {
           Expanded(
             child: _LeadEstimationsSection(
               leadId: widget.leadId!,
+              leadStatus: widget.lead?.status,
               refreshKey: _refreshKey,
             ),
           ),
@@ -120,11 +121,13 @@ class _LeadQuotationsScreenState extends State<LeadQuotationsScreen> {
 
 class _LeadEstimationsSection extends StatelessWidget {
   final int leadId;
+  final String? leadStatus;
   final int refreshKey;
 
   const _LeadEstimationsSection({
     required this.leadId,
     required this.refreshKey,
+    this.leadStatus,
   });
 
   @override
@@ -141,6 +144,10 @@ class _LeadEstimationsSection extends StatelessWidget {
           children: [
             Consumer<LeadEstimationsProvider>(
               builder: (context, p, _) {
+                // L — integrity warning: lead is project_won but no estimation accepted.
+                final showWonWithoutAccepted = leadStatus?.toLowerCase() == 'project_won' &&
+                    p.estimations.isNotEmpty &&
+                    !p.estimations.any((e) => e.status == LeadEstimationStatus.ACCEPTED);
                 if (p.isLoading && p.estimations.isEmpty) {
                   return const Padding(
                     padding: EdgeInsets.all(24),
@@ -170,7 +177,45 @@ class _LeadEstimationsSection extends StatelessWidget {
                     ),
                   );
                 }
-                return ListView.separated(
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (showWonWithoutAccepted)
+                      Container(
+                        margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade50,
+                          border: Border.all(color: Colors.amber.shade400),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.warning_amber_rounded,
+                                color: Colors.orange),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: RichText(
+                                text: const TextSpan(
+                                  style: TextStyle(color: Colors.black87, fontSize: 13),
+                                  children: [
+                                    TextSpan(
+                                      text: 'Lead status is Project Won, ',
+                                      style: TextStyle(fontWeight: FontWeight.w600),
+                                    ),
+                                    TextSpan(
+                                      text:
+                                          'but no estimation has been Accepted. Mark the winning quote as Accepted from its detail screen to align the audit trail.',
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: p.estimations.length,
@@ -190,6 +235,8 @@ class _LeadEstimationsSection extends StatelessWidget {
                           const SizedBox(width: 6),
                           if (e.pricingMode == EstimationPricingMode.BUDGETARY)
                             const _BudgetaryRowChip(),
+                          const SizedBox(width: 6),
+                          if (e.isCurrent) const _CurrentRowChip(),
                         ],
                       ),
                       subtitle: Text(
@@ -239,6 +286,8 @@ class _LeadEstimationsSection extends StatelessWidget {
                       ),
                     );
                   },
+                ),
+                  ],
                 );
               },
             ),
@@ -262,9 +311,12 @@ class _EstimationStatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
       LeadEstimationStatus.DRAFT => ('DRAFT', Colors.grey),
+      LeadEstimationStatus.PENDING_APPROVAL => ('PENDING', Colors.amber),
+      LeadEstimationStatus.APPROVED => ('APPROVED', Colors.indigo),
       LeadEstimationStatus.SENT => ('SENT', Colors.blue),
       LeadEstimationStatus.ACCEPTED => ('ACCEPTED', Colors.green),
       LeadEstimationStatus.REJECTED => ('REJECTED', Colors.red),
+      LeadEstimationStatus.EXPIRED => ('EXPIRED', Colors.brown),
     };
     return Chip(
       label: Text(
@@ -291,6 +343,23 @@ class _BudgetaryRowChip extends StatelessWidget {
       backgroundColor: Colors.blueGrey,
       padding: EdgeInsets.zero,
       labelPadding: const EdgeInsets.symmetric(horizontal: 6),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
+}
+
+class _CurrentRowChip extends StatelessWidget {
+  const _CurrentRowChip();
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      avatar: const Icon(Icons.check_circle, color: Colors.white, size: 12),
+      label: const Text("CURRENT",
+          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+      backgroundColor: Colors.deepPurple,
+      padding: EdgeInsets.zero,
+      labelPadding: const EdgeInsets.symmetric(horizontal: 4),
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }

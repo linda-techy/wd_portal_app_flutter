@@ -221,7 +221,13 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
               ),
             ],
             const SizedBox(height: 8),
-            _ModePill(mode: detail.pricingMode),
+            Row(
+              children: [
+                _ModePill(mode: detail.pricingMode),
+                const SizedBox(width: 8),
+                if (detail.isCurrent) const _CurrentPill(),
+              ],
+            ),
             const SizedBox(height: 8),
             const Divider(),
             if (detail.pricingMode == EstimationPricingMode.BUDGETARY) ...[
@@ -373,6 +379,12 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
           ),
           child: const Text('Revert to Draft'),
         ));
+        break;
+      case LeadEstimationStatus.PENDING_APPROVAL:
+      case LeadEstimationStatus.APPROVED:
+      case LeadEstimationStatus.EXPIRED:
+        // EXPIRED is terminal; admin must create a new revision via the wizard.
+        // PENDING_APPROVAL/APPROVED are reserved for a future approval workflow.
         break;
     }
 
@@ -842,9 +854,12 @@ class _StatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
       LeadEstimationStatus.DRAFT => ('DRAFT', Colors.grey),
+      LeadEstimationStatus.PENDING_APPROVAL => ('PENDING APPROVAL', Colors.amber),
+      LeadEstimationStatus.APPROVED => ('APPROVED', Colors.indigo),
       LeadEstimationStatus.SENT => ('SENT', Colors.blue),
       LeadEstimationStatus.ACCEPTED => ('ACCEPTED', Colors.green),
       LeadEstimationStatus.REJECTED => ('REJECTED', Colors.red),
+      LeadEstimationStatus.EXPIRED => ('EXPIRED', Colors.brown),
     };
     return Chip(
       label: Text(
@@ -864,6 +879,37 @@ class _StatusChip extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 enum _MoreAction { regenerateToken }
+
+class _CurrentPill extends StatelessWidget {
+  const _CurrentPill();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.deepPurple.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.deepPurple.withOpacity(0.5)),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_circle, color: Colors.deepPurple, size: 14),
+          SizedBox(width: 4),
+          Text(
+            'Current',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Colors.deepPurple,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _ModePill extends StatelessWidget {
   final EstimationPricingMode mode;

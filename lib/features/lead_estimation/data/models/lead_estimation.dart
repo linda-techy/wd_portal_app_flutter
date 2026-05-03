@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:admin/features/estimation_settings/data/models/package_rate_version.dart';
 import 'package:admin/features/lead_estimation/data/models/estimation_sub_resource.dart';
 
-enum LeadEstimationStatus { DRAFT, SENT, ACCEPTED, REJECTED }
+enum LeadEstimationStatus { DRAFT, PENDING_APPROVAL, APPROVED, SENT, ACCEPTED, REJECTED, EXPIRED }
 
 /// K — pricing mode at the estimation level (distinct from per-customisation
 /// pricing mode). BUDGETARY: lead-stage range. LINE_ITEM: post-architect detail.
@@ -62,6 +62,8 @@ class LeadEstimationSummary {
   final double? estimatedAreaSqft;
   final double? grandTotalMin;
   final double? grandTotalMax;
+  // L — current-estimation indicator. Exactly one estimation per lead may be current.
+  final bool isCurrent;
 
   const LeadEstimationSummary({
     required this.id,
@@ -79,6 +81,7 @@ class LeadEstimationSummary {
     this.estimatedAreaSqft,
     this.grandTotalMin,
     this.grandTotalMax,
+    this.isCurrent = false,
   });
 
   factory LeadEstimationSummary.fromJson(Map<String, dynamic> json) {
@@ -102,6 +105,7 @@ class LeadEstimationSummary {
       estimatedAreaSqft: (json['estimatedAreaSqft'] as num?)?.toDouble(),
       grandTotalMin: (json['grandTotalMin'] as num?)?.toDouble(),
       grandTotalMax: (json['grandTotalMax'] as num?)?.toDouble(),
+      isCurrent: json['isCurrent'] as bool? ?? false,
     );
   }
 }
@@ -135,6 +139,8 @@ class LeadEstimationDetail {
   final double? estimatedAreaSqft;
   final double? grandTotalMin;
   final double? grandTotalMax;
+  // L — current-estimation indicator.
+  final bool isCurrent;
 
   const LeadEstimationDetail({
     required this.id,
@@ -162,6 +168,7 @@ class LeadEstimationDetail {
     this.estimatedAreaSqft,
     this.grandTotalMin,
     this.grandTotalMax,
+    this.isCurrent = false,
   });
 
   factory LeadEstimationDetail.fromJson(Map<String, dynamic> json) {
@@ -205,6 +212,7 @@ class LeadEstimationDetail {
       estimatedAreaSqft: (json['estimatedAreaSqft'] as num?)?.toDouble(),
       grandTotalMin: (json['grandTotalMin'] as num?)?.toDouble(),
       grandTotalMax: (json['grandTotalMax'] as num?)?.toDouble(),
+      isCurrent: json['isCurrent'] as bool? ?? false,
     );
   }
 
