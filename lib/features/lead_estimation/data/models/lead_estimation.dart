@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:admin/features/estimation_settings/data/models/package_rate_version.dart';
 import 'package:admin/features/lead_estimation/data/models/estimation_sub_resource.dart';
 
-enum LeadEstimationStatus { DRAFT }
+enum LeadEstimationStatus { DRAFT, SENT, ACCEPTED, REJECTED }
 
 @immutable
 class LeadEstimationLineItem {
