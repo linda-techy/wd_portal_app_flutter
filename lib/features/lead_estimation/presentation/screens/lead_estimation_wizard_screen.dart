@@ -147,6 +147,13 @@ class _LeadEstimationWizardScreenState
     if (prefill != null) {
       _draft.packageId = prefill.packageId;
       _draft.projectType = prefill.projectType;
+      _draft.pricingMode = prefill.pricingMode;
+      // N — hydrate budgetary area or line-item dimensions from the parent.
+      if (prefill.pricingMode == EstimationPricingMode.BUDGETARY) {
+        _draft.estimatedAreaSqft = prefill.estimatedAreaSqft;
+      } else {
+        _hydrateDimensionsFromJson(prefill.dimensionsJson);
+      }
       // Trigger catalog load for the pre-filled package.
       if (prefill.packageId != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -169,6 +176,25 @@ class _LeadEstimationWizardScreenState
     _estimationsProvider.dispose();
     _optionsProvider.dispose();
     super.dispose();
+  }
+
+  /// N — populates draft floor list + semi/terrace areas from a parent estimation's
+  /// dimensions_json blob. Tolerant of missing/empty fields (the wizard handles
+  /// `floors = []` by leaving the seeded blank floor in place).
+  void _hydrateDimensionsFromJson(Map<String, dynamic>? dim) {
+    if (dim == null || dim.isEmpty) return;
+    final floors = dim['floors'];
+    if (floors is List && floors.isNotEmpty) {
+      _draft.floors = floors.map((f) {
+        final m = f as Map<String, dynamic>;
+        return WizardFloorInput()
+          ..name = (m['floorName'] as String?) ?? ''
+          ..length = (m['length'] as num?)?.toDouble() ?? 0
+          ..width = (m['width'] as num?)?.toDouble() ?? 0;
+      }).toList();
+    }
+    _draft.semiCoveredArea = (dim['semiCoveredArea'] as num?)?.toDouble() ?? 0;
+    _draft.openTerraceArea = (dim['openTerraceArea'] as num?)?.toDouble() ?? 0;
   }
 
   // ---------------------------------------------------------------------------

@@ -141,6 +141,9 @@ class LeadEstimationDetail {
   final double? grandTotalMax;
   // L — current-estimation indicator.
   final bool isCurrent;
+  // N — raw dimensions input (floors/semiCovered/openTerrace) used to hydrate the
+  // wizard on Revise. Empty for budgetary estimations.
+  final Map<String, dynamic>? dimensionsJson;
 
   const LeadEstimationDetail({
     required this.id,
@@ -169,6 +172,7 @@ class LeadEstimationDetail {
     this.grandTotalMin,
     this.grandTotalMax,
     this.isCurrent = false,
+    this.dimensionsJson,
   });
 
   factory LeadEstimationDetail.fromJson(Map<String, dynamic> json) {
@@ -213,6 +217,7 @@ class LeadEstimationDetail {
       grandTotalMin: (json['grandTotalMin'] as num?)?.toDouble(),
       grandTotalMax: (json['grandTotalMax'] as num?)?.toDouble(),
       isCurrent: json['isCurrent'] as bool? ?? false,
+      dimensionsJson: json['dimensionsJson'] as Map<String, dynamic>?,
     );
   }
 

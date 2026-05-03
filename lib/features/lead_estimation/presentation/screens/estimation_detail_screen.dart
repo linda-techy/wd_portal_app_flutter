@@ -6,6 +6,7 @@ import 'package:admin/config/app_config.dart';
 import 'package:admin/features/lead_estimation/data/models/estimation_sub_resource.dart';
 import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart';
 import 'package:admin/features/lead_estimation/presentation/screens/lead_estimation_wizard_screen.dart';
+import 'package:admin/features/lead_estimation/presentation/widgets/revision_diff_sheet.dart';
 import 'package:admin/features/lead_estimation/providers/estimation_detail_provider.dart';
 import 'package:admin/utils/file_download_helper.dart';
 
@@ -212,12 +213,23 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
                     ?.copyWith(color: Colors.grey[600])),
             if (detail.parentEstimationId != null) ...[
               const SizedBox(height: 4),
-              Text(
-                'Revision of ${detail.parentEstimationId}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.orange[700],
-                  fontStyle: FontStyle.italic,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Revision of ${detail.parentEstimationId}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.orange[700],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                  TextButton.icon(
+                    icon: const Icon(Icons.compare_arrows, size: 16),
+                    label: const Text('Compare with parent'),
+                    onPressed: () => RevisionDiffSheet.show(context, detail),
+                  ),
+                ],
               ),
             ],
             const SizedBox(height: 8),
