@@ -1,26 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:admin/features/estimation_settings/data/models/package_rate_version.dart';
 import 'package:admin/features/estimation_settings/providers/estimation_packages_provider.dart';
 import 'package:admin/features/lead_estimation/presentation/screens/lead_estimation_wizard_screen.dart';
 
 /// Step 1 — Package + Project Type selection.
 ///
-/// Mutates [draft] in-place; calls [onChanged] after every change so the
-/// parent Stepper rebuilds.
+/// Reads packages via `context.watch<EstimationPackagesProvider>` so the
+/// dropdown rebuilds when the provider's async load completes. The previous
+/// implementation took the provider as a constructor field and read it
+/// synchronously at build-time, which left the dropdown items list empty
+/// when load finished after the first render — making the dropdown
+/// non-selectable in practice.
 class WizardStep1Package extends StatelessWidget {
   final WizardDraft draft;
-  final EstimationPackagesProvider packagesProvider;
   final VoidCallback onChanged;
 
   const WizardStep1Package({
     super.key,
     required this.draft,
-    required this.packagesProvider,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
+    final packagesProvider = context.watch<EstimationPackagesProvider>();
     final packages = packagesProvider.packages;
     final isLoading = packagesProvider.isLoading;
     final error = packagesProvider.errorMessage;

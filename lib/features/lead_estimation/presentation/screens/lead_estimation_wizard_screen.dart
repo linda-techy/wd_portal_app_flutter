@@ -221,7 +221,6 @@ class _LeadEstimationWizardScreenState
                 key: _step1Key,
                 child: WizardStep1Package(
                   draft: _draft,
-                  packagesProvider: _packagesProvider,
                   onChanged: () => setState(() {}),
                 ),
               ),
@@ -245,7 +244,6 @@ class _LeadEstimationWizardScreenState
               content: WizardStep3Customisations(
                 draft: _draft,
                 onChanged: () => setState(() {}),
-                optionsProvider: _optionsProvider,
               ),
             ),
             Step(
@@ -255,7 +253,6 @@ class _LeadEstimationWizardScreenState
               content: WizardStep4AddOnsFees(
                 draft: _draft,
                 onChanged: () => setState(() {}),
-                optionsProvider: _optionsProvider,
               ),
             ),
             Step(

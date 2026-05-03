@@ -1,28 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:admin/features/lead_estimation/data/models/estimation_options.dart';
 import 'package:admin/features/lead_estimation/presentation/screens/lead_estimation_wizard_screen.dart';
 import 'package:admin/features/lead_estimation/providers/estimation_options_provider.dart';
 
 /// Step 3 — Customisations.
 ///
-/// Renders a [RadioListTile] group per customisation category returned by
-/// [EstimationOptionsProvider]. Selecting an option updates
-/// [WizardDraft.customisations] (replaces any existing entry for the same
-/// category, keeping exactly one selection per category).
-///
-/// Shows a loading spinner while the provider is fetching, an error message
-/// with a retry button if the fetch failed, and the previous "coming soon"
-/// placeholder when the catalog is empty.
+/// Reads options via `context.watch<EstimationOptionsProvider>` so the list
+/// rebuilds when the provider's async load completes (the previous
+/// constructor-field pattern missed the rebuild and showed empty state).
 class WizardStep3Customisations extends StatelessWidget {
   final WizardDraft draft;
   final VoidCallback onChanged;
-  final EstimationOptionsProvider optionsProvider;
 
   const WizardStep3Customisations({
     super.key,
     required this.draft,
     required this.onChanged,
-    required this.optionsProvider,
   });
 
   // ---------------------------------------------------------------------------
@@ -48,6 +42,7 @@ class WizardStep3Customisations extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final optionsProvider = context.watch<EstimationOptionsProvider>();
     // Loading state
     if (optionsProvider.isLoading) {
       return const Padding(

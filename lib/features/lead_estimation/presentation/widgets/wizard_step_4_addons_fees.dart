@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:admin/features/lead_estimation/data/models/estimation_options.dart';
 import 'package:admin/features/lead_estimation/presentation/screens/lead_estimation_wizard_screen.dart';
 import 'package:admin/features/lead_estimation/providers/estimation_options_provider.dart';
@@ -17,13 +18,11 @@ import 'package:admin/features/lead_estimation/providers/estimation_options_prov
 class WizardStep4AddOnsFees extends StatelessWidget {
   final WizardDraft draft;
   final VoidCallback onChanged;
-  final EstimationOptionsProvider optionsProvider;
 
   const WizardStep4AddOnsFees({
     super.key,
     required this.draft,
     required this.onChanged,
-    required this.optionsProvider,
   });
 
   // ---------------------------------------------------------------------------
@@ -82,6 +81,7 @@ class WizardStep4AddOnsFees extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final optionsProvider = context.watch<EstimationOptionsProvider>();
     // Loading state
     if (optionsProvider.isLoading) {
       return const Padding(
