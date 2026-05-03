@@ -94,4 +94,13 @@ class LeadEstimationService {
       (json) => LeadEstimationDetail.fromJson(json as Map<String, dynamic>),
     );
   }
+
+  /// GET /api/lead-estimations/{id}/pdf — returns raw PDF bytes.
+  Future<List<int>> downloadPdf(String id) async {
+    final response = await _dio.get<List<int>>(
+      '/api/lead-estimations/$id/pdf',
+      options: Options(responseType: ResponseType.bytes),
+    );
+    return response.data!;
+  }
 }

@@ -187,6 +187,34 @@ class EstimationDetailProvider extends ChangeNotifier {
 
   // ─── Status transitions ──────────────────────────────────────────────────
 
+  // ─── PDF download ────────────────────────────────────────────────────────
+
+  bool _isPdfDownloading = false;
+  bool get isPdfDownloading => _isPdfDownloading;
+
+  /// Downloads the PDF for the current estimation.
+  /// Returns the raw bytes on success, or null on error (sets [errorMessage]).
+  Future<List<int>?> downloadPdf() async {
+    if (_detail == null) return null;
+    _isPdfDownloading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      return await _estimationService.downloadPdf(_detail!.id);
+    } on DioException catch (e) {
+      _errorMessage = _humanizeDioError(e);
+      notifyListeners();
+      return null;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return null;
+    } finally {
+      _isPdfDownloading = false;
+      notifyListeners();
+    }
+  }
+
   Future<bool> markSent() => _transition(
       () => _estimationService.markSent(_detail!.id));
 

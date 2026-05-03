@@ -1,8 +1,11 @@
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/features/lead_estimation/data/models/estimation_sub_resource.dart';
 import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart';
 import 'package:admin/features/lead_estimation/providers/estimation_detail_provider.dart';
+import 'package:admin/utils/file_download_helper.dart';
 
 class EstimationDetailScreen extends StatefulWidget {
   final String estimationId;
@@ -59,6 +62,21 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
                     child: _StatusChip(status: detail.status),
                   ),
                 const SizedBox(width: 4),
+                if (detail != null)
+                  p.isPdfDownloading
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.picture_as_pdf_outlined),
+                          tooltip: 'Download PDF',
+                          onPressed: () => _downloadPdf(context, p, detail),
+                        ),
                 IconButton(
                   icon: const Icon(Icons.refresh),
                   tooltip: 'Refresh',
@@ -72,6 +90,38 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _downloadPdf(
+    BuildContext context,
+    EstimationDetailProvider p,
+    LeadEstimationDetail detail,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final bytes = await p.downloadPdf();
+    if (bytes == null) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(
+        content: Text(p.errorMessage ?? 'Failed to download PDF'),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+    final fileName = 'estimation-${detail.estimationNo}.pdf';
+    if (kIsWeb) {
+      await FileDownloadHelper.downloadAndShareFile(
+        bytes: Uint8List.fromList(bytes),
+        fileName: fileName,
+        mimeType: 'application/pdf',
+      );
+    } else {
+      await FileDownloadHelper.downloadAndShareFile(
+        bytes: Uint8List.fromList(bytes),
+        fileName: fileName,
+        mimeType: 'application/pdf',
+        shareText: 'Estimation ${detail.estimationNo}',
+      );
+    }
   }
 
   Widget _buildBody(
