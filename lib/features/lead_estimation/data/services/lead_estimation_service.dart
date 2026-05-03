@@ -95,6 +95,16 @@ class LeadEstimationService {
     );
   }
 
+  /// PATCH /api/lead-estimations/{id}/regenerate-token — rotates the public view token.
+  Future<LeadEstimationDetail> regenerateToken(String id) async {
+    final response =
+        await _dio.patch('/api/lead-estimations/$id/regenerate-token');
+    return _api.unwrap<LeadEstimationDetail>(
+      response,
+      (json) => LeadEstimationDetail.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
   /// GET /api/lead-estimations/{id}/pdf — returns raw PDF bytes.
   Future<List<int>> downloadPdf(String id) async {
     final response = await _dio.get<List<int>>(

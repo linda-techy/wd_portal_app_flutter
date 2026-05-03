@@ -216,6 +216,10 @@ class EstimationDetailProvider extends ChangeNotifier {
     }
   }
 
+  /// Rotates the publicViewToken. Old share links will break immediately.
+  Future<bool> regenerateToken() => _transition(
+      () => _estimationService.regenerateToken(_detail!.id));
+
   Future<bool> markSent() => _transition(
       () => _estimationService.markSent(_detail!.id));
 
