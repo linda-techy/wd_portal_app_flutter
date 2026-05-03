@@ -106,6 +106,7 @@ class EstimationDetailProvider extends ChangeNotifier {
       paymentMilestones: type == SubResourceType.paymentMilestone
           ? items
           : d.paymentMilestones,
+      publicViewToken: d.publicViewToken,
     );
   }
 

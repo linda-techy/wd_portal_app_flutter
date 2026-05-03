@@ -51,6 +51,7 @@ class LeadEstimationSummary {
   final double grandTotal;
   final DateTime? validUntil;
   final DateTime createdAt;
+  final String publicViewToken;
 
   const LeadEstimationSummary({
     required this.id,
@@ -62,6 +63,7 @@ class LeadEstimationSummary {
     required this.grandTotal,
     this.validUntil,
     required this.createdAt,
+    required this.publicViewToken,
   });
 
   factory LeadEstimationSummary.fromJson(Map<String, dynamic> json) {
@@ -77,6 +79,7 @@ class LeadEstimationSummary {
           ? DateTime.parse(json['validUntil'] as String)
           : null,
       createdAt: DateTime.parse(json['createdAt'] as String),
+      publicViewToken: json['publicViewToken'] as String,
     );
   }
 }
@@ -102,6 +105,7 @@ class LeadEstimationDetail {
   final List<EstimationSubResource> exclusions;
   final List<EstimationSubResource> assumptions;
   final List<EstimationSubResource> paymentMilestones;
+  final String publicViewToken;
 
   const LeadEstimationDetail({
     required this.id,
@@ -123,6 +127,7 @@ class LeadEstimationDetail {
     this.exclusions = const [],
     this.assumptions = const [],
     this.paymentMilestones = const [],
+    required this.publicViewToken,
   });
 
   factory LeadEstimationDetail.fromJson(Map<String, dynamic> json) {
@@ -158,6 +163,7 @@ class LeadEstimationDetail {
       paymentMilestones: ((json['paymentMilestones'] as List<dynamic>?) ?? [])
           .map((j) => EstimationSubResource.fromJson(j as Map<String, dynamic>))
           .toList(),
+      publicViewToken: json['publicViewToken'] as String,
     );
   }
 

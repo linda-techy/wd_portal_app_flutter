@@ -10,6 +10,7 @@ const _detailJson = '{"id":"e1","estimationNo":"EST-202605-ABC123","leadId":42,'
     '"marketIndexId":"mi-1","status":"DRAFT","subtotal":2467500.00,'
     '"discountAmount":0.00,"gstAmount":444150.00,"grandTotal":2911650.00,'
     '"validUntil":"2026-06-01","createdAt":"2026-05-02T10:00:00",'
+    '"publicViewToken":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",'
     '"lineItems":[{"lineType":"BASE","description":"Base package","amount":2467500,'
     '"displayOrder":1}]}';
 

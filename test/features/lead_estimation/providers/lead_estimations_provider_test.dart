@@ -10,7 +10,8 @@ const _summaryListJson =
     '{"id":"e1","estimationNo":"EST-202605-ABC123","leadId":42,'
     '"projectType":"NEW_BUILD","packageId":"pkg-1","status":"DRAFT",'
     '"grandTotal":2911650.0,"validUntil":"2026-06-01",'
-    '"createdAt":"2026-05-02T10:00:00"}'
+    '"createdAt":"2026-05-02T10:00:00",'
+    '"publicViewToken":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"}'
     ']}';
 
 const _detailJson =
@@ -19,6 +20,7 @@ const _detailJson =
     '"marketIndexId":"mi-1","status":"DRAFT","subtotal":2467500.00,'
     '"discountAmount":0.00,"gstAmount":444150.00,"grandTotal":2911650.00,'
     '"validUntil":"2026-06-01","createdAt":"2026-05-02T10:00:00",'
+    '"publicViewToken":"11111111-2222-3333-4444-555555555555",'
     '"lineItems":[{"lineType":"BASE","description":"Base package","amount":2467500,'
     '"displayOrder":1}]}';
 
