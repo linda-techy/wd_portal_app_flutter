@@ -185,6 +185,37 @@ class EstimationDetailProvider extends ChangeNotifier {
         () => _subService.delete(estimationId, SubResourceType.paymentMilestone, id));
   }
 
+  // ─── Status transitions ──────────────────────────────────────────────────
+
+  Future<bool> markSent() => _transition(
+      () => _estimationService.markSent(_detail!.id));
+
+  Future<bool> markAccepted() => _transition(
+      () => _estimationService.markAccepted(_detail!.id));
+
+  Future<bool> markRejected() => _transition(
+      () => _estimationService.markRejected(_detail!.id));
+
+  Future<bool> revertToDraft() => _transition(
+      () => _estimationService.revertToDraft(_detail!.id));
+
+  Future<bool> _transition(
+      Future<LeadEstimationDetail> Function() action) async {
+    try {
+      _detail = await action();
+      notifyListeners();
+      return true;
+    } on DioException catch (e) {
+      _errorMessage = _humanizeDioError(e);
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return false;
+    }
+  }
+
   // ─── Private helper ──────────────────────────────────────────────────────
 
   Future<bool> _mutate(
@@ -217,6 +248,11 @@ class EstimationDetailProvider extends ChangeNotifier {
       return 'Invalid request.';
     }
     if (status == 404) return 'Not found.';
+    if (status == 422) {
+      final data = e.response?.data;
+      if (data is Map && data['message'] is String) return data['message'] as String;
+      return 'Invalid transition — this status change is not allowed.';
+    }
     if (status == 409) {
       final data = e.response?.data;
       if (data is Map && data['message'] is String) return data['message'] as String;
