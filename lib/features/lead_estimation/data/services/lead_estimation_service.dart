@@ -56,4 +56,42 @@ class LeadEstimationService {
     final response = await _dio.delete('/api/lead-estimations/$id');
     _api.unwrap<void>(response, (_) {});
   }
+
+  /// PATCH /api/lead-estimations/{id}/mark-sent  (DRAFT → SENT)
+  Future<LeadEstimationDetail> markSent(String id) async {
+    final response = await _dio.patch('/api/lead-estimations/$id/mark-sent');
+    return _api.unwrap<LeadEstimationDetail>(
+      response,
+      (json) => LeadEstimationDetail.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// PATCH /api/lead-estimations/{id}/mark-accepted  (SENT → ACCEPTED)
+  Future<LeadEstimationDetail> markAccepted(String id) async {
+    final response =
+        await _dio.patch('/api/lead-estimations/$id/mark-accepted');
+    return _api.unwrap<LeadEstimationDetail>(
+      response,
+      (json) => LeadEstimationDetail.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// PATCH /api/lead-estimations/{id}/mark-rejected  (SENT → REJECTED)
+  Future<LeadEstimationDetail> markRejected(String id) async {
+    final response =
+        await _dio.patch('/api/lead-estimations/$id/mark-rejected');
+    return _api.unwrap<LeadEstimationDetail>(
+      response,
+      (json) => LeadEstimationDetail.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// PATCH /api/lead-estimations/{id}/mark-draft  (SENT/REJECTED → DRAFT)
+  Future<LeadEstimationDetail> revertToDraft(String id) async {
+    final response = await _dio.patch('/api/lead-estimations/$id/mark-draft');
+    return _api.unwrap<LeadEstimationDetail>(
+      response,
+      (json) => LeadEstimationDetail.fromJson(json as Map<String, dynamic>),
+    );
+  }
 }
