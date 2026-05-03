@@ -65,7 +65,8 @@ void main() {
           {"id":"e1","estimationNo":"EST-202605-ABC123","leadId":42,
             "projectType":"NEW_BUILD","packageId":"pkg-1","status":"DRAFT",
             "grandTotal":2911650.0,"validUntil":"2026-06-01",
-            "createdAt":"2026-05-02T10:00:00"}
+            "createdAt":"2026-05-02T10:00:00",
+            "publicViewToken":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"}
         ]}''',
         200,
         headers: {'content-type': ['application/json']},

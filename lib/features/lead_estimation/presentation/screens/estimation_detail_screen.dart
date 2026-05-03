@@ -1,7 +1,8 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:admin/config/app_config.dart';
 import 'package:admin/features/lead_estimation/data/models/estimation_sub_resource.dart';
 import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart';
 import 'package:admin/features/lead_estimation/providers/estimation_detail_provider.dart';
@@ -77,6 +78,27 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
                           tooltip: 'Download PDF',
                           onPressed: () => _downloadPdf(context, p, detail),
                         ),
+                if (detail != null)
+                  IconButton(
+                    icon: const Icon(Icons.link),
+                    tooltip: 'Copy share link',
+                    onPressed: () => _copyShareLink(context, detail),
+                  ),
+                if (detail != null)
+                  PopupMenuButton<_MoreAction>(
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (action) {
+                      if (action == _MoreAction.regenerateToken) {
+                        _confirmRegenerateToken(context, p);
+                      }
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(
+                        value: _MoreAction.regenerateToken,
+                        child: Text('Regenerate share link'),
+                      ),
+                    ],
+                  ),
                 IconButton(
                   icon: const Icon(Icons.refresh),
                   tooltip: 'Refresh',
@@ -554,6 +576,49 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
       );
     }
   }
+
+  Future<void> _copyShareLink(
+      BuildContext context, LeadEstimationDetail detail) async {
+    final url = AppConfig.buildQuotationShareUrl(detail.publicViewToken);
+    await Clipboard.setData(ClipboardData(text: url));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Share link copied to clipboard')),
+    );
+  }
+
+  Future<void> _confirmRegenerateToken(
+      BuildContext context, EstimationDetailProvider p) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirm = await showDialog<bool>(  // ignore: use_build_context_synchronously
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Regenerate share link?'),
+        content: const Text(
+            'This will create a new share link. Anyone with the old link will '
+            'no longer be able to view this estimation.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Regenerate'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    final ok = await p.regenerateToken();
+    if (!mounted) return;
+    messenger.showSnackBar(SnackBar(
+      content: Text(ok
+          ? 'New share link generated'
+          : (p.errorMessage ?? 'Failed to regenerate link')),
+      backgroundColor: ok ? Colors.green : Colors.red,
+    ));
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -731,3 +796,10 @@ class _StatusChip extends StatelessWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// More-actions menu
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum _MoreAction { regenerateToken }
+
