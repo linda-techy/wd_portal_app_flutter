@@ -16,12 +16,16 @@ class WizardStep5Review extends StatefulWidget {
   final VoidCallback onChanged;
   final void Function(LeadEstimationDetail created) onSaved;
 
+  /// When set, calls `reviseEstimation(parentId, ...)` instead of `create`.
+  final String? reviseFromEstimationId;
+
   const WizardStep5Review({
     super.key,
     required this.draft,
     required this.estimationsProvider,
     required this.onChanged,
     required this.onSaved,
+    this.reviseFromEstimationId,
   });
 
   @override
@@ -124,10 +128,22 @@ class _WizardStep5ReviewState extends State<WizardStep5Review> {
       return;
     }
     setState(() => _saving = true);
-    final created = await widget.estimationsProvider.create(
-      previewPayload: widget.draft.toPreviewPayload(),
-      validUntil: widget.draft.validUntil,
-    );
+
+    final LeadEstimationDetail? created;
+    final parentId = widget.reviseFromEstimationId;
+    if (parentId != null) {
+      created = await widget.estimationsProvider.reviseEstimation(
+        parentId: parentId,
+        previewPayload: widget.draft.toPreviewPayload(),
+        validUntil: widget.draft.validUntil,
+      );
+    } else {
+      created = await widget.estimationsProvider.create(
+        previewPayload: widget.draft.toPreviewPayload(),
+        validUntil: widget.draft.validUntil,
+      );
+    }
+
     if (!mounted) return;
     setState(() => _saving = false);
 
@@ -231,7 +247,11 @@ class _WizardStep5ReviewState extends State<WizardStep5Review> {
               ? const SizedBox(
                   width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
               : const Icon(Icons.save),
-          label: Text(_saving ? 'Saving…' : 'Save Estimation'),
+          label: Text(_saving
+              ? 'Saving…'
+              : widget.reviseFromEstimationId != null
+                  ? 'Save Revision'
+                  : 'Save Estimation'),
           onPressed: _saving ? null : _onSave,
         ),
       ],

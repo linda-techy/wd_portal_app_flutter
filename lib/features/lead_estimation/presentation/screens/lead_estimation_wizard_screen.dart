@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/features/estimation_settings/data/models/package_rate_version.dart';
 import 'package:admin/features/estimation_settings/providers/estimation_packages_provider.dart';
+import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart';
 import 'package:admin/features/lead_estimation/providers/estimation_options_provider.dart';
 import 'package:admin/features/lead_estimation/providers/lead_estimations_provider.dart';
 import 'package:admin/features/lead_estimation/presentation/widgets/wizard_step_1_package.dart';
@@ -85,7 +86,20 @@ class WizardDraft {
 class LeadEstimationWizardScreen extends StatefulWidget {
   final int leadId;
 
-  const LeadEstimationWizardScreen({super.key, required this.leadId});
+  /// When set, the wizard calls `reviseEstimation` instead of `create` on save.
+  final String? reviseFromEstimationId;
+
+  /// When set, pre-populates the draft with package + projectType from this detail.
+  /// MVP limitation: dimensions are not pre-filled (detail response omits raw
+  /// input dimensions); user re-enters them manually.
+  final LeadEstimationDetail? prefillFrom;
+
+  const LeadEstimationWizardScreen({
+    super.key,
+    required this.leadId,
+    this.reviseFromEstimationId,
+    this.prefillFrom,
+  });
 
   @override
   State<LeadEstimationWizardScreen> createState() =>
@@ -111,6 +125,20 @@ class _LeadEstimationWizardScreenState
     _packagesProvider = EstimationPackagesProvider();
     _estimationsProvider = LeadEstimationsProvider();
     _optionsProvider = EstimationOptionsProvider();
+
+    // Pre-fill draft when revising an existing estimation.
+    final prefill = widget.prefillFrom;
+    if (prefill != null) {
+      _draft.packageId = prefill.packageId;
+      _draft.projectType = prefill.projectType;
+      // Trigger catalog load for the pre-filled package.
+      if (prefill.packageId != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _optionsProvider.loadForPackage(prefill.packageId);
+        });
+      }
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await Future.wait([
         _packagesProvider.load(),
@@ -172,7 +200,9 @@ class _LeadEstimationWizardScreenState
       ],
       child: Scaffold(
         appBar: AppBar(
-          title: Text('New Estimation — Lead #${widget.leadId}'),
+          title: Text(widget.reviseFromEstimationId != null
+              ? 'Revise Estimation — Lead #${widget.leadId}'
+              : 'New Estimation — Lead #${widget.leadId}'),
         ),
         body: Stepper(
           type: StepperType.vertical,
@@ -237,6 +267,7 @@ class _LeadEstimationWizardScreenState
                 estimationsProvider: _estimationsProvider,
                 onChanged: () => setState(() {}),
                 onSaved: (created) => Navigator.of(context).pop(created),
+                reviseFromEstimationId: widget.reviseFromEstimationId,
               ),
             ),
           ],
