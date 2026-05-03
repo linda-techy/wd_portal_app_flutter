@@ -182,7 +182,13 @@ class _LeadEstimationsSection extends StatelessWidget {
                     return ListTile(
                       leading: const CircleAvatar(
                           child: Icon(Icons.receipt_long)),
-                      title: Text(e.estimationNo),
+                      title: Row(
+                        children: [
+                          Text(e.estimationNo),
+                          const SizedBox(width: 8),
+                          _EstimationStatusPill(status: e.status),
+                        ],
+                      ),
                       subtitle: Text(
                         '${e.projectType.name} \u00b7 \u20b9${e.grandTotal.toStringAsFixed(2)} \u00b7 $created',
                       ),
@@ -232,6 +238,36 @@ class _LeadEstimationsSection extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Small status pill for the estimations list row
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _EstimationStatusPill extends StatelessWidget {
+  final LeadEstimationStatus status;
+
+  const _EstimationStatusPill({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = switch (status) {
+      LeadEstimationStatus.DRAFT => ('DRAFT', Colors.grey),
+      LeadEstimationStatus.SENT => ('SENT', Colors.blue),
+      LeadEstimationStatus.ACCEPTED => ('ACCEPTED', Colors.green),
+      LeadEstimationStatus.REJECTED => ('REJECTED', Colors.red),
+    };
+    return Chip(
+      label: Text(
+        label,
+        style: const TextStyle(color: Colors.white, fontSize: 10),
+      ),
+      backgroundColor: color,
+      padding: EdgeInsets.zero,
+      labelPadding: const EdgeInsets.symmetric(horizontal: 6),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 }
