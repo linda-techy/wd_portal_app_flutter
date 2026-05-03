@@ -54,12 +54,11 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
                   : 'Estimation Detail'),
               actions: [
                 if (detail != null)
-                  Chip(
-                    label: Text(detail.status.name),
-                    backgroundColor:
-                        Theme.of(context).colorScheme.primaryContainer,
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: _StatusChip(status: detail.status),
                   ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 IconButton(
                   icon: const Icon(Icons.refresh),
                   tooltip: 'Refresh',
@@ -155,8 +154,119 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
                 ),
               ],
             ),
+            _buildTransitionButtons(context, detail),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTransitionButtons(
+      BuildContext context, LeadEstimationDetail detail) {
+    final p = context.read<EstimationDetailProvider>();
+
+    Future<void> doTransition({
+      required String confirmMessage,
+      required Future<bool> Function() action,
+      required String successMessage,
+    }) async {
+      final messenger = ScaffoldMessenger.of(context);
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          content: Text(confirmMessage),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Confirm'),
+            ),
+          ],
+        ),
+      );
+      if (confirm != true) return;
+      final ok = await action();
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(ok ? successMessage : (p.errorMessage ?? 'Operation failed.')),
+          backgroundColor: ok ? Colors.green : Colors.red,
+        ),
+      );
+    }
+
+    final buttons = <Widget>[];
+
+    switch (detail.status) {
+      case LeadEstimationStatus.DRAFT:
+        buttons.add(FilledButton(
+          onPressed: () => doTransition(
+            confirmMessage: 'Mark this estimation as Sent?',
+            action: p.markSent,
+            successMessage: 'Estimation marked as Sent.',
+          ),
+          child: const Text('Mark as Sent'),
+        ));
+        break;
+      case LeadEstimationStatus.SENT:
+        buttons.addAll([
+          FilledButton(
+            onPressed: () => doTransition(
+              confirmMessage:
+                  'Mark this estimation as Accepted? This will also update the lead status to Project Won.',
+              action: p.markAccepted,
+              successMessage: 'Estimation accepted. Lead marked as Project Won.',
+            ),
+            style: FilledButton.styleFrom(backgroundColor: Colors.green),
+            child: const Text('Mark Accepted'),
+          ),
+          const SizedBox(width: 8),
+          FilledButton(
+            onPressed: () => doTransition(
+              confirmMessage: 'Mark this estimation as Rejected?',
+              action: p.markRejected,
+              successMessage: 'Estimation marked as Rejected.',
+            ),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Mark Rejected'),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton(
+            onPressed: () => doTransition(
+              confirmMessage: 'Revert this estimation back to Draft?',
+              action: p.revertToDraft,
+              successMessage: 'Estimation reverted to Draft.',
+            ),
+            child: const Text('Revert to Draft'),
+          ),
+        ]);
+        break;
+      case LeadEstimationStatus.ACCEPTED:
+        // Final state — no transitions allowed.
+        break;
+      case LeadEstimationStatus.REJECTED:
+        buttons.add(OutlinedButton(
+          onPressed: () => doTransition(
+            confirmMessage: 'Revert this estimation back to Draft?',
+            action: p.revertToDraft,
+            successMessage: 'Estimation reverted to Draft.',
+          ),
+          child: const Text('Revert to Draft'),
+        ));
+        break;
+    }
+
+    if (buttons.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: buttons,
       ),
     );
   }
@@ -538,6 +648,36 @@ class _SubResourceEditDialogState extends State<_SubResourceEditDialog> {
           child: Text(isEdit ? 'Save' : 'Add'),
         ),
       ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Status chip
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _StatusChip extends StatelessWidget {
+  final LeadEstimationStatus status;
+
+  const _StatusChip({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = switch (status) {
+      LeadEstimationStatus.DRAFT => ('DRAFT', Colors.grey),
+      LeadEstimationStatus.SENT => ('SENT', Colors.blue),
+      LeadEstimationStatus.ACCEPTED => ('ACCEPTED', Colors.green),
+      LeadEstimationStatus.REJECTED => ('REJECTED', Colors.red),
+    };
+    return Chip(
+      label: Text(
+        label,
+        style: const TextStyle(color: Colors.white, fontSize: 11),
+      ),
+      backgroundColor: color,
+      padding: EdgeInsets.zero,
+      labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 }
