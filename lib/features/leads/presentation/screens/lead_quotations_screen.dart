@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:admin/features/leads/data/models/lead.dart';
 import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart';
+import 'package:admin/features/lead_estimation/presentation/screens/estimation_detail_screen.dart';
 import 'package:admin/features/lead_estimation/presentation/screens/lead_estimation_wizard_screen.dart';
 import 'package:admin/features/lead_estimation/providers/lead_estimations_provider.dart';
 
@@ -185,6 +186,12 @@ class _LeadEstimationsSection extends StatelessWidget {
                       subtitle: Text(
                         '${e.projectType.name} \u00b7 \u20b9${e.grandTotal.toStringAsFixed(2)} \u00b7 $created',
                       ),
+                      onTap: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) =>
+                              EstimationDetailScreen(estimationId: e.id),
+                        ));
+                      },
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline),
                         tooltip: 'Delete',
