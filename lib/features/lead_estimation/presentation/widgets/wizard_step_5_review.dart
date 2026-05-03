@@ -148,10 +148,16 @@ class _WizardStep5ReviewState extends State<WizardStep5Review> {
     setState(() => _saving = false);
 
     if (created != null) {
+      final totalText =
+          created.pricingMode == EstimationPricingMode.BUDGETARY &&
+                  created.grandTotalMin != null &&
+                  created.grandTotalMax != null
+              ? 'range \u20b9${created.grandTotalMin!.toStringAsFixed(0)}\u2013\u20b9${created.grandTotalMax!.toStringAsFixed(0)}'
+              : 'total \u20b9${created.grandTotal.toStringAsFixed(2)}';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
-                'Estimation saved (${created.estimationNo}) — total ₹${created.grandTotal.toStringAsFixed(2)}')),
+                'Estimation saved (${created.estimationNo}) — $totalText')),
       );
       widget.onSaved(created);
     } else {
@@ -262,27 +268,47 @@ class _WizardStep5ReviewState extends State<WizardStep5Review> {
       v == null ? '—' : (v as num).toStringAsFixed(2);
 
   Widget _buildTotals(Map<String, dynamic> data) {
+    final isBudgetary = data['pricingMode'] == 'BUDGETARY';
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _row('Chargeable area (sqft)', _fmt(data['chargeableArea'])),
-            _row('Base cost', '₹${_fmt(data['baseCost'])}'),
-            _row('Customisations', '₹${_fmt(data['customisationCost'])}'),
-            _row('Site fees', '₹${_fmt(data['siteCost'])}'),
-            _row('Add-ons', '₹${_fmt(data['addOnCost'])}'),
-            _row('Fluctuation adjustment', '₹${_fmt(data['fluctuationAdjustment'])}'),
-            const Divider(),
-            _row('Subtotal', '₹${_fmt(data['subtotal'])}', bold: true),
-            _row('Govt fees', '₹${_fmt(data['govtFees'])}'),
-            _row('Discount', '−₹${_fmt(data['discount'])}'),
-            _row('Taxable', '₹${_fmt(data['taxable'])}'),
-            _row('GST', '₹${_fmt(data['gst'])}'),
-            const Divider(),
-            _row('Grand total', '₹${_fmt(data['grandTotal'])}', big: true),
-          ],
+          children: isBudgetary
+              ? [
+                  _row(
+                      'Estimated buildable area (sqft)',
+                      _fmt(data['estimatedAreaSqft'])),
+                  const Divider(),
+                  _row('Estimated low (incl. GST)',
+                      '₹${_fmt(data['grandTotalMin'])}', bold: true),
+                  _row('Estimated high (incl. GST)',
+                      '₹${_fmt(data['grandTotalMax'])}', bold: true),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Range = (area × base rate) ±10%, GST applied. Sub-resources '
+                    '(inclusions / exclusions / payment milestones) can still be '
+                    'added after saving.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                  ),
+                ]
+              : [
+                  _row('Chargeable area (sqft)', _fmt(data['chargeableArea'])),
+                  _row('Base cost', '₹${_fmt(data['baseCost'])}'),
+                  _row('Customisations', '₹${_fmt(data['customisationCost'])}'),
+                  _row('Site fees', '₹${_fmt(data['siteCost'])}'),
+                  _row('Add-ons', '₹${_fmt(data['addOnCost'])}'),
+                  _row('Fluctuation adjustment',
+                      '₹${_fmt(data['fluctuationAdjustment'])}'),
+                  const Divider(),
+                  _row('Subtotal', '₹${_fmt(data['subtotal'])}', bold: true),
+                  _row('Govt fees', '₹${_fmt(data['govtFees'])}'),
+                  _row('Discount', '−₹${_fmt(data['discount'])}'),
+                  _row('Taxable', '₹${_fmt(data['taxable'])}'),
+                  _row('GST', '₹${_fmt(data['gst'])}'),
+                  const Divider(),
+                  _row('Grand total', '₹${_fmt(data['grandTotal'])}', big: true),
+                ],
         ),
       ),
     );

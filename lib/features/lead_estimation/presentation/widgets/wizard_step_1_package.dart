@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/features/estimation_settings/data/models/package_rate_version.dart';
 import 'package:admin/features/estimation_settings/providers/estimation_packages_provider.dart';
+import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart' show EstimationPricingMode;
 import 'package:admin/features/lead_estimation/presentation/screens/lead_estimation_wizard_screen.dart';
 
 /// Step 1 — Package + Project Type selection.
@@ -57,6 +58,44 @@ class WizardStep1Package extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Mode picker — drives whether subsequent steps gather floors+catalog or just an area.
+        const Text('Quotation type *',
+            style: TextStyle(fontWeight: FontWeight.w600)),
+        RadioListTile<EstimationPricingMode>(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          value: EstimationPricingMode.BUDGETARY,
+          groupValue: draft.pricingMode,
+          title: const Text('Budgetary estimate (lead stage)'),
+          subtitle: const Text(
+            'Range based on rough buildable area. Use when no architect plan yet.',
+            style: TextStyle(fontSize: 11),
+          ),
+          onChanged: (v) {
+            if (v != null) {
+              draft.pricingMode = v;
+              onChanged();
+            }
+          },
+        ),
+        RadioListTile<EstimationPricingMode>(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          value: EstimationPricingMode.LINE_ITEM,
+          groupValue: draft.pricingMode,
+          title: const Text('Detailed estimate (architect plan in hand)'),
+          subtitle: const Text(
+            'Per-floor dimensions, customisations, add-ons, fees.',
+            style: TextStyle(fontSize: 11),
+          ),
+          onChanged: (v) {
+            if (v != null) {
+              draft.pricingMode = v;
+              onChanged();
+            }
+          },
+        ),
+        const SizedBox(height: 16),
         DropdownButtonFormField<String>(
           value: draft.packageId,
           decoration: const InputDecoration(

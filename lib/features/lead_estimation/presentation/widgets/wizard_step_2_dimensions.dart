@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart' show EstimationPricingMode;
 import 'package:admin/features/lead_estimation/presentation/screens/lead_estimation_wizard_screen.dart';
 
 /// Step 2 — Floor dimensions, semi-covered area, open-terrace area.
@@ -47,8 +48,45 @@ class WizardStep2Dimensions extends StatelessWidget {
     onChanged();
   }
 
+  Widget _buildBudgetary(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text('Estimated buildable area',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        const Text(
+          'At lead stage, exact per-floor dimensions usually aren\u2019t known. '
+          'Enter a rough total buildable area; the estimate will be a \u00b110% range '
+          'around (area \u00d7 base rate).',
+          style: TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          initialValue: (draft.estimatedAreaSqft ?? 0) > 0
+              ? draft.estimatedAreaSqft!.toString()
+              : '',
+          decoration: const InputDecoration(
+            labelText: 'Estimated buildable area (sqft) *',
+            border: OutlineInputBorder(),
+            hintText: 'e.g. 2000',
+          ),
+          keyboardType: TextInputType.number,
+          validator: _validatePositive,
+          onChanged: (v) {
+            draft.estimatedAreaSqft = double.tryParse(v.trim());
+            onChanged();
+          },
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (draft.pricingMode == EstimationPricingMode.BUDGETARY) {
+      return _buildBudgetary(context);
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

@@ -12,7 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/features/estimation_settings/data/models/package_rate_version.dart';
 import 'package:admin/features/estimation_settings/providers/estimation_packages_provider.dart';
-import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart';
+import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart' show EstimationPricingMode, LeadEstimationDetail;
 import 'package:admin/features/lead_estimation/providers/estimation_options_provider.dart';
 import 'package:admin/features/lead_estimation/providers/lead_estimations_provider.dart';
 import 'package:admin/features/lead_estimation/presentation/widgets/wizard_step_1_package.dart';
@@ -32,14 +32,20 @@ class WizardFloorInput {
 }
 
 class WizardDraft {
+  // K — pricing mode (drives whether subsequent steps gather floors+catalog or just an area).
+  EstimationPricingMode pricingMode = EstimationPricingMode.LINE_ITEM;
+
   // Step 1
   String? packageId;
   ProjectType projectType = ProjectType.NEW_BUILD;
 
-  // Step 2
+  // Step 2 — line-item path
   List<WizardFloorInput> floors = [WizardFloorInput()];
   double semiCoveredArea = 0;
   double openTerraceArea = 0;
+
+  // Step 2 — budgetary path
+  double? estimatedAreaSqft;
 
   // Step 3 — empty until future endpoint is available
   List<Map<String, String>> customisations = [];
@@ -55,9 +61,19 @@ class WizardDraft {
   DateTime? validUntil;
 
   Map<String, dynamic> toPreviewPayload() {
+    if (pricingMode == EstimationPricingMode.BUDGETARY) {
+      return {
+        'projectType': projectType.name,
+        'packageId': packageId,
+        'pricingMode': 'BUDGETARY',
+        'estimatedAreaSqft': estimatedAreaSqft,
+        if (gstRate != null) 'gstRate': gstRate,
+      };
+    }
     return {
       'projectType': projectType.name,
       'packageId': packageId,
+      'pricingMode': 'LINE_ITEM',
       'dimensions': {
         'floors': floors
             .map((f) => {
@@ -168,19 +184,34 @@ class _LeadEstimationWizardScreenState
         );
         return;
       }
-      // Trigger catalog load now that packageId is known.
-      _optionsProvider.loadForPackage(_draft.packageId);
+      // Trigger catalog load only for line-item mode (budgetary skips catalog).
+      if (_draft.pricingMode == EstimationPricingMode.LINE_ITEM) {
+        _optionsProvider.loadForPackage(_draft.packageId);
+      }
     } else if (_currentStep == 1) {
       if (!(_step2Key.currentState?.validate() ?? false)) return;
     }
-    // Steps 2 (index 2 = customisations) and 3 (add-ons) are skip-able
     if (_currentStep < 4) {
-      setState(() => _currentStep++);
+      // Budgetary mode skips Steps 3 (customisations) + 4 (addons/fees) entirely:
+      // jump directly from Step 2 (area) to Step 5 (review).
+      if (_draft.pricingMode == EstimationPricingMode.BUDGETARY &&
+          _currentStep == 1) {
+        setState(() => _currentStep = 4);
+      } else {
+        setState(() => _currentStep++);
+      }
     }
   }
 
   void _goBack() {
-    if (_currentStep > 0) setState(() => _currentStep--);
+    if (_currentStep == 0) return;
+    // Mirror the forward jump on the way back.
+    if (_draft.pricingMode == EstimationPricingMode.BUDGETARY &&
+        _currentStep == 4) {
+      setState(() => _currentStep = 1);
+    } else {
+      setState(() => _currentStep--);
+    }
   }
 
   // ---------------------------------------------------------------------------

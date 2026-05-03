@@ -4,6 +4,10 @@ import 'package:admin/features/lead_estimation/data/models/estimation_sub_resour
 
 enum LeadEstimationStatus { DRAFT, SENT, ACCEPTED, REJECTED }
 
+/// K — pricing mode at the estimation level (distinct from per-customisation
+/// pricing mode). BUDGETARY: lead-stage range. LINE_ITEM: post-architect detail.
+enum EstimationPricingMode { BUDGETARY, LINE_ITEM }
+
 @immutable
 class LeadEstimationLineItem {
   final String lineType;
@@ -53,6 +57,11 @@ class LeadEstimationSummary {
   final DateTime createdAt;
   final String publicViewToken;
   final String? parentEstimationId;
+  // K — pricing mode + budgetary range fields (range fields null for LINE_ITEM rows).
+  final EstimationPricingMode pricingMode;
+  final double? estimatedAreaSqft;
+  final double? grandTotalMin;
+  final double? grandTotalMax;
 
   const LeadEstimationSummary({
     required this.id,
@@ -66,6 +75,10 @@ class LeadEstimationSummary {
     required this.createdAt,
     required this.publicViewToken,
     this.parentEstimationId,
+    this.pricingMode = EstimationPricingMode.LINE_ITEM,
+    this.estimatedAreaSqft,
+    this.grandTotalMin,
+    this.grandTotalMax,
   });
 
   factory LeadEstimationSummary.fromJson(Map<String, dynamic> json) {
@@ -83,6 +96,12 @@ class LeadEstimationSummary {
       createdAt: DateTime.parse(json['createdAt'] as String),
       publicViewToken: json['publicViewToken'] as String,
       parentEstimationId: json['parentEstimationId'] as String?,
+      pricingMode: json['pricingMode'] != null
+          ? EstimationPricingMode.values.byName(json['pricingMode'] as String)
+          : EstimationPricingMode.LINE_ITEM,
+      estimatedAreaSqft: (json['estimatedAreaSqft'] as num?)?.toDouble(),
+      grandTotalMin: (json['grandTotalMin'] as num?)?.toDouble(),
+      grandTotalMax: (json['grandTotalMax'] as num?)?.toDouble(),
     );
   }
 }
@@ -97,9 +116,10 @@ class LeadEstimationDetail {
   final String? rateVersionId;
   final String? marketIndexId;
   final LeadEstimationStatus status;
-  final double subtotal;
-  final double discountAmount;
-  final double gstAmount;
+  // K — these are null for BUDGETARY rows; backend stores them only on LINE_ITEM rows.
+  final double? subtotal;
+  final double? discountAmount;
+  final double? gstAmount;
   final double grandTotal;
   final DateTime? validUntil;
   final DateTime createdAt;
@@ -110,6 +130,11 @@ class LeadEstimationDetail {
   final List<EstimationSubResource> paymentMilestones;
   final String publicViewToken;
   final String? parentEstimationId;
+  // K — pricing mode + budgetary range fields.
+  final EstimationPricingMode pricingMode;
+  final double? estimatedAreaSqft;
+  final double? grandTotalMin;
+  final double? grandTotalMax;
 
   const LeadEstimationDetail({
     required this.id,
@@ -120,9 +145,9 @@ class LeadEstimationDetail {
     this.rateVersionId,
     this.marketIndexId,
     required this.status,
-    required this.subtotal,
-    required this.discountAmount,
-    required this.gstAmount,
+    this.subtotal,
+    this.discountAmount,
+    this.gstAmount,
     required this.grandTotal,
     this.validUntil,
     required this.createdAt,
@@ -133,6 +158,10 @@ class LeadEstimationDetail {
     this.paymentMilestones = const [],
     required this.publicViewToken,
     this.parentEstimationId,
+    this.pricingMode = EstimationPricingMode.LINE_ITEM,
+    this.estimatedAreaSqft,
+    this.grandTotalMin,
+    this.grandTotalMax,
   });
 
   factory LeadEstimationDetail.fromJson(Map<String, dynamic> json) {
@@ -145,9 +174,9 @@ class LeadEstimationDetail {
       rateVersionId: json['rateVersionId'] as String?,
       marketIndexId: json['marketIndexId'] as String?,
       status: LeadEstimationStatus.values.byName(json['status'] as String),
-      subtotal: (json['subtotal'] as num).toDouble(),
-      discountAmount: (json['discountAmount'] as num).toDouble(),
-      gstAmount: (json['gstAmount'] as num).toDouble(),
+      subtotal: (json['subtotal'] as num?)?.toDouble(),
+      discountAmount: (json['discountAmount'] as num?)?.toDouble(),
+      gstAmount: (json['gstAmount'] as num?)?.toDouble(),
       grandTotal: (json['grandTotal'] as num).toDouble(),
       validUntil: json['validUntil'] != null
           ? DateTime.parse(json['validUntil'] as String)
@@ -170,6 +199,12 @@ class LeadEstimationDetail {
           .toList(),
       publicViewToken: json['publicViewToken'] as String,
       parentEstimationId: json['parentEstimationId'] as String?,
+      pricingMode: json['pricingMode'] != null
+          ? EstimationPricingMode.values.byName(json['pricingMode'] as String)
+          : EstimationPricingMode.LINE_ITEM,
+      estimatedAreaSqft: (json['estimatedAreaSqft'] as num?)?.toDouble(),
+      grandTotalMin: (json['grandTotalMin'] as num?)?.toDouble(),
+      grandTotalMax: (json['grandTotalMax'] as num?)?.toDouble(),
     );
   }
 

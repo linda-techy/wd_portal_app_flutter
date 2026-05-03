@@ -187,10 +187,17 @@ class _LeadEstimationsSection extends StatelessWidget {
                           Text(e.estimationNo),
                           const SizedBox(width: 8),
                           _EstimationStatusPill(status: e.status),
+                          const SizedBox(width: 6),
+                          if (e.pricingMode == EstimationPricingMode.BUDGETARY)
+                            const _BudgetaryRowChip(),
                         ],
                       ),
                       subtitle: Text(
-                        '${e.projectType.name} \u00b7 \u20b9${e.grandTotal.toStringAsFixed(2)} \u00b7 $created',
+                        e.pricingMode == EstimationPricingMode.BUDGETARY &&
+                                e.grandTotalMin != null &&
+                                e.grandTotalMax != null
+                            ? '${e.projectType.name} \u00b7 \u20b9${e.grandTotalMin!.toStringAsFixed(0)}\u2013\u20b9${e.grandTotalMax!.toStringAsFixed(0)} \u00b7 $created'
+                            : '${e.projectType.name} \u00b7 \u20b9${e.grandTotal.toStringAsFixed(2)} \u00b7 $created',
                       ),
                       onTap: () {
                         Navigator.of(context).push(MaterialPageRoute(
@@ -265,6 +272,23 @@ class _EstimationStatusPill extends StatelessWidget {
         style: const TextStyle(color: Colors.white, fontSize: 10),
       ),
       backgroundColor: color,
+      padding: EdgeInsets.zero,
+      labelPadding: const EdgeInsets.symmetric(horizontal: 6),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
+}
+
+
+class _BudgetaryRowChip extends StatelessWidget {
+  const _BudgetaryRowChip();
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      label: const Text("Budgetary",
+          style: TextStyle(color: Colors.white, fontSize: 10)),
+      backgroundColor: Colors.blueGrey,
       padding: EdgeInsets.zero,
       labelPadding: const EdgeInsets.symmetric(horizontal: 6),
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,

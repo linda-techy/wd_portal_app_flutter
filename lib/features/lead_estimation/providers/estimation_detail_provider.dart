@@ -107,6 +107,11 @@ class EstimationDetailProvider extends ChangeNotifier {
           ? items
           : d.paymentMilestones,
       publicViewToken: d.publicViewToken,
+      parentEstimationId: d.parentEstimationId,
+      pricingMode: d.pricingMode,
+      estimatedAreaSqft: d.estimatedAreaSqft,
+      grandTotalMin: d.grandTotalMin,
+      grandTotalMax: d.grandTotalMax,
     );
   }
 

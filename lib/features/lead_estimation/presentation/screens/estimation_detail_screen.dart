@@ -221,30 +221,56 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
               ),
             ],
             const SizedBox(height: 8),
-            const Divider(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _amountRow('Subtotal', detail.subtotal),
-                _amountRow('Discount', detail.discountAmount),
-                _amountRow('GST', detail.gstAmount),
-              ],
-            ),
+            _ModePill(mode: detail.pricingMode),
             const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text('Grand Total: ',
-                    style: theme.textTheme.titleMedium),
-                Text(
-                  '\u20b9${detail.grandTotal.toStringAsFixed(2)}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
+            const Divider(),
+            if (detail.pricingMode == EstimationPricingMode.BUDGETARY) ...[
+              Text(
+                'Budgetary estimate — ${detail.estimatedAreaSqft?.toStringAsFixed(0) ?? '?'} sqft',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: Colors.grey[700]),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text('Estimated range: ',
+                      style: theme.textTheme.titleMedium),
+                  Text(
+                    '\u20b9${(detail.grandTotalMin ?? 0).toStringAsFixed(0)}'
+                    ' – \u20b9${(detail.grandTotalMax ?? 0).toStringAsFixed(0)}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ] else ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _amountRow('Subtotal', detail.subtotal ?? 0),
+                  _amountRow('Discount', detail.discountAmount ?? 0),
+                  _amountRow('GST', detail.gstAmount ?? 0),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text('Grand Total: ',
+                      style: theme.textTheme.titleMedium),
+                  Text(
+                    '\u20b9${detail.grandTotal.toStringAsFixed(2)}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             _buildTransitionButtons(context, detail),
           ],
         ),
@@ -838,4 +864,29 @@ class _StatusChip extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 enum _MoreAction { regenerateToken }
+
+class _ModePill extends StatelessWidget {
+  final EstimationPricingMode mode;
+  const _ModePill({required this.mode});
+
+  @override
+  Widget build(BuildContext context) {
+    final isBudgetary = mode == EstimationPricingMode.BUDGETARY;
+    final color = isBudgetary ? Colors.blueGrey : Colors.teal;
+    final label = isBudgetary ? 'Budgetary' : 'Detailed';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+            fontSize: 11, fontWeight: FontWeight.w600, color: color.shade800),
+      ),
+    );
+  }
+}
 
