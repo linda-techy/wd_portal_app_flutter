@@ -238,6 +238,37 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
                 _ModePill(mode: detail.pricingMode),
                 const SizedBox(width: 8),
                 if (detail.isCurrent) const _CurrentPill(),
+                if (detail.confidenceLevel != null) ...[
+                  const SizedBox(width: 8),
+                  _ConfidencePill(level: detail.confidenceLevel!),
+                ],
+                if (detail.pricingMode == EstimationPricingMode.BUDGETARY &&
+                    (detail.status == LeadEstimationStatus.DRAFT ||
+                        detail.status == LeadEstimationStatus.SENT)) ...[
+                  const SizedBox(width: 12),
+                  TextButton.icon(
+                    icon: const Icon(Icons.upgrade, size: 16),
+                    label: const Text('Convert to Detailed'),
+                    onPressed: () async {
+                      final created = await Navigator.of(context).push<LeadEstimationDetail>(
+                        MaterialPageRoute(
+                          builder: (_) => LeadEstimationWizardScreen(
+                            leadId: detail.leadId,
+                            prefillFrom: detail,
+                            reviseFromEstimationId: detail.id,
+                            forceMode: EstimationPricingMode.LINE_ITEM,
+                          ),
+                          fullscreenDialog: true,
+                        ),
+                      );
+                      if (created != null && context.mounted) {
+                        Navigator.of(context).pushReplacement(MaterialPageRoute(
+                          builder: (_) => EstimationDetailScreen(estimationId: created.id),
+                        ));
+                      }
+                    },
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 8),
@@ -891,6 +922,31 @@ class _StatusChip extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 enum _MoreAction { regenerateToken }
+
+class _ConfidencePill extends StatelessWidget {
+  final EstimationConfidenceLevel level;
+  const _ConfidencePill({required this.level});
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = switch (level) {
+      EstimationConfidenceLevel.LOW => ('Low \u00b110%', Colors.orange),
+      EstimationConfidenceLevel.MEDIUM => ('Medium \u00b15%', Colors.amber),
+      EstimationConfidenceLevel.HIGH => ('High \u00b13%', Colors.green),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Text(label,
+          style: TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w600, color: color.shade800)),
+    );
+  }
+}
 
 class _CurrentPill extends StatelessWidget {
   const _CurrentPill();

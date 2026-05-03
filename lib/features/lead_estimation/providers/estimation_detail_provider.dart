@@ -114,6 +114,7 @@ class EstimationDetailProvider extends ChangeNotifier {
       grandTotalMax: d.grandTotalMax,
       isCurrent: d.isCurrent,
       dimensionsJson: d.dimensionsJson,
+      confidenceLevel: d.confidenceLevel,
     );
   }
 

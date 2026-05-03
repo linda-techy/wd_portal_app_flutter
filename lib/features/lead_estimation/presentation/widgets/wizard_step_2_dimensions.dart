@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart' show EstimationPricingMode;
+import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart' show EstimationConfidenceLevel, EstimationPricingMode;
 import 'package:admin/features/lead_estimation/presentation/screens/lead_estimation_wizard_screen.dart';
 
 /// Step 2 — Floor dimensions, semi-covered area, open-terrace area.
@@ -57,8 +57,8 @@ class WizardStep2Dimensions extends StatelessWidget {
         const SizedBox(height: 8),
         const Text(
           'At lead stage, exact per-floor dimensions usually aren\u2019t known. '
-          'Enter a rough total buildable area; the estimate will be a \u00b110% range '
-          'around (area \u00d7 base rate).',
+          'Enter a rough total buildable area; the estimate will be a range '
+          'around (area \u00d7 base rate). Confidence below controls the band width.',
           style: TextStyle(fontSize: 12, color: Colors.grey),
         ),
         const SizedBox(height: 12),
@@ -75,6 +75,34 @@ class WizardStep2Dimensions extends StatelessWidget {
           validator: _validatePositive,
           onChanged: (v) {
             draft.estimatedAreaSqft = double.tryParse(v.trim());
+            onChanged();
+          },
+        ),
+        const SizedBox(height: 16),
+        const Text('Confidence',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        SegmentedButton<EstimationConfidenceLevel>(
+          segments: const [
+            ButtonSegment(
+              value: EstimationConfidenceLevel.LOW,
+              label: Text('Low (\u00b110%)'),
+              tooltip: 'Early lead — minimal info, broad range',
+            ),
+            ButtonSegment(
+              value: EstimationConfidenceLevel.MEDIUM,
+              label: Text('Medium (\u00b15%)'),
+              tooltip: 'Site visit done, requirements clear',
+            ),
+            ButtonSegment(
+              value: EstimationConfidenceLevel.HIGH,
+              label: Text('High (\u00b13%)'),
+              tooltip: 'Architect plan ~80% locked',
+            ),
+          ],
+          selected: {draft.confidence},
+          onSelectionChanged: (s) {
+            draft.confidence = s.first;
             onChanged();
           },
         ),

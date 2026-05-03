@@ -12,7 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/features/estimation_settings/data/models/package_rate_version.dart';
 import 'package:admin/features/estimation_settings/providers/estimation_packages_provider.dart';
-import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart' show EstimationPricingMode, LeadEstimationDetail;
+import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart' show EstimationConfidenceLevel, EstimationPricingMode, LeadEstimationDetail;
 import 'package:admin/features/lead_estimation/providers/estimation_options_provider.dart';
 import 'package:admin/features/lead_estimation/providers/lead_estimations_provider.dart';
 import 'package:admin/features/lead_estimation/presentation/widgets/wizard_step_1_package.dart';
@@ -46,6 +46,8 @@ class WizardDraft {
 
   // Step 2 — budgetary path
   double? estimatedAreaSqft;
+  // P — confidence drives the ±band the calculator applies. Defaults to MEDIUM (±5%).
+  EstimationConfidenceLevel confidence = EstimationConfidenceLevel.MEDIUM;
 
   // Step 3 — empty until future endpoint is available
   List<Map<String, String>> customisations = [];
@@ -67,6 +69,7 @@ class WizardDraft {
         'packageId': packageId,
         'pricingMode': 'BUDGETARY',
         'estimatedAreaSqft': estimatedAreaSqft,
+        'confidenceLevel': confidence.name,
         if (gstRate != null) 'gstRate': gstRate,
       };
     }
@@ -106,15 +109,21 @@ class LeadEstimationWizardScreen extends StatefulWidget {
   final String? reviseFromEstimationId;
 
   /// When set, pre-populates the draft with package + projectType from this detail.
-  /// MVP limitation: dimensions are not pre-filled (detail response omits raw
-  /// input dimensions); user re-enters them manually.
+  /// As of N, also hydrates floor dimensions from the parent's dimensions_json
+  /// (line-item) or estimatedAreaSqft (budgetary).
   final LeadEstimationDetail? prefillFrom;
+
+  /// P — when set, overrides the prefill's pricingMode. Used by the
+  /// "Convert to Detailed" button to force a budgetary parent's child into
+  /// LINE_ITEM mode.
+  final EstimationPricingMode? forceMode;
 
   const LeadEstimationWizardScreen({
     super.key,
     required this.leadId,
     this.reviseFromEstimationId,
     this.prefillFrom,
+    this.forceMode,
   });
 
   @override
@@ -147,12 +156,20 @@ class _LeadEstimationWizardScreenState
     if (prefill != null) {
       _draft.packageId = prefill.packageId;
       _draft.projectType = prefill.projectType;
-      _draft.pricingMode = prefill.pricingMode;
-      // N — hydrate budgetary area or line-item dimensions from the parent.
-      if (prefill.pricingMode == EstimationPricingMode.BUDGETARY) {
-        _draft.estimatedAreaSqft = prefill.estimatedAreaSqft;
-      } else {
-        _hydrateDimensionsFromJson(prefill.dimensionsJson);
+      // P — forceMode overrides the prefill mode (used by Convert to Detailed).
+      _draft.pricingMode = widget.forceMode ?? prefill.pricingMode;
+      // N — hydrate budgetary area or line-item dimensions from the parent ONLY
+      // when staying in the same mode. A mode flip (forceMode != prefill.mode)
+      // would have nothing meaningful to hydrate.
+      if (widget.forceMode == null || widget.forceMode == prefill.pricingMode) {
+        if (prefill.pricingMode == EstimationPricingMode.BUDGETARY) {
+          _draft.estimatedAreaSqft = prefill.estimatedAreaSqft;
+          if (prefill.confidenceLevel != null) {
+            _draft.confidence = prefill.confidenceLevel!;
+          }
+        } else {
+          _hydrateDimensionsFromJson(prefill.dimensionsJson);
+        }
       }
       // Trigger catalog load for the pre-filled package.
       if (prefill.packageId != null) {

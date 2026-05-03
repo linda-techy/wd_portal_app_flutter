@@ -8,6 +8,10 @@ enum LeadEstimationStatus { DRAFT, PENDING_APPROVAL, APPROVED, SENT, ACCEPTED, R
 /// pricing mode). BUDGETARY: lead-stage range. LINE_ITEM: post-architect detail.
 enum EstimationPricingMode { BUDGETARY, LINE_ITEM }
 
+/// P — sales-set confidence on budgetary rows; controls the ± band applied
+/// around (area × baseRate). LOW=±10%, MEDIUM=±5%, HIGH=±3%.
+enum EstimationConfidenceLevel { LOW, MEDIUM, HIGH }
+
 @immutable
 class LeadEstimationLineItem {
   final String lineType;
@@ -64,6 +68,8 @@ class LeadEstimationSummary {
   final double? grandTotalMax;
   // L — current-estimation indicator. Exactly one estimation per lead may be current.
   final bool isCurrent;
+  // P — sales-set confidence on budgetary rows; null on line-item rows.
+  final EstimationConfidenceLevel? confidenceLevel;
 
   const LeadEstimationSummary({
     required this.id,
@@ -82,6 +88,7 @@ class LeadEstimationSummary {
     this.grandTotalMin,
     this.grandTotalMax,
     this.isCurrent = false,
+    this.confidenceLevel,
   });
 
   factory LeadEstimationSummary.fromJson(Map<String, dynamic> json) {
@@ -106,6 +113,9 @@ class LeadEstimationSummary {
       grandTotalMin: (json['grandTotalMin'] as num?)?.toDouble(),
       grandTotalMax: (json['grandTotalMax'] as num?)?.toDouble(),
       isCurrent: json['isCurrent'] as bool? ?? false,
+      confidenceLevel: json['confidenceLevel'] != null
+          ? EstimationConfidenceLevel.values.byName(json['confidenceLevel'] as String)
+          : null,
     );
   }
 }
@@ -144,6 +154,8 @@ class LeadEstimationDetail {
   // N — raw dimensions input (floors/semiCovered/openTerrace) used to hydrate the
   // wizard on Revise. Empty for budgetary estimations.
   final Map<String, dynamic>? dimensionsJson;
+  // P — sales-set confidence on budgetary rows; null on line-item rows.
+  final EstimationConfidenceLevel? confidenceLevel;
 
   const LeadEstimationDetail({
     required this.id,
@@ -173,6 +185,7 @@ class LeadEstimationDetail {
     this.grandTotalMax,
     this.isCurrent = false,
     this.dimensionsJson,
+    this.confidenceLevel,
   });
 
   factory LeadEstimationDetail.fromJson(Map<String, dynamic> json) {
@@ -218,6 +231,9 @@ class LeadEstimationDetail {
       grandTotalMax: (json['grandTotalMax'] as num?)?.toDouble(),
       isCurrent: json['isCurrent'] as bool? ?? false,
       dimensionsJson: json['dimensionsJson'] as Map<String, dynamic>?,
+      confidenceLevel: json['confidenceLevel'] != null
+          ? EstimationConfidenceLevel.values.byName(json['confidenceLevel'] as String)
+          : null,
     );
   }
 
