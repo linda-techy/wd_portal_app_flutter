@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:admin/config/app_config.dart';
 import 'package:admin/features/lead_estimation/data/models/estimation_sub_resource.dart';
 import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart';
+import 'package:admin/features/lead_estimation/presentation/screens/lead_estimation_wizard_screen.dart';
 import 'package:admin/features/lead_estimation/providers/estimation_detail_provider.dart';
 import 'package:admin/utils/file_download_helper.dart';
 
@@ -78,6 +79,14 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
                           tooltip: 'Download PDF',
                           onPressed: () => _downloadPdf(context, p, detail),
                         ),
+                if (detail != null &&
+                    (detail.status == LeadEstimationStatus.DRAFT ||
+                        detail.status == LeadEstimationStatus.SENT))
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined),
+                    tooltip: 'Revise (creates new version)',
+                    onPressed: () => _openReviseWizard(context, detail),
+                  ),
                 if (detail != null)
                   IconButton(
                     icon: const Icon(Icons.link),
@@ -201,6 +210,16 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
             Text(detail.projectType.name,
                 style: theme.textTheme.bodyMedium
                     ?.copyWith(color: Colors.grey[600])),
+            if (detail.parentEstimationId != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Revision of ${detail.parentEstimationId}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.orange[700],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             const Divider(),
             Row(
@@ -574,6 +593,23 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  Future<void> _openReviseWizard(
+      BuildContext context, LeadEstimationDetail detail) async {
+    final result = await Navigator.of(context).push<LeadEstimationDetail>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => LeadEstimationWizardScreen(
+          leadId: detail.leadId,
+          prefillFrom: detail,
+          reviseFromEstimationId: detail.id,
+        ),
+      ),
+    );
+    if (result != null && mounted) {
+      _provider.loadEstimation(widget.estimationId);
     }
   }
 
