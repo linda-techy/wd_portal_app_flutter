@@ -10,6 +10,7 @@ import 'package:admin/features/lead_estimation/presentation/widgets/revision_dif
 import 'package:admin/features/lead_estimation/providers/estimation_detail_provider.dart';
 import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/utils/file_download_helper.dart';
+import 'package:admin/utils/indian_number_formatter.dart';
 
 class EstimationDetailScreen extends StatefulWidget {
   final String estimationId;
@@ -276,7 +277,7 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
             const Divider(),
             if (detail.pricingMode == EstimationPricingMode.BUDGETARY) ...[
               Text(
-                'Budgetary estimate — ${detail.estimatedAreaSqft?.toStringAsFixed(0) ?? '?'} sqft',
+                'Budgetary estimate — ${detail.estimatedAreaSqft != null ? IndianNumberFormatter.formatWholeIndianNumber(detail.estimatedAreaSqft!) : '?'} sqft',
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: Colors.grey[700]),
               ),
@@ -287,8 +288,8 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
                   Text('Estimated range: ',
                       style: theme.textTheme.titleMedium),
                   Text(
-                    '\u20b9${(detail.grandTotalMin ?? 0).toStringAsFixed(0)}'
-                    ' – \u20b9${(detail.grandTotalMax ?? 0).toStringAsFixed(0)}',
+                    '${IndianNumberFormatter.formatINR(detail.grandTotalMin)}'
+                    ' \u2013 ${IndianNumberFormatter.formatINR(detail.grandTotalMax)}',
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.bold,
@@ -312,7 +313,7 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
                   Text('Grand Total: ',
                       style: theme.textTheme.titleMedium),
                   Text(
-                    '\u20b9${detail.grandTotal.toStringAsFixed(2)}',
+                    IndianNumberFormatter.formatINRWithPaisa(detail.grandTotal),
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.bold,
@@ -464,7 +465,7 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
       children: [
         Text(label,
             style: const TextStyle(fontSize: 11, color: Colors.grey)),
-        Text('\u20b9${amount.toStringAsFixed(0)}',
+        Text(IndianNumberFormatter.formatINR(amount),
             style: const TextStyle(fontWeight: FontWeight.w500)),
       ],
     );

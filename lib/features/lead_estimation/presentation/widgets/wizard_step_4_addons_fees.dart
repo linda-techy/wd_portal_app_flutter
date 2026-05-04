@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:admin/features/lead_estimation/data/models/estimation_options.dart';
 import 'package:admin/features/lead_estimation/presentation/screens/lead_estimation_wizard_screen.dart';
 import 'package:admin/features/lead_estimation/providers/estimation_options_provider.dart';
+import 'package:admin/utils/indian_number_formatter.dart';
 
 /// Step 4 — Add-ons, site fees, govt fees.
 ///
@@ -61,19 +62,17 @@ class WizardStep4AddOnsFees extends StatelessWidget {
   // ---------------------------------------------------------------------------
 
   String _addonCostLabel(AddonRef addon) =>
-      '₹${addon.lumpAmount.toStringAsFixed(2)}';
+      IndianNumberFormatter.formatINRWithPaisa(addon.lumpAmount);
 
   String _siteFeeCostLabel(SiteFeeRef fee) {
     if (fee.mode == 'PER_SQFT') {
-      final rate = fee.perSqftRate ?? 0.0;
-      return '₹${rate.toStringAsFixed(2)}/sqft';
+      return '${IndianNumberFormatter.formatINRWithPaisa(fee.perSqftRate ?? 0.0)}/sqft';
     }
-    final amount = fee.lumpAmount ?? 0.0;
-    return '₹${amount.toStringAsFixed(2)}';
+    return IndianNumberFormatter.formatINRWithPaisa(fee.lumpAmount ?? 0.0);
   }
 
   String _govtFeeCostLabel(GovtFeeRef fee) =>
-      '₹${fee.lumpAmount.toStringAsFixed(2)}';
+      IndianNumberFormatter.formatINRWithPaisa(fee.lumpAmount);
 
   // ---------------------------------------------------------------------------
   // Build

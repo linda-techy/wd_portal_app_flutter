@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:admin/features/lead_estimation/data/models/estimation_options.dart';
 import 'package:admin/features/lead_estimation/presentation/screens/lead_estimation_wizard_screen.dart';
 import 'package:admin/features/lead_estimation/providers/estimation_options_provider.dart';
+import 'package:admin/utils/indian_number_formatter.dart';
 
 /// Step 3 — Customisations.
 ///
@@ -161,7 +162,7 @@ class _CategorySection extends StatelessWidget {
               value: option.id,
               groupValue: selectedOptionId,
               title: Text(option.name),
-              subtitle: Text('₹${option.rate.toStringAsFixed(2)}'),
+              subtitle: Text(IndianNumberFormatter.formatINRWithPaisa(option.rate)),
               onChanged: (value) {
                 if (value != null) onSelect(value);
               },

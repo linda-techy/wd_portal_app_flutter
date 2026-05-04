@@ -4,6 +4,7 @@ import 'package:admin/services/api_service.dart';
 import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart';
 import 'package:admin/features/lead_estimation/presentation/screens/lead_estimation_wizard_screen.dart';
 import 'package:admin/features/lead_estimation/providers/lead_estimations_provider.dart';
+import 'package:admin/utils/indian_number_formatter.dart';
 
 /// Step 5 — Review (live preview) + Save.
 ///
@@ -152,8 +153,8 @@ class _WizardStep5ReviewState extends State<WizardStep5Review> {
           created.pricingMode == EstimationPricingMode.BUDGETARY &&
                   created.grandTotalMin != null &&
                   created.grandTotalMax != null
-              ? 'range \u20b9${created.grandTotalMin!.toStringAsFixed(0)}\u2013\u20b9${created.grandTotalMax!.toStringAsFixed(0)}'
-              : 'total \u20b9${created.grandTotal.toStringAsFixed(2)}';
+              ? 'range ${IndianNumberFormatter.formatINR(created.grandTotalMin)}\u2013${IndianNumberFormatter.formatINR(created.grandTotalMax)}'
+              : 'total ${IndianNumberFormatter.formatINRWithPaisa(created.grandTotal)}';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
@@ -264,8 +265,10 @@ class _WizardStep5ReviewState extends State<WizardStep5Review> {
     );
   }
 
-  String _fmt(dynamic v) =>
-      v == null ? '—' : (v as num).toStringAsFixed(2);
+  String _money(dynamic v) =>
+      v == null ? '—' : IndianNumberFormatter.formatINRWithPaisa(v as num);
+  String _sqft(dynamic v) =>
+      v == null ? '—' : IndianNumberFormatter.formatWholeIndianNumber(v as num);
 
   Widget _buildTotals(Map<String, dynamic> data) {
     final isBudgetary = data['pricingMode'] == 'BUDGETARY';
@@ -278,12 +281,12 @@ class _WizardStep5ReviewState extends State<WizardStep5Review> {
               ? [
                   _row(
                       'Estimated buildable area (sqft)',
-                      _fmt(data['estimatedAreaSqft'])),
+                      _sqft(data['estimatedAreaSqft'])),
                   const Divider(),
                   _row('Estimated low (incl. GST)',
-                      '₹${_fmt(data['grandTotalMin'])}', bold: true),
+                      _money(data['grandTotalMin']), bold: true),
                   _row('Estimated high (incl. GST)',
-                      '₹${_fmt(data['grandTotalMax'])}', bold: true),
+                      _money(data['grandTotalMax']), bold: true),
                   const SizedBox(height: 8),
                   Text(
                     'Range = (area × base rate) ±10%, GST applied. Sub-resources '
@@ -293,21 +296,21 @@ class _WizardStep5ReviewState extends State<WizardStep5Review> {
                   ),
                 ]
               : [
-                  _row('Chargeable area (sqft)', _fmt(data['chargeableArea'])),
-                  _row('Base cost', '₹${_fmt(data['baseCost'])}'),
-                  _row('Customisations', '₹${_fmt(data['customisationCost'])}'),
-                  _row('Site fees', '₹${_fmt(data['siteCost'])}'),
-                  _row('Add-ons', '₹${_fmt(data['addOnCost'])}'),
+                  _row('Chargeable area (sqft)', _sqft(data['chargeableArea'])),
+                  _row('Base cost', _money(data['baseCost'])),
+                  _row('Customisations', _money(data['customisationCost'])),
+                  _row('Site fees', _money(data['siteCost'])),
+                  _row('Add-ons', _money(data['addOnCost'])),
                   _row('Fluctuation adjustment',
-                      '₹${_fmt(data['fluctuationAdjustment'])}'),
+                      _money(data['fluctuationAdjustment'])),
                   const Divider(),
-                  _row('Subtotal', '₹${_fmt(data['subtotal'])}', bold: true),
-                  _row('Govt fees', '₹${_fmt(data['govtFees'])}'),
-                  _row('Discount', '−₹${_fmt(data['discount'])}'),
-                  _row('Taxable', '₹${_fmt(data['taxable'])}'),
-                  _row('GST', '₹${_fmt(data['gst'])}'),
+                  _row('Subtotal', _money(data['subtotal']), bold: true),
+                  _row('Govt fees', _money(data['govtFees'])),
+                  _row('Discount', '−${_money(data['discount'])}'),
+                  _row('Taxable', _money(data['taxable'])),
+                  _row('GST', _money(data['gst'])),
                   const Divider(),
-                  _row('Grand total', '₹${_fmt(data['grandTotal'])}', big: true),
+                  _row('Grand total', _money(data['grandTotal']), big: true),
                 ],
         ),
       ),

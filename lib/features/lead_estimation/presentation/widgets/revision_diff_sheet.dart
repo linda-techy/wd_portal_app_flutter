@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart';
 import 'package:admin/features/lead_estimation/data/services/lead_estimation_service.dart';
+import 'package:admin/utils/indian_number_formatter.dart';
 
 /// N — Bottom-sheet that diffs a child estimation against its parent.
 ///
@@ -73,7 +74,7 @@ class _RevisionDiffSheetState extends State<RevisionDiffSheet> {
     }
   }
 
-  String _fmt(num n) => '\u20b9${n.toStringAsFixed(0)}';
+  String _fmt(num n) => IndianNumberFormatter.formatINR(n);
 
   @override
   Widget build(BuildContext context) {
@@ -267,7 +268,7 @@ class _TotalDelta extends StatelessWidget {
           children: [
             const Text('Grand total', style: TextStyle(fontWeight: FontWeight.w600)),
             Text(
-              '\u20b9${parentTotal.toStringAsFixed(0)} → \u20b9${childTotal.toStringAsFixed(0)} ($sign\u20b9${delta.toStringAsFixed(0)})',
+              '${IndianNumberFormatter.formatINR(parentTotal)} \u2192 ${IndianNumberFormatter.formatINR(childTotal)} ($sign${IndianNumberFormatter.formatINR(delta)})',
               style: TextStyle(fontWeight: FontWeight.bold, color: color),
             ),
           ],

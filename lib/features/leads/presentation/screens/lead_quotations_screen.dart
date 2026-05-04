@@ -6,6 +6,7 @@ import 'package:admin/features/lead_estimation/data/models/lead_estimation.dart'
 import 'package:admin/features/lead_estimation/presentation/screens/estimation_detail_screen.dart';
 import 'package:admin/features/lead_estimation/presentation/screens/lead_estimation_wizard_screen.dart';
 import 'package:admin/features/lead_estimation/providers/lead_estimations_provider.dart';
+import 'package:admin/utils/indian_number_formatter.dart';
 
 class LeadQuotationsScreen extends StatefulWidget {
   final Lead? lead;
@@ -243,8 +244,8 @@ class _LeadEstimationsSection extends StatelessWidget {
                         e.pricingMode == EstimationPricingMode.BUDGETARY &&
                                 e.grandTotalMin != null &&
                                 e.grandTotalMax != null
-                            ? '${e.projectType.name} \u00b7 \u20b9${e.grandTotalMin!.toStringAsFixed(0)}\u2013\u20b9${e.grandTotalMax!.toStringAsFixed(0)} \u00b7 $created'
-                            : '${e.projectType.name} \u00b7 \u20b9${e.grandTotal.toStringAsFixed(2)} \u00b7 $created',
+                            ? '${e.projectType.name} \u00b7 ${IndianNumberFormatter.formatINR(e.grandTotalMin)}\u2013${IndianNumberFormatter.formatINR(e.grandTotalMax)} \u00b7 $created'
+                            : '${e.projectType.name} \u00b7 ${IndianNumberFormatter.formatINRWithPaisa(e.grandTotal)} \u00b7 $created',
                       ),
                       onTap: () {
                         Navigator.of(context).push(MaterialPageRoute(
