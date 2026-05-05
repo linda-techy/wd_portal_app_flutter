@@ -43,12 +43,6 @@ class _HolidayCalendarScreenState extends State<HolidayCalendarScreen> {
         appBar: AppBar(
           title: const Text('Holiday Calendar'),
           actions: [
-            if (canManage)
-              TextButton.icon(
-                icon: const Icon(Icons.cloud_download),
-                label: const Text('Import YAML'),
-                onPressed: _onImportYaml,
-              ),
             IconButton(
               icon: const Icon(Icons.refresh),
               tooltip: 'Refresh',
@@ -129,19 +123,19 @@ class _HolidayCalendarScreenState extends State<HolidayCalendarScreen> {
               children: [
                 const Text('Scope:'),
                 const SizedBox(width: 8),
-                DropdownButton<HolidayScope?>(
+                // Backend requires a scope (no "All" option). Default
+                // NATIONAL; user picks STATE/DISTRICT/PROJECT explicitly.
+                DropdownButton<HolidayScope>(
                   value: p.scope,
-                  hint: const Text('All'),
-                  items: <DropdownMenuItem<HolidayScope?>>[
-                    const DropdownMenuItem(value: null, child: Text('All')),
-                    ...HolidayScope.values.map(
-                      (s) =>
-                          DropdownMenuItem(value: s, child: Text(s.label)),
-                    ),
-                  ],
+                  items: HolidayScope.values
+                      .map((s) =>
+                          DropdownMenuItem(value: s, child: Text(s.label)))
+                      .toList(),
                   onChanged: (v) {
-                    p.setScope(v, scopeRef: null);
-                    p.load();
+                    if (v != null) {
+                      p.setScope(v);
+                      p.load();
+                    }
                   },
                 ),
               ],
@@ -216,11 +210,6 @@ class _HolidayCalendarScreenState extends State<HolidayCalendarScreen> {
     if (confirm != true) return;
     final ok = await _provider.delete(h.id!);
     _toast(ok ? 'Deleted.' : (_provider.errorMessage ?? 'Failed.'));
-  }
-
-  Future<void> _onImportYaml() async {
-    final n = await _provider.importYaml(year: _provider.year);
-    _toast(n > 0 ? 'Imported $n holidays.' : 'Nothing imported.');
   }
 
   void _toast(String msg) {

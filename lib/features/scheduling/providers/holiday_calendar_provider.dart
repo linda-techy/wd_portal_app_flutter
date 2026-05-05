@@ -8,27 +8,40 @@ class HolidayCalendarProvider extends ChangeNotifier {
   HolidayCalendarProvider({HolidayAdminService? service})
       : _service = service ?? HolidayAdminService();
 
-  List<Holiday> _holidays = const [];
+  /// Cached server result for the last fetched (year, scope). The screen
+  /// filters this list further by [scopeRef] client-side so we don't refetch
+  /// when the user only narrows the state/district hint.
+  List<Holiday> _all = const [];
   bool _isLoading = false;
   String? _errorMessage;
   int _year = DateTime.now().year;
-  HolidayScope? _scope;
+  // Real backend requires a scope (no "All scopes" option). We default to
+  // NATIONAL — admins can switch via the dropdown.
+  HolidayScope _scope = HolidayScope.national;
   String? _scopeRef;
 
-  List<Holiday> get holidays => List.unmodifiable(_holidays);
+  /// Holidays after the optional client-side [scopeRef] narrow.
+  List<Holiday> get holidays => List.unmodifiable(
+        _scopeRef == null || _scopeRef!.isEmpty
+            ? _all
+            : _all.where((h) => h.scopeRef == _scopeRef).toList(),
+      );
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   int get year => _year;
-  HolidayScope? get scope => _scope;
+  HolidayScope get scope => _scope;
   String? get scopeRef => _scopeRef;
 
+  /// Updates the year filter. Caller must `await load()` after to refetch.
   void setYear(int y) {
     if (y == _year) return;
     _year = y;
     notifyListeners();
   }
 
-  void setScope(HolidayScope? s, {String? scopeRef}) {
+  /// Sets the scope (required) and optional in-scope reference. The reference
+  /// is filtered client-side so changing it does not trigger a network call.
+  void setScope(HolidayScope s, {String? scopeRef}) {
     _scope = s;
     _scopeRef = scopeRef;
     notifyListeners();
@@ -39,11 +52,7 @@ class HolidayCalendarProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
     try {
-      _holidays = await _service.list(
-        year: _year,
-        scope: _scope,
-        scopeRef: _scopeRef,
-      );
+      _all = await _service.list(year: _year, scope: _scope);
     } on DioException catch (e) {
       _errorMessage = _humanize(e);
     } finally {
@@ -85,19 +94,6 @@ class HolidayCalendarProvider extends ChangeNotifier {
       _errorMessage = _humanize(e);
       notifyListeners();
       return false;
-    }
-  }
-
-  /// Returns the number of upserted rows.
-  Future<int> importYaml({required int year}) async {
-    try {
-      final n = await _service.importYaml(year: year);
-      await load();
-      return n;
-    } on DioException catch (e) {
-      _errorMessage = _humanize(e);
-      notifyListeners();
-      return 0;
     }
   }
 

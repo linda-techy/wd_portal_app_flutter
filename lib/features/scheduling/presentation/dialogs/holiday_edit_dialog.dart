@@ -25,7 +25,7 @@ class _HolidayEditDialogState extends State<HolidayEditDialog> {
   late DateTime _date;
   late HolidayScope _scope;
   late HolidayRecurrenceType _recurrence;
-  late bool _isActive;
+  late bool _active;
 
   bool get _isEdit => widget.existing != null;
 
@@ -39,7 +39,7 @@ class _HolidayEditDialogState extends State<HolidayEditDialog> {
     _date = e?.date ?? DateTime.now();
     _scope = e?.scope ?? HolidayScope.national;
     _recurrence = e?.recurrenceType ?? HolidayRecurrenceType.fixedDate;
-    _isActive = e?.isActive ?? true;
+    _active = e?.active ?? true;
   }
 
   @override
@@ -122,8 +122,8 @@ class _HolidayEditDialogState extends State<HolidayEditDialog> {
                 if (_isEdit)
                   SwitchListTile(
                     title: const Text('Active'),
-                    value: _isActive,
-                    onChanged: (v) => setState(() => _isActive = v),
+                    value: _active,
+                    onChanged: (v) => setState(() => _active = v),
                     contentPadding: EdgeInsets.zero,
                   ),
               ],
@@ -161,7 +161,7 @@ class _HolidayEditDialogState extends State<HolidayEditDialog> {
       scope: _scope,
       scopeRef: _scopeRef.text.trim().isEmpty ? null : _scopeRef.text.trim(),
       recurrenceType: _recurrence,
-      isActive: _isActive,
+      active: _active,
     );
     Navigator.of(context).pop(result);
   }

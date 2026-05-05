@@ -99,7 +99,9 @@ class Holiday {
   final String? scopeRef;
   final HolidayRecurrenceType recurrenceType;
   final String? source;
-  final bool isActive;
+  // Field name mirrors the backend record component (`Boolean active` →
+  // JSON `"active"`). UI labels can still say "Active".
+  final bool active;
 
   const Holiday({
     this.id,
@@ -110,7 +112,7 @@ class Holiday {
     this.scopeRef,
     required this.recurrenceType,
     this.source,
-    required this.isActive,
+    required this.active,
   });
 
   factory Holiday.fromJson(Map<String, dynamic> j) => Holiday(
@@ -123,7 +125,7 @@ class Holiday {
         recurrenceType:
             HolidayRecurrenceType.fromApi(j['recurrenceType'] as String),
         source: j['source'] as String?,
-        isActive: j['isActive'] as bool? ?? true,
+        active: j['active'] as bool? ?? true,
       );
 
   Map<String, dynamic> toJson() => {
@@ -137,6 +139,6 @@ class Holiday {
         if (scopeRef != null) 'scopeRef': scopeRef,
         'recurrenceType': recurrenceType.toApi(),
         if (source != null) 'source': source,
-        'isActive': isActive,
+        'active': active,
       };
 }

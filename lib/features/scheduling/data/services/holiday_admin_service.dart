@@ -3,50 +3,56 @@ import 'package:admin/services/api_service.dart';
 import 'package:admin/features/scheduling/data/models/holiday_model.dart';
 
 /// Admin API for `/api/admin/holidays`.
+///
+/// Real backend (HolidayAdminController) requires both `scope` AND `year` on
+/// the list endpoint and returns raw bodies (no `{success, data}` envelope).
+/// We use [ApiService.unwrap] / [ApiService.unwrapList] which transparently
+/// handle both shapes.
 class HolidayAdminService {
-  final Dio _dio;
-  HolidayAdminService({Dio? dio}) : _dio = dio ?? ApiService().dio;
+  final ApiService _api;
+  final Dio? _injectedDio;
 
-  /// GET /api/admin/holidays?year=&scope=&scopeRef=
+  HolidayAdminService({ApiService? api, Dio? dio})
+      : _api = api ?? ApiService(),
+        _injectedDio = dio;
+
+  Dio get _dio => _injectedDio ?? _api.dio;
+
+  /// GET /api/admin/holidays?scope=&year=
+  ///
+  /// Both [scope] and [year] are required by the backend (`@RequestParam`
+  /// without `defaultValue`). Sending `null` for either yields a 400.
   Future<List<Holiday>> list({
-    int? year,
-    HolidayScope? scope,
-    String? scopeRef,
+    required HolidayScope scope,
+    required int year,
   }) async {
     final response = await _dio.get(
       '/api/admin/holidays',
       queryParameters: {
-        if (year != null) 'year': year,
-        if (scope != null) 'scope': scope.toApi(),
-        if (scopeRef != null) 'scopeRef': scopeRef,
+        'scope': scope.toApi(),
+        'year': year,
       },
     );
-    final data = response.data['data'] as List<dynamic>;
-    return data
-        .map((e) => Holiday.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return _api.unwrapList(response, Holiday.fromJson);
   }
 
   Future<Holiday> create(Holiday h) async {
     final response = await _dio.post('/api/admin/holidays', data: h.toJson());
-    return Holiday.fromJson(response.data['data'] as Map<String, dynamic>);
+    return _api.unwrap<Holiday>(
+      response,
+      (json) => Holiday.fromJson(json as Map<String, dynamic>),
+    );
   }
 
   Future<Holiday> patch(int id, Map<String, dynamic> changes) async {
     final response = await _dio.patch('/api/admin/holidays/$id', data: changes);
-    return Holiday.fromJson(response.data['data'] as Map<String, dynamic>);
+    return _api.unwrap<Holiday>(
+      response,
+      (json) => Holiday.fromJson(json as Map<String, dynamic>),
+    );
   }
 
   Future<void> delete(int id) async {
     await _dio.delete('/api/admin/holidays/$id');
-  }
-
-  /// POST /api/admin/holidays/import-yaml — returns the count of upserted rows.
-  Future<int> importYaml({required int year}) async {
-    final response = await _dio.post(
-      '/api/admin/holidays/import-yaml',
-      data: {'year': year},
-    );
-    return ((response.data['data'] as Map)['imported'] as num).toInt();
   }
 }
