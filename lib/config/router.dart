@@ -42,6 +42,9 @@ import 'package:admin/features/estimation_settings/presentation/screens/estimati
 import 'package:admin/features/estimation_settings/presentation/screens/packages_list_screen.dart';
 import 'package:admin/features/estimation_settings/presentation/screens/rate_card_screen.dart';
 import 'package:admin/features/estimation_settings/presentation/screens/market_index_screen.dart';
+import 'package:admin/features/scheduling/presentation/screens/wbs_template_list_screen.dart';
+import 'package:admin/features/scheduling/presentation/screens/wbs_template_editor_screen.dart';
+import 'package:admin/features/scheduling/presentation/screens/holiday_calendar_screen.dart';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -79,6 +82,8 @@ const Map<String, int> kPathToMenuIndex = {
   '/settings/estimation/packages': 27,
   '/settings/estimation/rate-card': 28,
   '/settings/estimation/market-index': 29,
+  '/scheduling/templates':         30,
+  '/scheduling/holidays':          31,
 };
 
 /// Map a menu index (from [MenuAppController]) to its route path.
@@ -94,6 +99,8 @@ const List<String> kIndexToPath = [
   '/settings/estimation/packages',
   '/settings/estimation/rate-card',
   '/settings/estimation/market-index',
+  '/scheduling/templates',
+  '/scheduling/holidays',
 ];
 
 String indexToPath(int index) =>
@@ -243,6 +250,27 @@ GoRouter buildAppRouter(PortalAuthProvider authProvider) {
           GoRoute(
             path: '/settings/estimation/market-index',
             builder: (_, __) => const MarketIndexScreen(),
+          ),
+
+          // Scheduling (S1)
+          GoRoute(
+            path: '/scheduling/templates',
+            builder: (_, __) => const WbsTemplateListScreen(),
+          ),
+          GoRoute(
+            path: '/scheduling/templates/new',
+            builder: (_, __) => const WbsTemplateEditorScreen(),
+          ),
+          GoRoute(
+            path: '/scheduling/templates/:id',
+            builder: (_, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '');
+              return WbsTemplateEditorScreen(templateId: id);
+            },
+          ),
+          GoRoute(
+            path: '/scheduling/holidays',
+            builder: (_, __) => const HolidayCalendarScreen(),
           ),
         ],
       ),

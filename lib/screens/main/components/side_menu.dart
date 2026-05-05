@@ -562,6 +562,18 @@ final List<_MenuGroupData> _menuGroups = [
         index: 27,
         isVisible: (p) => p.canManageEstimationSettings,
       ),
+      _MenuItem(
+        title: 'WBS Templates',
+        icon: Icons.account_tree_outlined,
+        index: 30,
+        isVisible: (p) => p.canViewWbsTemplates,
+      ),
+      _MenuItem(
+        title: 'Holidays',
+        icon: Icons.event_outlined,
+        index: 31,
+        isVisible: (p) => p.canViewHolidays,
+      ),
       const _MenuItem(
         title: 'Profile',
         svgSrc: 'assets/icons/menu_profile.svg',

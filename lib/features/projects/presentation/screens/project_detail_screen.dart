@@ -33,6 +33,7 @@ import 'package:admin/features/deductions/presentation/screens/deduction_registe
 import 'package:admin/features/final_account/presentation/screens/final_account_screen.dart';
 import 'package:admin/features/projects/presentation/screens/project_members_screen.dart';
 import 'package:admin/features/projects/presentation/widgets/project_gps_card.dart';
+import 'package:admin/features/scheduling/presentation/widgets/project_schedule_config_tab.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final ProjectModel project;
@@ -203,6 +204,23 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             if (project.id != null) ...[
               const SizedBox(height: 24),
               _buildModulesSection(context),
+            ],
+            if (project.id != null) ...[
+              // I1 — gate the schedule tab on the same perms the backend
+              // requires (HOLIDAY_VIEW or PROJECT_SCHEDULE_CONFIG_EDIT).
+              // Users without either should not see the tab at all.
+              Consumer<PermissionProvider>(
+                builder: (_, perms, __) {
+                  if (!perms.canViewHolidays &&
+                      !perms.canEditProjectScheduleConfig) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 24),
+                    child: ProjectScheduleConfigTab(projectId: project.id!),
+                  );
+                },
+              ),
             ],
           ],
         ),

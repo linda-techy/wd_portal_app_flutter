@@ -12,6 +12,9 @@ import 'components/lead_documents_tab.dart';
 import 'lead_quotations_screen.dart';
 import 'package:admin/features/partnerships/data/services/partnership_admin_service.dart';
 import 'package:admin/features/partnerships/presentation/screens/partner_admin_detail_screen.dart';
+import 'package:admin/features/scheduling/presentation/dialogs/wbs_template_picker_flow.dart';
+import 'package:admin/providers/permission_provider.dart';
+import 'package:provider/provider.dart';
 
 class EditLeadScreen extends StatefulWidget {
   final Lead lead;
@@ -356,11 +359,23 @@ class _EditLeadScreenState extends State<EditLeadScreen> {
 
     if (result != null) {
       try {
-        await _controller.convertLead(result);
+        final newProject = await _controller.convertLead(result);
         if (mounted) {
            ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Lead converted into Customer successfully!"), backgroundColor: Colors.green));
-           Navigator.pop(context, true); // Go back to list
+        }
+        // B9 — offer to materialize a WBS from a template before navigating
+        // back. Permission-gated and a no-op if the project type doesn't map
+        // to any WBS template.
+        if (mounted) {
+          await runWbsTemplatePickerFlow(
+            context: context,
+            project: newProject,
+            perms: context.read<PermissionProvider>(),
+          );
+        }
+        if (mounted) {
+          Navigator.pop(context, true); // Go back to list
         }
       } catch (e) {
         if (mounted) {

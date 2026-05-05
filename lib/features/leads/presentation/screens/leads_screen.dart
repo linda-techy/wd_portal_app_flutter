@@ -17,6 +17,7 @@ import 'package:provider/provider.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
 import 'package:admin/utils/error_handler.dart';
 import 'package:admin/utils/motion_toast.dart';
+import 'package:admin/features/scheduling/presentation/dialogs/wbs_template_picker_flow.dart';
 import 'package:admin/utils/file_download_helper.dart';
 import 'package:admin/config/app_config.dart';
 import 'package:admin/utils/debouncer.dart';
@@ -1088,12 +1089,23 @@ class _LeadsScreenState extends State<LeadsScreen> {
         };
 
         // Call Service
-        await _leadService.convertLead(lead.leadId, requestData);
+        final newProject =
+            await _leadService.convertLead(lead.leadId, requestData);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Lead converted successfully!')));
           _loadLeads(resetPage: false); // Refresh list to show updated status
+        }
+
+        // B9 — offer to materialize a WBS from a template. Permission-gated
+        // and a no-op if the project type doesn't map to any WBS template.
+        if (mounted) {
+          await runWbsTemplatePickerFlow(
+            context: context,
+            project: newProject,
+            perms: context.read<PermissionProvider>(),
+          );
         }
       } catch (e) {
         if (mounted) {

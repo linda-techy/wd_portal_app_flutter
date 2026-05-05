@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:admin/services/api_service.dart';
 import 'package:admin/theme/app_theme.dart';
+import 'package:admin/features/scheduling/data/models/monsoon_warning_model.dart';
+import 'package:admin/features/scheduling/data/services/monsoon_warning_service.dart';
+import 'package:admin/features/scheduling/presentation/widgets/monsoon_warning_chip.dart';
 
 // ─── Data model ──────────────────────────────────────────────────────────────
 
@@ -70,11 +73,15 @@ class GanttScreen extends StatefulWidget {
 
 class _GanttScreenState extends State<GanttScreen> {
   final ApiService _api = ApiService();
+  final MonsoonWarningService _monsoon = MonsoonWarningService();
   final ScrollController _hScroll = ScrollController();
 
   bool _isLoading = true;
   String? _error;
   _GanttData? _data;
+  // taskId -> warning, populated after a successful Gantt load. Empty on
+  // permission failure (the chip is non-blocking).
+  Map<int, MonsoonWarning> _warningsByTask = const {};
 
   // px per day for bar sizing
   static const double _dayWidth = 24.0;
@@ -105,6 +112,16 @@ class _GanttScreenState extends State<GanttScreen> {
           .map((e) => _GanttTask.fromJson(e as Map<String, dynamic>))
           .toList();
 
+      // Best-effort: also fetch monsoon warnings. Failure (e.g. 403 if the
+      // user lacks MONSOON_WARNING_VIEW) must not block the Gantt.
+      Map<int, MonsoonWarning> warnings = const {};
+      try {
+        final list = await _monsoon.warningsFor(widget.projectId);
+        warnings = {for (final w in list) w.taskId: w};
+      } catch (_) {
+        // Silent: chips just won't render.
+      }
+
       setState(() {
         _data = _GanttData(
           tasks: tasks,
@@ -117,6 +134,7 @@ class _GanttScreenState extends State<GanttScreen> {
           overallProgress: (payload['overallProgress'] as num?)?.toInt() ?? 0,
           overdueTasks: (payload['overdueTasks'] as num?)?.toInt() ?? 0,
         );
+        _warningsByTask = warnings;
         _isLoading = false;
       });
     } catch (e) {
@@ -241,6 +259,7 @@ class _GanttScreenState extends State<GanttScreen> {
                         separatorBuilder: (_, __) => const Divider(height: 1),
                         itemBuilder: (_, i) {
                           final t = data.tasks[i];
+                          final warning = _warningsByTask[t.id];
                           return SizedBox(
                             height: _rowHeight,
                             child: Padding(
@@ -249,11 +268,22 @@ class _GanttScreenState extends State<GanttScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text(
-                                    t.title,
-                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          t.title,
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (warning != null) ...[
+                                        const SizedBox(width: 4),
+                                        MonsoonWarningChip(warning: warning),
+                                      ],
+                                    ],
                                   ),
                                   const SizedBox(height: 2),
                                   Text(

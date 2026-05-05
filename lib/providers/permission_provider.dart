@@ -187,6 +187,18 @@ class PermissionProvider with ChangeNotifier {
   bool get canManageDpcCustomizationCatalog =>
       hasPermission('DPC_CUSTOMIZATION_CATALOG_MANAGE');
 
+  // Scheduling (S1) permissions
+  bool get canViewWbsTemplates => hasPermission('WBS_TEMPLATE_VIEW');
+  bool get canManageWbsTemplates => hasPermission('WBS_TEMPLATE_MANAGE');
+  bool get canCloneProjectWbs => hasPermission('PROJECT_WBS_CLONE');
+  bool get canViewHolidays => hasPermission('HOLIDAY_VIEW');
+  bool get canManageHolidays => hasPermission('HOLIDAY_MANAGE');
+  bool get canOverrideProjectHolidays =>
+      hasPermission('PROJECT_HOLIDAY_OVERRIDE');
+  bool get canEditProjectScheduleConfig =>
+      hasPermission('PROJECT_SCHEDULE_CONFIG_EDIT');
+  bool get canViewMonsoonWarnings => hasPermission('MONSOON_WARNING_VIEW');
+
   // Site Report permissions
   bool get canViewSiteReports => canView('SITE_REPORT');
   bool get canCreateSiteReport => canCreate('SITE_REPORT');
