@@ -21,59 +21,89 @@ class WbsCloneSummary {
       );
 }
 
-/// Admin API for `/api/admin/wbs-templates` and `/api/projects/{id}/wbs/clone-from-template`.
+/// Admin API for `/api/wbs/templates` and `/api/projects/{id}/wbs/clone-from-template`.
+///
+/// All methods go through [ApiService.unwrap] / [ApiService.unwrapList] which
+/// transparently handle both raw bodies (the real backend shape) and any
+/// future `{success, data}` envelope, so we don't have to re-thread responses
+/// if/when an envelope is introduced.
 class WbsTemplateService {
-  final Dio _dio;
-  WbsTemplateService({Dio? dio}) : _dio = dio ?? ApiService().dio;
+  final ApiService _api;
+  final Dio? _injectedDio;
 
-  /// GET /api/admin/wbs-templates?projectType=...&activeOnly=true
-  Future<List<WbsTemplate>> list({
-    WbsProjectType? projectType,
-    bool activeOnly = false,
-  }) async {
+  WbsTemplateService({ApiService? api, Dio? dio})
+      : _api = api ?? ApiService(),
+        _injectedDio = dio;
+
+  Dio get _dio => _injectedDio ?? _api.dio;
+
+  /// GET /api/wbs/templates?includeInactive={includeInactive}
+  ///
+  /// The real backend only accepts `includeInactive`. Project-type filtering
+  /// is performed client-side by the provider/screen so we don't change the
+  /// UX while staying compatible with the real contract.
+  Future<List<WbsTemplate>> list({bool includeInactive = false}) async {
     final response = await _dio.get(
-      '/api/admin/wbs-templates',
-      queryParameters: {
-        if (projectType != null) 'projectType': projectType.toApi(),
-        if (activeOnly) 'activeOnly': true,
-      },
+      '/api/wbs/templates',
+      queryParameters: {'includeInactive': includeInactive},
     );
-    final data = response.data['data'] as List<dynamic>;
-    return data
-        .map((e) => WbsTemplate.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return _api.unwrapList(response, WbsTemplate.fromJson);
   }
 
-  /// GET /api/admin/wbs-templates/{id}
+  /// GET /api/wbs/templates/{id}
   Future<WbsTemplate> get(int id) async {
-    final response = await _dio.get('/api/admin/wbs-templates/$id');
-    return WbsTemplate.fromJson(response.data['data'] as Map<String, dynamic>);
+    final response = await _dio.get('/api/wbs/templates/$id');
+    return _api.unwrap<WbsTemplate>(
+      response,
+      (json) => WbsTemplate.fromJson(json as Map<String, dynamic>),
+    );
   }
 
-  /// POST /api/admin/wbs-templates — server bumps `version` and inserts a new row.
+  /// POST /api/wbs/templates — server bumps `version` and inserts a new row.
   Future<WbsTemplate> createNewVersion(WbsTemplate draft) async {
     final response = await _dio.post(
-      '/api/admin/wbs-templates',
+      '/api/wbs/templates',
       data: draft.toJson(),
     );
-    return WbsTemplate.fromJson(response.data['data'] as Map<String, dynamic>);
-  }
-
-  /// PATCH /api/admin/wbs-templates/{id} — toggles `isActive` only.
-  Future<WbsTemplate> setActive(int id, bool isActive) async {
-    final response = await _dio.patch(
-      '/api/admin/wbs-templates/$id',
-      data: {'isActive': isActive},
+    return _api.unwrap<WbsTemplate>(
+      response,
+      (json) => WbsTemplate.fromJson(json as Map<String, dynamic>),
     );
-    return WbsTemplate.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 
-  /// DELETE /api/admin/wbs-templates/{id} — soft-delete (server enforces no-clone-yet).
+  /// PUT /api/wbs/templates/{id} — replaces the entire template DTO.
+  ///
+  /// The real backend has no PATCH/toggle endpoint; toggling `isActive` is a
+  /// full-DTO PUT. Callers that want to flip active are expected to fetch the
+  /// current DTO, mutate it, and pass it here.
+  Future<WbsTemplate> update(int id, WbsTemplate dto) async {
+    final response = await _dio.put(
+      '/api/wbs/templates/$id',
+      data: dto.toJson(),
+    );
+    return _api.unwrap<WbsTemplate>(
+      response,
+      (json) => WbsTemplate.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// DELETE /api/wbs/templates/{id} — soft-delete (server enforces no-clone-yet).
   Future<void> delete(int id) async {
-    await _dio.delete('/api/admin/wbs-templates/$id');
+    await _dio.delete('/api/wbs/templates/$id');
   }
 
   /// POST /api/projects/{projectId}/wbs/clone-from-template
+  ///
+  /// TODO_S1_INTEGRATION: this method is not yet wired into the project
+  /// creation flow. Per the spec, when creating a customer project the
+  /// scheduler should pick a WBS template + a floor count and the cloner
+  /// should run server-side immediately after the project insert succeeds.
+  /// The current project-creation paths (`leads/edit_lead_screen.dart`
+  /// → CRM conversion → `customer_project_service.createProject`) are owned
+  /// by legacy flows and the wiring is out of scope of the PR3 fix pass.
+  /// Remaining work: extend the project create dialog with a "Choose WBS
+  /// template" step + "floors" input, then call this method post-create and
+  /// route to the project detail / WBS view.
   Future<WbsCloneSummary> cloneIntoProject({
     required int projectId,
     required int templateId,
@@ -83,8 +113,9 @@ class WbsTemplateService {
       '/api/projects/$projectId/wbs/clone-from-template',
       data: {'templateId': templateId, 'floorCount': floorCount},
     );
-    return WbsCloneSummary.fromJson(
-      response.data['data'] as Map<String, dynamic>,
+    return _api.unwrap<WbsCloneSummary>(
+      response,
+      (json) => WbsCloneSummary.fromJson(json as Map<String, dynamic>),
     );
   }
 }

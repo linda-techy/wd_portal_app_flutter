@@ -19,12 +19,14 @@ void main() {
   });
 
   test('loadList populates list and clears loading', () async {
-    adapter.mock('GET', '/api/admin/wbs-templates', (_) {
+    adapter.mock('GET', '/api/wbs/templates', (_) {
       return ResponseBody.fromString(
-        '{"success":true,"data":[{"id":1,"code":"RES","projectType":"RESIDENTIAL",'
-        '"name":"Residential","version":1,"isActive":true,"phases":[]}]}',
+        '[{"id":1,"code":"RES","projectType":"RESIDENTIAL",'
+        '"name":"Residential","version":1,"isActive":true,"phases":[]}]',
         200,
-        headers: {'content-type': ['application/json']},
+        headers: {
+          'content-type': ['application/json']
+        },
       );
     });
     await provider.loadList();
@@ -34,11 +36,13 @@ void main() {
   });
 
   test('loadList captures 403 as a friendly error', () async {
-    adapter.mock('GET', '/api/admin/wbs-templates', (_) {
+    adapter.mock('GET', '/api/wbs/templates', (_) {
       return ResponseBody.fromString(
-        '{"success":false,"message":"Forbidden"}',
+        '"Forbidden"',
         403,
-        headers: {'content-type': ['application/json']},
+        headers: {
+          'content-type': ['application/json']
+        },
       );
     });
     await provider.loadList();
@@ -46,15 +50,36 @@ void main() {
     expect(provider.errorMessage, contains('permission'));
   });
 
-  test('loadEditing fetches by id and stores it as the editing draft', () async {
-    adapter.mock('GET', '/api/admin/wbs-templates/3', (_) {
+  test('client-side projectType filter narrows results', () async {
+    adapter.mock('GET', '/api/wbs/templates', (_) {
       return ResponseBody.fromString(
-        '{"success":true,"data":{"id":3,"code":"RES","projectType":"RESIDENTIAL",'
+        '[{"id":1,"code":"RES","projectType":"RESIDENTIAL",'
+        '"name":"Residential","version":1,"isActive":true,"phases":[]},'
+        '{"id":2,"code":"COMM","projectType":"COMMERCIAL",'
+        '"name":"Commercial","version":1,"isActive":true,"phases":[]}]',
+        200,
+        headers: {
+          'content-type': ['application/json']
+        },
+      );
+    });
+    await provider.loadList(projectType: WbsProjectType.residential);
+    expect(provider.templates, hasLength(1));
+    expect(provider.templates.first.projectType, WbsProjectType.residential);
+  });
+
+  test('loadEditing fetches by id and stores it as the editing draft',
+      () async {
+    adapter.mock('GET', '/api/wbs/templates/3', (_) {
+      return ResponseBody.fromString(
+        '{"id":3,"code":"RES","projectType":"RESIDENTIAL",'
         '"name":"Residential v2","version":2,"isActive":true,"phases":['
         '{"id":10,"sequence":1,"name":"Foundation","monsoonSensitive":false,"tasks":[]}'
-        ']}}',
+        ']}',
         200,
-        headers: {'content-type': ['application/json']},
+        headers: {
+          'content-type': ['application/json']
+        },
       );
     });
     await provider.loadEditing(3);
@@ -63,12 +88,14 @@ void main() {
   });
 
   test('updateEditing replaces draft and notifies', () async {
-    adapter.mock('GET', '/api/admin/wbs-templates/3', (_) {
+    adapter.mock('GET', '/api/wbs/templates/3', (_) {
       return ResponseBody.fromString(
-        '{"success":true,"data":{"id":3,"code":"RES","projectType":"RESIDENTIAL",'
-        '"name":"R","version":1,"isActive":true,"phases":[]}}',
+        '{"id":3,"code":"RES","projectType":"RESIDENTIAL",'
+        '"name":"R","version":1,"isActive":true,"phases":[]}',
         200,
-        headers: {'content-type': ['application/json']},
+        headers: {
+          'content-type': ['application/json']
+        },
       );
     });
     await provider.loadEditing(3);
@@ -80,20 +107,24 @@ void main() {
   });
 
   test('saveEditing POSTs draft as new version', () async {
-    adapter.mock('POST', '/api/admin/wbs-templates', (_) {
+    adapter.mock('POST', '/api/wbs/templates', (_) {
       return ResponseBody.fromString(
-        '{"success":true,"data":{"id":4,"code":"RES","projectType":"RESIDENTIAL",'
-        '"name":"R","version":2,"isActive":true,"phases":[]}}',
+        '{"id":4,"code":"RES","projectType":"RESIDENTIAL",'
+        '"name":"R","version":2,"isActive":true,"phases":[]}',
         201,
-        headers: {'content-type': ['application/json']},
+        headers: {
+          'content-type': ['application/json']
+        },
       );
     });
-    // Also mock the background loadList that saveEditing kicks off
-    adapter.mock('GET', '/api/admin/wbs-templates', (_) {
+    // Background loadList that saveEditing kicks off
+    adapter.mock('GET', '/api/wbs/templates', (_) {
       return ResponseBody.fromString(
-        '{"success":true,"data":[]}',
+        '[]',
         200,
-        headers: {'content-type': ['application/json']},
+        headers: {
+          'content-type': ['application/json']
+        },
       );
     });
     provider.updateEditing(const WbsTemplate(
@@ -108,5 +139,47 @@ void main() {
     expect(saved, isTrue);
     expect(provider.editing!.id, 4);
     expect(provider.editing!.version, 2);
+  });
+
+  test('setActive GETs current DTO and PUTs the toggled copy', () async {
+    // Seed the list with one template.
+    adapter.mock('GET', '/api/wbs/templates', (_) {
+      return ResponseBody.fromString(
+        '[{"id":7,"code":"RES","projectType":"RESIDENTIAL",'
+        '"name":"R","version":1,"isActive":true,"phases":[]}]',
+        200,
+        headers: {
+          'content-type': ['application/json']
+        },
+      );
+    });
+    await provider.loadList();
+
+    adapter.mock('GET', '/api/wbs/templates/7', (_) {
+      return ResponseBody.fromString(
+        '{"id":7,"code":"RES","projectType":"RESIDENTIAL",'
+        '"name":"R","version":1,"isActive":true,"phases":[]}',
+        200,
+        headers: {
+          'content-type': ['application/json']
+        },
+      );
+    });
+    var putBody = <String, dynamic>{};
+    adapter.mock('PUT', '/api/wbs/templates/7', (options) {
+      putBody = options.data as Map<String, dynamic>;
+      return ResponseBody.fromString(
+        '{"id":7,"code":"RES","projectType":"RESIDENTIAL",'
+        '"name":"R","version":1,"isActive":false,"phases":[]}',
+        200,
+        headers: {
+          'content-type': ['application/json']
+        },
+      );
+    });
+    final ok = await provider.setActive(7, false);
+    expect(ok, isTrue);
+    expect(putBody['isActive'], isFalse);
+    expect(provider.templates.first.isActive, isFalse);
   });
 }

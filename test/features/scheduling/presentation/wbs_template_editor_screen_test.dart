@@ -18,9 +18,9 @@ void main() {
     final dio = Dio(BaseOptions(baseUrl: 'http://test'));
     final adapter = MockDioAdapter();
     dio.httpClientAdapter = adapter;
-    adapter.mock('GET', '/api/admin/wbs-templates/3', (_) {
+    adapter.mock('GET', '/api/wbs/templates/3', (_) {
       return ResponseBody.fromString(
-        '{"success":true,"data":{"id":3,"code":"RES","projectType":"RESIDENTIAL",'
+        '{"id":3,"code":"RES","projectType":"RESIDENTIAL",'
         '"name":"Residential","version":2,"isActive":true,"phases":['
         '{"id":10,"sequence":1,"name":"Foundation","monsoonSensitive":false,'
         '"tasks":[{"id":100,"sequence":1,"name":"Excavation","durationDays":5,'
@@ -28,9 +28,11 @@ void main() {
         '"predecessors":[]}]},'
         '{"id":11,"sequence":2,"name":"Superstructure","monsoonSensitive":true,'
         '"tasks":[]}'
-        ']}}',
+        ']}',
         200,
-        headers: {'content-type': ['application/json']},
+        headers: {
+          'content-type': ['application/json']
+        },
       );
     });
 

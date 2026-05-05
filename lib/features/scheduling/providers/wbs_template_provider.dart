@@ -9,25 +9,41 @@ class WbsTemplateProvider extends ChangeNotifier {
   WbsTemplateProvider({WbsTemplateService? service})
       : _service = service ?? WbsTemplateService();
 
-  List<WbsTemplate> _templates = const [];
+  /// All templates the server returned for the current `includeInactive`
+  /// setting. The screen filters these client-side by [filterType].
+  List<WbsTemplate> _allTemplates = const [];
   bool _isLoading = false;
   String? _errorMessage;
   WbsTemplate? _editing;
   WbsProjectType? _filterType;
+  bool _includeInactive = false;
 
-  List<WbsTemplate> get templates => List.unmodifiable(_templates);
+  /// Templates after the [filterType] client-side filter is applied.
+  List<WbsTemplate> get templates => List.unmodifiable(
+        _filterType == null
+            ? _allTemplates
+            : _allTemplates.where((t) => t.projectType == _filterType).toList(),
+      );
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   WbsTemplate? get editing => _editing;
   WbsProjectType? get filterType => _filterType;
+  bool get includeInactive => _includeInactive;
 
-  Future<void> loadList({WbsProjectType? projectType}) async {
+  /// Fetches the unfiltered list from the server (per the real contract,
+  /// only [includeInactive] is server-side; project-type filter is applied in
+  /// the getter above).
+  Future<void> loadList({
+    WbsProjectType? projectType,
+    bool? includeInactive,
+  }) async {
     _filterType = projectType;
+    if (includeInactive != null) _includeInactive = includeInactive;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
     try {
-      _templates = await _service.list(projectType: projectType);
+      _allTemplates = await _service.list(includeInactive: _includeInactive);
     } on DioException catch (e) {
       _errorMessage = _humanize(e);
     } catch (e) {
@@ -91,12 +107,21 @@ class WbsTemplateProvider extends ChangeNotifier {
     }
   }
 
+  /// Toggle a template's `isActive` flag.
+  ///
+  /// The backend has no PATCH; we PUT the full DTO with the flag flipped.
+  /// We GET the latest DTO first so we don't blow away changes someone else
+  /// made while the list was on screen.
   Future<bool> setActive(int id, bool isActive) async {
     try {
-      final updated = await _service.setActive(id, isActive);
-      final idx = _templates.indexWhere((t) => t.id == id);
+      final current = await _service.get(id);
+      final updated = await _service.update(
+        id,
+        current.copyWith(isActive: isActive),
+      );
+      final idx = _allTemplates.indexWhere((t) => t.id == id);
       if (idx != -1) {
-        _templates = [..._templates]..[idx] = updated;
+        _allTemplates = [..._allTemplates]..[idx] = updated;
         notifyListeners();
       }
       return true;
@@ -110,7 +135,7 @@ class WbsTemplateProvider extends ChangeNotifier {
   Future<bool> delete(int id) async {
     try {
       await _service.delete(id);
-      _templates = _templates.where((t) => t.id != id).toList();
+      _allTemplates = _allTemplates.where((t) => t.id != id).toList();
       notifyListeners();
       return true;
     } on DioException catch (e) {

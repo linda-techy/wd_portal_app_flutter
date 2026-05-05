@@ -17,12 +17,14 @@ void main() {
     final dio = Dio(BaseOptions(baseUrl: 'http://test'));
     final adapter = MockDioAdapter();
     dio.httpClientAdapter = adapter;
-    adapter.mock('GET', '/api/admin/wbs-templates', (_) {
+    adapter.mock('GET', '/api/wbs/templates', (_) {
       return ResponseBody.fromString(
-        '{"success":true,"data":[{"id":1,"code":"RES","projectType":"RESIDENTIAL",'
-        '"name":"Residential","version":1,"isActive":true,"phases":[]}]}',
+        '[{"id":1,"code":"RES","projectType":"RESIDENTIAL",'
+        '"name":"Residential","version":1,"isActive":true,"phases":[]}]',
         200,
-        headers: {'content-type': ['application/json']},
+        headers: {
+          'content-type': ['application/json']
+        },
       );
     });
 
@@ -54,12 +56,14 @@ void main() {
     final dio = Dio(BaseOptions(baseUrl: 'http://test'));
     final adapter = MockDioAdapter();
     dio.httpClientAdapter = adapter;
-    adapter.mock('GET', '/api/admin/wbs-templates', (_) {
+    adapter.mock('GET', '/api/wbs/templates', (_) {
       return ResponseBody.fromString(
-        '{"success":true,"data":[{"id":1,"code":"RES","projectType":"RESIDENTIAL",'
-        '"name":"Residential","version":1,"isActive":true,"phases":[]}]}',
+        '[{"id":1,"code":"RES","projectType":"RESIDENTIAL",'
+        '"name":"Residential","version":1,"isActive":true,"phases":[]}]',
         200,
-        headers: {'content-type': ['application/json']},
+        headers: {
+          'content-type': ['application/json']
+        },
       );
     });
 
