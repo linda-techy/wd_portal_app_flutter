@@ -33,6 +33,7 @@ import 'package:admin/features/deductions/presentation/screens/deduction_registe
 import 'package:admin/features/final_account/presentation/screens/final_account_screen.dart';
 import 'package:admin/features/projects/presentation/screens/project_members_screen.dart';
 import 'package:admin/features/projects/presentation/widgets/project_gps_card.dart';
+import 'package:admin/features/scheduling/presentation/widgets/project_schedule_config_tab.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final ProjectModel project;
@@ -203,6 +204,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             if (project.id != null) ...[
               const SizedBox(height: 24),
               _buildModulesSection(context),
+            ],
+            if (project.id != null) ...[
+              const SizedBox(height: 24),
+              ProjectScheduleConfigTab(projectId: project.id!),
             ],
           ],
         ),
