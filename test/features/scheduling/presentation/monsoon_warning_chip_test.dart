@@ -23,6 +23,40 @@ void main() {
     expect(find.text('Monsoon'), findsOneWidget);
   });
 
+  testWidgets('caller can gate chip on data presence (B10 list pattern)',
+      (tester) async {
+    // Mirror the Gantt screen's `if (warning != null) MonsoonWarningChip(...)`
+    // pattern: rows with a warning render a chip; rows without don't.
+    final withWarning = MonsoonWarning(
+      taskId: 1,
+      taskName: 'A',
+      plannedStart: DateTime(2026, 7, 15),
+      plannedEnd: DateTime(2026, 7, 25),
+      monsoonStart: DateTime(2026, 6, 1),
+      monsoonEnd: DateTime(2026, 9, 30),
+    );
+
+    Widget rowFor(MonsoonWarning? w) => Row(
+          children: [
+            const Text('Task'),
+            if (w != null) MonsoonWarningChip(warning: w),
+          ],
+        );
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Column(
+          children: [rowFor(withWarning), rowFor(null)],
+        ),
+      ),
+    ));
+    await tester.pump();
+
+    // Only one chip — the row without a warning has none.
+    expect(find.byType(MonsoonWarningChip), findsOneWidget);
+    expect(find.byIcon(Icons.umbrella), findsOneWidget);
+  });
+
   testWidgets('compact=false shows the date range too', (tester) async {
     final warning = MonsoonWarning(
       taskId: 1,
