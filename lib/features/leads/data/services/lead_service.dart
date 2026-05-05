@@ -11,6 +11,7 @@ import 'package:admin/features/leads/data/models/activity_feed.dart';
 import 'package:admin/features/leads/data/models/lead_document.dart';
 import 'package:admin/features/leads/data/models/lead_interaction.dart';
 import 'package:admin/features/leads/data/models/lead_score_history.dart';
+import 'package:admin/models/customer_project.dart';
 
 class LeadService {
   final ApiService _apiService = ApiService();
@@ -149,11 +150,17 @@ class LeadService {
         response, (json) => ActivityFeed.fromJson(json));
   }
 
-  Future<void> convertLead(
+  /// Convert a lead into a customer + project. Returns the newly created
+  /// [CustomerProject] (with `id`) so callers can immediately wire follow-on
+  /// flows like the WBS template picker (B9).
+  Future<CustomerProject> convertLead(
       String leadId, Map<String, dynamic> requestData) async {
     final response =
         await _apiService.post('/leads/$leadId/convert', data: requestData);
-    _apiService.unwrap<void>(response, (_) {});
+    return _apiService.unwrap<CustomerProject>(
+      response,
+      (json) => CustomerProject.fromJson(json as Map<String, dynamic>),
+    );
   }
 
   Future<List<LeadDocument>> getLeadDocuments(String leadId) async {

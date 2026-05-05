@@ -94,16 +94,9 @@ class WbsTemplateService {
 
   /// POST /api/projects/{projectId}/wbs/clone-from-template
   ///
-  /// TODO_S1_INTEGRATION: this method is not yet wired into the project
-  /// creation flow. Per the spec, when creating a customer project the
-  /// scheduler should pick a WBS template + a floor count and the cloner
-  /// should run server-side immediately after the project insert succeeds.
-  /// The current project-creation paths (`leads/edit_lead_screen.dart`
-  /// → CRM conversion → `customer_project_service.createProject`) are owned
-  /// by legacy flows and the wiring is out of scope of the PR3 fix pass.
-  /// Remaining work: extend the project create dialog with a "Choose WBS
-  /// template" step + "floors" input, then call this method post-create and
-  /// route to the project detail / WBS view.
+  /// Wired into the post-lead-conversion flow via
+  /// `WbsTemplatePickerDialog` + `runWbsTemplatePickerFlow` (B9). Returns 409
+  /// if the project already has a WBS — the caller surfaces that to the user.
   Future<WbsCloneSummary> cloneIntoProject({
     required int projectId,
     required int templateId,

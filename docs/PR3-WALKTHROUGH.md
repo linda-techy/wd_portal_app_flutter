@@ -150,12 +150,30 @@ All 10 steps complete with green checkmarks. Network tab shows requests to:
 All return `200`/`201`/`204` with raw JSON bodies (no `{success, data}`
 envelope). 4xx responses are surfaced via the screen's snackbar.
 
+### 11. B9 — WBS template picker on project creation
+
+- As `ADMIN` (or any user with `PROJECT_WBS_CLONE`), open Leads, pick a lead
+  whose project type is residential / commercial / interior / renovation,
+  click **Convert** and fill the convert dialog. After the
+  "Lead converted successfully!" snackbar a second modal —
+  **"Materialize WBS from template"** — appears.
+- **Pass:** Templates filtered to the chosen project type are listed as
+  radio rows. Floors input defaults to the lead's floor count (clamped to
+  1–20). Clicking **Materialize** calls
+  `POST /api/projects/{id}/wbs/clone-from-template`; on success a green
+  snackbar reports `"WBS materialized: X phases, Y tasks created."`.
+- **Skip path:** Click **Skip** → no clone fires; the project is left
+  WBS-less and the user can run the flow later from the project's WBS tab.
+- **Duplicate-clone:** Re-running the picker against a project that already
+  has a WBS surfaces a red snackbar `"Project already has a WBS — nothing
+  was changed."` (backend returns 409).
+- **Permission gate:** Sign in as a user without `PROJECT_WBS_CLONE` and
+  convert a lead. The picker dialog is skipped silently — only the
+  conversion success snackbar is shown.
+
 ## Notes
 
-- **B9 deferred** — the WBS clone wiring (calling `cloneIntoProject` after
-  project creation) requires modifying the legacy project-creation flow
-  (`leads → CRM convert → customer_project_service.createProject`) and is
-  not in scope of this fix pass. The service method is in place; a
-  `TODO_S1_INTEGRATION:` comment in
-  `lib/features/scheduling/data/services/wbs_template_service.dart` lists
-  the remaining work.
+- **B9 wired** — the WBS clone is invoked after lead-conversion via
+  `WbsTemplatePickerDialog` + `runWbsTemplatePickerFlow`. The picker is
+  permission-gated on `PROJECT_WBS_CLONE` and is a silent no-op when the
+  project's type doesn't map to any WBS template (e.g. Vastu / Smart Home).

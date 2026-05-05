@@ -6,6 +6,7 @@ import 'package:admin/features/leads/data/services/lead_service.dart';
 import 'package:admin/constants/customer_type_constants.dart';
 import 'package:admin/constants/lead_status_constants.dart';
 import 'package:admin/constants/project_type_constants.dart';
+import 'package:admin/models/customer_project.dart';
 
 class EditLeadController extends ChangeNotifier {
   final Lead _originalLead;
@@ -433,15 +434,20 @@ class EditLeadController extends ChangeNotifier {
     }
   }
 
-  Future<void> convertLead(Map<String, dynamic> requestData) async {
+  /// Convert the lead into a customer + project, returning the newly-created
+  /// [CustomerProject] (with `id`) so the caller can wire follow-on flows
+  /// like the WBS template picker.
+  Future<CustomerProject> convertLead(Map<String, dynamic> requestData) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      await _leadService.convertLead(_originalLead.leadId, requestData);
+      final project =
+          await _leadService.convertLead(_originalLead.leadId, requestData);
       _isLoading = false;
       notifyListeners();
+      return project;
     } catch (e) {
       _isLoading = false;
       _errorMessage = 'Error converting lead: ${e.toString()}';
