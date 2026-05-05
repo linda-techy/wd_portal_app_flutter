@@ -206,8 +206,21 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               _buildModulesSection(context),
             ],
             if (project.id != null) ...[
-              const SizedBox(height: 24),
-              ProjectScheduleConfigTab(projectId: project.id!),
+              // I1 — gate the schedule tab on the same perms the backend
+              // requires (HOLIDAY_VIEW or PROJECT_SCHEDULE_CONFIG_EDIT).
+              // Users without either should not see the tab at all.
+              Consumer<PermissionProvider>(
+                builder: (_, perms, __) {
+                  if (!perms.canViewHolidays &&
+                      !perms.canEditProjectScheduleConfig) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 24),
+                    child: ProjectScheduleConfigTab(projectId: project.id!),
+                  );
+                },
+              ),
             ],
           ],
         ),

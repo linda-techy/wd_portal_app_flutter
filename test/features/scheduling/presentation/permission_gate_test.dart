@@ -19,12 +19,14 @@ void main() {
     final dio = Dio(BaseOptions(baseUrl: 'http://test'));
     final adapter = MockDioAdapter();
     dio.httpClientAdapter = adapter;
-    adapter.mock('GET', '/api/admin/wbs-templates', (_) {
+    adapter.mock('GET', '/api/wbs/templates', (_) {
       return ResponseBody.fromString(
-        '{"success":true,"data":[{"id":1,"code":"RES","projectType":"RESIDENTIAL",'
-        '"name":"Residential","version":1,"isActive":true,"phases":[]}]}',
+        '[{"id":1,"code":"RES","projectType":"RESIDENTIAL",'
+        '"name":"Residential","version":1,"isActive":true,"phases":[]}]',
         200,
-        headers: {'content-type': ['application/json']},
+        headers: {
+          'content-type': ['application/json']
+        },
       );
     });
 
@@ -56,12 +58,14 @@ void main() {
     final dio = Dio(BaseOptions(baseUrl: 'http://test'));
     final adapter = MockDioAdapter();
     dio.httpClientAdapter = adapter;
-    adapter.mock('GET', '/api/admin/wbs-templates/1', (_) {
+    adapter.mock('GET', '/api/wbs/templates/1', (_) {
       return ResponseBody.fromString(
-        '{"success":true,"data":{"id":1,"code":"RES","projectType":"RESIDENTIAL",'
-        '"name":"Residential","version":1,"isActive":true,"phases":[]}}',
+        '{"id":1,"code":"RES","projectType":"RESIDENTIAL",'
+        '"name":"Residential","version":1,"isActive":true,"phases":[]}',
         200,
-        headers: {'content-type': ['application/json']},
+        headers: {
+          'content-type': ['application/json']
+        },
       );
     });
 
@@ -84,5 +88,47 @@ void main() {
 
     expect(find.text('Save as new version'), findsNothing);
     expect(find.text('Add task'), findsNothing);
+  });
+
+  testWidgets(
+      'I1 — schedule tab is gated on HOLIDAY_VIEW or PROJECT_SCHEDULE_CONFIG_EDIT',
+      (tester) async {
+    // Mirrors the gate added to project_detail_screen.dart: a Consumer that
+    // returns SizedBox.shrink() unless the user can view holidays or edit
+    // schedule config. We test the gate logic directly to avoid spinning up
+    // the real project detail screen (which loads project data + the
+    // schedule tab provider, both of which need real services).
+
+    Widget gateUnder(PermissionProvider perms) {
+      return MaterialApp(
+        home: ChangeNotifierProvider<PermissionProvider>.value(
+          value: perms,
+          child: Scaffold(
+            body: Consumer<PermissionProvider>(
+              builder: (_, p, __) {
+                if (!p.canViewHolidays && !p.canEditProjectScheduleConfig) {
+                  return const SizedBox.shrink();
+                }
+                return const Text('SCHEDULE_TAB_VISIBLE');
+              },
+            ),
+          ),
+        ),
+      );
+    }
+
+    // No perms — gate hides.
+    final noPerms = PermissionProvider();
+    noPerms.setPermissions(<String>[], 'CUSTOMER');
+    await tester.pumpWidget(gateUnder(noPerms));
+    await tester.pump();
+    expect(find.text('SCHEDULE_TAB_VISIBLE'), findsNothing);
+
+    // HOLIDAY_VIEW alone is enough.
+    final viewPerms = PermissionProvider();
+    viewPerms.setPermissions(['HOLIDAY_VIEW'], 'PROJECT_MANAGER');
+    await tester.pumpWidget(gateUnder(viewPerms));
+    await tester.pump();
+    expect(find.text('SCHEDULE_TAB_VISIBLE'), findsOneWidget);
   });
 }
