@@ -53,17 +53,23 @@ class ProjectScheduleConfigProvider extends ChangeNotifier {
     }
   }
 
+  /// Adds a holiday override and re-fetches the list (the POST returns only
+  /// a Long id, so we need a fresh GET to render the row).
   Future<bool> addOverride({
-    required int holidayId,
     required HolidayOverrideAction action,
+    required DateTime overrideDate,
+    int? holidayId,
+    String? overrideName,
   }) async {
     try {
-      final ov = await _service.addOverride(
+      await _service.addOverride(
         projectId: projectId,
-        holidayId: holidayId,
         action: action,
+        overrideDate: overrideDate,
+        holidayId: holidayId,
+        overrideName: overrideName,
       );
-      _overrides = [..._overrides, ov];
+      _overrides = await _service.listOverrides(projectId);
       notifyListeners();
       return true;
     } on DioException catch (e) {

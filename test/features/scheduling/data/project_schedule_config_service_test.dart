@@ -20,10 +20,12 @@ void main() {
   test('get parses MMDD smallint into month/day pairs', () async {
     adapter.mock('GET', '/api/projects/42/schedule-config', (_) {
       return ResponseBody.fromString(
-        '{"success":true,"data":{"projectId":42,"sundayWorking":false,'
-        '"monsoonStartMonthDay":601,"monsoonEndMonthDay":930,"districtCode":"KL-EKM"}}',
+        '{"projectId":42,"sundayWorking":false,'
+        '"monsoonStartMonthDay":601,"monsoonEndMonthDay":930,"districtCode":"KL-EKM"}',
         200,
-        headers: {'content-type': ['application/json']},
+        headers: {
+          'content-type': ['application/json']
+        },
       );
     });
 
@@ -42,10 +44,12 @@ void main() {
       expect(body['monsoonEndMonthDay'], 930);
       expect(body['sundayWorking'], true);
       return ResponseBody.fromString(
-        '{"success":true,"data":{"projectId":42,"sundayWorking":true,'
-        '"monsoonStartMonthDay":601,"monsoonEndMonthDay":930,"districtCode":"KL-EKM"}}',
+        '{"projectId":42,"sundayWorking":true,'
+        '"monsoonStartMonthDay":601,"monsoonEndMonthDay":930,"districtCode":"KL-EKM"}',
         200,
-        headers: {'content-type': ['application/json']},
+        headers: {
+          'content-type': ['application/json']
+        },
       );
     });
 
@@ -62,23 +66,54 @@ void main() {
     expect(saved.sundayWorking, isTrue);
   });
 
-  test('addOverride POSTs override and returns the row', () async {
+  test('addOverride POSTs action+date+holidayId+name and returns Long id',
+      () async {
     adapter.mock('POST', '/api/projects/42/holiday-overrides', (options) {
       final body = options.data as Map<String, dynamic>;
-      expect(body['holidayId'], 7);
       expect(body['action'], 'EXCLUDE');
+      expect(body['overrideDate'], '2026-08-15');
+      expect(body['holidayId'], 7);
+      // Backend returns a raw Long, not a DTO.
       return ResponseBody.fromString(
-        '{"success":true,"data":{"id":1,"projectId":42,"holidayId":7,"action":"EXCLUDE"}}',
+        '99',
         201,
-        headers: {'content-type': ['application/json']},
+        headers: {
+          'content-type': ['application/json']
+        },
       );
     });
-    final ov = await service.addOverride(
+    final newId = await service.addOverride(
       projectId: 42,
-      holidayId: 7,
       action: HolidayOverrideAction.exclude,
+      overrideDate: DateTime.utc(2026, 8, 15),
+      holidayId: 7,
     );
-    expect(ov.id, 1);
+    expect(newId, 99);
+  });
+
+  test('addOverride for project-only ADD omits holidayId, includes name',
+      () async {
+    adapter.mock('POST', '/api/projects/42/holiday-overrides', (options) {
+      final body = options.data as Map<String, dynamic>;
+      expect(body['action'], 'ADD');
+      expect(body['overrideDate'], '2026-12-25');
+      expect(body.containsKey('holidayId'), isFalse);
+      expect(body['overrideName'], 'Site closure');
+      return ResponseBody.fromString(
+        '101',
+        201,
+        headers: {
+          'content-type': ['application/json']
+        },
+      );
+    });
+    final newId = await service.addOverride(
+      projectId: 42,
+      action: HolidayOverrideAction.add,
+      overrideDate: DateTime.utc(2026, 12, 25),
+      overrideName: 'Site closure',
+    );
+    expect(newId, 101);
   });
 
   test('deleteOverride sends DELETE', () async {
@@ -86,25 +121,36 @@ void main() {
     adapter.mock('DELETE', '/api/projects/42/holiday-overrides/1', (_) {
       called = true;
       return ResponseBody.fromString(
-        '{"success":true}',
-        200,
-        headers: {'content-type': ['application/json']},
+        '',
+        204,
+        headers: {
+          'content-type': ['application/json']
+        },
       );
     });
     await service.deleteOverride(projectId: 42, overrideId: 1);
     expect(called, isTrue);
   });
 
-  test('listOverrides returns list', () async {
+  test('listOverrides returns list with overrideDate + nullable holidayId',
+      () async {
     adapter.mock('GET', '/api/projects/42/holiday-overrides', (_) {
       return ResponseBody.fromString(
-        '{"success":true,"data":[{"id":1,"projectId":42,"holidayId":7,"action":"EXCLUDE"}]}',
+        '[{"id":1,"projectId":42,"holidayId":7,"overrideDate":"2026-08-15",'
+        '"action":"EXCLUDE"},'
+        '{"id":2,"projectId":42,"holidayId":null,"overrideDate":"2026-12-25",'
+        '"overrideName":"Site closure","action":"ADD"}]',
         200,
-        headers: {'content-type': ['application/json']},
+        headers: {
+          'content-type': ['application/json']
+        },
       );
     });
     final out = await service.listOverrides(42);
-    expect(out, hasLength(1));
+    expect(out, hasLength(2));
     expect(out.first.action, HolidayOverrideAction.exclude);
+    expect(out.first.holidayId, 7);
+    expect(out[1].holidayId, isNull);
+    expect(out[1].overrideName, 'Site closure');
   });
 }

@@ -83,28 +83,41 @@ enum HolidayOverrideAction {
 class ProjectHolidayOverride {
   final int? id;
   final int projectId;
-  final int holidayId;
+  // Nullable because backend allows project-only ADD overrides without an
+  // underlying holiday row (column `holiday_id` is nullable).
+  final int? holidayId;
+  final DateTime overrideDate;
+  final String? overrideName;
   final HolidayOverrideAction action;
 
   const ProjectHolidayOverride({
     this.id,
     required this.projectId,
-    required this.holidayId,
+    this.holidayId,
+    required this.overrideDate,
+    this.overrideName,
     required this.action,
   });
 
   factory ProjectHolidayOverride.fromJson(Map<String, dynamic> j) =>
       ProjectHolidayOverride(
-        id: j['id'] as int?,
+        id: (j['id'] as num?)?.toInt(),
         projectId: (j['projectId'] as num).toInt(),
-        holidayId: (j['holidayId'] as num).toInt(),
+        holidayId: (j['holidayId'] as num?)?.toInt(),
+        overrideDate: DateTime.parse(j['overrideDate'] as String),
+        overrideName: j['overrideName'] as String?,
         action: HolidayOverrideAction.fromApi(j['action'] as String),
       );
 
   Map<String, dynamic> toJson() => {
         if (id != null) 'id': id,
         'projectId': projectId,
-        'holidayId': holidayId,
+        if (holidayId != null) 'holidayId': holidayId,
+        'overrideDate':
+            '${overrideDate.year.toString().padLeft(4, '0')}-'
+            '${overrideDate.month.toString().padLeft(2, '0')}-'
+            '${overrideDate.day.toString().padLeft(2, '0')}',
+        if (overrideName != null) 'overrideName': overrideName,
         'action': action.toApi(),
       };
 }

@@ -145,23 +145,32 @@ class _ProjectScheduleConfigTabState extends State<ProjectScheduleConfigTab> {
                     )
                   else
                     ...p.overrides.map(
-                      (o) => ListTile(
-                        dense: true,
-                        leading: Icon(
-                          o.action == HolidayOverrideAction.exclude
-                              ? Icons.cancel
-                              : Icons.add_circle,
-                        ),
-                        title: Text(o.action.label),
-                        subtitle: Text('Holiday ID: ${o.holidayId}'),
-                        trailing: canOverride && o.id != null
-                            ? IconButton(
-                                icon: const Icon(Icons.delete_outline),
-                                onPressed: () =>
-                                    _provider.deleteOverride(o.id!),
-                              )
-                            : null,
-                      ),
+                      (o) {
+                        final dateStr =
+                            '${o.overrideDate.year.toString().padLeft(4, '0')}-'
+                            '${o.overrideDate.month.toString().padLeft(2, '0')}-'
+                            '${o.overrideDate.day.toString().padLeft(2, '0')}';
+                        final ref = o.holidayId != null
+                            ? 'Holiday #${o.holidayId}'
+                            : (o.overrideName ?? 'Project-only');
+                        return ListTile(
+                          dense: true,
+                          leading: Icon(
+                            o.action == HolidayOverrideAction.exclude
+                                ? Icons.cancel
+                                : Icons.add_circle,
+                          ),
+                          title: Text(o.action.label),
+                          subtitle: Text('$dateStr  •  $ref'),
+                          trailing: canOverride && o.id != null
+                              ? IconButton(
+                                  icon: const Icon(Icons.delete_outline),
+                                  onPressed: () =>
+                                      _provider.deleteOverride(o.id!),
+                                )
+                              : null,
+                        );
+                      },
                     ),
                 ],
                 ),
@@ -240,35 +249,75 @@ class _ProjectScheduleConfigTabState extends State<ProjectScheduleConfigTab> {
   }
 
   Future<void> _onAddOverride() async {
-    // Minimal flow: ask for a holiday ID + action. A full picker requires
-    // listing nation/state/district holidays — out of scope for PR3 v1.
+    // Backend `HolidayOverrideRequest` requires `action` + `overrideDate`.
+    // `holidayId` is optional (null for project-only ADD). `overrideName`
+    // is also optional and only meaningful for project-only ADDs.
     final idController = TextEditingController();
+    final nameController = TextEditingController();
     HolidayOverrideAction action = HolidayOverrideAction.exclude;
+    DateTime? selectedDate;
+
     final picked = await showDialog<bool>(
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (ctx, setLocal) => AlertDialog(
           title: const Text('Add holiday override'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: idController,
-                decoration: const InputDecoration(labelText: 'Holiday ID'),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 12),
-              DropdownButton<HolidayOverrideAction>(
-                value: action,
-                items: HolidayOverrideAction.values
-                    .map((a) =>
-                        DropdownMenuItem(value: a, child: Text(a.label)))
-                    .toList(),
-                onChanged: (v) {
-                  if (v != null) setLocal(() => action = v);
-                },
-              ),
-            ],
+          content: SizedBox(
+            width: 400,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButton<HolidayOverrideAction>(
+                  isExpanded: true,
+                  value: action,
+                  items: HolidayOverrideAction.values
+                      .map((a) =>
+                          DropdownMenuItem(value: a, child: Text(a.label)))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) setLocal(() => action = v);
+                  },
+                ),
+                const SizedBox(height: 8),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.calendar_today),
+                  title: Text(selectedDate == null
+                      ? 'Pick override date'
+                      : 'Date: '
+                          '${selectedDate!.year.toString().padLeft(4, '0')}-'
+                          '${selectedDate!.month.toString().padLeft(2, '0')}-'
+                          '${selectedDate!.day.toString().padLeft(2, '0')}'),
+                  onTap: () async {
+                    final today = DateTime.now();
+                    final d = await showDatePicker(
+                      context: ctx,
+                      initialDate: selectedDate ?? today,
+                      firstDate: DateTime(today.year - 1),
+                      lastDate: DateTime(today.year + 5),
+                    );
+                    if (d != null) setLocal(() => selectedDate = d);
+                  },
+                ),
+                TextField(
+                  controller: idController,
+                  decoration: const InputDecoration(
+                    labelText: 'Holiday ID (optional)',
+                    helperText:
+                        'Reference an existing holiday row, or leave blank '
+                        'for a project-only ADD.',
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+                if (action == HolidayOverrideAction.add)
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Name (optional, project-only ADD)',
+                    ),
+                  ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -276,16 +325,31 @@ class _ProjectScheduleConfigTabState extends State<ProjectScheduleConfigTab> {
               child: const Text('Cancel'),
             ),
             FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
+              onPressed: selectedDate == null
+                  ? null
+                  : () => Navigator.of(ctx).pop(true),
               child: const Text('Add'),
             ),
           ],
         ),
       ),
     );
-    if (picked != true) return;
-    final id = int.tryParse(idController.text);
-    if (id == null) return;
-    await _provider.addOverride(holidayId: id, action: action);
+    if (picked != true || selectedDate == null) return;
+    final holidayId = int.tryParse(idController.text.trim());
+    final name = nameController.text.trim();
+    final ok = await _provider.addOverride(
+      action: action,
+      overrideDate: selectedDate!,
+      holidayId: holidayId,
+      overrideName: name.isEmpty ? null : name,
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok
+            ? 'Override added.'
+            : (_provider.errorMessage ?? 'Failed to add override.')),
+      ),
+    );
   }
 }
