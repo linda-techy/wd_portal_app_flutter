@@ -38,6 +38,7 @@ class SiteReportService {
     required String description,
     required ReportType reportType,
     int? siteVisitId,
+    int? taskId,                         // S3 PR2: optional task linkage
     List<XFile>? photos,
     double? latitude,
     double? longitude,
@@ -49,6 +50,7 @@ class SiteReportService {
       'description': description,
       'reportType': reportType.toJson(),
       'siteVisitId': siteVisitId,
+      if (taskId != null) 'taskId': taskId,            // S3 PR2
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
       if (locationAccuracy != null) 'locationAccuracy': locationAccuracy,
