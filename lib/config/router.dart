@@ -45,6 +45,8 @@ import 'package:admin/features/estimation_settings/presentation/screens/market_i
 import 'package:admin/features/scheduling/presentation/screens/wbs_template_list_screen.dart';
 import 'package:admin/features/scheduling/presentation/screens/wbs_template_editor_screen.dart';
 import 'package:admin/features/scheduling/presentation/screens/holiday_calendar_screen.dart';
+import 'package:admin/features/projects/presentation/screens/pm_approval_inbox_screen.dart';
+import 'package:admin/features/projects/data/services/task_completion_service.dart';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -84,6 +86,7 @@ const Map<String, int> kPathToMenuIndex = {
   '/settings/estimation/market-index': 29,
   '/scheduling/templates':         30,
   '/scheduling/holidays':          31,
+  '/scheduling/pending-approvals': 32,
 };
 
 /// Map a menu index (from [MenuAppController]) to its route path.
@@ -101,6 +104,7 @@ const List<String> kIndexToPath = [
   '/settings/estimation/market-index',
   '/scheduling/templates',
   '/scheduling/holidays',
+  '/scheduling/pending-approvals',
 ];
 
 String indexToPath(int index) =>
@@ -271,6 +275,13 @@ GoRouter buildAppRouter(PortalAuthProvider authProvider) {
           GoRoute(
             path: '/scheduling/holidays',
             builder: (_, __) => const HolidayCalendarScreen(),
+          ),
+          GoRoute(
+            path: '/scheduling/pending-approvals',
+            builder: (_, __) => Provider<TaskCompletionService>(
+              create: (_) => TaskCompletionService(),
+              child: const PmApprovalInboxScreen(),
+            ),
           ),
         ],
       ),
