@@ -15,6 +15,7 @@ import 'package:admin/providers/subcontract_provider.dart';
 import 'package:admin/providers/vendor_payment_provider.dart';
 import 'package:admin/providers/customer_project_provider.dart';
 import 'package:admin/providers/common_data_provider.dart';
+import 'package:admin/features/projects/providers/gantt_cpm_provider.dart';
 import 'package:admin/services/portal_auth_service.dart';
 import 'package:admin/services/user_service.dart';
 import 'package:admin/services/storage_service.dart';
@@ -240,6 +241,9 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(create: (_) => SubcontractProvider()),
         ChangeNotifierProvider(
             create: (_) => VendorPaymentProvider(vendorPaymentService)),
+
+        // Scheduling — CPM result for the per-project Gantt screen.
+        ChangeNotifierProvider(create: (_) => GanttCpmProvider()),
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,

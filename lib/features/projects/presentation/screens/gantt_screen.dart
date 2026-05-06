@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:admin/services/api_service.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/features/scheduling/data/models/monsoon_warning_model.dart';
 import 'package:admin/features/scheduling/data/services/monsoon_warning_service.dart';
 import 'package:admin/features/scheduling/presentation/widgets/monsoon_warning_chip.dart';
+import 'package:admin/features/projects/providers/gantt_cpm_provider.dart';
 
 // ─── Data model ──────────────────────────────────────────────────────────────
 
@@ -92,6 +94,12 @@ class _GanttScreenState extends State<GanttScreen> {
   void initState() {
     super.initState();
     _load();
+    // Kick off CPM load after the first frame so context.read is safe and
+    // notifyListeners doesn't fire during build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<GanttCpmProvider>().load(widget.projectId);
+    });
   }
 
   @override
