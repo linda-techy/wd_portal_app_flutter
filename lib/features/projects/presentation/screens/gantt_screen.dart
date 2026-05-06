@@ -545,6 +545,9 @@ class _GanttScreenState extends State<GanttScreen> {
       );
 
       // Amber float bar — shown only for non-critical tasks with float > 0.
+      // Build only if at least partially within the chart: previously the
+      // left edge was clamped, but the bar could still draw a 4px stub at
+      // the right edge when ef extended past the visible window.
       if (cpmTask != null &&
           !isCritical &&
           cpmTask.totalFloatDays > 0) {
@@ -552,17 +555,23 @@ class _GanttScreenState extends State<GanttScreen> {
             cpmTask.efDate.difference(chartStart).inDays * _dayWidth;
         final floatWidth =
             cpmTask.lfDate.difference(cpmTask.efDate).inDays * _dayWidth;
-        if (floatWidth > 0) {
-          floatBar = Positioned(
-            left: floatLeft.clamp(0, chartWidth).toDouble(),
-            top: _rowHeight / 2 - 2,
-            child: Container(
-              key: Key('gantt-float-${task.id}'),
-              width: floatWidth,
-              height: 4,
-              color: Colors.amber.shade300,
-            ),
-          );
+        if (floatLeft < chartWidth && floatWidth > 0) {
+          final clampedLeft = floatLeft.clamp(0.0, chartWidth.toDouble());
+          final maxWidth = chartWidth - clampedLeft;
+          final renderedWidth =
+              floatWidth.toDouble().clamp(0.0, maxWidth.toDouble());
+          if (renderedWidth > 0) {
+            floatBar = Positioned(
+              left: clampedLeft,
+              top: _rowHeight / 2 - 2,
+              child: Container(
+                key: Key('gantt-float-${task.id}'),
+                width: renderedWidth,
+                height: 4,
+                color: Colors.amber.shade300,
+              ),
+            );
+          }
         }
       }
     } else {
