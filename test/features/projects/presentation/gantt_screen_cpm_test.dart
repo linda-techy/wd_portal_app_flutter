@@ -54,6 +54,8 @@ void main() {
   late List<Interceptor> savedInterceptors;
   late MockDioAdapter adapter;
 
+  // Mutates ApiService singleton interceptors; do NOT run this file with
+  // --concurrency > 1 against other ApiService-using widget-test files.
   setUp(() {
     savedAdapter = ApiService().dio.httpClientAdapter;
     savedInterceptors = List.of(ApiService().dio.interceptors);
