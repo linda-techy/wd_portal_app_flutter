@@ -228,5 +228,30 @@ void main() {
     expect(tooltip.message, contains('EF'));
     expect(tooltip.message, contains('LS'));
     expect(tooltip.message, contains('LF'));
+
+    // ── Float-bar geometry is timezone-stable ────────────────────────────
+    //
+    // chartStart = projectStartDate (2026-06-01 UTC) − 3 days padding
+    //            = 2026-05-29 UTC
+    // floatLeft  = (efDate 2026-06-03 − chartStart 2026-05-29) * _dayWidth
+    //            = 5 * 24 = 120
+    // floatWidth = (lfDate 2026-06-06 − efDate 2026-06-03) * _dayWidth
+    //            = 3 * 24 = 72
+    //
+    // Before the UTC-normalization fix, parsing projectStartDate via
+    // DateTime.tryParse returned local-time midnight; mixing it with UTC
+    // ef/lf dates from CpmResultModel shifted Duration.inDays by ±1 on
+    // non-UTC hosts (especially across DST), bumping these values by 24.
+    final floatPositioned = tester.widget<Positioned>(
+      find.ancestor(
+        of: find.byKey(const Key('gantt-float-102')),
+        matching: find.byType(Positioned),
+      ),
+    );
+    expect(floatPositioned.left, 120.0);
+    final floatContainer = tester.widget<Container>(
+      find.byKey(const Key('gantt-float-102')),
+    );
+    expect(floatContainer.constraints?.maxWidth, 72.0);
   });
 }

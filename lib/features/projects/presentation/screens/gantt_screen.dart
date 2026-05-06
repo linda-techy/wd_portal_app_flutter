@@ -10,6 +10,28 @@ import 'package:admin/features/projects/providers/gantt_cpm_provider.dart';
 
 // ─── Data model ──────────────────────────────────────────────────────────────
 
+/// Parses a gantt-payload date value into a UTC `DateTime`.
+///
+/// The schedule API ships `yyyy-MM-dd` strings — same shape as the CPM
+/// payload. Routing through [parseUtcDate] (rather than `DateTime.tryParse`,
+/// which returns local time) keeps `chartStart` in the same timezone domain
+/// as `CpmTaskResult.efDate` / `lfDate`, so `Duration.inDays` math used for
+/// float-bar geometry doesn't shift by `_dayWidth` on non-UTC hosts.
+///
+/// Falls back to `DateTime.tryParse` if the string isn't strict `yyyy-MM-dd`
+/// (defensive — but the chart still mixes domains in that fallback path).
+DateTime? _parseGanttPayloadDate(dynamic raw) {
+  if (raw == null) return null;
+  final s = raw.toString();
+  // Strict yyyy-MM-dd → UTC midnight. Anything else (e.g. ISO datetime with
+  // a 'T') falls back to tryParse.
+  if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(s)) {
+    return parseUtcDate(s);
+  }
+  final parsed = DateTime.tryParse(s);
+  return parsed?.toUtc();
+}
+
 class _GanttTask {
   final int id;
   final String title;
@@ -134,12 +156,12 @@ class _GanttScreenState extends State<GanttScreen> {
       setState(() {
         _data = _GanttData(
           tasks: tasks,
-          projectStartDate: payload['projectStartDate'] != null
-              ? DateTime.tryParse(payload['projectStartDate'].toString())
-              : null,
-          projectEndDate: payload['projectEndDate'] != null
-              ? DateTime.tryParse(payload['projectEndDate'].toString())
-              : null,
+          // Parse via parseUtcDate (not DateTime.tryParse, which returns local
+          // time) so chartStart mixes cleanly with UTC ef/lf dates from
+          // CpmResultModel in float-bar geometry. Mixing local + UTC in
+          // Duration.inDays math shifted bars by _dayWidth on non-UTC runners.
+          projectStartDate: _parseGanttPayloadDate(payload['projectStartDate']),
+          projectEndDate: _parseGanttPayloadDate(payload['projectEndDate']),
           overallProgress: (payload['overallProgress'] as num?)?.toInt() ?? 0,
           overdueTasks: (payload['overdueTasks'] as num?)?.toInt() ?? 0,
         );

@@ -55,10 +55,10 @@ class CpmTaskResult {
         taskId: (json['taskId'] as num).toInt(),
         taskName: json['taskName'] as String? ?? '',
         durationDays: (json['durationDays'] as num?)?.toInt(),
-        esDate: _parseUtcDate(json['esDate'] as String),
-        efDate: _parseUtcDate(json['efDate'] as String),
-        lsDate: _parseUtcDate(json['lsDate'] as String),
-        lfDate: _parseUtcDate(json['lfDate'] as String),
+        esDate: parseUtcDate(json['esDate'] as String),
+        efDate: parseUtcDate(json['efDate'] as String),
+        lsDate: parseUtcDate(json['lsDate'] as String),
+        lfDate: parseUtcDate(json['lfDate'] as String),
         totalFloatDays: (json['totalFloatDays'] as num).toInt(),
         isCritical: json['isCritical'] as bool,
       );
@@ -96,8 +96,8 @@ class CpmResultModel {
 
   factory CpmResultModel.fromJson(Map<String, dynamic> json) => CpmResultModel(
         projectId: (json['projectId'] as num).toInt(),
-        projectStartDate: _parseUtcDate(json['projectStartDate'] as String),
-        projectFinishDate: _parseUtcDate(json['projectFinishDate'] as String),
+        projectStartDate: parseUtcDate(json['projectStartDate'] as String),
+        projectFinishDate: parseUtcDate(json['projectFinishDate'] as String),
         criticalPathTaskIds: (json['criticalTaskIds'] as List)
             .map((e) => (e as num).toInt())
             .toList(),
@@ -124,8 +124,16 @@ String _fmt(DateTime d) =>
     '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
 /// Parses an ISO `yyyy-MM-dd` (date-only) string into a UTC DateTime so date
-/// equality works regardless of the host machine's local zone.
-DateTime _parseUtcDate(String s) {
+/// equality (and `Duration.inDays` math) works regardless of the host
+/// machine's local zone.
+///
+/// Exposed (non-private) so other widgets — notably the Gantt chart, which
+/// mixes payload dates with these CPM dates in geometry calculations — can
+/// route their own date strings through the same helper. Without this,
+/// `DateTime.tryParse('2026-06-01')` returns local-time midnight, and
+/// subtracting a UTC `DateTime` from a local `DateTime` shifts by the host's
+/// UTC offset (≥1 day across DST), shifting Gantt bars by `_dayWidth`.
+DateTime parseUtcDate(String s) {
   final parts = s.split('-');
   return DateTime.utc(
     int.parse(parts[0]),
