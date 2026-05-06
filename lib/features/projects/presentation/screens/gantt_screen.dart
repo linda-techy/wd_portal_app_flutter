@@ -1,11 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:admin/services/api_service.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/features/scheduling/data/models/monsoon_warning_model.dart';
 import 'package:admin/features/scheduling/data/services/monsoon_warning_service.dart';
 import 'package:admin/features/scheduling/presentation/widgets/monsoon_warning_chip.dart';
+import 'package:admin/features/scheduling/data/models/cpm_result_model.dart';
+import 'package:admin/features/projects/providers/gantt_cpm_provider.dart';
 
 // ─── Data model ──────────────────────────────────────────────────────────────
+
+/// Parses a gantt-payload date value into a UTC `DateTime`.
+///
+/// The schedule API ships `yyyy-MM-dd` strings — same shape as the CPM
+/// payload. Routing through [parseUtcDate] (rather than `DateTime.tryParse`,
+/// which returns local time) keeps `chartStart` in the same timezone domain
+/// as `CpmTaskResult.efDate` / `lfDate`, so `Duration.inDays` math used for
+/// float-bar geometry doesn't shift by `_dayWidth` on non-UTC hosts.
+///
+/// Falls back to `DateTime.tryParse` if the string isn't strict `yyyy-MM-dd`
+/// (defensive — but the chart still mixes domains in that fallback path).
+DateTime? _parseGanttPayloadDate(dynamic raw) {
+  if (raw == null) return null;
+  final s = raw.toString();
+  // Strict yyyy-MM-dd → UTC midnight. Anything else (e.g. ISO datetime with
+  // a 'T') falls back to tryParse.
+  if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(s)) {
+    return parseUtcDate(s);
+  }
+  final parsed = DateTime.tryParse(s);
+  return parsed?.toUtc();
+}
 
 class _GanttTask {
   final int id;
@@ -92,6 +117,12 @@ class _GanttScreenState extends State<GanttScreen> {
   void initState() {
     super.initState();
     _load();
+    // Kick off CPM load after the first frame so context.read is safe and
+    // notifyListeners doesn't fire during build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<GanttCpmProvider>().load(widget.projectId);
+    });
   }
 
   @override
@@ -125,12 +156,12 @@ class _GanttScreenState extends State<GanttScreen> {
       setState(() {
         _data = _GanttData(
           tasks: tasks,
-          projectStartDate: payload['projectStartDate'] != null
-              ? DateTime.tryParse(payload['projectStartDate'].toString())
-              : null,
-          projectEndDate: payload['projectEndDate'] != null
-              ? DateTime.tryParse(payload['projectEndDate'].toString())
-              : null,
+          // Parse via parseUtcDate (not DateTime.tryParse, which returns local
+          // time) so chartStart mixes cleanly with UTC ef/lf dates from
+          // CpmResultModel in float-bar geometry. Mixing local + UTC in
+          // Duration.inDays math shifted bars by _dayWidth on non-UTC runners.
+          projectStartDate: _parseGanttPayloadDate(payload['projectStartDate']),
+          projectEndDate: _parseGanttPayloadDate(payload['projectEndDate']),
           overallProgress: (payload['overallProgress'] as num?)?.toInt() ?? 0,
           overdueTasks: (payload['overdueTasks'] as num?)?.toInt() ?? 0,
         );
@@ -215,6 +246,12 @@ class _GanttScreenState extends State<GanttScreen> {
   }
 
   Widget _buildContent() {
+    return Consumer<GanttCpmProvider>(
+      builder: (context, cpm, _) => _buildContentWithCpm(cpm.cpmByTaskId),
+    );
+  }
+
+  Widget _buildContentWithCpm(Map<int, CpmTaskResult> cpm) {
     final data = _data!;
     final today = DateTime.now();
 
@@ -260,6 +297,7 @@ class _GanttScreenState extends State<GanttScreen> {
                         itemBuilder: (_, i) {
                           final t = data.tasks[i];
                           final warning = _warningsByTask[t.id];
+                          final isCritical = cpm[t.id]?.isCritical == true;
                           return SizedBox(
                             height: _rowHeight,
                             child: Padding(
@@ -271,6 +309,11 @@ class _GanttScreenState extends State<GanttScreen> {
                                   Row(
                                     crossAxisAlignment: CrossAxisAlignment.center,
                                     children: [
+                                      if (isCritical) ...[
+                                        Icon(Icons.local_fire_department,
+                                            size: 14, color: Colors.red.shade700),
+                                        const SizedBox(width: 4),
+                                      ],
                                       Expanded(
                                         child: Text(
                                           t.title,
@@ -323,7 +366,7 @@ class _GanttScreenState extends State<GanttScreen> {
                                 itemCount: data.tasks.length,
                                 separatorBuilder: (_, __) => const Divider(height: 1),
                                 itemBuilder: (_, i) => _buildChartRow(
-                                    data.tasks[i], chartStart, chartWidth, todayOffset),
+                                    data.tasks[i], chartStart, chartWidth, todayOffset, cpm),
                               ),
                               // Today line (overlay)
                               if (todayOffset >= 0 && todayOffset <= chartWidth)
@@ -421,52 +464,116 @@ class _GanttScreenState extends State<GanttScreen> {
     );
   }
 
-  Widget _buildChartRow(_GanttTask task, DateTime chartStart, double chartWidth, double todayOffset) {
+  Widget _buildChartRow(
+    _GanttTask task,
+    DateTime chartStart,
+    double chartWidth,
+    double todayOffset,
+    Map<int, CpmTaskResult> cpm,
+  ) {
     final start = task.startDate;
     final end = task.endDate;
+    final cpmTask = cpm[task.id];
+    final isCritical = cpmTask?.isCritical ?? false;
 
     Widget bar = const SizedBox.shrink();
-    double? barLeft;
-    double? barWidth;
+    Widget? floatBar;
 
     if (start != null && end != null) {
-      barLeft = start.difference(chartStart).inDays * _dayWidth;
-      barWidth = (end.difference(start).inDays + 1) * _dayWidth;
+      final barLeft = start.difference(chartStart).inDays * _dayWidth;
+      var barWidth = (end.difference(start).inDays + 1) * _dayWidth;
       if (barWidth < 4) barWidth = 4;
+
+      // Critical-path overrides the default bar styling.
+      final fillColor =
+          isCritical ? Colors.red.shade400 : _barColor(task);
+      final borderColor =
+          isCritical ? Colors.red.shade700 : Colors.transparent;
+
+      Widget barContainer = Container(
+        key: Key('gantt-bar-${task.id}'),
+        width: barWidth,
+        height: _rowHeight - 20,
+        decoration: BoxDecoration(
+          color: fillColor,
+          border: Border.all(
+            color: borderColor,
+            width: isCritical ? 1.5 : 0,
+          ),
+          borderRadius: BorderRadius.circular(6),
+          boxShadow: const [
+            BoxShadow(color: Colors.black12, blurRadius: 3, offset: Offset(0, 1)),
+          ],
+        ),
+        clipBehavior: Clip.hardEdge,
+        child: Stack(
+          children: [
+            // Progress fill
+            FractionallySizedBox(
+              widthFactor: (task.progressPercent / 100).clamp(0.0, 1.0),
+              child: Container(color: Colors.white.withOpacity(0.25)),
+            ),
+            // Label
+            Center(
+              child: Text(
+                '${task.progressPercent}%',
+                style: const TextStyle(
+                    color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      // When CPM data is available, wrap the bar with a Tooltip showing
+      // ES/EF/LS/LF and float days.
+      if (cpmTask != null) {
+        barContainer = Tooltip(
+          key: Key('gantt-bar-tooltip-${task.id}'),
+          message: _tooltipFor(cpmTask),
+          child: barContainer,
+        );
+      }
 
       bar = Positioned(
         left: barLeft.clamp(0, chartWidth),
         top: 10,
         child: GestureDetector(
           onTap: () => _showEditDialog(task),
-          child: Container(
-            width: barWidth,
-            height: _rowHeight - 20,
-            decoration: BoxDecoration(
-              color: _barColor(task).withOpacity(0.85),
-              borderRadius: BorderRadius.circular(6),
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 3, offset: const Offset(0, 1))],
-            ),
-            clipBehavior: Clip.hardEdge,
-            child: Stack(
-              children: [
-                // Progress fill
-                FractionallySizedBox(
-                  widthFactor: (task.progressPercent / 100).clamp(0.0, 1.0),
-                  child: Container(color: Colors.white.withOpacity(0.25)),
-                ),
-                // Label
-                Center(
-                  child: Text(
-                    '${task.progressPercent}%',
-                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          child: barContainer,
         ),
       );
+
+      // Amber float bar — shown only for non-critical tasks with float > 0.
+      // Build only if at least partially within the chart: previously the
+      // left edge was clamped, but the bar could still draw a 4px stub at
+      // the right edge when ef extended past the visible window.
+      if (cpmTask != null &&
+          !isCritical &&
+          cpmTask.totalFloatDays > 0) {
+        final floatLeft =
+            cpmTask.efDate.difference(chartStart).inDays * _dayWidth;
+        final floatWidth =
+            cpmTask.lfDate.difference(cpmTask.efDate).inDays * _dayWidth;
+        if (floatLeft < chartWidth && floatWidth > 0) {
+          final clampedLeft = floatLeft.clamp(0.0, chartWidth.toDouble());
+          final maxWidth = chartWidth - clampedLeft;
+          final renderedWidth =
+              floatWidth.toDouble().clamp(0.0, maxWidth.toDouble());
+          if (renderedWidth > 0) {
+            floatBar = Positioned(
+              left: clampedLeft,
+              top: _rowHeight / 2 - 2,
+              child: Container(
+                key: Key('gantt-float-${task.id}'),
+                width: renderedWidth,
+                height: 4,
+                color: Colors.amber.shade300,
+              ),
+            );
+          }
+        }
+      }
     } else {
       // No dates — show a small diamond at the due-date position or a "no dates" indicator
       bar = Positioned(
@@ -493,10 +600,18 @@ class _GanttScreenState extends State<GanttScreen> {
           // Alternating row background
           Positioned.fill(child: Container(color: Colors.transparent)),
           bar,
+          if (floatBar != null) floatBar,
         ],
       ),
     );
   }
+
+  String _tooltipFor(CpmTaskResult c) =>
+      'ES: ${_fmtDate(c.esDate)}\n'
+      'EF: ${_fmtDate(c.efDate)}\n'
+      'LS: ${_fmtDate(c.lsDate)}\n'
+      'LF: ${_fmtDate(c.lfDate)}\n'
+      'Float: ${c.totalFloatDays} day${c.totalFloatDays == 1 ? '' : 's'}';
 
   Future<void> _showEditDialog(_GanttTask task) async {
     DateTime? startDate = task.startDate;
