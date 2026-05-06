@@ -130,4 +130,103 @@ void main() {
     // App bar still shows the project name — render didn't crash.
     expect(find.textContaining('Test Project'), findsOneWidget);
   });
+
+  testWidgets('renders critical-path bar (red+flame) and amber float bar',
+      (tester) async {
+    tester.view.physicalSize = const Size(1600, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    adapter.mock('GET', '/api/projects/1/schedule/gantt', (_) {
+      return ResponseBody.fromString(
+        _ganttBody(),
+        200,
+        headers: {
+          'content-type': ['application/json']
+        },
+      );
+    });
+    adapter.mock('GET', '/api/projects/1/schedule/warnings', (_) {
+      return ResponseBody.fromString(
+        '[]',
+        200,
+        headers: {
+          'content-type': ['application/json']
+        },
+      );
+    });
+
+    final cpmDio = Dio(BaseOptions(baseUrl: 'http://test'));
+    final cpmAdapter = MockDioAdapter();
+    cpmDio.httpClientAdapter = cpmAdapter;
+    cpmAdapter.mock('GET', '/api/projects/1/cpm', (_) {
+      return ResponseBody.fromString(
+        _cpmBody(),
+        200,
+        headers: {
+          'content-type': ['application/json']
+        },
+      );
+    });
+    final cpmProvider = GanttCpmProvider(service: CpmService(dio: cpmDio));
+
+    await tester.pumpWidget(MaterialApp(
+      home: ChangeNotifierProvider<GanttCpmProvider>.value(
+        value: cpmProvider,
+        child: const GanttScreen(projectId: 1, projectName: 'Test Project'),
+      ),
+    ));
+    // Settle both fetches and the post-frame callback.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Flame icon shows on row label for the critical task (101) — there
+    // are two PENDING task labels; only the critical one gets the flame.
+    expect(find.byIcon(Icons.local_fire_department), findsOneWidget);
+
+    // Critical task bar — fill is red.shade400.
+    final criticalBar = tester.widget<Container>(
+      find.byKey(const Key('gantt-bar-101')),
+    );
+    final criticalDeco = criticalBar.decoration as BoxDecoration;
+    expect(criticalDeco.color, Colors.red.shade400);
+    expect(criticalDeco.border, isNotNull);
+    expect(
+      (criticalDeco.border as Border).top.color,
+      Colors.red.shade700,
+    );
+
+    // Non-critical task bar — fill stays the existing default for PENDING
+    // (`Colors.blueGrey.shade300`), no red border.
+    final normalBar = tester.widget<Container>(
+      find.byKey(const Key('gantt-bar-102')),
+    );
+    final normalDeco = normalBar.decoration as BoxDecoration;
+    expect(normalDeco.color, Colors.blueGrey.shade300);
+
+    // Float bar present for task 102 (totalFloatDays=3), color amber.shade300,
+    // height 4px.
+    expect(find.byKey(const Key('gantt-float-102')), findsOneWidget);
+    final floatBar = tester.widget<Container>(
+      find.byKey(const Key('gantt-float-102')),
+    );
+    expect(floatBar.color, Colors.amber.shade300);
+    final floatSize = floatBar.constraints;
+    expect(floatSize?.maxHeight, 4);
+
+    // No float bar for task 101 (critical, float=0).
+    expect(find.byKey(const Key('gantt-float-101')), findsNothing);
+
+    // Tooltip on task 102 mentions float days.
+    final tooltip = tester.widget<Tooltip>(
+      find.byKey(const Key('gantt-bar-tooltip-102')),
+    );
+    expect(tooltip.message, contains('Float: 3 days'));
+    expect(tooltip.message, contains('ES'));
+    expect(tooltip.message, contains('EF'));
+    expect(tooltip.message, contains('LS'));
+    expect(tooltip.message, contains('LF'));
+  });
 }
