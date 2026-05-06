@@ -3,6 +3,8 @@ import '../constants.dart';
 
 enum ReportType {
   dailyProgress,
+  completion,         // S3 PR2: task-completion evidence
+  issue,              // S3 PR2: site-scoped issue/blocker
   qualityCheck,
   safetyIncident,
   materialDelivery,
@@ -12,6 +14,8 @@ enum ReportType {
   String get label {
     switch (this) {
       case ReportType.dailyProgress: return 'Daily Progress';
+      case ReportType.completion: return 'Completion';
+      case ReportType.issue: return 'Issue';
       case ReportType.qualityCheck: return 'Quality Check';
       case ReportType.safetyIncident: return 'Safety Incident';
       case ReportType.materialDelivery: return 'Material Delivery';
@@ -23,11 +27,13 @@ enum ReportType {
   // Convert from backend SCREAMING_SNAKE_CASE to camelCase enum
   static ReportType fromJson(String? json) {
     if (json == null) return ReportType.dailyProgress;
-    
+
     // Normalize string to match enum names (e.g. DAILY_PROGRESS -> dailyProgress)
     // Map of backend values to enum values
     const map = {
       'DAILY_PROGRESS': ReportType.dailyProgress,
+      'COMPLETION': ReportType.completion,
+      'ISSUE': ReportType.issue,
       'QUALITY_CHECK': ReportType.qualityCheck,
       'SAFETY_INCIDENT': ReportType.safetyIncident,
       'MATERIAL_DELIVERY': ReportType.materialDelivery,
@@ -53,6 +59,8 @@ enum ReportType {
   String toJson() {
     switch (this) {
       case ReportType.dailyProgress: return 'DAILY_PROGRESS';
+      case ReportType.completion: return 'COMPLETION';
+      case ReportType.issue: return 'ISSUE';
       case ReportType.qualityCheck: return 'QUALITY_CHECK';
       case ReportType.safetyIncident: return 'SAFETY_INCIDENT';
       case ReportType.materialDelivery: return 'MATERIAL_DELIVERY';

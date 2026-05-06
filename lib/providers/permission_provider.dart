@@ -199,6 +199,10 @@ class PermissionProvider with ChangeNotifier {
       hasPermission('PROJECT_SCHEDULE_CONFIG_EDIT');
   bool get canViewMonsoonWarnings => hasPermission('MONSOON_WARNING_VIEW');
 
+  // S3 PR2 — Completion gate
+  bool get canApproveTaskCompletion =>
+      hasPermission('TASK_COMPLETION_APPROVE');
+
   // Site Report permissions
   bool get canViewSiteReports => canView('SITE_REPORT');
   bool get canCreateSiteReport => canCreate('SITE_REPORT');

@@ -135,6 +135,7 @@ class MainScreenState extends State<MainScreen> {
       case 19: return 'Inventory Tracking';
       case 20: return 'Finance & Billing';
       case 21: return 'Partnerships & Referrals';
+      case 32: return 'Approval Inbox';
       default: return 'Dashboard';
     }
   }

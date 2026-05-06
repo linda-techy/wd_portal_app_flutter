@@ -574,6 +574,12 @@ final List<_MenuGroupData> _menuGroups = [
         index: 31,
         isVisible: (p) => p.canViewHolidays,
       ),
+      _MenuItem(
+        title: 'Approval Inbox',
+        icon: Icons.fact_check_outlined,
+        index: 32,
+        isVisible: (p) => p.canApproveTaskCompletion,
+      ),
       const _MenuItem(
         title: 'Profile',
         svgSrc: 'assets/icons/menu_profile.svg',
