@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:admin/data/local/outbox_db.dart';
 import 'package:admin/data/local/outbox_mutation_type.dart';
 import 'package:admin/services/connectivity_service.dart';
 import 'package:admin/services/outbox_service.dart';
 import 'package:dio/dio.dart';
+import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
 /// Drains the outbox. Triggered by:
@@ -104,17 +106,65 @@ class SyncService {
         if (projectId == null) {
           throw StateError('delayLogCreate row missing projectId: ${entry.id}');
         }
+        // Spec text says /api/projects/{id}/delay-logs, but the canonical
+        // existing endpoint per V58+ is /api/projects/{id}/delays.
         await _dio.post(
           '/api/projects/$projectId/delays',
           data: jsonDecode(entry.payloadJson),
           options: Options(headers: headers),
         );
         return;
+
       case OutboxMutationType.taskMarkComplete:
+        // S3 PR2 mark-complete is body-less — server reads the engineer
+        // identity from the auth token + the task id from the URL. The photo
+        // evidence rides on a separate siteReportCreate row queued ahead of
+        // this one (the bottom-sheet enqueues both; SyncService claims them
+        // in id order so the report uploads first).
+        final taskId = entry.taskId;
+        if (taskId == null) {
+          throw StateError('taskMarkComplete row missing taskId: ${entry.id}');
+        }
+        await _dio.post(
+          '/api/tasks/$taskId/mark-complete',
+          options: Options(headers: headers),
+        );
+        return;
+
       case OutboxMutationType.siteReportCreate:
-        // PR1: dispatch shape for these two flows is wired in PR2 (multipart upload).
-        throw UnimplementedError(
-            'PR2 wires multipart dispatch for ${type.toWire()}');
+        final payload = jsonDecode(entry.payloadJson) as Map<String, dynamic>;
+        final form = FormData();
+        // Send report JSON as text/plain so Spring's StringHttpMessageConverter
+        // resolves @RequestPart("report") String correctly.
+        form.files.add(MapEntry(
+          'report',
+          MultipartFile.fromString(
+            jsonEncode(payload),
+            contentType: DioMediaType.parse('text/plain'),
+          ),
+        ));
+        final photoPath = entry.photoFilePath;
+        if (photoPath != null) {
+          // Read into memory rather than streaming from disk: SyncService
+          // markDone() deletes the file immediately on success, and on
+          // Windows the streaming file handle would still be held when
+          // the delete fires. The photos are bounded to single shots from
+          // the camera, so the memory cost is acceptable.
+          final bytes = await File(photoPath).readAsBytes();
+          form.files.add(MapEntry(
+            'photos',
+            MultipartFile.fromBytes(
+              bytes,
+              filename: p.basename(photoPath),
+            ),
+          ));
+        }
+        await _dio.post(
+          '/api/site-reports',
+          data: form,
+          options: Options(headers: headers),
+        );
+        return;
     }
   }
 
