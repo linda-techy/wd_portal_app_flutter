@@ -73,11 +73,10 @@ void main() async {
     _testApiConnectionAsync();
   }
 
-  // Initialize offline connectivity detection. Skip in tests — the platform
-  // channel is unavailable and the watcher fires continuously.
-  if (!kIntegrationTest) {
-    await ConnectivityService.initialize();
-  }
+  // S5 PR1: connectivity service is now instance-based; the singleton lives
+  // on the [MyApp] state and is provided to the widget tree via Provider so
+  // [OfflineBanner] (and PR2's pending-count badge) can subscribe via stream.
+  // No bootstrap call is needed — `watchOnline()` self-seeds.
 
   runApp(const MyApp());
 }
@@ -153,6 +152,10 @@ class _MyAppState extends State<MyApp> {
   late final GoRouter _router = buildAppRouter(_authProvider);
   final AppLinks _appLinks = AppLinks();
 
+  // S5 PR1: connectivity is instance-based now. The OfflineBanner subscribes
+  // via Provider.read<ConnectivityService>() to its watchOnline stream.
+  final ConnectivityService _connectivityService = ConnectivityService();
+
   @override
   void initState() {
     super.initState();
@@ -198,6 +201,9 @@ class _MyAppState extends State<MyApp> {
         // Services
         Provider<ApiService>.value(value: apiService),
         Provider<StorageService>(create: (_) => StorageService()),
+
+        // S5 PR1: connectivity instance shared with OfflineBanner.
+        Provider<ConnectivityService>.value(value: _connectivityService),
 
         // Menu controller
         ChangeNotifierProvider(create: (_) => MenuAppController()),
