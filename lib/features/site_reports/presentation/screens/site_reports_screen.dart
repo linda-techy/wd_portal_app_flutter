@@ -1,10 +1,14 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../data/local/photo_capture.dart';
+import '../../../../services/outbox_service.dart';
 import '../../../../services/site_report_service.dart';
+import '../../../../services/sync_service.dart';
 import '../../../../services/location_service.dart';
 import '../../../../models/site_report_models.dart';
 import '../../../../theme/app_theme.dart';
@@ -604,7 +608,8 @@ class _CreateSiteReportPageState extends State<_CreateSiteReportPage> {
   final _formKey = GlobalKey<FormState>();
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
-  final _service = SiteReportService();
+  // PR2: SiteReportService instance is built at submit time via
+  // [SiteReportService.forOutbox]; no long-lived field needed here.
   final _picker = ImagePicker();
 
   ReportType _type = ReportType.dailyProgress;
@@ -698,6 +703,11 @@ class _CreateSiteReportPageState extends State<_CreateSiteReportPage> {
     });
 
     try {
+      // PR2: capture the providers BEFORE any async work — once we await,
+      // the BuildContext can't be safely used across the gap.
+      final outbox = context.read<OutboxService>();
+      final sync = context.read<SyncService>();
+
       // Simulate upload progress
       for (int i = 0; i < 5; i++) {
         await Future.delayed(const Duration(milliseconds: 100));
@@ -706,12 +716,27 @@ class _CreateSiteReportPageState extends State<_CreateSiteReportPage> {
         }
       }
 
-      await _service.createReport(
+      // PR2: route through outbox so the report survives offline use.
+      final svc = SiteReportService.forOutbox(outbox: outbox, sync: sync);
+
+      PhotoCapture? primary;
+      if (_photos.isNotEmpty) {
+        final first = _photos.first;
+        primary = PhotoCapture(
+          file: File(first.path),
+          latitude: _latitude,
+          longitude: _longitude,
+          accuracyMeters: _accuracy,
+          capturedAt: DateTime.now(),
+        );
+      }
+
+      await svc.createReportQueued(
         projectId: widget.projectId,
         title: _titleCtrl.text,
         description: _descCtrl.text,
         reportType: _type,
-        photos: _photos,
+        primaryPhoto: primary,
         latitude: _latitude,
         longitude: _longitude,
         locationAccuracy: _accuracy,
@@ -721,7 +746,7 @@ class _CreateSiteReportPageState extends State<_CreateSiteReportPage> {
         setState(() => _uploadProgress = 1.0);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Report submitted successfully!'),
+            content: Text('Queued — will upload when online'),
             backgroundColor: Colors.green,
           ),
         );
