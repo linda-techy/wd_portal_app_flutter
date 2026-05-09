@@ -1,5 +1,4 @@
 import 'package:admin/data/local/outbox_mutation_type.dart';
-import 'package:admin/data/local/photo_capture.dart';
 import 'package:admin/features/projects/data/models/pending_approval_row.dart';
 import 'package:admin/services/api_service.dart';
 import 'package:admin/services/outbox_service.dart';
@@ -12,6 +11,14 @@ import 'package:dio/dio.dart';
 /// it survives offline use. PM flows ([approve], [reject],
 /// [pendingApprovalInbox]) stay synchronous because PMs are office-bound and
 /// outside the S5 offline scope.
+///
+/// FOLLOW-UP (S5 PR2 review, Important #1): [TaskProgressEntryScreen] is the
+/// intended call site but has no production wiring today (no router entry,
+/// no DI). Wiring also requires reshaping the screen's
+/// `onMarkComplete: Future<String> Function(String)` callback to match this
+/// service's `Future<void>` shape (server status is no longer available
+/// inline; the UI must surface a "queued for sync" state until SyncService
+/// reports DONE). Tracked separately — out of scope for PR2.
 class TaskCompletionService {
   TaskCompletionService({ApiService? api, Dio? dio})
       : _api = api ?? ApiService(),
@@ -42,10 +49,16 @@ class TaskCompletionService {
   /// PENDING_SYNC until SyncService reports DONE — at which point the
   /// server-side status (PENDING_PM_APPROVAL or COMPLETED) becomes visible on
   /// the next refresh.
+  ///
+  /// Photo evidence rides on a SEPARATE [OutboxMutationType.siteReportCreate]
+  /// row enqueued ahead of this one (via [SiteReportService.createReportQueued]
+  /// with [ReportType.completion]). [SyncService] claims rows in id order, so
+  /// the report uploads first; the server-side completion-gate query
+  /// (`existsByTaskIdAndReportTypeAndLatitudeIsNotNullAndLongitudeIsNotNull`)
+  /// then succeeds when this row's `/mark-complete` POST runs.
   Future<void> markCompleteQueued({
     required int taskId,
     required int? projectId,
-    required PhotoCapture photo,
   }) async {
     final outbox = _outbox;
     final sync = _sync;
@@ -59,7 +72,6 @@ class TaskCompletionService {
       payload: {'taskId': taskId},
       projectId: projectId,
       taskId: taskId,
-      photo: photo,
     );
     // Best-effort kick. Doesn't await — the sync is fire-and-forget.
     // ignore: discarded_futures
@@ -73,7 +85,8 @@ class TaskCompletionService {
   Future<String> markComplete(int taskId) {
     throw UnsupportedError(
       'TaskCompletionService.markComplete(int) is removed in S5 PR2. '
-      'Call markCompleteQueued({taskId, projectId, photo}) instead.',
+      'Call markCompleteQueued({taskId, projectId}) instead — photo '
+      'evidence rides on a separate siteReportCreate row.',
     );
   }
 

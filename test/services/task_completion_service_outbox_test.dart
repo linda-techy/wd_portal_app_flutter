@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:admin/data/local/outbox_db.dart';
 import 'package:admin/data/local/outbox_mutation_type.dart';
-import 'package:admin/data/local/photo_capture.dart';
 import 'package:admin/features/projects/data/services/task_completion_service.dart';
 import 'package:admin/services/outbox_service.dart';
 import 'package:admin/services/sync_service.dart';
@@ -35,7 +34,6 @@ void main() {
   late OutboxService outbox;
   late _SpySync sync;
   late TaskCompletionService svc;
-  late File photoFile;
 
   setUp(() async {
     tmp = await Directory.systemTemp.createTemp('task_completion_outbox_');
@@ -47,8 +45,6 @@ void main() {
     );
     sync = _SpySync();
     svc = TaskCompletionService.forOutbox(outbox: outbox, sync: sync);
-    photoFile = File(p.join(tmp.path, 'evidence.jpg'))
-      ..writeAsStringSync('jpegbytes');
   });
 
   tearDown(() async {
@@ -56,17 +52,9 @@ void main() {
     await tmp.delete(recursive: true);
   });
 
-  test('markCompleteQueued enqueues TASK_MARK_COMPLETE with photo + triggers sync',
+  test('markCompleteQueued enqueues TASK_MARK_COMPLETE + triggers sync',
       () async {
-    final photo = PhotoCapture(
-      file: photoFile,
-      latitude: 12.97,
-      longitude: 77.59,
-      accuracyMeters: 8.0,
-      capturedAt: DateTime.utc(2026, 5, 7, 10),
-    );
-
-    await svc.markCompleteQueued(taskId: 7, projectId: 3, photo: photo);
+    await svc.markCompleteQueued(taskId: 7, projectId: 3);
 
     final rows = await db.select(db.outboxEntries).get();
     expect(rows, hasLength(1));
@@ -75,9 +63,11 @@ void main() {
     expect(row.taskId, 7);
     expect(row.projectId, 3);
     expect(row.payloadJson, contains('"taskId":7'));
-    expect(row.photoFilePath, isNotNull);
-    expect(row.latitude, 12.97);
-    expect(row.longitude, 77.59);
+    // Photo evidence rides on a separate siteReportCreate row, so the
+    // mark-complete row carries no photo / GPS columns.
+    expect(row.photoFilePath, isNull);
+    expect(row.latitude, isNull);
+    expect(row.longitude, isNull);
 
     expect(sync.triggerSyncNowCalls, 1);
   });
@@ -88,16 +78,8 @@ void main() {
 
   test('markCompleteQueued requires forOutbox constructor', () async {
     final defaultSvc = TaskCompletionService();
-    final photo = PhotoCapture(
-      file: photoFile,
-      capturedAt: DateTime.utc(2026, 5, 7),
-    );
     expect(
-      () => defaultSvc.markCompleteQueued(
-        taskId: 7,
-        projectId: 3,
-        photo: photo,
-      ),
+      () => defaultSvc.markCompleteQueued(taskId: 7, projectId: 3),
       throwsA(isA<StateError>()),
     );
   });
