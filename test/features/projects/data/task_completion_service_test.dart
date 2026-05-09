@@ -16,17 +16,12 @@ void main() {
     service = TaskCompletionService(dio: dio);
   });
 
-  test('markComplete POSTs the right URL and returns status', () async {
-    adapter.mock('POST', '/api/tasks/42/mark-complete', (options) {
-      return ResponseBody.fromString(
-        '{"id":42,"status":"PENDING_PM_APPROVAL"}',
-        200,
-        headers: {'content-type': ['application/json']},
-      );
-    });
-
-    final status = await service.markComplete(42);
-    expect(status, 'PENDING_PM_APPROVAL');
+  // S5 PR2: legacy markComplete(int) is removed — site-engineer flow now
+  // routes through markCompleteQueued via the outbox. The new behaviour is
+  // covered by test/services/task_completion_service_outbox_test.dart and the
+  // dispatch shape is asserted in test/services/sync_service_dispatch_test.dart.
+  test('legacy markComplete(int) throws UnsupportedError after S5 PR2', () {
+    expect(() => service.markComplete(42), throwsA(isA<UnsupportedError>()));
   });
 
   test('approve POSTs the right URL', () async {
