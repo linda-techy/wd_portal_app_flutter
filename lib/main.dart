@@ -267,7 +267,15 @@ class _MyAppState extends State<MyApp> {
           Provider<SyncService>.value(value: syncService),
         if (outboxService != null && syncService != null)
           ChangeNotifierProvider<PendingSyncProvider>(
-            create: (_) => PendingSyncProvider(outbox: outboxService, sync: syncService),
+            // S5 PR2: feed ConnectivityService into the provider so the
+            // OfflineBanner + drawer badge react to online/offline changes
+            // without needing a separate ConnectivityService.watchOnline()
+            // subscription per consumer.
+            create: (_) => PendingSyncProvider(
+              outbox: outboxService,
+              sync: syncService,
+              connectivity: _connectivityService,
+            ),
           ),
 
         // Menu controller
