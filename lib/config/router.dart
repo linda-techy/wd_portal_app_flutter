@@ -88,6 +88,7 @@ const Map<String, int> kPathToMenuIndex = {
   '/scheduling/templates':         30,
   '/scheduling/holidays':          31,
   '/scheduling/pending-approvals': 32,
+  '/sync/pending':                 33,
 };
 
 /// Map a menu index (from [MenuAppController]) to its route path.
@@ -106,6 +107,7 @@ const List<String> kIndexToPath = [
   '/scheduling/templates',
   '/scheduling/holidays',
   '/scheduling/pending-approvals',
+  '/sync/pending',
 ];
 
 String indexToPath(int index) =>

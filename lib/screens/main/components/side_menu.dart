@@ -1,9 +1,11 @@
+import 'package:badges/badges.dart' as badges;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
 import 'package:admin/providers/permission_provider.dart';
+import 'package:admin/providers/pending_sync_provider.dart';
 import 'package:admin/theme/app_theme.dart';
 
 class SideMenu extends StatefulWidget {
@@ -252,6 +254,36 @@ class _SideMenuState extends State<SideMenu> {
   Widget _buildMenuItemForGroup(BuildContext context, _MenuItem item) {
     final isSelected = widget.selectedIndex == item.index;
 
+    final iconWidget = item.svgSrc != null
+        ? SvgPicture.asset(
+            item.svgSrc!,
+            colorFilter: ColorFilter.mode(
+              isSelected ? Colors.white : Colors.grey[600]!,
+              BlendMode.srcIn,
+            ),
+            height: 16,
+          )
+        : Icon(
+            item.icon,
+            color: isSelected ? Colors.white : Colors.grey[600],
+            size: 18,
+          );
+
+    Widget leading = iconWidget;
+    if (item.badgeBuilder != null) {
+      final count = item.badgeBuilder!(context);
+      if (count > 0) {
+        leading = badges.Badge(
+          badgeContent: Text(
+            '$count',
+            style: const TextStyle(color: Colors.white, fontSize: 9),
+          ),
+          badgeStyle: const badges.BadgeStyle(badgeColor: AppTheme.coralRed),
+          child: iconWidget,
+        );
+      }
+    }
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
@@ -270,20 +302,7 @@ class _SideMenuState extends State<SideMenu> {
         selectedTileColor: Colors.transparent,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-        leading: item.svgSrc != null
-            ? SvgPicture.asset(
-                item.svgSrc!,
-                colorFilter: ColorFilter.mode(
-                  isSelected ? Colors.white : Colors.grey[600]!,
-                  BlendMode.srcIn,
-                ),
-                height: 16,
-              )
-            : Icon(
-                item.icon,
-                color: isSelected ? Colors.white : Colors.grey[600],
-                size: 18,
-              ),
+        leading: leading,
         title: Text(
           item.title,
           style: TextStyle(
@@ -365,12 +384,17 @@ class _MenuItem {
   final int index;
   final bool Function(PermissionProvider) isVisible;
 
+  /// Optional badge — when set the icon is wrapped in a [badges.Badge] showing
+  /// the returned count. Returning <= 0 hides the badge.
+  final int Function(BuildContext)? badgeBuilder;
+
   const _MenuItem({
     required this.title,
     this.svgSrc,
     this.icon,
     required this.index,
     this.isVisible = _alwaysVisible,
+    this.badgeBuilder,
   });
 
   static bool _alwaysVisible(PermissionProvider _) => true;
@@ -462,6 +486,13 @@ final List<_MenuGroupData> _menuGroups = [
         title: 'Team Members',
         svgSrc: 'assets/icons/menu_profile.svg',
         index: 10,
+      ),
+      _MenuItem(
+        title: 'Pending Sync',
+        icon: Icons.cloud_sync_outlined,
+        index: 33,
+        isVisible: (p) => p.canEditTask,
+        badgeBuilder: (ctx) => ctx.watch<PendingSyncProvider>().pendingCount,
       ),
     ],
   ),
