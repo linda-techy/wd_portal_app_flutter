@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/connectivity_service.dart';
 
 class OfflineBanner extends StatelessWidget {
@@ -6,19 +7,27 @@ class OfflineBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (ConnectivityService.isOnline) return const SizedBox.shrink();
-    return Container(
-      width: double.infinity,
-      color: Colors.orange.shade800,
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.wifi_off, color: Colors.white, size: 16),
-          SizedBox(width: 8),
-          Text('No internet connection', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
-        ],
-      ),
+    return StreamBuilder<bool>(
+      stream: context.read<ConnectivityService>().watchOnline(),
+      initialData: true,
+      builder: (context, snap) {
+        final online = snap.data ?? true;
+        if (online) return const SizedBox.shrink();
+        return Container(
+          width: double.infinity,
+          color: Colors.orange.shade800,
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.wifi_off, color: Colors.white, size: 16),
+              SizedBox(width: 8),
+              Text('No internet connection',
+                  style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
+            ],
+          ),
+        );
+      },
     );
   }
 }

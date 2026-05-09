@@ -29,6 +29,7 @@ import 'package:admin/screens/inventory/inventory_dashboard_screen.dart';
 import 'package:admin/screens/finance/finance_dashboard_screen.dart';
 import 'package:admin/features/partnerships/presentation/screens/partnerships_admin_screen.dart';
 import 'package:admin/screens/acl/acl_screen.dart';
+import 'package:admin/screens/sync/pending_sync_screen.dart';
 import 'package:admin/screens/support/support_tickets_screen.dart';
 import 'package:admin/screens/support/support_ticket_detail_screen.dart';
 import 'package:admin/screens/auth/forgot_password_screen.dart';
@@ -194,6 +195,7 @@ GoRouter buildAppRouter(PortalAuthProvider authProvider) {
           GoRoute(path: '/finance',      builder: (_, __) => const FinanceDashboardScreen()),
           GoRoute(path: '/partnerships', builder: (_, __) => const PartnershipsAdminScreen()),
           GoRoute(path: '/acl',          builder: (_, __) => const AclScreen()),
+          GoRoute(path: '/sync/pending', builder: (_, __) => const PendingSyncScreen()),
           GoRoute(path: '/support',      builder: (_, __) => const SupportTicketsScreen()),
           GoRoute(
             path: '/support/:ticketId',
