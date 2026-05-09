@@ -1,90 +1,147 @@
-import 'dart:async';
-import 'package:admin/services/connectivity_service.dart';
+import 'package:admin/data/local/outbox_db.dart';
+import 'package:admin/providers/pending_sync_provider.dart';
 import 'package:admin/widgets/offline_banner.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
-/// Test seam fake — drives ConnectivityService.watchOnline() deterministically.
-class _FakeProbe implements ConnectivityProbe {
-  _FakeProbe(this._initial);
-  final List<ConnectivityResult> _initial;
-  final _ctrl = StreamController<List<ConnectivityResult>>.broadcast();
+/// Lightweight stand-in for [PendingSyncProvider] used by the banner tests.
+/// Avoids spinning up Drift + ConnectivityService just to drive a few flags.
+class _FakeSyncProvider extends ChangeNotifier implements PendingSyncProvider {
+  bool _online = true;
+  int _count = 0;
+  bool _syncing = false;
+  int syncNowCalls = 0;
 
   @override
-  Future<List<ConnectivityResult>> checkConnectivity() async => _initial;
+  bool get isOnline => _online;
+  @override
+  int get pendingCount => _count;
+  @override
+  bool get isSyncing => _syncing;
+
+  void emit({bool? online, int? count, bool? syncing}) {
+    if (online != null) _online = online;
+    if (count != null) _count = count;
+    if (syncing != null) _syncing = syncing;
+    notifyListeners();
+  }
 
   @override
-  Stream<List<ConnectivityResult>> get onConnectivityChanged => _ctrl.stream;
+  Future<void> syncNow() async {
+    syncNowCalls++;
+  }
 
-  void emit(List<ConnectivityResult> r) => _ctrl.add(r);
-  Future<void> close() => _ctrl.close();
+  @override
+  List<OutboxEntry> get issues => const [];
+  @override
+  List<OutboxEntry> get queued => const [];
+  @override
+  Future<void> retryPermanent(int id) async {}
+  @override
+  Future<void> discardPermanent(int id) async {}
+
+  @override
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-Widget _wrap(ConnectivityService svc) => MaterialApp(
-      home: Provider<ConnectivityService>.value(
-        value: svc,
-        child: const Scaffold(body: OfflineBanner()),
+Widget _wrap(_FakeSyncProvider p) => MaterialApp(
+      home: ChangeNotifierProvider<PendingSyncProvider>.value(
+        value: p,
+        child: const Scaffold(body: Column(children: [OfflineBanner()])),
       ),
     );
 
 void main() {
-  testWidgets('online → banner is hidden (renders empty)', (t) async {
-    final probe = _FakeProbe([ConnectivityResult.wifi]);
-    final svc = ConnectivityService(probe: probe);
-
-    await t.pumpWidget(_wrap(svc));
-    // Allow the seed emission from watchOnline() to flow through StreamBuilder.
-    await t.pump();
-
-    expect(find.text('No internet connection'), findsNothing);
-    expect(find.byIcon(Icons.wifi_off), findsNothing);
-    // The widget should collapse to a SizedBox.shrink() — no Container painted.
-    expect(find.byType(Container), findsNothing);
-
-    await probe.close();
+  testWidgets('online + 0 queue → banner is hidden', (t) async {
+    final p = _FakeSyncProvider()..emit(online: true, count: 0);
+    await t.pumpWidget(_wrap(p));
+    expect(find.byType(OfflineBanner), findsOneWidget);
+    expect(find.byType(InkWell), findsNothing);
+    expect(find.textContaining('queued'), findsNothing);
+    expect(find.textContaining('waiting'), findsNothing);
   });
 
-  testWidgets('offline → banner shows wifi_off icon and message', (t) async {
-    final probe = _FakeProbe([ConnectivityResult.none]);
-    final svc = ConnectivityService(probe: probe);
-
-    await t.pumpWidget(_wrap(svc));
-    await t.pump();
-
-    expect(find.text('No internet connection'), findsOneWidget);
+  testWidgets('offline + 0 queue → "Offline — 0 items queued"', (t) async {
+    final p = _FakeSyncProvider()..emit(online: false, count: 0);
+    await t.pumpWidget(_wrap(p));
+    expect(find.text('Offline — 0 items queued'), findsOneWidget);
     expect(find.byIcon(Icons.wifi_off), findsOneWidget);
-
-    await probe.close();
   });
 
-  testWidgets('online → offline transition is reflected reactively',
+  testWidgets('offline + 2 queue → "Offline — 2 items queued"', (t) async {
+    final p = _FakeSyncProvider()..emit(online: false, count: 2);
+    await t.pumpWidget(_wrap(p));
+    expect(find.text('Offline — 2 items queued'), findsOneWidget);
+    // No "Sync now" button while offline.
+    expect(find.widgetWithText(TextButton, 'Sync now'), findsNothing);
+  });
+
+  testWidgets('online + 3 queue → "3 items waiting to sync" + Sync now',
       (t) async {
-    final probe = _FakeProbe([ConnectivityResult.wifi]);
-    final svc = ConnectivityService(probe: probe);
+    final p = _FakeSyncProvider()..emit(online: true, count: 3);
+    await t.pumpWidget(_wrap(p));
+    expect(find.text('3 items waiting to sync'), findsOneWidget);
+    expect(find.byIcon(Icons.sync), findsOneWidget);
+    expect(find.widgetWithText(TextButton, 'Sync now'), findsOneWidget);
+  });
 
-    await t.pumpWidget(_wrap(svc));
+  testWidgets('Sync now button calls syncNow on the provider', (t) async {
+    final p = _FakeSyncProvider()..emit(online: true, count: 2);
+    await t.pumpWidget(_wrap(p));
+    await t.tap(find.widgetWithText(TextButton, 'Sync now'));
     await t.pump();
+    expect(p.syncNowCalls, 1);
+  });
 
-    // Initially online: banner hidden.
-    expect(find.text('No internet connection'), findsNothing);
+  testWidgets('isSyncing → button disabled and labelled "Syncing…"',
+      (t) async {
+    final p = _FakeSyncProvider()..emit(online: true, count: 1, syncing: true);
+    await t.pumpWidget(_wrap(p));
+    expect(find.widgetWithText(TextButton, 'Syncing…'), findsOneWidget);
+    final btn = t.widget<TextButton>(find.byType(TextButton));
+    expect(btn.onPressed, isNull);
+  });
 
-    // Drop connectivity.
-    probe.emit([ConnectivityResult.none]);
+  testWidgets('tapping the banner pushes /sync/pending', (t) async {
+    final p = _FakeSyncProvider()..emit(online: false, count: 1);
+    String? pushedRoute;
+    await t.pumpWidget(MaterialApp(
+      home: ChangeNotifierProvider<PendingSyncProvider>.value(
+        value: p,
+        child: const Scaffold(body: OfflineBanner()),
+      ),
+      onGenerateRoute: (s) {
+        pushedRoute = s.name;
+        return MaterialPageRoute<void>(
+            builder: (_) => const Scaffold(body: Text('pending')));
+      },
+    ));
+    await t.tap(find.byType(InkWell));
+    await t.pumpAndSettle();
+    expect(pushedRoute, '/sync/pending');
+  });
+
+  testWidgets('without provider → banner collapses gracefully', (t) async {
+    await t.pumpWidget(const MaterialApp(
+      home: Scaffold(body: OfflineBanner()),
+    ));
     await t.pump();
+    expect(find.byType(OfflineBanner), findsOneWidget);
+    expect(find.byType(InkWell), findsNothing);
+  });
+
+  testWidgets('reactive: count updates flip the visible label', (t) async {
+    final p = _FakeSyncProvider()..emit(online: true, count: 0);
+    await t.pumpWidget(_wrap(p));
+    expect(find.byType(InkWell), findsNothing);
+
+    p.emit(count: 2);
     await t.pump();
+    expect(find.text('2 items waiting to sync'), findsOneWidget);
 
-    expect(find.text('No internet connection'), findsOneWidget);
-    expect(find.byIcon(Icons.wifi_off), findsOneWidget);
-
-    // Recover connectivity.
-    probe.emit([ConnectivityResult.wifi]);
+    p.emit(count: 0);
     await t.pump();
-    await t.pump();
-
-    expect(find.text('No internet connection'), findsNothing);
-
-    await probe.close();
+    expect(find.byType(InkWell), findsNothing);
   });
 }
