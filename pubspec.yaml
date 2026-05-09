@@ -75,7 +75,7 @@ dependencies:
 
   # S5 PR1 — Outbox infrastructure
   drift: ^2.18.0
-  drift_flutter: ^0.2.0
+  drift_flutter: ">=0.2.0 <0.2.5"
   uuid: ^4.4.0
 
 dev_dependencies:
