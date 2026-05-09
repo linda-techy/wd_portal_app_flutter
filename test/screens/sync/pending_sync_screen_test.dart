@@ -15,8 +15,8 @@ class _StubProvider extends ChangeNotifier implements PendingSyncProvider {
         _issues = issues,
         _isSyncing = isSyncing;
 
-  List<OutboxEntry> _queued;
-  List<OutboxEntry> _issues;
+  final List<OutboxEntry> _queued;
+  final List<OutboxEntry> _issues;
   bool _isSyncing;
 
   @override

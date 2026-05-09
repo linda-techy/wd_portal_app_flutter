@@ -1,4 +1,9 @@
+import 'dart:io';
 import 'package:admin/services/connectivity_service.dart';
+import 'package:admin/services/outbox_service.dart';
+import 'package:admin/services/sync_service.dart';
+import 'package:admin/data/local/outbox_db.dart';
+import 'package:admin/providers/pending_sync_provider.dart';
 import 'package:admin/controllers/menu_app_controller.dart';
 import 'package:admin/config/app_config.dart';
 import 'package:admin/config/router.dart';
@@ -33,6 +38,9 @@ import 'package:admin/services/notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:app_links/app_links.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 
 /// True when the app is launched from an integration test.
 /// Set via: flutter test ... --dart-define=INTEGRATION_TEST=true
@@ -156,6 +164,12 @@ class _MyAppState extends State<MyApp> {
   // via Provider.read<ConnectivityService>() to its watchOnline stream.
   final ConnectivityService _connectivityService = ConnectivityService();
 
+  // S5 PR1: outbox infrastructure (lazy-initialised in initState; mutations
+  // are not yet wired here, PR2 attaches them).
+  OutboxDb? _outboxDb;
+  OutboxService? _outboxService;
+  SyncService? _syncService;
+
   @override
   void initState() {
     super.initState();
@@ -170,6 +184,40 @@ class _MyAppState extends State<MyApp> {
       _appLinks.getInitialLink().then((uri) {
         if (uri != null) _handleDeepLink(uri);
       }).catchError((_) {});
+    }
+
+    // S5 PR1: bootstrap the outbox stack. Skipped in integration tests and on
+    // web — Drift's drift_flutter native backend isn't available there.
+    if (!kIntegrationTest && !kIsWeb) {
+      _bootstrapOutbox();
+    }
+  }
+
+  Future<void> _bootstrapOutbox() async {
+    try {
+      final db = OutboxDb.openCanonical();
+      final supportDir = await getApplicationSupportDirectory();
+      final photoRoot = Directory(p.join(supportDir.path, 'outbox', 'photos'));
+      final outbox = OutboxService(db: db, photoRoot: photoRoot, uuid: const Uuid());
+      await outbox.startup();
+      final sync = SyncService(
+        outbox: outbox,
+        connectivity: _connectivityService,
+        dio: ApiService().dio,
+        uuid: const Uuid(),
+      );
+      if (!mounted) {
+        sync.dispose();
+        await db.close();
+        return;
+      }
+      setState(() {
+        _outboxDb = db;
+        _outboxService = outbox;
+        _syncService = sync;
+      });
+    } catch (e) {
+      debugPrint('S5 PR1 outbox bootstrap failed: $e');
     }
   }
 
@@ -186,6 +234,8 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void dispose() {
+    _syncService?.dispose();
+    _outboxDb?.close();
     _authProvider.dispose();
     super.dispose();
   }
@@ -196,6 +246,9 @@ class _MyAppState extends State<MyApp> {
     final vendorPaymentService = VendorPaymentService(apiService);
     final projectTrackingService = ProjectTrackingService(apiService);
 
+    final outboxService = _outboxService;
+    final syncService = _syncService;
+
     return MultiProvider(
       providers: [
         // Services
@@ -204,6 +257,18 @@ class _MyAppState extends State<MyApp> {
 
         // S5 PR1: connectivity instance shared with OfflineBanner.
         Provider<ConnectivityService>.value(value: _connectivityService),
+
+        // S5 PR1: outbox stack — only registered after _bootstrapOutbox()
+        // resolves. PendingSyncScreen is router-only at PR1 (no drawer entry),
+        // so the optional providers are read by PR2 widgets.
+        if (outboxService != null)
+          Provider<OutboxService>.value(value: outboxService),
+        if (syncService != null)
+          Provider<SyncService>.value(value: syncService),
+        if (outboxService != null && syncService != null)
+          ChangeNotifierProvider<PendingSyncProvider>(
+            create: (_) => PendingSyncProvider(outbox: outboxService, sync: syncService),
+          ),
 
         // Menu controller
         ChangeNotifierProvider(create: (_) => MenuAppController()),
