@@ -1,9 +1,36 @@
-import 'package:admin/services/api_service.dart';
+import 'package:admin/data/local/outbox_mutation_type.dart';
 import 'package:admin/features/delays/data/models/delay_log.dart';
 import 'package:admin/models/paginated_response.dart';
+import 'package:admin/services/api_service.dart';
+import 'package:admin/services/outbox_service.dart';
+import 'package:admin/services/sync_service.dart';
+
+/// PR2 contract: [DelayLogService.logDelayQueued] returns [DelayLogResult].
+/// Legacy [logDelay] now throws — call sites must migrate.
+sealed class DelayLogResult {
+  const DelayLogResult();
+}
+
+class DelayLogResultQueued extends DelayLogResult {
+  const DelayLogResultQueued(this.outboxEntryId);
+  final int outboxEntryId;
+}
 
 class DelayLogService {
+  DelayLogService()
+      : _outbox = null,
+        _sync = null;
+
+  /// PR2 binding for the site-engineer flow.
+  DelayLogService.forOutbox({
+    required OutboxService outbox,
+    required SyncService sync,
+  })  : _outbox = outbox,
+        _sync = sync;
+
   final ApiService _apiService = ApiService();
+  final OutboxService? _outbox;
+  final SyncService? _sync;
 
   Future<List<DelayLog>> getDelays(int projectId) async {
     final response = await _apiService.get('/api/projects/$projectId/delays');
@@ -16,17 +43,33 @@ class DelayLogService {
     }
   }
 
-  Future<DelayLog> logDelay(DelayLog delay) async {
-    final response = await _apiService.post(
-      '/api/projects/${delay.projectId}/delays',
-      data: delay.toJson(),
-    );
-
-    if (response.statusCode == 200) {
-      return DelayLog.fromJson(response.data);
-    } else {
-      throw Exception('Failed to log delay');
+  /// PR2 entry point. Persists the delay log to the outbox; the [SyncService]
+  /// dispatches the JSON POST when online.
+  Future<DelayLogResult> logDelayQueued(DelayLog delay) async {
+    final outbox = _outbox;
+    final sync = _sync;
+    if (outbox == null || sync == null) {
+      throw StateError(
+        'logDelayQueued requires DelayLogService.forOutbox(...).',
+      );
     }
+    final id = await outbox.enqueue(
+      type: OutboxMutationType.delayLogCreate,
+      payload: delay.toJson(),
+      projectId: delay.projectId,
+    );
+    // ignore: discarded_futures
+    sync.triggerSyncNow();
+    return DelayLogResultQueued(id);
+  }
+
+  /// Deprecated. Pre-PR2 the call site posted directly. Use [logDelayQueued].
+  @Deprecated('Use logDelayQueued (S5 PR2).')
+  Future<DelayLog> logDelay(DelayLog delay) {
+    throw UnsupportedError(
+      'DelayLogService.logDelay(DelayLog) is removed in S5 PR2. '
+      'Use logDelayQueued(...) which enqueues via the outbox.',
+    );
   }
 
   Future<Map<String, dynamic>> getSummary(int projectId) async {
@@ -60,7 +103,7 @@ class DelayLogService {
     }
   }
 
-  /// NEW: Standardized search endpoint for delay logs
+  /// Standardized search endpoint for delay logs.
   Future<PaginatedResponse<DelayLog>> searchDelayLogs({
     required int page,
     required int size,

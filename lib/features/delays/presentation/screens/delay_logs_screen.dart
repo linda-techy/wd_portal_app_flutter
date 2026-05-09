@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/features/delays/data/models/delay_log.dart';
 import 'package:admin/features/delays/data/services/delay_log_service.dart';
+import 'package:admin/services/outbox_service.dart';
+import 'package:admin/services/sync_service.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/utils/error_handler.dart';
@@ -454,7 +456,8 @@ class _AddDelayDialogState extends State<AddDelayDialog> {
   final _impactController = TextEditingController();
   final _durationController = TextEditingController();
   final _customerSummaryController = TextEditingController();
-  final DelayLogService _service = DelayLogService();
+  // PR2: DelayLogService is built at submit time via [DelayLogService.forOutbox]
+  // reading OutboxService + SyncService from the widget tree.
 
   String _category = 'WEATHER';
   DateTime _fromDate = DateTime.now();
@@ -487,6 +490,10 @@ class _AddDelayDialogState extends State<AddDelayDialog> {
     setState(() => _isSaving = true);
 
     try {
+      // PR2: capture providers before any async work.
+      final outbox = context.read<OutboxService>();
+      final sync = context.read<SyncService>();
+
       final durationText = _durationController.text.trim();
       final customerSummary = _customerSummaryController.text.trim();
       final newDelay = DelayLog(
@@ -510,7 +517,9 @@ class _AddDelayDialogState extends State<AddDelayDialog> {
         impactOnHandover: _customerVisible ? _impactOnHandover : null,
       );
 
-      await _service.logDelay(newDelay);
+      // PR2: enqueue via the outbox; SyncService dispatches when online.
+      await DelayLogService.forOutbox(outbox: outbox, sync: sync)
+          .logDelayQueued(newDelay);
       widget.onSave();
       if (mounted) Navigator.pop(context);
     } catch (e) {
