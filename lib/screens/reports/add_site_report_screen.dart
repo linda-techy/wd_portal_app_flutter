@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:motion_toast/motion_toast.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
+import 'dart:io';
+import '../../data/local/photo_capture.dart';
 import '../../models/site_report_models.dart';
 import '../../models/customer_project.dart';
+import '../../services/outbox_service.dart';
 import '../../services/site_report_service.dart';
+import '../../services/sync_service.dart';
 import '../../services/crm_service.dart';
 import '../../services/location_service.dart';
 import '../../theme/app_theme.dart';
@@ -28,7 +33,9 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _siteReportService = SiteReportService();
+  // PR2: SiteReportService is constructed at submit time via
+  // [SiteReportService.forOutbox] reading OutboxService + SyncService from
+  // the widget tree. No long-lived instance is needed here.
   final _imagePicker = ImagePicker();
 
   CustomerProject? _selectedProject;
@@ -180,13 +187,30 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
     setState(() => _isSaving = true);
 
     try {
-      await _siteReportService.createReport(
+      // PR2: enqueue via the outbox; SyncService dispatches on connectivity.
+      final outbox = context.read<OutboxService>();
+      final sync = context.read<SyncService>();
+      final svc = SiteReportService.forOutbox(outbox: outbox, sync: sync);
+
+      PhotoCapture? primary;
+      if (_photos.isNotEmpty) {
+        final first = _photos.first;
+        primary = PhotoCapture(
+          file: File(first.path),
+          latitude: _latitude,
+          longitude: _longitude,
+          accuracyMeters: _locationAccuracy,
+          capturedAt: DateTime.now(),
+        );
+      }
+
+      await svc.createReportQueued(
         projectId: _selectedProject!.id!,
         title: _titleController.text,
         description: _descriptionController.text,
         reportType: _selectedType,
         siteVisitId: widget.siteVisitId,
-        photos: _photos,
+        primaryPhoto: primary,
         latitude: _latitude,
         longitude: _longitude,
         locationAccuracy: _locationAccuracy,
@@ -194,8 +218,8 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
 
       if (mounted) {
         MotionToast.success(
-                description: const Text('Report submitted successfully'))
-            .show(context);
+          description: const Text('Queued — will upload when online'),
+        ).show(context);
         Navigator.pop(context, true);
       }
     } catch (e) {

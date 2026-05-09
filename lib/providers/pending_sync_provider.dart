@@ -1,12 +1,16 @@
 import 'dart:async';
 import 'package:admin/data/local/outbox_db.dart';
+import 'package:admin/services/connectivity_service.dart';
 import 'package:admin/services/outbox_service.dart';
 import 'package:admin/services/sync_service.dart';
 import 'package:flutter/foundation.dart';
 
 class PendingSyncProvider extends ChangeNotifier {
-  PendingSyncProvider({required OutboxService outbox, required SyncService sync})
-      : _outbox = outbox,
+  PendingSyncProvider({
+    required OutboxService outbox,
+    required SyncService sync,
+    ConnectivityService? connectivity,
+  })  : _outbox = outbox,
         _sync = sync {
     _queuedSub = _outbox.watchPending().listen((rows) {
       _queued = rows;
@@ -16,6 +20,14 @@ class PendingSyncProvider extends ChangeNotifier {
       _issues = rows;
       notifyListeners();
     });
+    if (connectivity != null) {
+      _connectivitySub = connectivity.watchOnline().listen((online) {
+        if (_online != online) {
+          _online = online;
+          notifyListeners();
+        }
+      });
+    }
   }
 
   final OutboxService _outbox;
@@ -23,15 +35,21 @@ class PendingSyncProvider extends ChangeNotifier {
 
   StreamSubscription<List<OutboxEntry>>? _queuedSub;
   StreamSubscription<List<OutboxEntry>>? _issuesSub;
+  StreamSubscription<bool>? _connectivitySub;
 
   List<OutboxEntry> _queued = const [];
   List<OutboxEntry> _issues = const [];
   bool _isSyncing = false;
+  bool _online = true;
 
   int get pendingCount => _queued.length;
   List<OutboxEntry> get queued => List.unmodifiable(_queued);
   List<OutboxEntry> get issues => List.unmodifiable(_issues);
   bool get isSyncing => _isSyncing;
+
+  /// Latest connectivity reading observed by the provider. Defaults to true
+  /// when no [ConnectivityService] is supplied (e.g. legacy boot path).
+  bool get isOnline => _online;
 
   Future<void> syncNow() async {
     _isSyncing = true;
@@ -51,6 +69,7 @@ class PendingSyncProvider extends ChangeNotifier {
   void dispose() {
     _queuedSub?.cancel();
     _issuesSub?.cancel();
+    _connectivitySub?.cancel();
     super.dispose();
   }
 }

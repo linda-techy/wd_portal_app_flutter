@@ -1,20 +1,43 @@
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
-import '../services/api_service.dart';
+import '../data/local/outbox_mutation_type.dart';
+import '../data/local/photo_capture.dart';
 import '../models/site_report_models.dart';
 import '../models/paginated_response.dart';
-import 'dart:convert';
+import 'api_service.dart';
+import 'outbox_service.dart';
+import 'sync_service.dart';
+
+/// PR2 contract: [SiteReportService.createReportQueued] returns
+/// [SiteReportResult]. The pre-PR2 synchronous `Future<SiteReport>` shape on
+/// the legacy [createReport] now throws — call sites must migrate to the
+/// queued variant and treat the report as in-flight until the outbox drains.
+sealed class SiteReportResult {
+  const SiteReportResult();
+}
+
+class SiteReportResultQueued extends SiteReportResult {
+  const SiteReportResultQueued(this.outboxEntryId);
+  final int outboxEntryId;
+}
 
 class SiteReportService {
+  SiteReportService()
+      : _outbox = null,
+        _sync = null;
+
+  /// PR2 binding for the site-engineer flow. Required by [createReportQueued].
+  SiteReportService.forOutbox({
+    required OutboxService outbox,
+    required SyncService sync,
+  })  : _outbox = outbox,
+        _sync = sync;
+
   final ApiService _apiService = ApiService();
+  final OutboxService? _outbox;
+  final SyncService? _sync;
 
   /// Reports for a single project, ordered newest first.
-  ///
-  /// Switched off the {@code @Deprecated /api/site-reports/project/{id}}
-  /// endpoint to {@code /api/site-reports/search?projectId=…}. The new
-  /// endpoint returns the canonical {@code Page<SiteReportDto>} shape,
-  /// supports server-side pagination, and is the only one the audit
-  /// flagged as safe to keep.
   Future<List<SiteReport>> getReportsByProject(int projectId) async {
     final page = await searchSiteReports(
       page: 0,
@@ -32,65 +55,75 @@ class SiteReportService {
         response, (json) => SiteReport.fromJson(json));
   }
 
+  /// PR2 entry point. Persists the report to the outbox + queues the photo
+  /// for upload. Returns immediately with [SiteReportResultQueued]. The
+  /// [SyncService] later dispatches the multipart POST when online.
+  ///
+  /// S5 keeps a single photo per outbox row; multi-photo reports are out of
+  /// scope for PR2 (deferred — one outbox row per photo + a server-side merge
+  /// endpoint).
+  Future<SiteReportResult> createReportQueued({
+    required int projectId,
+    required String title,
+    required String description,
+    required ReportType reportType,
+    int? siteVisitId,
+    int? taskId,
+    PhotoCapture? primaryPhoto,
+    double? latitude,
+    double? longitude,
+    double? locationAccuracy,
+  }) async {
+    final outbox = _outbox;
+    final sync = _sync;
+    if (outbox == null || sync == null) {
+      throw StateError(
+        'createReportQueued requires SiteReportService.forOutbox(...).',
+      );
+    }
+    final payload = <String, dynamic>{
+      'projectId': projectId,
+      'title': title,
+      'description': description,
+      'reportType': reportType.toJson(),
+      if (siteVisitId != null) 'siteVisitId': siteVisitId,
+      if (taskId != null) 'taskId': taskId,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      if (locationAccuracy != null) 'locationAccuracy': locationAccuracy,
+    };
+    final id = await outbox.enqueue(
+      type: OutboxMutationType.siteReportCreate,
+      payload: payload,
+      projectId: projectId,
+      taskId: taskId,
+      photo: primaryPhoto,
+    );
+    // ignore: discarded_futures
+    sync.triggerSyncNow();
+    return SiteReportResultQueued(id);
+  }
+
+  /// Deprecated synchronous report creation. Pre-PR2 the call site posted a
+  /// multipart form directly; PR2 routes through the outbox. Use
+  /// [createReportQueued].
+  @Deprecated('Use createReportQueued (S5 PR2). Multi-photo path will return.')
   Future<SiteReport> createReport({
     required int projectId,
     required String title,
     required String description,
     required ReportType reportType,
     int? siteVisitId,
-    int? taskId,                         // S3 PR2: optional task linkage
+    int? taskId,
     List<XFile>? photos,
     double? latitude,
     double? longitude,
     double? locationAccuracy,
-  }) async {
-    final Map<String, dynamic> reportData = {
-      'projectId': projectId,
-      'title': title,
-      'description': description,
-      'reportType': reportType.toJson(),
-      'siteVisitId': siteVisitId,
-      if (taskId != null) 'taskId': taskId,            // S3 PR2
-      if (latitude != null) 'latitude': latitude,
-      if (longitude != null) 'longitude': longitude,
-      if (locationAccuracy != null) 'locationAccuracy': locationAccuracy,
-    };
-
-    final formData = FormData();
-
-    // Send report JSON as text/plain so Spring's StringHttpMessageConverter
-    // can resolve @RequestPart("report") String correctly.
-    // Using application/json causes Spring to try Jackson deserialization
-    // into String which fails for JSON objects.
-    formData.files.add(MapEntry(
-      'report',
-      MultipartFile.fromString(
-        jsonEncode(reportData),
-        contentType: DioMediaType.parse('text/plain'),
-      ),
-    ));
-
-    if (photos != null && photos.isNotEmpty) {
-      for (final file in photos) {
-        formData.files.add(MapEntry(
-          'photos',
-          MultipartFile.fromBytes(
-            await file.readAsBytes(),
-            filename: file.name,
-          ),
-        ));
-      }
-    }
-
-    // Don't set contentType explicitly — Dio auto-sets multipart/form-data
-    // with the correct boundary when sending FormData
-    final response = await _apiService.post(
-      '/api/site-reports',
-      data: formData,
+  }) {
+    throw UnsupportedError(
+      'SiteReportService.createReport(...) is removed in S5 PR2. '
+      'Use createReportQueued(...) which enqueues via the outbox.',
     );
-
-    return _apiService.unwrap(
-        response, (json) => SiteReport.fromJson(json as Map<String, dynamic>));
   }
 
   Future<void> deleteReport(int id) async {
@@ -130,7 +163,7 @@ class SiteReportService {
     _apiService.unwrap(response, (_) {});
   }
 
-  /// NEW: Standardized search endpoint for site reports
+  /// Standardized search endpoint for site reports.
   Future<PaginatedResponse<SiteReport>> searchSiteReports({
     required int page,
     required int size,
@@ -170,4 +203,5 @@ class SiteReportService {
           json as Map<String, dynamic>, SiteReport.fromJson),
     );
   }
+
 }
