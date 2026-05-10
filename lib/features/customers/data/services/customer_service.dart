@@ -4,6 +4,15 @@ import 'package:admin/models/paginated_response.dart';
 import 'package:admin/models/pagination_params.dart';
 import 'package:admin/services/api_service.dart';
 
+/// Outcome of DELETE /customers/{id}. `deactivated == true` means the customer
+/// row was preserved (linked leads needed its customer_user_id reference) and
+/// only `enabled` was flipped to false.
+class DeleteCustomerResult {
+  final bool deactivated;
+  final String? message;
+  const DeleteCustomerResult({required this.deactivated, this.message});
+}
+
 class CustomerService {
   final ApiService _apiService = ApiService();
 
@@ -33,9 +42,18 @@ class CustomerService {
     return _apiService.unwrap<Customer>(response, (json) => Customer.fromJson(json as Map<String, dynamic>));
   }
 
-  Future<void> deleteCustomer(int id) async {
+  /// Deletes (or deactivates, when leads reference the customer) and returns the
+  /// outcome so the caller can surface the right message.
+  Future<DeleteCustomerResult> deleteCustomer(int id) async {
     final response = await _apiService.delete('/customers/$id');
-    _apiService.unwrap<void>(response, (_) {});
+    final body = response.data;
+    bool deactivated = false;
+    String? message;
+    if (body is Map) {
+      deactivated = body['deactivated'] == true;
+      message = body['message'] as String?;
+    }
+    return DeleteCustomerResult(deactivated: deactivated, message: message);
   }
 
   Future<List<CustomerRole>> getCustomerRoles() async {

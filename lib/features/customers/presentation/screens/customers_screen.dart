@@ -445,16 +445,20 @@ class CustomersScreen extends StatelessWidget {
     if (confirmed == true && context.mounted) {
       try {
         final customerService = CustomerService();
-        await customerService.deleteCustomer(customer.id!);
-        
+        final result = await customerService.deleteCustomer(customer.id!);
+
         if (context.mounted) {
+          final fallback = result.deactivated
+              ? 'Customer deactivated — linked lead history preserved.'
+              : 'Customer deleted successfully';
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Customer deleted successfully'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: Text(result.message ?? fallback),
+              backgroundColor:
+                  result.deactivated ? Colors.orange.shade700 : Colors.green,
             ),
           );
-          
+
           // Refresh the customer list
           final provider = Provider.of<CustomerProvider>(context, listen: false);
           provider.fetch();
