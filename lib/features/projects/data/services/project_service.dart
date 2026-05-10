@@ -54,4 +54,8 @@ class ProjectService {
       },
     );
   }
+
+  Future<void> deleteProject(int id) async {
+    await _apiService.delete('/customer-projects/$id');
+  }
 }

@@ -40,4 +40,9 @@ class ProjectProvider extends BasePaginatedProvider<ProjectModel> {
       updateFilter('projectStatus', status);
     }
   }
+
+  Future<void> deleteProject(int id) async {
+    await _projectService.deleteProject(id);
+    await fetch();
+  }
 }

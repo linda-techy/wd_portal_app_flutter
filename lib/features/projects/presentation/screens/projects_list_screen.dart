@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/features/projects/data/models/project_model.dart';
 import 'package:admin/features/projects/presentation/providers/project_provider.dart';
+import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'project_detail_screen.dart';
@@ -120,6 +121,8 @@ class ProjectsListScreen extends StatelessWidget {
                   ),
                   if (project.projectPhase != null)
                     _buildPhaseBadge(project.projectPhase!),
+                  if (context.watch<PermissionProvider>().canDeleteProject)
+                    _buildProjectActionsMenu(context, project),
                 ],
               ),
               if (project.code != null) ...[
@@ -177,6 +180,78 @@ class ProjectsListScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildProjectActionsMenu(BuildContext context, ProjectModel project) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert, size: 20),
+      tooltip: 'Project actions',
+      onSelected: (value) {
+        if (value == 'delete') {
+          _confirmDelete(context, project);
+        }
+      },
+      itemBuilder: (_) => const [
+        PopupMenuItem<String>(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete_outline, size: 18, color: Colors.red),
+              SizedBox(width: 8),
+              Text('Delete project', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, ProjectModel project) async {
+    final provider = context.read<ProjectProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete project?'),
+        content: Text(
+          'This permanently deletes "${project.name}". '
+          'Related WBS, BOQ, tasks, and reports will also be removed. '
+          'This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final id = project.id;
+    if (id == null) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Cannot delete: project has no id')),
+      );
+      return;
+    }
+    try {
+      await provider.deleteProject(id);
+      messenger.showSnackBar(
+        SnackBar(content: Text('Deleted "${project.name}"')),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text('Delete failed: $e'),
+        ),
+      );
+    }
   }
 
   Widget _buildPhaseBadge(String phase) {
