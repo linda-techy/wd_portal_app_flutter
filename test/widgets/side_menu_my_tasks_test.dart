@@ -92,6 +92,7 @@ void main() {
 
   testWidgets('Tapping My Tasks emits index 34 to onMenuItemClick',
       (t) async {
+    await t.binding.setSurfaceSize(const Size(900, 1600));
     final perms = PermissionProvider()
       ..setPermissions(['TASK_EDIT', 'TASK_VIEW'], 'SITE_ENGINEER');
     int? clickedIndex;
@@ -103,7 +104,9 @@ void main() {
 
     await t.tap(find.text('PROJECTS'));
     await t.pump();
-    await t.tap(find.text('My Tasks'));
+    await t.ensureVisible(find.text('My Tasks'));
+    await t.pump();
+    await t.tap(find.text('My Tasks'), warnIfMissed: false);
     await t.pump();
 
     expect(clickedIndex, 34);

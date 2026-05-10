@@ -494,6 +494,12 @@ final List<_MenuGroupData> _menuGroups = [
         isVisible: (p) => p.canEditTask,
         badgeBuilder: (ctx) => ctx.watch<PendingSyncProvider>().pendingCount,
       ),
+      _MenuItem(
+        title: 'My Tasks',
+        icon: Icons.assignment_turned_in_outlined,
+        index: 34,
+        isVisible: (p) => p.canEditTask,
+      ),
     ],
   ),
   const _MenuGroupData(
