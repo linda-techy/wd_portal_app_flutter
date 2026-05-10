@@ -137,6 +137,7 @@ class MainScreenState extends State<MainScreen> {
       case 21: return 'Partnerships & Referrals';
       case 32: return 'Approval Inbox';
       case 33: return 'Pending Sync';
+      case 34: return 'My Tasks';
       default: return 'Dashboard';
     }
   }

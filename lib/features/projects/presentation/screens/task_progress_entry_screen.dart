@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/mark_complete_outcome.dart';
 import '../widgets/task_progress_bottom_sheet.dart';
 
 /// Mobile-friendly screen for site engineers to update task progress.
 /// Designed phone-first; existing Gantt screen stays for desktop scheduling.
 ///
-/// This is a scaffolding implementation — task fetching and PATCH wiring
-/// happen via the [onLoadTasks] and [onSaveProgress] callbacks so the
-/// screen can be unit-tested without depending on the actual HTTP service.
+/// S5.1 — `onMarkComplete` now does the geotagged-photo capture + dual outbox
+/// enqueue inside the wrapper passed in via DI. The screen-level callback
+/// receives the parsed (taskId, projectId) and returns a [MarkCompleteOutcome]
+/// the bottom-sheet maps onto its 6-state UI.
 class TaskProgressEntryScreen extends StatefulWidget {
   final String projectId;
   final String projectName;
@@ -16,11 +18,10 @@ class TaskProgressEntryScreen extends StatefulWidget {
   final Future<void> Function(String taskId, int progress, String? note)
       onSaveProgress;
 
-  // S3 PR2 — completion-gate hooks. Optional so legacy call sites (which
-  // wired only progress-percent) continue to compile; the bottom sheet
-  // hides the Mark-complete row when either is null.
-  final Future<bool> Function(String taskId)? onCheckCompletionPhoto;
-  final Future<String> Function(String taskId)? onMarkComplete;
+  /// S5.1 — see `MarkCompleteOutcome`. Pass null to hide the Mark-complete
+  /// row entirely (legacy / test scaffolding paths).
+  final Future<MarkCompleteOutcome> Function(int taskId, int? projectId)?
+      onMarkComplete;
 
   const TaskProgressEntryScreen({
     super.key,
@@ -28,7 +29,6 @@ class TaskProgressEntryScreen extends StatefulWidget {
     required this.projectName,
     required this.onLoadTasks,
     required this.onSaveProgress,
-    this.onCheckCompletionPhoto,
     this.onMarkComplete,
   });
 
@@ -58,8 +58,7 @@ class _TaskProgressEntryScreenState extends State<TaskProgressEntryScreen> {
       context: context,
       isScrollControlled: true,
       builder: (c) => Padding(
-        padding:
-            EdgeInsets.only(bottom: MediaQuery.of(c).viewInsets.bottom),
+        padding: EdgeInsets.only(bottom: MediaQuery.of(c).viewInsets.bottom),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -73,11 +72,10 @@ class _TaskProgressEntryScreenState extends State<TaskProgressEntryScreen> {
                   if (mounted) _refresh();
                 },
               ),
-              if (widget.onCheckCompletionPhoto != null &&
-                  widget.onMarkComplete != null)
+              if (widget.onMarkComplete != null)
                 _MarkCompleteRow(
-                  taskId: task.id,
-                  onCheckPhoto: widget.onCheckCompletionPhoto!,
+                  taskRowId: task.id,
+                  resolvedProjectId: int.tryParse(widget.projectId),
                   onMarkComplete: widget.onMarkComplete!,
                   onAfterMark: () {
                     if (mounted) _refresh();
@@ -169,21 +167,32 @@ class TaskRow {
   });
 }
 
-/// S3 PR2 — bottom-sheet row that gates task completion on a geotagged
-/// COMPLETION SiteReport. When a Mark-complete callback succeeds the row
-/// flips to a result banner showing the new task status (PENDING PM
-/// APPROVAL or COMPLETED) so the site engineer gets immediate feedback.
+// ─── Bottom-sheet Mark-complete row (S5.1 state machine) ───────────────────
+
+enum _MarkCompleteState {
+  idle,
+  capturing,
+  queued,
+  errorCameraDenied,
+  errorGpsUnavailable,
+  errorOutboxFailure,
+}
+
 class _MarkCompleteRow extends StatefulWidget {
   const _MarkCompleteRow({
-    required this.taskId,
-    required this.onCheckPhoto,
+    required this.taskRowId,
+    required this.resolvedProjectId,
     required this.onMarkComplete,
     required this.onAfterMark,
   });
 
-  final String taskId;
-  final Future<bool> Function(String taskId) onCheckPhoto;
-  final Future<String> Function(String taskId) onMarkComplete;
+  /// `TaskRow.id` is `String` (the screen's data model is unchanged in S5.1).
+  /// The row parses it to `int` before invoking [onMarkComplete]; an
+  /// unparseable id flips immediately to [_MarkCompleteState.errorOutboxFailure].
+  final String taskRowId;
+  final int? resolvedProjectId;
+  final Future<MarkCompleteOutcome> Function(int taskId, int? projectId)
+      onMarkComplete;
   final VoidCallback onAfterMark;
 
   @override
@@ -191,68 +200,130 @@ class _MarkCompleteRow extends StatefulWidget {
 }
 
 class _MarkCompleteRowState extends State<_MarkCompleteRow> {
-  bool? _hasPhoto;       // null while loading
-  String? _resultStatus; // populated post-mark
+  _MarkCompleteState _state = _MarkCompleteState.idle;
+  String? _errorDetail; // optional message from MarkCompleteFailed
 
-  @override
-  void initState() {
-    super.initState();
-    _checkPhoto();
-  }
+  Future<void> _onPressed() async {
+    setState(() => _state = _MarkCompleteState.capturing);
 
-  Future<void> _checkPhoto() async {
-    final has = await widget.onCheckPhoto(widget.taskId);
-    if (mounted) setState(() => _hasPhoto = has);
-  }
-
-  Future<void> _doMark() async {
-    final status = await widget.onMarkComplete(widget.taskId);
-    if (mounted) {
-      setState(() => _resultStatus = status);
-      widget.onAfterMark();
+    final taskId = int.tryParse(widget.taskRowId);
+    if (taskId == null) {
+      setState(() {
+        _state = _MarkCompleteState.errorOutboxFailure;
+        _errorDetail = 'Invalid task id';
+      });
+      return;
     }
+
+    late MarkCompleteOutcome outcome;
+    try {
+      outcome = await widget.onMarkComplete(taskId, widget.resolvedProjectId);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _state = _MarkCompleteState.errorOutboxFailure;
+        _errorDetail = null;
+      });
+      return;
+    }
+
+    if (!mounted) return;
+    switch (outcome) {
+      case MarkCompleteQueued():
+        setState(() => _state = _MarkCompleteState.queued);
+        widget.onAfterMark();
+      case MarkCompleteFailed(reason: final r, message: final m):
+        setState(() {
+          _errorDetail = m;
+          switch (r) {
+            case MarkCompleteError.cameraDenied:
+              _state = _MarkCompleteState.errorCameraDenied;
+            case MarkCompleteError.gpsUnavailable:
+              _state = _MarkCompleteState.errorGpsUnavailable;
+            case MarkCompleteError.outboxFailure:
+              _state = _MarkCompleteState.errorOutboxFailure;
+          }
+        });
+    }
+  }
+
+  void _retry() {
+    setState(() {
+      _state = _MarkCompleteState.idle;
+      _errorDetail = null;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_resultStatus != null) {
-      final label = _resultStatus == 'PENDING_PM_APPROVAL'
-          ? 'Pending PM approval'
-          : 'Completed';
-      return Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.green),
-            const SizedBox(width: 8),
-            Text(label),
-          ],
-        ),
-      );
-    }
-
-    final canMark = _hasPhoto == true;
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              canMark
-                  ? 'Geotagged COMPLETION photo on file.'
-                  : 'Upload a geotagged COMPLETION photo to enable Mark complete.',
-              style: TextStyle(
-                color: canMark ? Colors.green.shade700 : Colors.grey.shade700,
+      child: _buildContent(),
+    );
+  }
+
+  Widget _buildContent() {
+    switch (_state) {
+      case _MarkCompleteState.idle:
+        return Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Capture a geotagged photo to mark this task complete.',
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          FilledButton(
-            onPressed: canMark ? _doMark : null,
-            child: const Text('Mark complete'),
-          ),
-        ],
-      ),
+            const SizedBox(width: 12),
+            FilledButton(
+              onPressed: _onPressed,
+              child: const Text('Mark complete'),
+            ),
+          ],
+        );
+      case _MarkCompleteState.capturing:
+        return const Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text('Capturing photo + location...'),
+            ),
+          ],
+        );
+      case _MarkCompleteState.queued:
+        return const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green),
+            SizedBox(width: 8),
+            Expanded(child: Text('Queued — syncs when online')),
+          ],
+        );
+      case _MarkCompleteState.errorCameraDenied:
+        return _errorRow(
+            'Camera permission denied. Mark complete cancelled.');
+      case _MarkCompleteState.errorGpsUnavailable:
+        return _errorRow(
+            _errorDetail ??
+                'Location unavailable. Mark complete requires GPS.');
+      case _MarkCompleteState.errorOutboxFailure:
+        return _errorRow("Couldn't queue. Try again.");
+    }
+  }
+
+  Widget _errorRow(String message) {
+    return Row(
+      children: [
+        const Icon(Icons.error_outline, color: Colors.red),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(message, style: const TextStyle(color: Colors.red)),
+        ),
+        const SizedBox(width: 12),
+        TextButton(onPressed: _retry, child: const Text('Retry')),
+      ],
     );
   }
 }

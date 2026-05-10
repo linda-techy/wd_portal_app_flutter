@@ -45,18 +45,16 @@ class TaskCompletionService {
   Dio get _dio => _injectedDio ?? _api.dio;
 
   /// Site-engineer flow. Enqueues the mark-complete via the outbox; SyncService
-  /// dispatches it when online. The local task view should treat the task as
-  /// PENDING_SYNC until SyncService reports DONE — at which point the
-  /// server-side status (PENDING_PM_APPROVAL or COMPLETED) becomes visible on
-  /// the next refresh.
+  /// dispatches it when online. Returns the inserted outbox entry id — useful
+  /// for compensating rollback (S5.1 dual-row enqueue) and for future
+  /// debugging.
   ///
   /// Photo evidence rides on a SEPARATE [OutboxMutationType.siteReportCreate]
   /// row enqueued ahead of this one (via [SiteReportService.createReportQueued]
   /// with [ReportType.completion]). [SyncService] claims rows in id order, so
-  /// the report uploads first; the server-side completion-gate query
-  /// (`existsByTaskIdAndReportTypeAndLatitudeIsNotNullAndLongitudeIsNotNull`)
-  /// then succeeds when this row's `/mark-complete` POST runs.
-  Future<void> markCompleteQueued({
+  /// the report uploads first; the server-side completion-gate query then
+  /// succeeds when this row's `/mark-complete` POST runs.
+  Future<int> markCompleteQueued({
     required int taskId,
     required int? projectId,
   }) async {
@@ -67,7 +65,7 @@ class TaskCompletionService {
         'markCompleteQueued requires TaskCompletionService.forOutbox(...).',
       );
     }
-    await outbox.enqueue(
+    final id = await outbox.enqueue(
       type: OutboxMutationType.taskMarkComplete,
       payload: {'taskId': taskId},
       projectId: projectId,
@@ -76,6 +74,7 @@ class TaskCompletionService {
     // Best-effort kick. Doesn't await — the sync is fire-and-forget.
     // ignore: discarded_futures
     sync.triggerSyncNow();
+    return id;
   }
 
   /// Deprecated. Pre-PR2 contract returned the new task status, but S3 PR2
