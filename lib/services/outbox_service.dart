@@ -128,11 +128,22 @@ class OutboxService {
   ///   2. Used immediately after enqueue (no audit trail needed); whereas
   ///      [discardPermanentFailure] is the user-facing "I give up on this
   ///      row" path triggered from PendingSyncScreen.
+  ///
+  /// The DB delete must happen even if the photo unlink fails — on Windows
+  /// the photo file can be held open by an in-flight SyncService dispatch
+  /// (multipart upload reading the file) when the rollback runs concurrently
+  /// with a fire-and-forget `triggerSyncNow()` from `createReportQueued`.
+  /// Any orphaned photo files are reclaimed by [sweepOrphanedPhotoFiles] on
+  /// next startup.
   Future<void> deleteEntry(int id) async {
     final row = await _byId(id);
     if (row?.photoFilePath != null) {
-      final f = File(row!.photoFilePath!);
-      if (await f.exists()) await f.delete();
+      try {
+        final f = File(row!.photoFilePath!);
+        if (await f.exists()) await f.delete();
+      } catch (_) {
+        // File may be locked by an in-flight upload; the DB row still goes.
+      }
     }
     await (_db.delete(_db.outboxEntries)..where((e) => e.id.equals(id))).go();
   }
