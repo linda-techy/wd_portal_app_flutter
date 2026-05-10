@@ -1197,7 +1197,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                   },
                   icon: const Icon(Icons.chevron_left),
                 ),
-              Text('Page $currentPage of $totalPages'),
+              Text('Page ${totalPages == 0 ? 0 : currentPage + 1} of $totalPages'),
               if (hasNextPage)
                 IconButton(
                   onPressed: () {
@@ -1397,7 +1397,7 @@ class _LeadsTableState extends State<LeadsTable> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  lead.status,
+                                  _humanize(lead.status),
                                   style: const TextStyle(
                                     color: textPrimary,
                                     fontSize: 12,
@@ -1464,9 +1464,7 @@ class _LeadsTableState extends State<LeadsTable> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
-                                        lead.projectType.isNotEmpty
-                                            ? lead.projectType
-                                            : 'N/A',
+                                        _projectTypeLabel(lead.projectType),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -1779,6 +1777,22 @@ class _LeadsTableState extends State<LeadsTable> {
       default:
         return Colors.grey;
     }
+  }
+
+  String _humanize(String raw) {
+    if (raw.isEmpty) return raw;
+    return raw
+        .replaceAll('_', ' ')
+        .split(' ')
+        .where((w) => w.isNotEmpty)
+        .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
+        .join(' ');
+  }
+
+  String _projectTypeLabel(String raw) {
+    if (raw.isEmpty) return 'N/A';
+    final match = ProjectType.values.where((t) => t.value == raw.toLowerCase());
+    return match.isNotEmpty ? match.first.label : _humanize(raw);
   }
 
   Color _getPriorityColor(LeadPriority priority) {
