@@ -82,7 +82,9 @@ void main() {
       await db.close();
       try {
         await tmp.delete(recursive: true);
-      } on FileSystemException {}
+      } on FileSystemException {
+        // Windows file-handle race — ignore.
+      }
     }
   });
 }
