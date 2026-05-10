@@ -337,20 +337,18 @@ GoRouter buildAppRouter(PortalAuthProvider authProvider) {
                 projectId: projectIdParam ?? '',
                 projectName: 'My Tasks',
                 onLoadTasks: (pid, filter) async {
-                  // Phase 1: empty list when no projectId. The drawer entry
-                  // navigates without a query param; engineers reach a
-                  // populated list via deep links / future picker UX.
+                  // TODO(S5.2): wire to TaskService.searchByProject(pid).
+                  // Phase 1 deliberately ships an empty list when no projectId
+                  // is in scope — the drawer entry navigates without a query
+                  // param, so engineers reach a populated list via deep links
+                  // until the project picker UX is added.
                   if (resolvedProjectId == null) return const [];
-                  // Wired list source comes from the existing TaskService;
-                  // for the slice we keep the screen behaviour identical to
-                  // its current (empty-when-no-project) shape and let
-                  // existing test fixtures + the integration test drive it.
                   return const [];
                 },
                 onSaveProgress: (taskId, progress, note) async {
-                  // S5.1 does not change the progress-save path. Existing
-                  // TaskService PATCH wiring is invoked here when a real
-                  // project id is in scope. Out of scope for this slice.
+                  // TODO(S5.2): wire to TaskService.updateProgress(...).
+                  // S5.1 ships only the offline mark-complete flow; progress
+                  // editing isn't part of this slice.
                 },
                 onMarkComplete: buildPerformMarkComplete(
                   outbox: outbox,
