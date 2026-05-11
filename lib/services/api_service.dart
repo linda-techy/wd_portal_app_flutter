@@ -89,6 +89,17 @@ class ApiService {
     }
   }
 
+  Future<Response> patch(String endpoint,
+      {dynamic data, Map<String, dynamic>? queryParams, Options? options}) async {
+    try {
+      final response =
+          await _dio.patch(endpoint, data: data, queryParameters: queryParams, options: options);
+      return response;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   Future<Response> delete(String endpoint, {Options? options}) async {
     try {
       final response = await _dio.delete(endpoint, options: options);

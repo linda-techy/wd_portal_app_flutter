@@ -216,30 +216,49 @@ class CustomersScreen extends StatelessWidget {
                         _deleteCustomer(context, customer);
                       } else if (value == 'edit') {
                         _navigateToEdit(context, customer);
+                      } else if (value == 'toggle') {
+                        _setCustomerEnabled(context, customer, !customer.enabled);
                       }
                     },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit, size: 20),
-                            SizedBox(width: 8),
-                            Text('Edit'),
-                          ],
+                    itemBuilder: (context) {
+                      final isEnabled = customer.enabled;
+                      return [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit, size: 20),
+                              SizedBox(width: 8),
+                              Text('Edit'),
+                            ],
+                          ),
                         ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, size: 20, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Delete', style: TextStyle(color: Colors.red)),
-                          ],
+                        PopupMenuItem(
+                          value: 'toggle',
+                          child: Row(
+                            children: [
+                              Icon(
+                                isEnabled ? Icons.toggle_off : Icons.toggle_on,
+                                size: 20,
+                                color: isEnabled ? Colors.orange.shade700 : Colors.green,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(isEnabled ? 'Deactivate' : 'Activate'),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete, size: 20, color: Colors.red),
+                              SizedBox(width: 8),
+                              Text('Delete', style: TextStyle(color: Colors.red)),
+                            ],
+                          ),
+                        ),
+                      ];
+                    },
                   ),
                 ],
               ),
@@ -444,27 +463,20 @@ class CustomersScreen extends StatelessWidget {
 
     if (confirmed == true && context.mounted) {
       try {
-        final customerService = CustomerService();
-        final result = await customerService.deleteCustomer(customer.id!);
-
+        await CustomerService().deleteCustomer(customer.id!);
         if (context.mounted) {
-          final fallback = result.deactivated
-              ? 'Customer deactivated — linked lead history preserved.'
-              : 'Customer deleted successfully';
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result.message ?? fallback),
-              backgroundColor:
-                  result.deactivated ? Colors.orange.shade700 : Colors.green,
+            const SnackBar(
+              content: Text('Customer deleted successfully'),
+              backgroundColor: Colors.green,
             ),
           );
-
-          // Refresh the customer list
-          final provider = Provider.of<CustomerProvider>(context, listen: false);
-          provider.fetch();
+          Provider.of<CustomerProvider>(context, listen: false).fetch();
         }
       } catch (e) {
         if (context.mounted) {
+          // Backend returns 400 + { message } when references block delete —
+          // surface that text so the user understands they should deactivate.
           await ErrorHandler.handleApiError(
             context,
             e,
@@ -472,6 +484,55 @@ class CustomersScreen extends StatelessWidget {
           );
         }
       }
+    }
+  }
+
+  Future<void> _setCustomerEnabled(
+      BuildContext context, Customer customer, bool enabled) async {
+    if (customer.id == null) return;
+    final action = enabled ? 'activate' : 'deactivate';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(enabled ? 'Activate customer?' : 'Deactivate customer?'),
+        content: Text(
+          enabled
+              ? '"${customer.fullName}" will be marked active and appear in the default lists again.'
+              : '"${customer.fullName}" will be hidden from active lists. Linked leads and projects are kept.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: enabled ? Colors.green : Colors.orange.shade700,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(enabled ? 'Activate' : 'Deactivate'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await CustomerService().setEnabled(customer.id!, enabled);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Customer ${action}d'),
+          backgroundColor: enabled ? Colors.green : Colors.orange.shade700,
+        ),
+      );
+      Provider.of<CustomerProvider>(context, listen: false).fetch();
+    } catch (e) {
+      if (!context.mounted) return;
+      await ErrorHandler.handleApiError(
+        context,
+        e,
+        defaultMessage: 'Failed to $action customer',
+      );
     }
   }
 }
