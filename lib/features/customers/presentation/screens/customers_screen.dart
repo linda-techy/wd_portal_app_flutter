@@ -212,9 +212,7 @@ class CustomersScreen extends StatelessWidget {
                   _buildStatusBadge(customer.enabled),
                   PopupMenuButton<String>(
                     onSelected: (value) {
-                      if (value == 'delete') {
-                        _deleteCustomer(context, customer);
-                      } else if (value == 'edit') {
+                      if (value == 'edit') {
                         _navigateToEdit(context, customer);
                       } else if (value == 'toggle') {
                         _setCustomerEnabled(context, customer, !customer.enabled);
@@ -244,16 +242,6 @@ class CustomersScreen extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(isEnabled ? 'Deactivate' : 'Activate'),
-                            ],
-                          ),
-                        ),
-                        const PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(Icons.delete, size: 20, color: Colors.red),
-                              SizedBox(width: 8),
-                              Text('Delete', style: TextStyle(color: Colors.red)),
                             ],
                           ),
                         ),
@@ -426,64 +414,6 @@ class CustomersScreen extends StatelessWidget {
     if (result == true && context.mounted) {
       final provider = Provider.of<CustomerProvider>(context, listen: false);
       provider.fetch();
-    }
-  }
-
-  void _deleteCustomer(BuildContext context, Customer customer) async {
-    if (customer.id == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Customer ID is missing'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Customer'),
-        content: Text(
-          'Are you sure you want to delete "${customer.fullName}"? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && context.mounted) {
-      try {
-        await CustomerService().deleteCustomer(customer.id!);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Customer deleted successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Provider.of<CustomerProvider>(context, listen: false).fetch();
-        }
-      } catch (e) {
-        if (context.mounted) {
-          // Backend returns 400 + { message } when references block delete —
-          // surface that text so the user understands they should deactivate.
-          await ErrorHandler.handleApiError(
-            context,
-            e,
-            defaultMessage: 'Failed to delete customer',
-          );
-        }
-      }
     }
   }
 
