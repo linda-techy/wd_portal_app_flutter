@@ -22,7 +22,7 @@ class DeductionRegisterScreen extends StatefulWidget {
 
 class _DeductionRegisterScreenState extends State<DeductionRegisterScreen> {
   final DeductionService _service = DeductionService();
-  final _currency = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
+  final _currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
   List<DeductionRegisterEntry> _deductions = [];
   bool _isLoading = true;

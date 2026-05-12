@@ -22,7 +22,7 @@ class VODetailScreen extends StatefulWidget {
 class _VODetailScreenState extends State<VODetailScreen>
     with SingleTickerProviderStateMixin {
   final VariationOrderService _service = VariationOrderService();
-  final _currency = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
+  final _currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
   VariationOrderDetail? _vo;
   bool _isLoading = true;

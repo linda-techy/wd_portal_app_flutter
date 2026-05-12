@@ -21,7 +21,7 @@ class FinalAccountScreen extends StatefulWidget {
 
 class _FinalAccountScreenState extends State<FinalAccountScreen> {
   final FinalAccountService _service = FinalAccountService();
-  final _currency = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
+  final _currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
   FinalAccountData? _fa;
   bool _isLoading = true;

@@ -17,7 +17,7 @@ class CoManagementScreen extends StatefulWidget {
 
 class _CoManagementScreenState extends State<CoManagementScreen> {
   final _service = BoqPaymentService();
-  final _currency = NumberFormat.currency(symbol: '₹', decimalDigits: 2);
+  final _currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2);
 
   List<ChangeOrderModel> _cos = [];
   bool _isLoading = true;

@@ -23,7 +23,7 @@ class VOListScreen extends StatefulWidget {
 
 class _VOListScreenState extends State<VOListScreen> {
   final VariationOrderService _service = VariationOrderService();
-  final _currency = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
+  final _currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
   List<VariationOrderSummary> _orders = [];
   bool _isLoading = true;

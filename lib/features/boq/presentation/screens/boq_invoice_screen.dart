@@ -17,7 +17,7 @@ class BoqInvoiceScreen extends StatefulWidget {
 
 class _BoqInvoiceScreenState extends State<BoqInvoiceScreen> {
   final _service = BoqPaymentService();
-  final _currency = NumberFormat.currency(symbol: '₹', decimalDigits: 2);
+  final _currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2);
 
   List<BoqInvoiceModel> _invoices = [];
   bool _isLoading = true;

@@ -33,7 +33,7 @@ class PaymentBreakdownCard extends StatelessWidget {
   });
 
   static final _currency =
-      NumberFormat.currency(symbol: '₹', decimalDigits: 0);
+      NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
   static const _statusColors = <String, Color>{
     'PENDING':  Colors.grey,

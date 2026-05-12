@@ -22,7 +22,7 @@ class StagePaymentScreen extends StatefulWidget {
 
 class _StagePaymentScreenState extends State<StagePaymentScreen> {
   final StagePaymentService _service = StagePaymentService();
-  final _currency = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
+  final _currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
   List<StageTimelineSummary> _stages = [];
   bool _isLoading = true;

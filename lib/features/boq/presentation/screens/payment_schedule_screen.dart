@@ -17,7 +17,7 @@ class PaymentScheduleScreen extends StatefulWidget {
 
 class _PaymentScheduleScreenState extends State<PaymentScheduleScreen> {
   final _service = BoqPaymentService();
-  final _currency = NumberFormat.currency(symbol: '₹', decimalDigits: 2);
+  final _currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2);
   final _pct = NumberFormat.percentPattern()..maximumFractionDigits = 1;
 
   List<PaymentStageModel> _stages = [];
