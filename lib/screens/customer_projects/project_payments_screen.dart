@@ -91,26 +91,35 @@ class _ProjectPaymentsScreenState extends State<ProjectPaymentsScreen> {
 
     if (_payment == null) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.payment_outlined, size: 64, color: AppTheme.textSecondary),
-            const SizedBox(height: 16),
-            Text(
-              'No payment record found',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppTheme.textSecondary,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.payment_outlined, size: 64, color: AppTheme.textSecondary),
+              const SizedBox(height: 16),
+              Text(
+                'No design payment for this project yet',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: AppTheme.textSecondary,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Design package payment will appear here after signing the agreement.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppTheme.textTertiary,
+              const SizedBox(height: 8),
+              Text(
+                'Create the design package payment to start billing the customer for the design phase.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppTheme.textTertiary,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _openCreateDialog,
+                icon: const Icon(Icons.add),
+                label: const Text('Create Design Payment'),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -520,6 +529,159 @@ class _ProjectPaymentsScreenState extends State<ProjectPaymentsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _openCreateDialog() async {
+    final created = await showDialog<bool>(
+      context: context,
+      builder: (_) => _CreateDesignPaymentDialog(projectId: widget.project.id!),
+    );
+    if (created == true) {
+      _loadPaymentData();
+    }
+  }
+}
+
+class _CreateDesignPaymentDialog extends StatefulWidget {
+  final int projectId;
+
+  const _CreateDesignPaymentDialog({required this.projectId});
+
+  @override
+  State<_CreateDesignPaymentDialog> createState() =>
+      _CreateDesignPaymentDialogState();
+}
+
+class _CreateDesignPaymentDialogState
+    extends State<_CreateDesignPaymentDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _packageNameController = TextEditingController(text: 'Standard Design Package');
+  final _rateController = TextEditingController();
+  final _sqftController = TextEditingController();
+  final _discountController = TextEditingController(text: '0');
+  String _paymentType = 'INSTALLMENT';
+  bool _isSubmitting = false;
+
+  final PaymentService _paymentService = PaymentService();
+
+  @override
+  void dispose() {
+    _packageNameController.dispose();
+    _rateController.dispose();
+    _sqftController.dispose();
+    _discountController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSubmitting = true);
+    try {
+      await _paymentService.createDesignPayment(
+        CreateDesignPaymentRequest(
+          projectId: widget.projectId,
+          packageName: _packageNameController.text.trim(),
+          ratePerSqft: double.parse(_rateController.text),
+          totalSqft: double.parse(_sqftController.text),
+          discountPercentage: double.tryParse(_discountController.text),
+          paymentType: _paymentType,
+        ),
+      );
+      if (!mounted) return;
+      MotionToast.show(context,
+          message: 'Design payment created', isError: false);
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      await ErrorHandler.handleApiError(context, e,
+          defaultMessage: 'Failed to create design payment');
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  String? _requiredNumber(String? value, {bool allowZero = false}) {
+    if (value == null || value.trim().isEmpty) return 'Required';
+    final parsed = double.tryParse(value);
+    if (parsed == null) return 'Enter a number';
+    if (!allowZero && parsed <= 0) return 'Must be greater than 0';
+    if (parsed < 0) return 'Cannot be negative';
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Create Design Payment'),
+      content: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextFormField(
+                controller: _packageNameController,
+                decoration: const InputDecoration(labelText: 'Package name'),
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Required' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _rateController,
+                decoration:
+                    const InputDecoration(labelText: 'Rate per sqft (₹)'),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                validator: (v) => _requiredNumber(v),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _sqftController,
+                decoration: const InputDecoration(labelText: 'Total sqft'),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                validator: (v) => _requiredNumber(v),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _discountController,
+                decoration:
+                    const InputDecoration(labelText: 'Discount % (optional)'),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                validator: (v) => _requiredNumber(v, allowZero: true),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _paymentType,
+                decoration: const InputDecoration(labelText: 'Payment type'),
+                items: const [
+                  DropdownMenuItem(value: 'FULL', child: Text('Pay in Full')),
+                  DropdownMenuItem(
+                      value: 'INSTALLMENT', child: Text('Pay in Installments')),
+                ],
+                onChanged: (v) => setState(() => _paymentType = v!),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed:
+              _isSubmitting ? null : () => Navigator.of(context).pop(false),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _isSubmitting ? null : _submit,
+          child: _isSubmitting
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Create'),
+        ),
+      ],
     );
   }
 }

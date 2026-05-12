@@ -337,12 +337,16 @@ class ReportsScreen extends StatelessWidget {
     );
   }
 
-  void _navigateToCreate(BuildContext context) {
-    Navigator.push(
+  Future<void> _navigateToCreate(BuildContext context) async {
+    final provider = context.read<SiteReportProvider>();
+    final created = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (context) => const AddSiteReportScreen(),
+        builder: (_) => const AddSiteReportScreen(),
       ),
     );
+    if (created == true) {
+      await provider.fetch();
+    }
   }
 }

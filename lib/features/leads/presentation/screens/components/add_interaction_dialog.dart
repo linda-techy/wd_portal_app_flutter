@@ -29,7 +29,10 @@ class _AddInteractionDialogState extends State<AddInteractionDialog> {
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _subjectController = TextEditingController();
+  final TextEditingController _nextActionController = TextEditingController();
   String _outcome = 'SCHEDULED_FOLLOWUP';
+  DateTime _nextActionDate = DateTime.now().add(const Duration(days: 1));
+  TimeOfDay _nextActionTime = const TimeOfDay(hour: 10, minute: 0);
 
   bool _isLoading = false;
 
@@ -39,6 +42,7 @@ class _AddInteractionDialogState extends State<AddInteractionDialog> {
     'MEETING',
     'SITE_VISIT',
     'WHATSAPP',
+    'SMS',
     'OTHER'
   ];
 
@@ -78,6 +82,32 @@ class _AddInteractionDialogState extends State<AddInteractionDialog> {
     }
   }
 
+  Future<void> _selectNextActionDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _nextActionDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null) {
+      setState(() {
+        _nextActionDate = picked;
+      });
+    }
+  }
+
+  Future<void> _selectNextActionTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _nextActionTime,
+    );
+    if (picked != null) {
+      setState(() {
+        _nextActionTime = picked;
+      });
+    }
+  }
+
   Future<void> _saveInteraction() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -94,6 +124,19 @@ class _AddInteractionDialogState extends State<AddInteractionDialog> {
         _interactionTime.minute,
       );
 
+      final isFollowUp = _outcome == 'SCHEDULED_FOLLOWUP';
+      final nextActionDateTime = isFollowUp
+          ? DateTime(
+              _nextActionDate.year,
+              _nextActionDate.month,
+              _nextActionDate.day,
+              _nextActionTime.hour,
+              _nextActionTime.minute,
+            )
+          : null;
+
+      final locationText = _locationController.text.trim();
+
       final interaction = LeadInteraction(
         leadId: widget.leadId,
         interactionType: _interactionType,
@@ -101,6 +144,11 @@ class _AddInteractionDialogState extends State<AddInteractionDialog> {
         notes: _notesController.text,
         subject: _subjectController.text.isNotEmpty ? _subjectController.text : 'Logged $_interactionType',
         outcome: _outcome,
+        location: locationText.isEmpty ? null : locationText,
+        nextActionDate: nextActionDateTime,
+        nextAction: isFollowUp && _nextActionController.text.trim().isNotEmpty
+            ? _nextActionController.text.trim()
+            : null,
       );
 
       await _leadService.createInteraction(interaction);
@@ -205,6 +253,49 @@ class _AddInteractionDialogState extends State<AddInteractionDialog> {
                   });
                 },
               ),
+              if (_outcome == 'SCHEDULED_FOLLOWUP') ...[
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _nextActionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Next action',
+                    hintText: 'e.g. Send revised quote',
+                  ),
+                  validator: (value) {
+                    if (_outcome == 'SCHEDULED_FOLLOWUP' &&
+                        (value == null || value.trim().isEmpty)) {
+                      return 'Describe the next action';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _selectNextActionDate(context),
+                        child: InputDecorator(
+                          decoration:
+                              const InputDecoration(labelText: 'Follow-up date'),
+                          child: Text(DateFormat('MMM d, y').format(_nextActionDate)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _selectNextActionTime(context),
+                        child: InputDecorator(
+                          decoration:
+                              const InputDecoration(labelText: 'Follow-up time'),
+                          child: Text(_nextActionTime.format(context)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 16),
               TextFormField(
                 controller: _notesController,

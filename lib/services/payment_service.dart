@@ -22,23 +22,16 @@ class PaymentService {
     throw Exception('Failed to create design payment');
   }
 
-  /// Get design payment details for a project
+  /// Get design payment details for a project.
+  /// Backend returns 200 with `data: null` when no record exists yet.
   Future<DesignPackagePayment?> getDesignPaymentByProject(int projectId) async {
-    try {
-      final response =
-          await _apiService.get('/payments/design/project/$projectId');
+    final response =
+        await _apiService.get('/payments/design/project/$projectId');
 
-      if (response.data != null && response.data['data'] != null) {
-        return DesignPackagePayment.fromJson(response.data['data']);
-      }
-      return null;
-    } catch (e) {
-      // Return null if no payment exists (404)
-      if (e.toString().contains('not found') || e.toString().contains('404')) {
-        return null;
-      }
-      rethrow;
+    if (response.data != null && response.data['data'] != null) {
+      return DesignPackagePayment.fromJson(response.data['data']);
     }
+    return null;
   }
 
   /// Get all payments (for dashboard) with pagination and search

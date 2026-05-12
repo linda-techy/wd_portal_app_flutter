@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/features/leads/data/models/lead_interaction.dart';
 import 'package:admin/features/leads/presentation/providers/lead_interaction_provider.dart';
+import 'package:admin/features/leads/presentation/screens/components/add_interaction_dialog.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/providers/permission_provider.dart';
 
 class LeadInteractionsScreen extends StatelessWidget {
-  final String? leadId;
-  
+  final int? leadId;
+
   const LeadInteractionsScreen({super.key, this.leadId});
 
   @override
@@ -17,9 +18,7 @@ class LeadInteractionsScreen extends StatelessWidget {
       create: (_) {
         final provider = LeadInteractionProvider();
         if (leadId != null) {
-          // Filter by leadId if provided - provider may need to be updated to support this
-          // For now, fetch all and filter in UI if needed
-          provider.fetch();
+          provider.applyAllFilters(leadId: leadId);
         } else {
           provider.fetch();
         }
@@ -29,8 +28,8 @@ class LeadInteractionsScreen extends StatelessWidget {
         builder: (context, provider, _) {
           return Scaffold(
             appBar: AppBar(
-              title: Text(leadId != null 
-                  ? 'Lead Interactions' 
+              title: Text(leadId != null
+                  ? 'Lead #$leadId Interactions'
                   : 'All Lead Interactions'),
               actions: [
                 Consumer<PermissionProvider>(
@@ -38,7 +37,7 @@ class LeadInteractionsScreen extends StatelessWidget {
                     if (permissionProvider.hasPermission('lead:edit')) {
                       return IconButton(
                         icon: const Icon(Icons.add),
-                        onPressed: () => _navigateToCreate(context),
+                        onPressed: () => _openAddDialog(context, provider),
                       );
                     }
                     return const SizedBox.shrink();
@@ -114,12 +113,20 @@ class LeadInteractionsScreen extends StatelessWidget {
           isSelected: provider.filters['interactionType'] == 'SITE_VISIT',
           onTap: () => provider.updateFilter('interactionType', 'SITE_VISIT'),
         ),
+        _buildFilterChip(
+          context,
+          label: 'WhatsApp',
+          isSelected: provider.filters['interactionType'] == 'WHATSAPP',
+          onTap: () => provider.updateFilter('interactionType', 'WHATSAPP'),
+        ),
         const SizedBox(width: 16),
         _buildFilterChip(
           context,
           label: 'Follow-up Required',
           isSelected: provider.filters['followUpRequired'] == true,
-          onTap: () => provider.updateFilter('followUpRequired', true),
+          onTap: () => provider.updateFilter(
+              'followUpRequired',
+              provider.filters['followUpRequired'] == true ? null : true),
           color: AppTheme.statusWarning,
         ),
       ],
@@ -306,13 +313,15 @@ class LeadInteractionsScreen extends StatelessWidget {
 
   Color _getOutcomeColor(String outcome) {
     switch (outcome.toUpperCase()) {
-      case 'POSITIVE':
-      case 'INTERESTED':
+      case 'CONVERTED':
+      case 'HOT_LEAD':
+      case 'QUOTE_SENT':
         return AppTheme.statusSuccess;
-      case 'NEUTRAL':
+      case 'SCHEDULED_FOLLOWUP':
+      case 'NEEDS_INFO':
         return AppTheme.statusWarning;
-      case 'NEGATIVE':
       case 'NOT_INTERESTED':
+      case 'COLD_LEAD':
         return AppTheme.statusError;
       default:
         return Colors.grey;
@@ -393,11 +402,21 @@ class LeadInteractionsScreen extends StatelessWidget {
     );
   }
 
-  void _navigateToCreate(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Interactions are logged from a specific lead\'s detail page'),
-        duration: Duration(seconds: 3),
+  void _openAddDialog(BuildContext context, LeadInteractionProvider provider) {
+    if (leadId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Open a specific lead to log an interaction'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+    showDialog(
+      context: context,
+      builder: (_) => AddInteractionDialog(
+        leadId: leadId!,
+        onSave: () => provider.fetch(),
       ),
     );
   }

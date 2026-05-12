@@ -44,7 +44,13 @@ class _SiteVisitsScreenState extends State<SiteVisitsScreen> {
     final visit = await SiteVisitCheckInDialog.show(dialogContext);
     if (visit != null && mounted) {
       setState(() => _activeVisit = visit);
-      provider.fetch();
+      // Reset to page 0 and await so the list reliably reflects the new row.
+      // Also re-pull the active visit from server so the banner stays in
+      // sync if the dialog's payload is missing fields.
+      await Future.wait([
+        provider.fetch(refresh: true),
+        _loadActiveVisit(),
+      ]);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -61,7 +67,10 @@ class _SiteVisitsScreenState extends State<SiteVisitsScreen> {
     final visit = await SiteVisitCheckOutDialog.show(dialogContext, _activeVisit!);
     if (visit != null && mounted) {
       setState(() => _activeVisit = null);
-      provider.fetch();
+      await Future.wait([
+        provider.fetch(refresh: true),
+        _loadActiveVisit(),
+      ]);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -703,54 +704,85 @@ class _CreateSiteReportPageState extends State<_CreateSiteReportPage> {
     });
 
     try {
-      // PR2: capture the providers BEFORE any async work — once we await,
-      // the BuildContext can't be safely used across the gap.
-      final outbox = context.read<OutboxService>();
-      final sync = context.read<SyncService>();
-
-      // Simulate upload progress
-      for (int i = 0; i < 5; i++) {
-        await Future.delayed(const Duration(milliseconds: 100));
-        if (mounted) {
-          setState(() => _uploadProgress = (i + 1) / 5 * 0.8);
+      // The offline outbox uses Drift's native backend, which isn't available
+      // on Flutter web. On web, post directly; on mobile/desktop, enqueue so
+      // the upload survives connectivity loss.
+      if (kIsWeb) {
+        for (int i = 0; i < 5; i++) {
+          await Future.delayed(const Duration(milliseconds: 100));
+          if (mounted) {
+            setState(() => _uploadProgress = (i + 1) / 5 * 0.8);
+          }
         }
-      }
 
-      // PR2: route through outbox so the report survives offline use.
-      final svc = SiteReportService.forOutbox(outbox: outbox, sync: sync);
-
-      PhotoCapture? primary;
-      if (_photos.isNotEmpty) {
-        final first = _photos.first;
-        primary = PhotoCapture(
-          file: File(first.path),
+        await SiteReportService().createReportDirect(
+          projectId: widget.projectId,
+          title: _titleCtrl.text,
+          description: _descCtrl.text,
+          reportType: _type,
+          photos: _photos,
           latitude: _latitude,
           longitude: _longitude,
-          accuracyMeters: _accuracy,
-          capturedAt: DateTime.now(),
+          locationAccuracy: _accuracy,
         );
-      }
 
-      await svc.createReportQueued(
-        projectId: widget.projectId,
-        title: _titleCtrl.text,
-        description: _descCtrl.text,
-        reportType: _type,
-        primaryPhoto: primary,
-        latitude: _latitude,
-        longitude: _longitude,
-        locationAccuracy: _accuracy,
-      );
+        if (mounted) {
+          setState(() => _uploadProgress = 1.0);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Site report submitted'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context, true);
+        }
+      } else {
+        // Capture providers before any await — BuildContext can't cross gaps.
+        final outbox = context.read<OutboxService>();
+        final sync = context.read<SyncService>();
 
-      if (mounted) {
-        setState(() => _uploadProgress = 1.0);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Queued — will upload when online'),
-            backgroundColor: Colors.green,
-          ),
+        for (int i = 0; i < 5; i++) {
+          await Future.delayed(const Duration(milliseconds: 100));
+          if (mounted) {
+            setState(() => _uploadProgress = (i + 1) / 5 * 0.8);
+          }
+        }
+
+        final svc = SiteReportService.forOutbox(outbox: outbox, sync: sync);
+
+        PhotoCapture? primary;
+        if (_photos.isNotEmpty) {
+          final first = _photos.first;
+          primary = PhotoCapture(
+            file: File(first.path),
+            latitude: _latitude,
+            longitude: _longitude,
+            accuracyMeters: _accuracy,
+            capturedAt: DateTime.now(),
+          );
+        }
+
+        await svc.createReportQueued(
+          projectId: widget.projectId,
+          title: _titleCtrl.text,
+          description: _descCtrl.text,
+          reportType: _type,
+          primaryPhoto: primary,
+          latitude: _latitude,
+          longitude: _longitude,
+          locationAccuracy: _accuracy,
         );
-        Navigator.pop(context, true);
+
+        if (mounted) {
+          setState(() => _uploadProgress = 1.0);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Queued — will upload when online'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context, true);
+        }
       }
     } catch (e) {
       if (mounted) {

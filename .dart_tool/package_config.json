@@ -146,10 +146,22 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "charcode",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/charcode-1.4.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
       "name": "checked_yaml",
       "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/checked_yaml-2.0.3",
       "packageUri": "lib/",
       "languageVersion": "2.19"
+    },
+    {
+      "name": "cli_util",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/cli_util-0.4.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
     },
     {
       "name": "clock",
@@ -240,6 +252,24 @@
       "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/dio_web_adapter-2.1.1",
       "packageUri": "lib/",
       "languageVersion": "3.3"
+    },
+    {
+      "name": "drift",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/drift-2.23.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "drift_dev",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/drift_dev-2.23.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "drift_flutter",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/drift_flutter-0.2.4",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
     },
     {
       "name": "equatable",
@@ -860,6 +890,12 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "recase",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/recase-4.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "share_plus",
       "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/share_plus-10.1.4",
       "packageUri": "lib/",
@@ -948,6 +984,24 @@
       "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/source_span-1.10.0",
       "packageUri": "lib/",
       "languageVersion": "2.18"
+    },
+    {
+      "name": "sqlite3",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/sqlite3-2.9.4",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
+    },
+    {
+      "name": "sqlite3_flutter_libs",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/sqlite3_flutter_libs-0.5.42",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "sqlparser",
+      "rootUri": "file:///C:/Users/linda/AppData/Local/Pub/Cache/hosted/pub.dev/sqlparser-0.40.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
     },
     {
       "name": "stack_trace",
@@ -1208,7 +1262,7 @@
       "languageVersion": "3.5"
     }
   ],
-  "generated": "2026-04-19T08:21:32.646309Z",
+  "generated": "2026-05-09T13:05:14.230959Z",
   "generator": "pub",
   "generatorVersion": "3.5.4",
   "flutterRoot": "file:///C:/src/flutter",

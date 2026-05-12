@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:motion_toast/motion_toast.dart';
@@ -187,40 +188,63 @@ class _AddSiteReportScreenState extends State<AddSiteReportScreen> {
     setState(() => _isSaving = true);
 
     try {
-      // PR2: enqueue via the outbox; SyncService dispatches on connectivity.
-      final outbox = context.read<OutboxService>();
-      final sync = context.read<SyncService>();
-      final svc = SiteReportService.forOutbox(outbox: outbox, sync: sync);
-
-      PhotoCapture? primary;
-      if (_photos.isNotEmpty) {
-        final first = _photos.first;
-        primary = PhotoCapture(
-          file: File(first.path),
+      // The offline outbox uses Drift's native backend, which isn't available
+      // on Flutter web. On web, post directly; on mobile/desktop, enqueue so
+      // the upload survives connectivity loss.
+      if (kIsWeb) {
+        await SiteReportService().createReportDirect(
+          projectId: _selectedProject!.id!,
+          title: _titleController.text,
+          description: _descriptionController.text,
+          reportType: _selectedType,
+          siteVisitId: widget.siteVisitId,
+          photos: _photos,
           latitude: _latitude,
           longitude: _longitude,
-          accuracyMeters: _locationAccuracy,
-          capturedAt: DateTime.now(),
+          locationAccuracy: _locationAccuracy,
         );
-      }
 
-      await svc.createReportQueued(
-        projectId: _selectedProject!.id!,
-        title: _titleController.text,
-        description: _descriptionController.text,
-        reportType: _selectedType,
-        siteVisitId: widget.siteVisitId,
-        primaryPhoto: primary,
-        latitude: _latitude,
-        longitude: _longitude,
-        locationAccuracy: _locationAccuracy,
-      );
+        if (mounted) {
+          MotionToast.success(
+            description: const Text('Site report submitted'),
+          ).show(context);
+          Navigator.pop(context, true);
+        }
+      } else {
+        final outbox = context.read<OutboxService>();
+        final sync = context.read<SyncService>();
+        final svc = SiteReportService.forOutbox(outbox: outbox, sync: sync);
 
-      if (mounted) {
-        MotionToast.success(
-          description: const Text('Queued — will upload when online'),
-        ).show(context);
-        Navigator.pop(context, true);
+        PhotoCapture? primary;
+        if (_photos.isNotEmpty) {
+          final first = _photos.first;
+          primary = PhotoCapture(
+            file: File(first.path),
+            latitude: _latitude,
+            longitude: _longitude,
+            accuracyMeters: _locationAccuracy,
+            capturedAt: DateTime.now(),
+          );
+        }
+
+        await svc.createReportQueued(
+          projectId: _selectedProject!.id!,
+          title: _titleController.text,
+          description: _descriptionController.text,
+          reportType: _selectedType,
+          siteVisitId: widget.siteVisitId,
+          primaryPhoto: primary,
+          latitude: _latitude,
+          longitude: _longitude,
+          locationAccuracy: _locationAccuracy,
+        );
+
+        if (mounted) {
+          MotionToast.success(
+            description: const Text('Queued — will upload when online'),
+          ).show(context);
+          Navigator.pop(context, true);
+        }
       }
     } catch (e) {
       if (mounted) {

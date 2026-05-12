@@ -1137,7 +1137,8 @@ class _LeadsScreenState extends State<LeadsScreen> {
   void _viewInteractions(Lead lead) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => LeadInteractionsScreen(leadId: lead.leadId),
+        builder: (context) =>
+            LeadInteractionsScreen(leadId: int.tryParse(lead.leadId)),
       ),
     );
   }

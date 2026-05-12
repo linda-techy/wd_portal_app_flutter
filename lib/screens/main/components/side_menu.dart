@@ -492,7 +492,15 @@ final List<_MenuGroupData> _menuGroups = [
         icon: Icons.cloud_sync_outlined,
         index: 33,
         isVisible: (p) => p.canEditTask,
-        badgeBuilder: (ctx) => ctx.watch<PendingSyncProvider>().pendingCount,
+        badgeBuilder: (ctx) {
+          try {
+            return ctx.watch<PendingSyncProvider>().pendingCount;
+          } on ProviderNotFoundException {
+            // PendingSyncProvider is only registered on native builds
+            // (outbox is skipped on web). Return 0 to hide the badge.
+            return 0;
+          }
+        },
       ),
       _MenuItem(
         title: 'My Tasks',
@@ -590,13 +598,13 @@ final List<_MenuGroupData> _menuGroups = [
       _MenuItem(
         title: 'DPC Customizations',
         icon: Icons.tune,
-        index: 26,
+        index: 25,
         isVisible: (p) => p.canManageDpcCustomizationCatalog,
       ),
       _MenuItem(
         title: 'Estimation Settings',
         icon: Icons.calculate_outlined,
-        index: 27,
+        index: 26,
         isVisible: (p) => p.canManageEstimationSettings,
       ),
       _MenuItem(

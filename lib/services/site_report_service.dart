@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import '../data/local/outbox_mutation_type.dart';
@@ -104,26 +105,59 @@ class SiteReportService {
     return SiteReportResultQueued(id);
   }
 
-  /// Deprecated synchronous report creation. Pre-PR2 the call site posted a
-  /// multipart form directly; PR2 routes through the outbox. Use
-  /// [createReportQueued].
-  @Deprecated('Use createReportQueued (S5 PR2). Multi-photo path will return.')
-  Future<SiteReport> createReport({
+  /// Direct multipart POST — used on Flutter web where the offline outbox
+  /// (Drift native backend) isn't available. Reads photos into memory and
+  /// submits in one request. On mobile/desktop prefer [createReportQueued]
+  /// so the upload survives connectivity loss.
+  Future<SiteReport> createReportDirect({
     required int projectId,
     required String title,
     required String description,
     required ReportType reportType,
     int? siteVisitId,
     int? taskId,
-    List<XFile>? photos,
+    required List<XFile> photos,
     double? latitude,
     double? longitude,
     double? locationAccuracy,
-  }) {
-    throw UnsupportedError(
-      'SiteReportService.createReport(...) is removed in S5 PR2. '
-      'Use createReportQueued(...) which enqueues via the outbox.',
+  }) async {
+    if (photos.isEmpty) {
+      throw ArgumentError('At least one photo is required');
+    }
+    final payload = <String, dynamic>{
+      'projectId': projectId,
+      'title': title,
+      'description': description,
+      'reportType': reportType.toJson(),
+      if (siteVisitId != null) 'siteVisitId': siteVisitId,
+      if (taskId != null) 'taskId': taskId,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      if (locationAccuracy != null) 'locationAccuracy': locationAccuracy,
+    };
+
+    final form = FormData();
+    form.files.add(MapEntry(
+      'report',
+      MultipartFile.fromString(
+        jsonEncode(payload),
+        contentType: DioMediaType.parse('text/plain'),
+      ),
+    ));
+    for (final photo in photos) {
+      final bytes = await photo.readAsBytes();
+      form.files.add(MapEntry(
+        'photos',
+        MultipartFile.fromBytes(bytes, filename: photo.name),
+      ));
+    }
+
+    final response = await _apiService.post(
+      '/api/site-reports',
+      data: form,
     );
+    return _apiService.unwrap(
+        response, (json) => SiteReport.fromJson(json as Map<String, dynamic>));
   }
 
   Future<void> deleteReport(int id) async {
