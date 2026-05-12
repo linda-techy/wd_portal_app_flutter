@@ -109,6 +109,9 @@ class BoqItem {
   final int? materialId;
   final String? materialName;
   final String? itemCode;
+  // G-21 / F-G08: GST HSN (goods, 4-8 digits) or SAC (services, 6 digits).
+  // Required by backend on create; backend validates format `^[0-9]{4,8}$`.
+  final String? hsnSacCode;
   final String description;
   final String unit;
   final double quantity;
@@ -144,6 +147,7 @@ class BoqItem {
     this.materialId,
     this.materialName,
     this.itemCode,
+    this.hsnSacCode,
     required this.description,
     required this.unit,
     required this.quantity,
@@ -180,6 +184,7 @@ class BoqItem {
       materialId: json['materialId'],
       materialName: json['materialName'],
       itemCode: json['itemCode'],
+      hsnSacCode: json['hsnSacCode'],
       description: json['description'] ?? '',
       unit: json['unit'] ?? '',
       quantity: (json['quantity'] ?? 0).toDouble(),
@@ -380,6 +385,8 @@ class BoqService {
     int? categoryId,
     int? workTypeId,
     String? itemCode,
+    // G-21: required by backend (`@NotBlank @Pattern(^[0-9]{4,8}$)`).
+    required String hsnSacCode,
     required String description,
     required String unit,
     required double quantity,
@@ -394,6 +401,7 @@ class BoqService {
       'categoryId': categoryId,
       'workTypeId': workTypeId,
       'itemCode': itemCode,
+      'hsnSacCode': hsnSacCode,
       'description': description,
       'unit': unit,
       'quantity': quantity,

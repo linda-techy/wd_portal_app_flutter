@@ -133,16 +133,42 @@ class _FinalAccountScreenState extends State<FinalAccountScreen> {
   Future<void> _transitionStatus(String targetStatus, {String? agreedBy}) async {
     String? by = agreedBy;
     if (targetStatus == 'AGREED') {
+      // F-G21: AGREED kicks off the DLP clock and unlocks retention release —
+      // it is effectively irreversible from the user's perspective. Block on a
+      // confirmation that spells the consequences out before posting.
       final ctrl = TextEditingController();
       by = await showDialog<String>(
         context: context,
+        barrierDismissible: false,
         builder: (ctx) => AlertDialog(
-          title: const Text('Mark as Agreed'),
-          content: TextField(
-            controller: ctrl,
-            decoration: const InputDecoration(
-                labelText: 'Agreed By *',
-                border: OutlineInputBorder()),
+          title: const Row(
+            children: [
+              Icon(Icons.gavel, color: Colors.orange),
+              SizedBox(width: 8),
+              Expanded(child: Text('Mark Final Account as Agreed?')),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'This will lock the final account, start the Defect Liability '
+                'Period (DLP), and trigger downstream invoice / retention '
+                'workflows. The status can only move forward to CLOSED from '
+                'here.',
+                style: TextStyle(fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: ctrl,
+                autofocus: true,
+                decoration: const InputDecoration(
+                    labelText: 'Agreed By *',
+                    hintText: 'Full name as on the agreed copy',
+                    border: OutlineInputBorder()),
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -151,8 +177,21 @@ class _FinalAccountScreenState extends State<FinalAccountScreen> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green),
-              onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-              child: const Text('Confirm',
+              onPressed: () {
+                final entered = ctrl.text.trim();
+                if (entered.isEmpty) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please type the signatory name to confirm.'),
+                      backgroundColor: Colors.red,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  return;
+                }
+                Navigator.pop(ctx, entered);
+              },
+              child: const Text('Confirm & Agree',
                   style: TextStyle(color: Colors.white)),
             ),
           ],
@@ -173,9 +212,58 @@ class _FinalAccountScreenState extends State<FinalAccountScreen> {
           context, 'Status updated to $targetStatus');
     } catch (e) {
       if (!mounted) return;
-      ErrorHandler.showErrorSnackBar(context, e);
+      // F-G23: backend G-19 fix raises 409 when another user has edited the
+      // Final Account between load and save. Detect that case and offer a
+      // refresh-and-retry path instead of dumping a raw error.
+      if (_isOptimisticLockConflict(e)) {
+        await _showConflictDialogAndReload();
+      } else {
+        ErrorHandler.showErrorSnackBar(context, e);
+      }
     } finally {
       if (mounted) setState(() => _isActing = false);
+    }
+  }
+
+  /// Recognise the 409-derived Exception the shared ApiService produces when
+  /// the backend returns OptimisticLockingFailureException.
+  bool _isOptimisticLockConflict(Object error) {
+    final msg = error.toString().toLowerCase();
+    return msg.contains('modified by another user') ||
+        msg.contains('optimistic') ||
+        msg.contains('conflict');
+  }
+
+  Future<void> _showConflictDialogAndReload() async {
+    final retry = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.sync_problem, color: Colors.orange),
+            SizedBox(width: 8),
+            Expanded(child: Text('Final Account changed elsewhere')),
+          ],
+        ),
+        content: const Text(
+          'Another user updated this Final Account while you were editing. '
+          'Your change was not saved. Reload the latest version to compare '
+          'and decide whether to re-apply your update.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Dismiss')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Reload latest'),
+          ),
+        ],
+      ),
+    );
+    if (retry == true && mounted) {
+      await _load();
     }
   }
 

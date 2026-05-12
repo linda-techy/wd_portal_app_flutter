@@ -1565,6 +1565,8 @@ class _BoqScreenState extends State<BoqScreen> {
     await _ensureMaterialsLoaded();
     final descController = TextEditingController();
     final itemCodeController = TextEditingController();
+    // G-21 / F-G08: GST HSN/SAC code, mandatory on create.
+    final hsnSacController = TextEditingController();
     final specsController = TextEditingController();
     final unitController = TextEditingController();
     final qtyController = TextEditingController();
@@ -1671,6 +1673,20 @@ class _BoqScreenState extends State<BoqScreen> {
                       ),
                       maxLines: 2,
                       onChanged: (_) => setDialogState(() {}), // Trigger rebuild for auto-code generation
+                    ),
+                    const SizedBox(height: 12),
+
+                    // G-21: HSN / SAC code — required by backend for GST.
+                    TextField(
+                      controller: hsnSacController,
+                      decoration: const InputDecoration(
+                        labelText: 'HSN / SAC Code *',
+                        hintText: '4-8 digits (e.g., 995411 for construction services)',
+                        helperText: 'GST HSN for goods, SAC for services (mandatory for tax invoice)',
+                        prefixIcon: Icon(Icons.numbers, size: 20),
+                      ),
+                      keyboardType: TextInputType.number,
+                      maxLength: 8,
                     ),
                     const SizedBox(height: 12),
 
@@ -1895,6 +1911,7 @@ class _BoqScreenState extends State<BoqScreen> {
                 onPressed: () {
                   // Validate before closing the dialog
                   if (descController.text.trim().isEmpty ||
+                      hsnSacController.text.trim().isEmpty ||
                       unitController.text.trim().isEmpty ||
                       qtyController.text.trim().isEmpty ||
                       rateController.text.trim().isEmpty) {
@@ -1907,6 +1924,19 @@ class _BoqScreenState extends State<BoqScreen> {
                             Text('Please fill all required fields (marked with *)'),
                           ],
                         ),
+                        backgroundColor: Colors.red,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                    return;
+                  }
+                  // G-21: validate HSN/SAC format before the API call so the
+                  // user sees a friendly inline error instead of a 400.
+                  final hsn = hsnSacController.text.trim();
+                  if (!RegExp(r'^[0-9]{4,8}$').hasMatch(hsn)) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(
+                      const SnackBar(
+                        content: Text("HSN/SAC code must be 4-8 digits"),
                         backgroundColor: Colors.red,
                         duration: Duration(seconds: 2),
                       ),
@@ -1963,6 +1993,7 @@ class _BoqScreenState extends State<BoqScreen> {
           workTypeId: selectedWorkTypeId,
           materialId: selectedMaterialId,
           itemCode: itemCodeController.text.trim().isNotEmpty ? itemCodeController.text.trim() : null,
+          hsnSacCode: hsnSacController.text.trim(),
           description: descController.text.trim(),
           specifications: specsController.text.trim().isNotEmpty ? specsController.text.trim() : null,
           unit: unitController.text.trim(),
@@ -2007,6 +2038,8 @@ class _BoqScreenState extends State<BoqScreen> {
     await _ensureMaterialsLoaded();
     final descController = TextEditingController(text: item.description);
     final itemCodeController = TextEditingController(text: item.itemCode);
+    // G-21: surface HSN/SAC code so PMs can backfill legacy items.
+    final hsnSacController = TextEditingController(text: item.hsnSacCode ?? '');
     final unitController = TextEditingController(text: item.unit);
     final qtyController = TextEditingController(text: item.quantity.toString());
     final rateController =
@@ -2042,6 +2075,17 @@ class _BoqScreenState extends State<BoqScreen> {
                         labelText: 'Description *',
                         prefixIcon: Icon(Icons.description)),
                     maxLines: 2,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: hsnSacController,
+                    decoration: const InputDecoration(
+                      labelText: 'HSN / SAC Code',
+                      hintText: '4-8 digits — required for GST invoices',
+                      prefixIcon: Icon(Icons.numbers),
+                    ),
+                    keyboardType: TextInputType.number,
+                    maxLength: 8,
                   ),
                   const SizedBox(height: 16),
                   // Category dropdown
@@ -2213,10 +2257,22 @@ class _BoqScreenState extends State<BoqScreen> {
 
     if (result == true && mounted) {
       try {
+        // G-21: optional on update, but validate format if user supplied it.
+        final hsnEdit = hsnSacController.text.trim();
+        if (hsnEdit.isNotEmpty && !RegExp(r'^[0-9]{4,8}$').hasMatch(hsnEdit)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('HSN/SAC code must be 4-8 digits'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
         await _service.updateBoqItem(item.id, {
           'itemCode': itemCodeController.text.isNotEmpty
               ? itemCodeController.text
               : null,
+          if (hsnEdit.isNotEmpty) 'hsnSacCode': hsnEdit,
           'description': descController.text,
           'unit': unitController.text,
           'quantity': double.tryParse(qtyController.text) ?? item.quantity,
