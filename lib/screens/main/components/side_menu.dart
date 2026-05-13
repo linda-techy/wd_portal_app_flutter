@@ -602,6 +602,12 @@ final List<_MenuGroupData> _menuGroups = [
         isVisible: (p) => p.canManageDpcCustomizationCatalog,
       ),
       _MenuItem(
+        title: 'Design Packages',
+        icon: Icons.dashboard_customize_outlined,
+        index: 35,
+        isVisible: (p) => p.canViewDesignPackageTemplates,
+      ),
+      _MenuItem(
         title: 'Estimation Settings',
         icon: Icons.calculate_outlined,
         index: 26,

@@ -53,6 +53,7 @@ import 'package:admin/features/projects/presentation/screens/perform_mark_comple
 import 'package:admin/services/outbox_service.dart';
 import 'package:admin/services/site_report_service.dart';
 import 'package:admin/services/sync_service.dart';
+import 'package:admin/screens/settings/design_package_templates_screen.dart';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -95,6 +96,7 @@ const Map<String, int> kPathToMenuIndex = {
   '/scheduling/pending-approvals': 32,
   '/sync/pending':                 33,
   '/scheduling/my-tasks':          34,
+  '/settings/design-packages':     35,
 };
 
 /// Map a menu index (from [MenuAppController]) to its route path.
@@ -115,6 +117,7 @@ const List<String> kIndexToPath = [
   '/scheduling/pending-approvals',
   '/sync/pending',
   '/scheduling/my-tasks',
+  '/settings/design-packages',
 ];
 
 String indexToPath(int index) =>
@@ -286,6 +289,10 @@ GoRouter buildAppRouter(PortalAuthProvider authProvider) {
           GoRoute(
             path: '/scheduling/holidays',
             builder: (_, __) => const HolidayCalendarScreen(),
+          ),
+          GoRoute(
+            path: '/settings/design-packages',
+            builder: (_, __) => const DesignPackageTemplatesScreen(),
           ),
           GoRoute(
             path: '/scheduling/pending-approvals',

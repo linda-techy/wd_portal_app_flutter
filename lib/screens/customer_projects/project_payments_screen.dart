@@ -535,7 +535,10 @@ class _ProjectPaymentsScreenState extends State<ProjectPaymentsScreen> {
   Future<void> _openCreateDialog() async {
     final created = await showDialog<bool>(
       context: context,
-      builder: (_) => _CreateDesignPaymentDialog(projectId: widget.project.id!),
+      builder: (_) => _CreateDesignPaymentDialog(
+        projectId: widget.project.id!,
+        projectName: widget.project.name,
+      ),
     );
     if (created == true) {
       _loadPaymentData();
@@ -545,8 +548,12 @@ class _ProjectPaymentsScreenState extends State<ProjectPaymentsScreen> {
 
 class _CreateDesignPaymentDialog extends StatefulWidget {
   final int projectId;
+  final String projectName;
 
-  const _CreateDesignPaymentDialog({required this.projectId});
+  const _CreateDesignPaymentDialog({
+    required this.projectId,
+    required this.projectName,
+  });
 
   @override
   State<_CreateDesignPaymentDialog> createState() =>
@@ -555,8 +562,18 @@ class _CreateDesignPaymentDialog extends StatefulWidget {
 
 class _CreateDesignPaymentDialogState
     extends State<_CreateDesignPaymentDialog> {
+  // Indian-locale ₹ formatter — renders 11,21,000 (lakh grouping), not 1,121,000.
+  static final _inr =
+      NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+
+  // Soft caps — Kerala residential design fees rarely exceed these.
+  static const double _maxRatePerSqft = 2000; // ₹/sqft
+  static const double _maxDiscountPct = 25;
+  static const double _gstPct = 18; // mirrors PaymentService.GST_PERCENTAGE
+
   final _formKey = GlobalKey<FormState>();
-  final _packageNameController = TextEditingController(text: 'Standard Design Package');
+  final _packageNameController =
+      TextEditingController(text: 'Standard Design Package');
   final _rateController = TextEditingController();
   final _sqftController = TextEditingController();
   final _discountController = TextEditingController(text: '0');
@@ -564,6 +581,15 @@ class _CreateDesignPaymentDialogState
   bool _isSubmitting = false;
 
   final PaymentService _paymentService = PaymentService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Live preview: any input change recomputes the totals card below.
+    for (final c in [_rateController, _sqftController, _discountController]) {
+      c.addListener(() => setState(() {}));
+    }
+  }
 
   @override
   void dispose() {
@@ -610,10 +636,70 @@ class _CreateDesignPaymentDialogState
     return null;
   }
 
+  String? _validateRate(String? value) {
+    final base = _requiredNumber(value);
+    if (base != null) return base;
+    final v = double.parse(value!);
+    if (v > _maxRatePerSqft) {
+      return 'Rate looks unusually high (max ₹${_maxRatePerSqft.toInt()}/sqft)';
+    }
+    return null;
+  }
+
+  String? _validateDiscount(String? value) {
+    final base = _requiredNumber(value, allowZero: true);
+    if (base != null) return base;
+    final v = double.parse(value!);
+    if (v > _maxDiscountPct) {
+      return 'Discount above ${_maxDiscountPct.toInt()}% needs manager approval';
+    }
+    return null;
+  }
+
+  /// Mirrors PaymentService.createDesignPayment math so staff see exactly
+  /// what the backend will persist — no surprises after submit.
+  ({double base, double gst, double subtotal, double discount, double total})?
+      _computeTotals() {
+    final rate = double.tryParse(_rateController.text);
+    final sqft = double.tryParse(_sqftController.text);
+    if (rate == null || sqft == null || rate <= 0 || sqft <= 0) return null;
+    final discountPct =
+        (double.tryParse(_discountController.text) ?? 0).clamp(0, 100);
+    final base = rate * sqft;
+    final gst = base * _gstPct / 100;
+    final subtotal = base + gst;
+    final discount = subtotal * discountPct / 100;
+    final total = subtotal - discount;
+    return (
+      base: base,
+      gst: gst,
+      subtotal: subtotal,
+      discount: discount,
+      total: total,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final totals = _computeTotals();
     return AlertDialog(
-      title: const Text('Create Design Payment'),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('Create Design Payment'),
+          const SizedBox(height: 2),
+          Text(
+            widget.projectName,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppTheme.textSecondary,
+                  fontWeight: FontWeight.normal,
+                ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -623,44 +709,55 @@ class _CreateDesignPaymentDialogState
             children: [
               TextFormField(
                 controller: _packageNameController,
-                decoration: const InputDecoration(labelText: 'Package name'),
+                decoration: const InputDecoration(labelText: 'Design Package'),
                 validator: (v) =>
                     (v == null || v.trim().isEmpty) ? 'Required' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _rateController,
-                decoration:
-                    const InputDecoration(labelText: 'Rate per sqft (₹)'),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                validator: (v) => _requiredNumber(v),
+                decoration: const InputDecoration(
+                  labelText: 'Design Fee Rate (₹/sqft)',
+                  helperText: 'Typical Kerala range: ₹50–250/sqft',
+                ),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                validator: _validateRate,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _sqftController,
-                decoration: const InputDecoration(labelText: 'Total sqft'),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                validator: (v) => _requiredNumber(v),
+                decoration: const InputDecoration(
+                  labelText: 'Built-up Area (sqft)',
+                ),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                validator: _requiredNumber,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _discountController,
-                decoration:
-                    const InputDecoration(labelText: 'Discount % (optional)'),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                validator: (v) => _requiredNumber(v, allowZero: true),
+                decoration: const InputDecoration(
+                    labelText: 'Discount % (optional)'),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                validator: _validateDiscount,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: _paymentType,
                 decoration: const InputDecoration(labelText: 'Payment type'),
                 items: const [
-                  DropdownMenuItem(value: 'FULL', child: Text('Pay in Full')),
                   DropdownMenuItem(
-                      value: 'INSTALLMENT', child: Text('Pay in Installments')),
+                      value: 'FULL', child: Text('Pay in Full')),
+                  DropdownMenuItem(
+                      value: 'INSTALLMENT',
+                      child: Text('3-Installment Plan (Advance / Mid / Final)')),
                 ],
                 onChanged: (v) => setState(() => _paymentType = v!),
               ),
+              const SizedBox(height: 16),
+              if (totals != null) _buildTotalsCard(totals),
             ],
           ),
         ),
@@ -682,6 +779,109 @@ class _CreateDesignPaymentDialogState
               : const Text('Create'),
         ),
       ],
+    );
+  }
+
+  Widget _buildTotalsCard(
+      ({
+        double base,
+        double gst,
+        double subtotal,
+        double discount,
+        double total
+      }) t) {
+    final rate = double.tryParse(_rateController.text) ?? 0;
+    final sqft = double.tryParse(_sqftController.text) ?? 0;
+    final discountPct = double.tryParse(_discountController.text) ?? 0;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryBlue.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+        border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Preview',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryBlue,
+                ),
+          ),
+          const SizedBox(height: 8),
+          _row('Base (${_inr.format(rate)} × ${sqft.toStringAsFixed(0)} sqft)',
+              _inr.format(t.base)),
+          _row('GST (${_gstPct.toInt()}%)', _inr.format(t.gst)),
+          _row('Subtotal', _inr.format(t.subtotal)),
+          if (discountPct > 0)
+            _row(
+              'Discount (${discountPct.toStringAsFixed(discountPct.truncateToDouble() == discountPct ? 0 : 1)}%)',
+              '− ${_inr.format(t.discount)}',
+              valueColor: AppTheme.statusSuccess,
+            ),
+          const Divider(height: 16),
+          _row('Total Payable', _inr.format(t.total), bold: true),
+          if (_paymentType == 'INSTALLMENT') ...[
+            const SizedBox(height: 12),
+            Text(
+              'Installment plan',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textSecondary,
+                  ),
+            ),
+            const SizedBox(height: 4),
+            ..._installmentPreview(t.total).map(
+              (e) => _row(e.$1, _inr.format(e.$2)),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Mirrors PaymentService's 3-installment split: equal thirds, with any
+  /// rounding remainder bolted onto the first installment so the rows sum
+  /// exactly to the total.
+  List<(String, double)> _installmentPreview(double total) {
+    final third = (total / 3 * 100).floorToDouble() / 100; // round down to 2dp
+    final remainder = total - third * 3;
+    return [
+      ('1. Advance', third + remainder),
+      ('2. Design Phase', third),
+      ('3. Post-Design', third),
+    ];
+  }
+
+  Widget _row(String label, String value,
+      {bool bold = false, Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: bold ? FontWeight.bold : FontWeight.w500,
+              color: valueColor,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

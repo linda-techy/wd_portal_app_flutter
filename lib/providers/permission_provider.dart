@@ -187,6 +187,12 @@ class PermissionProvider with ChangeNotifier {
   bool get canManageDpcCustomizationCatalog =>
       hasPermission('DPC_CUSTOMIZATION_CATALOG_MANAGE');
 
+  // Design Package Template catalog (V140)
+  bool get canViewDesignPackageTemplates =>
+      hasPermission('DESIGN_PACKAGE_VIEW');
+  bool get canManageDesignPackageTemplates =>
+      hasPermission('DESIGN_PACKAGE_MANAGE');
+
   // Scheduling (S1) permissions
   bool get canViewWbsTemplates => hasPermission('WBS_TEMPLATE_VIEW');
   bool get canManageWbsTemplates => hasPermission('WBS_TEMPLATE_MANAGE');
