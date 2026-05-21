@@ -20,6 +20,10 @@ class SiteVisit {
   final DateTime? createdAt;
   final double? distanceFromProjectCheckIn;
   final double? distanceFromProjectCheckOut;
+  // Force-close audit. Set when an admin closed the visit bypassing the GPS check.
+  final int? forceClosedByUserId;
+  final String? forceClosedByName;
+  final String? forceCloseReason;
 
   SiteVisit({
     required this.id,
@@ -43,6 +47,9 @@ class SiteVisit {
     this.createdAt,
     this.distanceFromProjectCheckIn,
     this.distanceFromProjectCheckOut,
+    this.forceClosedByUserId,
+    this.forceClosedByName,
+    this.forceCloseReason,
   });
 
   factory SiteVisit.fromJson(Map<String, dynamic> json) {
@@ -68,8 +75,15 @@ class SiteVisit {
       createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'].toString()) : null,
       distanceFromProjectCheckIn: (json['distanceFromProjectCheckIn'] as num?)?.toDouble(),
       distanceFromProjectCheckOut: (json['distanceFromProjectCheckOut'] as num?)?.toDouble(),
+      forceClosedByUserId: (json['forceClosedByUserId'] as num?)?.toInt(),
+      forceClosedByName: json['forceClosedByName'] as String?,
+      forceCloseReason: json['forceCloseReason'] as String?,
     );
   }
+
+  bool get wasForceClosed =>
+      forceClosedByUserId != null ||
+      (forceCloseReason != null && forceCloseReason!.isNotEmpty);
 
   Map<String, dynamic> toJson() {
     return {

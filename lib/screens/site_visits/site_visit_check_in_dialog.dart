@@ -195,7 +195,7 @@ class _SiteVisitCheckInDialogState extends State<SiteVisitCheckInDialog> {
                             ),
                           ),
                           Text(
-                            'GPS verification required within 2 km of site',
+                            'GPS verification required within 200 m of site',
                             style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                           ),
                         ],

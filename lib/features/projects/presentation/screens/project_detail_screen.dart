@@ -432,6 +432,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   Widget _buildModulesSection(BuildContext context) {
     final perms = context.watch<PermissionProvider>();
     final modules = <_ModuleTile>[
+      _ModuleTile(title: 'Schedule',         icon: Icons.view_timeline_outlined,  color: AppTheme.primaryBlue,        onTap: () => _navigateToModule(context, 'Schedule')),
       _ModuleTile(title: 'Documents',        icon: Icons.description_outlined,    color: AppTheme.primaryBlue,        onTap: () => _navigateToModule(context, 'Documents')),
       _ModuleTile(title: 'Payments',         icon: Icons.payment_outlined,        color: AppTheme.statusSuccess,      onTap: () => _navigateToModule(context, 'Payments')),
       _ModuleTile(title: 'BoQ',              icon: Icons.receipt_long_outlined,   color: AppTheme.safetyOrange,       onTap: () => _navigateToModule(context, 'BoQ')),
@@ -497,6 +498,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
     MaterialPageRoute<dynamic>? route;
     switch (moduleName) {
+      case 'Schedule':
+        route = MaterialPageRoute(builder: (_) => GanttScreen(projectId: id, projectName: project.name)); break;
       case 'Documents':
         route = MaterialPageRoute(builder: (_) => ProjectDocumentsScreen(project: _asCustomerProject())); break;
       case 'Payments':

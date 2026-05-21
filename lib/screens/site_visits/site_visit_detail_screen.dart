@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:admin/models/site_visit_models.dart';
+import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/services/site_visit_service.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:intl/intl.dart';
@@ -53,9 +55,23 @@ class _SiteVisitDetailScreenState extends State<SiteVisitDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final canForceClose = context.select<PermissionProvider, bool>(
+        (p) => p.hasPermission('SITE_VISIT_FORCE_CLOSE'));
+    final v = _visit;
+    final showForceCloseAction =
+        v != null && v.isActive && canForceClose;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Site Visit Details'),
+        actions: [
+          if (showForceCloseAction)
+            IconButton(
+              tooltip: 'Force-close this visit (bypasses GPS check)',
+              icon: const Icon(Icons.lock_clock, color: AppTheme.coralRed),
+              onPressed: _confirmForceClose,
+            ),
+        ],
       ),
       body: _isLoading && _visit == null
           ? const Center(child: CircularProgressIndicator())
@@ -65,6 +81,85 @@ class _SiteVisitDetailScreenState extends State<SiteVisitDetailScreen> {
                   ? _buildContent()
                   : const SizedBox.shrink(),
     );
+  }
+
+  Future<void> _confirmForceClose() async {
+    final v = _visit;
+    if (v == null) return;
+
+    final controller = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Force-close visit?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'You are closing ${v.visitedByName ?? "this user"}\'s active visit '
+              'at ${v.projectName} without GPS validation. The action is permanent and '
+              'is recorded against your account.',
+              style: const TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              minLines: 2,
+              maxLines: 4,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Reason (required)',
+                hintText: 'e.g. Lost phone, dead GPS, geofence policy change',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.coralRed, foregroundColor: Colors.white),
+            onPressed: () {
+              if (controller.text.trim().isEmpty) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  const SnackBar(content: Text('A reason is required.')),
+                );
+                return;
+              }
+              Navigator.of(ctx).pop(true);
+            },
+            child: const Text('Force close'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      final updated =
+          await _visitService.forceClose(v.id, controller.text.trim());
+      if (!mounted) return;
+      setState(() => _visit = updated);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Visit force-closed.'),
+          backgroundColor: AppTheme.successGreen,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Force-close failed: $e'),
+          backgroundColor: AppTheme.errorRed,
+        ),
+      );
+    }
   }
 
   Widget _buildError() {

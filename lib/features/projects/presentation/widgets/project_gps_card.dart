@@ -172,7 +172,7 @@ class _ProjectGpsCardState extends State<ProjectGpsCard> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Site-visit check-ins must be within 2 km of this location.',
+                'Site-visit check-ins must be within 200 m of this location.',
                 style: TextStyle(
                     color: Colors.grey.shade700, fontSize: 12),
               ),

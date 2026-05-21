@@ -2052,7 +2052,10 @@ class _BoqScreenState extends State<BoqScreen> {
     int? selectedCategoryId = item.categoryId;
     int? selectedWorkTypeId = item.workTypeId;
     int? selectedMaterialId = item.materialId;
-    String selectedItemKind = item.itemKind;
+    // Guard: an unrecognised itemKind would crash the dropdown's value invariant.
+    const knownItemKinds = {'BASE', 'ADDON', 'OPTIONAL', 'EXCLUSION'};
+    String selectedItemKind =
+        knownItemKinds.contains(item.itemKind) ? item.itemKind : 'BASE';
 
     final result = await showDialog<bool>(
       context: context,
@@ -2092,7 +2095,11 @@ class _BoqScreenState extends State<BoqScreen> {
                     maxLength: 8,
                   ),
                   const SizedBox(height: 16),
-                  // Category dropdown
+                  // Category dropdown — keep a synthetic placeholder when the
+                  // item references a category that isn't in the loaded list
+                  // (e.g. soft-deleted), otherwise the dropdown's value
+                  // invariant would throw and the dialog would render as just
+                  // a backdrop.
                   DropdownButtonFormField<int?>(
                     value: selectedCategoryId,
                     decoration: const InputDecoration(
@@ -2101,6 +2108,11 @@ class _BoqScreenState extends State<BoqScreen> {
                     items: [
                       const DropdownMenuItem<int?>(
                           value: null, child: Text('No Category')),
+                      if (selectedCategoryId != null &&
+                          !_categories.any((c) => c.id == selectedCategoryId))
+                        DropdownMenuItem<int?>(
+                            value: selectedCategoryId,
+                            child: Text('(Unknown #$selectedCategoryId)')),
                       ..._buildHierarchicalCategoryItems(),
                     ],
                     onChanged: (v) =>
@@ -2116,6 +2128,11 @@ class _BoqScreenState extends State<BoqScreen> {
                     items: [
                       const DropdownMenuItem<int?>(
                           value: null, child: Text('No Work Type')),
+                      if (selectedWorkTypeId != null &&
+                          !_workTypes.any((wt) => wt.id == selectedWorkTypeId))
+                        DropdownMenuItem<int?>(
+                            value: selectedWorkTypeId,
+                            child: Text('(Unknown #$selectedWorkTypeId)')),
                       ..._workTypes.map((wt) => DropdownMenuItem<int?>(
                             value: wt.id,
                             child: Text(wt.name,
@@ -2136,6 +2153,11 @@ class _BoqScreenState extends State<BoqScreen> {
                     items: [
                       const DropdownMenuItem<int?>(
                           value: null, child: Text('No Material')),
+                      if (selectedMaterialId != null &&
+                          !_materials.any((m) => m.id == selectedMaterialId))
+                        DropdownMenuItem<int?>(
+                            value: selectedMaterialId,
+                            child: Text('(Unknown #$selectedMaterialId)')),
                       ..._materials.map((m) => DropdownMenuItem<int?>(
                             value: m.id,
                             child: Text('${m.name} (${m.unit})'),

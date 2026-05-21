@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:admin/models/task_models.dart';
+import 'package:admin/providers/permission_provider.dart';
+import 'package:admin/screens/tasks/widgets/predecessor_edit_dialog.dart';
+import 'package:admin/screens/tasks/widgets/task_quality_gates_panel.dart';
 import 'package:admin/services/task_service.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/theme/responsive_utils.dart';
@@ -142,8 +146,87 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         .join(' ');
   }
 
+  Future<void> _confirmDelete() async {
+    final t = _task;
+    if (t == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete task?'),
+        content: Text(
+          'This will permanently remove "${t.title}" and all of its quality-gate '
+          'audit rows from the schedule. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel')),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.statusError,
+                foregroundColor: Colors.white),
+            icon: const Icon(Icons.delete_outline, size: 16),
+            label: const Text('Delete'),
+            onPressed: () => Navigator.of(ctx).pop(true),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _taskService.deleteTask(widget.taskId);
+      if (!mounted) return;
+      Navigator.of(context).pop(true); // return true so the caller refreshes
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Task deleted'),
+            backgroundColor: AppTheme.statusSuccess),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Delete failed: $e'),
+            backgroundColor: AppTheme.statusError),
+      );
+    }
+  }
+
+  Future<void> _editPredecessors() async {
+    final t = _task;
+    if (t == null) return;
+    if (t.projectId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text(
+            'This task has no project — predecessors only apply to project tasks.'),
+      ));
+      return;
+    }
+    final changed = await PredecessorEditDialog.show(
+      context,
+      taskId: widget.taskId,
+      projectId: t.projectId!,
+      taskTitle: t.title,
+    );
+    if (changed == true && mounted) {
+      // CPM was recomputed server-side; refresh so es/ef shifts (when shown) reflect it.
+      await _loadTask();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Predecessors updated; CPM recomputed.'),
+          backgroundColor: AppTheme.statusSuccess,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final canDelete = context.select<PermissionProvider, bool>(
+        (p) => p.hasPermission('TASK_DELETE'));
+    final canEdit = context.select<PermissionProvider, bool>(
+        (p) => p.hasPermission('TASK_EDIT'));
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
@@ -156,6 +239,19 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: _loadTask,
           ),
+          if (canEdit && _task != null && _task!.projectId != null)
+            IconButton(
+              icon: const Icon(Icons.account_tree_outlined),
+              tooltip: 'Edit predecessors',
+              onPressed: _editPredecessors,
+            ),
+          if (canDelete && _task != null)
+            IconButton(
+              icon: const Icon(Icons.delete_outline,
+                  color: AppTheme.statusError),
+              tooltip: 'Delete task',
+              onPressed: _confirmDelete,
+            ),
         ],
       ),
       body: _isLoading
@@ -171,6 +267,14 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                       _buildHeaderCard(),
                       const SizedBox(height: AppTheme.spacingMD),
                       _buildStatusUpdateCard(),
+                      const SizedBox(height: AppTheme.spacingMD),
+                      // ITP quality gates — sequential PRELIM / IN_PROGRESS / FINAL
+                      // sign-off by the site engineer. Server blocks COMPLETED
+                      // until FINAL passes.
+                      TaskQualityGatesPanel(
+                        taskId: widget.taskId,
+                        onChanged: _loadTask,
+                      ),
                       const SizedBox(height: AppTheme.spacingMD),
                       _buildInfoGrid(),
                     ],

@@ -1,15 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/models/task_models.dart';
+import 'package:admin/models/customer_project.dart';
 import 'package:admin/providers/task_provider.dart';
+import 'package:admin/services/customer_project_service.dart';
 import 'package:admin/widgets/common/search_bar_widget.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'task_detail_screen.dart';
 import 'task_create_screen.dart';
 import '../../providers/permission_provider.dart';
 
-class TaskListScreen extends StatelessWidget {
+class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
+
+  @override
+  State<TaskListScreen> createState() => _TaskListScreenState();
+}
+
+class _TaskListScreenState extends State<TaskListScreen> {
+  final _projectService = CustomerProjectService();
+  List<CustomerProject> _projects = [];
+  bool _loadingProjects = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProjects();
+  }
+
+  Future<void> _loadProjects() async {
+    try {
+      // Load a reasonable page of projects for the filter dropdown.
+      // Sorted by id desc so the most recent projects appear first.
+      final page = await _projectService.getProjects(size: 200);
+      if (!mounted) return;
+      setState(() {
+        _projects = page.content;
+        _loadingProjects = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingProjects = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,15 +86,76 @@ class TaskListScreen extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       color: Colors.grey[100],
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SearchBarWidget(
             onSearch: (query) => provider.search(query),
             hintText: 'Search tasks...',
           ),
           const SizedBox(height: 12),
+          _buildProjectFilter(context, provider),
+          const SizedBox(height: 12),
           _buildFilterChips(context, provider),
         ],
       ),
+    );
+  }
+
+  Widget _buildProjectFilter(BuildContext context, TaskProvider provider) {
+    final selectedId = provider.filters['projectId'] as int?;
+    if (_loadingProjects) {
+      return Row(
+        children: [
+          const SizedBox(
+              width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+          const SizedBox(width: 8),
+          Text('Loading projects…',
+              style: TextStyle(color: Colors.grey.shade700, fontSize: 12)),
+        ],
+      );
+    }
+    return Row(
+      children: [
+        Icon(Icons.folder_outlined, size: 16, color: Colors.grey.shade700),
+        const SizedBox(width: 6),
+        Text('Project:',
+            style: TextStyle(color: Colors.grey.shade800, fontSize: 13)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: DropdownButtonFormField<int?>(
+            value: selectedId,
+            isDense: true,
+            isExpanded: true,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              filled: true,
+              fillColor: Colors.white,
+            ),
+            items: [
+              const DropdownMenuItem<int?>(value: null, child: Text('All projects')),
+              ..._projects.map((p) => DropdownMenuItem<int?>(
+                    value: p.id,
+                    child: Text(
+                      p.name.isNotEmpty ? p.name : 'Project #${p.id}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  )),
+            ],
+            onChanged: (id) => provider.filterByProjectId(id),
+          ),
+        ),
+        if (selectedId != null) ...[
+          const SizedBox(width: 6),
+          IconButton(
+            tooltip: 'Clear project filter',
+            icon: const Icon(Icons.close, size: 18),
+            onPressed: () => provider.filterByProjectId(null),
+          ),
+        ],
+      ],
     );
   }
 

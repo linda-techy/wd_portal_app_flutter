@@ -9,6 +9,7 @@ import 'package:admin/providers/permission_provider.dart';
 import 'package:admin/screens/site_visits/site_visit_check_in_dialog.dart';
 import 'package:admin/screens/site_visits/site_visit_check_out_dialog.dart';
 import 'package:admin/screens/site_visits/site_visit_detail_screen.dart';
+import 'package:admin/screens/site_visits/site_visit_violations_screen.dart';
 
 class SiteVisitsScreen extends StatefulWidget {
   const SiteVisitsScreen({super.key});
@@ -92,6 +93,25 @@ class _SiteVisitsScreenState extends State<SiteVisitsScreen> {
             appBar: AppBar(
               title: const Text('Site Visits'),
               actions: [
+                // Geofence-violation audit log — visible to ADMIN / PROJECT_MANAGER
+                // (anyone with SITE_VISIT_VIOLATION_VIEW). Customers never see this.
+                Consumer<PermissionProvider>(
+                  builder: (context, perm, _) {
+                    if (!perm.hasPermission('SITE_VISIT_VIOLATION_VIEW')) {
+                      return const SizedBox.shrink();
+                    }
+                    return IconButton(
+                      icon: const Icon(Icons.gpp_bad_outlined,
+                          color: AppTheme.coralRed),
+                      tooltip: 'Geofence violations',
+                      onPressed: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const SiteVisitViolationsScreen(),
+                        ));
+                      },
+                    );
+                  },
+                ),
                 // Check-in / Check-out button
                 if (_activeVisit != null)
                   TextButton.icon(

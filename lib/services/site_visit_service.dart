@@ -21,6 +21,18 @@ class SiteVisitService {
         response, (json) => SiteVisit.fromJson(json as Map<String, dynamic>));
   }
 
+  /// Admin force-close. Bypasses the GPS geofence — used for legitimately
+  /// stuck visits (lost phone, dead GPS, geofence policy change). Requires
+  /// the SITE_VISIT_FORCE_CLOSE permission on the server.
+  Future<SiteVisit> forceClose(int visitId, String reason) async {
+    final response = await _apiService.post(
+      '/api/site-visits/$visitId/force-close',
+      data: {'reason': reason},
+    );
+    return _apiService.unwrap<SiteVisit>(
+        response, (json) => SiteVisit.fromJson(json as Map<String, dynamic>));
+  }
+
   /// Get current active visit for logged-in user
   Future<SiteVisit?> getMyActiveVisit() async {
     final response = await _apiService.get('/api/site-visits/active');
