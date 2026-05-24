@@ -624,6 +624,34 @@ class _BoqScreenState extends State<BoqScreen> {
       }
     }
     
+    // Safety net (defense-in-depth, NOT the "edit modal not coming" fix —
+    // that was the missing isExpanded:true below): emit any category NOT
+    // reached by the top-level→child walk above — orphans, levels deeper than
+    // 2, or a child whose parent isn't top-level. A category that IS in
+    // `_categories` but missing from these items would set a
+    // DropdownButtonFormField value with no matching item, tripping the
+    // "exactly one item with value" invariant. Emitting them flat keeps every
+    // category selectable so a pre-set value always has a match.
+    final emittedIds = items.map((i) => i.value).toSet();
+    for (final c in _categories) {
+      if (emittedIds.contains(c.id)) continue;
+      items.add(
+        DropdownMenuItem(
+          value: c.id,
+          child: Row(
+            children: [
+              const SizedBox(width: 12),
+              const Icon(Icons.label_outline, size: 16, color: Colors.grey),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(c.name, overflow: TextOverflow.ellipsis),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return items;
   }
 
@@ -2102,6 +2130,15 @@ class _BoqScreenState extends State<BoqScreen> {
                   // a backdrop.
                   DropdownButtonFormField<int?>(
                     value: selectedCategoryId,
+                    // Hierarchical category items wrap their label in Expanded;
+                    // the dropdown only gives items a bounded width when
+                    // isExpanded is true. Without it, items are measured at
+                    // unbounded width and the Expanded inside the Row throws
+                    // "RenderFlex children have non-zero flex but incoming width
+                    // constraints are unbounded", so the whole edit dialog
+                    // rendered as a bare backdrop ("edit modal not coming").
+                    // The Add dialog already sets this — keep them in sync.
+                    isExpanded: true,
                     decoration: const InputDecoration(
                         labelText: 'Category',
                         prefixIcon: Icon(Icons.category)),
