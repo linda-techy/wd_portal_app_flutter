@@ -63,6 +63,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   late ProjectModel project = widget.project;
   late String? _currentPhase = widget.project.projectPhase;
   bool _savingPhase = false;
+  // Per-project GST rate (decimal fraction; default 0%). Held in local state so
+  // the Financials card reflects edits without reloading the whole project.
+  late double? _gstRate = widget.project.gstRate;
+  bool _savingGst = false;
 
   /// Adapter for legacy module screens that still accept CustomerProject.
   CustomerProject _asCustomerProject() => CustomerProject(
@@ -184,10 +188,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               const SizedBox(height: 16),
             ],
             _buildDetailsCard(context),
-            if (project.budget != null || project.sqfeet != null) ...[
-              const SizedBox(height: 16),
-              _buildFinancialsCard(context),
-            ],
+            // GST is always present (per-project, default 0%), so the
+            // Financials card always renders now.
+            const SizedBox(height: 16),
+            _buildFinancialsCard(context),
             if (project.id != null) ...[
               const SizedBox(height: 16),
               // V82: site GPS card. Override is gated on the ADMIN role —
@@ -384,10 +388,126 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               if (project.budget != null) const SizedBox(height: 12),
               _buildDetailRow(icon: Icons.square_foot, label: 'Area', value: '${project.sqfeet!.toStringAsFixed(0)} sq.ft'),
             ],
+            if (project.budget != null || project.sqfeet != null) const SizedBox(height: 12),
+            _buildGstRow(context),
           ],
         ),
       ),
     );
+  }
+
+  /// Per-project GST rate row with inline edit (portal users with PROJECT_EDIT).
+  Widget _buildGstRow(BuildContext context) {
+    final canEdit = context.read<PermissionProvider>().canEditProject;
+    final pct = (_gstRate ?? 0) * 100;
+    final pctLabel = pct == pct.roundToDouble()
+        ? '${pct.toStringAsFixed(0)}%'
+        : '${pct.toStringAsFixed(2)}%';
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Icon(Icons.receipt_long, size: 18, color: Colors.grey[600]),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('GST rate', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+              const SizedBox(height: 2),
+              Text(pctLabel, style: const TextStyle(fontSize: 14)),
+            ],
+          ),
+        ),
+        if (canEdit)
+          _savingGst
+              ? const SizedBox(
+                  width: 18, height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2))
+              : IconButton(
+                  icon: const Icon(Icons.edit, size: 18),
+                  tooltip: 'Edit GST rate',
+                  color: AppTheme.deepSlate,
+                  onPressed: _editGstRate,
+                ),
+      ],
+    );
+  }
+
+  Future<void> _editGstRate() async {
+    final initialPct = (_gstRate ?? 0) * 100;
+    final controller = TextEditingController(
+      text: initialPct == initialPct.roundToDouble()
+          ? initialPct.toStringAsFixed(0)
+          : initialPct.toStringAsFixed(2),
+    );
+    final enteredPct = await showDialog<double>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Set GST rate'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'GST percentage applied to NEW BoQ documents for this project. '
+                'Already-approved BoQs keep their existing rate. Use 0 for none.',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'GST %',
+                  hintText: 'e.g. 0 or 18',
+                  suffixText: '%',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: () {
+                final v = double.tryParse(controller.text.trim());
+                if (v == null || v < 0 || v > 100) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+                    content: Text('Enter a GST % between 0 and 100'),
+                    backgroundColor: Colors.red));
+                  return;
+                }
+                Navigator.pop(ctx, v);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+    if (enteredPct == null) return;
+    setState(() => _savingGst = true);
+    try {
+      final saved = await CustomerProjectService()
+          .updateProjectGstRate(project.id!, enteredPct / 100.0);
+      if (!mounted) return;
+      final savedPct = saved * 100;
+      setState(() {
+        _gstRate = saved;
+        _savingGst = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('GST rate set to '
+            '${savedPct == savedPct.roundToDouble() ? savedPct.toStringAsFixed(0) : savedPct.toStringAsFixed(2)}%'),
+        backgroundColor: Colors.green));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _savingGst = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Failed to update GST: $e'), backgroundColor: Colors.red));
+    }
   }
 
   Widget _buildDetailRow({required IconData icon, required String label, required String value}) {

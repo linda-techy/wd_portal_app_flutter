@@ -13,6 +13,8 @@ class ProjectModel {
   final DateTime? endDate;
   final double? budget;
   final double? sqfeet;
+  /// Per-project GST rate as a decimal fraction (0.18 = 18%); default 0.
+  final double? gstRate;
   final String? customerName;
   final int? customerId;
 
@@ -29,6 +31,7 @@ class ProjectModel {
     this.endDate,
     this.budget,
     this.sqfeet,
+    this.gstRate,
     this.customerName,
     this.customerId,
   });
@@ -82,6 +85,7 @@ class ProjectModel {
       endDate: _toDate(json['endDate'] ?? json['end_date']),
       budget: _toDouble(json['budget']),
       sqfeet: _toDouble(json['sqfeet']),
+      gstRate: _toDouble(json['gstRate'] ?? json['gst_rate']),
       customerName: customerName,
       customerId: _toInt(json['customerId'] ?? json['customer_id'] ??
           (customer is Map ? customer['id'] : null)),

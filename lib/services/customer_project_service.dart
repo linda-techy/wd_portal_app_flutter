@@ -46,6 +46,19 @@ class CustomerProjectService {
     }
   }
 
+  /// Update a project's GST rate (decimal fraction; 0.18 = 18%). Returns the
+  /// saved rate. Only affects BoQ documents created afterwards (V158).
+  Future<double> updateProjectGstRate(int projectId, double gstRateFraction) async {
+    final response = await _apiService.patch(
+      '/customer-projects/$projectId/gst-rate',
+      data: {'gstRate': gstRateFraction},
+    );
+    final data = response.data is Map ? response.data['data'] : null;
+    final saved = (data is Map) ? data['gst_rate'] : null;
+    if (saved is num) return saved.toDouble();
+    return double.tryParse(saved?.toString() ?? '') ?? gstRateFraction;
+  }
+
   /// Get project by ID
   Future<CustomerProject?> getProjectById(int id) async {
     try {
