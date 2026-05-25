@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:provider/provider.dart';
 import 'package:admin/services/boq_service.dart';
-import 'package:admin/models/paginated_response.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/utils/error_handler.dart';
 import 'package:admin/providers/portal_auth_provider.dart';
@@ -73,40 +72,58 @@ class _BoqScreenState extends State<BoqScreen> {
       _currentPage = 0;
       _items = [];
     });
+    // The BoQ items are the screen's primary content — a failure here is a real
+    // error worth surfacing. (Materials load lazily when the dialog opens.)
     try {
-      // Materials are only needed when the create/edit dialog opens — load them lazily there.
-      final results = await Future.wait([
-        _service.getProjectBoq(
-          widget.projectId,
-          page: 0,
-          size: _pageSize,
-          workTypeId: _selectedWorkTypeId,
-          categoryId: _selectedCategoryId,
-          status: _selectedStatus,
-        ),
-        _service.getWorkTypes(),
-        _service.getCategories(widget.projectId),
-        _service.getFinancialSummary(widget.projectId),
-      ]);
-      if (mounted) {
-        final boqPage = results[0] as PaginatedResponse<BoqItem>;
-        setState(() {
-          _items = boqPage.content;
-          _hasNextPage = boqPage.hasNext;
-          _totalServerItems = boqPage.totalElements;
-          _workTypes = results[1] as List<BoqWorkType>;
-          _categories = results[2] as List<BoqCategory>;
-          _summary = results[3] as BoqFinancialSummary;
-          _isLoading = false;
-        });
-      }
+      final boqPage = await _service.getProjectBoq(
+        widget.projectId,
+        page: 0,
+        size: _pageSize,
+        workTypeId: _selectedWorkTypeId,
+        categoryId: _selectedCategoryId,
+        status: _selectedStatus,
+      );
+      if (!mounted) return;
+      setState(() {
+        _items = boqPage.content;
+        _hasNextPage = boqPage.hasNext;
+        _totalServerItems = boqPage.totalElements;
+        _isLoading = false;
+      });
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
         await ErrorHandler.handleApiError(context, e,
             defaultMessage: 'Failed to load BoQ');
       }
+      return;
     }
+
+    // Reference data + financial summary load INDEPENDENTLY of the items and of
+    // each other. Previously all four shared one Future.wait, so a single hiccup
+    // (e.g. a token refresh) blanked everything — including the work-type /
+    // category dropdowns and even the items list. Each piece now fails in
+    // isolation and is re-fetched on demand by _ensureDialogReferenceData().
+    Future<void> guard(Future<void> Function() task) async {
+      try {
+        await task();
+      } catch (_) {/* leave this piece empty/null; the rest still renders */}
+    }
+    await Future.wait([
+      guard(() async {
+        final w = await _service.getWorkTypes();
+        if (mounted) _workTypes = w;
+      }),
+      guard(() async {
+        final c = await _service.getCategories(widget.projectId);
+        if (mounted) _categories = c;
+      }),
+      guard(() async {
+        final s = await _service.getFinancialSummary(widget.projectId);
+        if (mounted) _summary = s;
+      }),
+    ]);
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadMore() async {
@@ -141,11 +158,42 @@ class _BoqScreenState extends State<BoqScreen> {
     }
   }
 
-  /// Loads materials lazily — only called when the create/edit dialog is about to open.
-  Future<void> _ensureMaterialsLoaded() async {
-    if (_materials.isNotEmpty) return;
-    final mats = await _service.getMaterials();
-    if (mounted) setState(() => _materials = mats);
+  /// Ensures the create/edit dialog has the reference data its dropdowns need.
+  ///
+  /// Materials are loaded lazily here. Work types and categories normally come
+  /// from the initial _loadData(), but that uses Future.wait([...]) — a single
+  /// transient failure (an API blip, a token refresh) leaves a list empty with
+  /// NO recovery, which surfaced as an empty "Work Type"/"Category" dropdown on
+  /// Add/Edit BoQ. Re-fetch any list that is still empty, fault-tolerantly, so a
+  /// hiccup never blocks the dialog or leaves its dropdowns empty.
+  Future<void> _ensureDialogReferenceData() async {
+    Future<void> guard(Future<void> Function() task) async {
+      try {
+        await task();
+      } catch (_) {
+        // Leave the list empty; the dialog still opens and shows its
+        // "no work types / categories available" hint rather than crashing.
+      }
+    }
+
+    await Future.wait([
+      if (_materials.isEmpty)
+        guard(() async {
+          final m = await _service.getMaterials();
+          if (mounted) _materials = m;
+        }),
+      if (_workTypes.isEmpty)
+        guard(() async {
+          final w = await _service.getWorkTypes();
+          if (mounted) _workTypes = w;
+        }),
+      if (_categories.isEmpty)
+        guard(() async {
+          final c = await _service.getCategories(widget.projectId);
+          if (mounted) _categories = c;
+        }),
+    ]);
+    if (mounted) setState(() {});
   }
 
   Future<void> _exportExcel() async {
@@ -1594,7 +1642,8 @@ class _BoqScreenState extends State<BoqScreen> {
   }
 
   Future<void> _showCreateDialog() async {
-    await _ensureMaterialsLoaded();
+    await _ensureDialogReferenceData();
+    if (!mounted) return;
     final descController = TextEditingController();
     final itemCodeController = TextEditingController();
     // G-21 / F-G08: GST HSN/SAC code, mandatory on create.
@@ -2067,7 +2116,8 @@ class _BoqScreenState extends State<BoqScreen> {
       return;
     }
 
-    await _ensureMaterialsLoaded();
+    await _ensureDialogReferenceData();
+    if (!mounted) return;
     final descController = TextEditingController(text: item.description);
     final itemCodeController = TextEditingController(text: item.itemCode);
     // G-21: surface HSN/SAC code so PMs can backfill legacy items.
