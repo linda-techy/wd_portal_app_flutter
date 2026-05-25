@@ -54,6 +54,7 @@ import 'package:admin/services/outbox_service.dart';
 import 'package:admin/services/site_report_service.dart';
 import 'package:admin/services/sync_service.dart';
 import 'package:admin/screens/settings/design_package_templates_screen.dart';
+import 'package:admin/features/boq/presentation/screens/stage_template_editor_screen.dart';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -293,6 +294,16 @@ GoRouter buildAppRouter(PortalAuthProvider authProvider) {
           GoRoute(
             path: '/settings/design-packages',
             builder: (_, __) => const DesignPackageTemplatesScreen(),
+          ),
+
+          // Payment Stage Template editor (audit P2-4)
+          GoRoute(
+            path: '/projects/:projectId/stage-template',
+            builder: (_, state) {
+              final projectId =
+                  int.tryParse(state.pathParameters['projectId'] ?? '') ?? 0;
+              return StageTemplateEditorScreen(projectId: projectId);
+            },
           ),
           GoRoute(
             path: '/scheduling/pending-approvals',

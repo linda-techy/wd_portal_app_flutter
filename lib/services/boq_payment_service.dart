@@ -225,6 +225,54 @@ class BoqInvoiceModel {
   bool get isStageInvoice => invoiceType == 'STAGE_INVOICE';
 }
 
+// ─── Stage Template ───────────────────────────────────────────────────────────
+
+/// One row in the per-project payment-stage template.
+///
+/// [percentageFraction] is stored/sent as a decimal fraction (0.10 = 10%).
+/// The editor converts to/from percent at the UI boundary.
+class StageTemplateRow {
+  final int stageNumber;
+  final String name;
+  final double percentageFraction;
+  final String? milestoneDescription;
+
+  const StageTemplateRow({
+    required this.stageNumber,
+    required this.name,
+    required this.percentageFraction,
+    this.milestoneDescription,
+  });
+
+  factory StageTemplateRow.fromJson(Map<String, dynamic> j) => StageTemplateRow(
+        stageNumber: j['stageNumber'] ?? 0,
+        name: j['name'] ?? '',
+        percentageFraction: _d(j['percentage']),
+        milestoneDescription: j['milestoneDescription'],
+      );
+
+  Map<String, dynamic> toJson() => {
+        'stageNumber': stageNumber,
+        'name': name,
+        'percentage': percentageFraction,
+        if (milestoneDescription != null)
+          'milestoneDescription': milestoneDescription,
+      };
+
+  StageTemplateRow copyWith({
+    int? stageNumber,
+    String? name,
+    double? percentageFraction,
+    String? milestoneDescription,
+  }) =>
+      StageTemplateRow(
+        stageNumber: stageNumber ?? this.stageNumber,
+        name: name ?? this.name,
+        percentageFraction: percentageFraction ?? this.percentageFraction,
+        milestoneDescription: milestoneDescription ?? this.milestoneDescription,
+      );
+}
+
 // ─── Service ─────────────────────────────────────────────────────────────────
 
 class BoqPaymentService {
@@ -322,6 +370,30 @@ class BoqPaymentService {
     return (res.data['data'] as List)
         .map((j) => PaymentStageModel.fromJson(j))
         .toList();
+  }
+
+  // ---- Stage Template ----
+
+  /// Fetch the per-project payment-stage template.
+  /// The backend seeds a Kerala 6-stage default on first access if none exists.
+  Future<List<StageTemplateRow>> getStageTemplate(int projectId) async {
+    final res = await _api.dio
+        .get('/customer-projects/$projectId/stage-template');
+    _checkSuccess(res.data, 'Failed to load stage template');
+    final stages = (res.data['data']['stages'] as List);
+    return stages.map((j) => StageTemplateRow.fromJson(j)).toList();
+  }
+
+  /// Replace the project's payment-stage template.
+  /// [rows] percentageFraction values must sum to 1.0 (validated server-side).
+  Future<List<StageTemplateRow>> setStageTemplate(
+      int projectId, List<StageTemplateRow> rows) async {
+    final body = {'stages': rows.map((r) => r.toJson()).toList()};
+    final res = await _api.dio
+        .put('/customer-projects/$projectId/stage-template', data: body);
+    _checkSuccess(res.data, 'Failed to save stage template');
+    final stages = (res.data['data']['stages'] as List);
+    return stages.map((j) => StageTemplateRow.fromJson(j)).toList();
   }
 
   // ---- Change Orders ----

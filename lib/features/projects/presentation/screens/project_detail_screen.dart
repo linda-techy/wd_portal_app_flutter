@@ -575,6 +575,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       _ModuleTile(title: 'Stage Payments',   icon: Icons.payments_outlined,       color: AppTheme.primaryBlue,        onTap: () => _navigateToModule(context, 'Stage Payments')),
       _ModuleTile(title: 'Deductions',       icon: Icons.remove_circle_outline,   color: AppTheme.coralRed,           onTap: () => _navigateToModule(context, 'Deductions')),
       _ModuleTile(title: 'Final Account',    icon: Icons.account_balance_outlined,color: AppTheme.safetyYellow,       onTap: () => _navigateToModule(context, 'Final Account')),
+      _ModuleTile(title: 'Payment Stage Template', icon: Icons.tune_outlined,   color: AppTheme.primaryBlue,        onTap: () => _navigateToModule(context, 'Payment Stage Template')),
     ];
 
     final cross = ResponsiveUtils.isLargeDesktop(context)
@@ -609,10 +610,14 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     final id = project.id;
     if (id == null) return;
 
-    // Special-case: DPC uses go_router so the URL updates and back-navigation
-    // works the same way as the rest of the DPC flow.
+    // Special-case: DPC and stage-template use go_router so the URL updates
+    // and back-navigation works the same way as the rest of the flow.
     if (moduleName == 'DPC') {
       context.go('/dpc/builder/$id');
+      return;
+    }
+    if (moduleName == 'Payment Stage Template') {
+      context.go('/projects/$id/stage-template');
       return;
     }
 
