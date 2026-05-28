@@ -29,9 +29,7 @@ class _AddPortalUserScreenState extends State<AddPortalUserScreen> {
   final _whatsappController = TextEditingController();
   final _designationController = TextEditingController();
   final _departmentController = TextEditingController();
-  // Removed: PortalUserCreateRequest has no `enabled` field, so the toggle's
-  // value was silently dropped server-side. Edit form keeps the toggle (the
-  // Update DTO does accept `enabled`).
+  bool _enabled = true;
   int? _roleId;
   List<PortalRole> _roles = [];
   bool _isLoadingRoles = false;
@@ -96,6 +94,7 @@ class _AddPortalUserScreenState extends State<AddPortalUserScreen> {
           c.text.trim().isEmpty ? null : c.text.trim();
       final user = PortalUser(
         email: _emailController.text.trim(),
+        enabled: _enabled,
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         password: _passwordController.text.trim(),
@@ -380,6 +379,13 @@ class _AddPortalUserScreenState extends State<AddPortalUserScreen> {
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.business_outlined),
                   ),
+                ),
+                const SizedBox(height: AppTheme.spacingMD),
+                SwitchListTile(
+                  title: const Text('Enabled'),
+                  subtitle: const Text('Active users can sign in'),
+                  value: _enabled,
+                  onChanged: (v) => setState(() => _enabled = v),
                 ),
                 const SizedBox(height: AppTheme.spacingXL),
 
