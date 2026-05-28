@@ -593,7 +593,7 @@ class _SupportTicketDetailScreenState
   // ── Reply input ──────────────────────────────────────────────────────────
   Widget _buildReplyInput() {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppTheme.surface,
         border: Border(top: BorderSide(color: AppTheme.borderLight)),
       ),

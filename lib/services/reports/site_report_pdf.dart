@@ -17,7 +17,7 @@ class SiteReportPdf {
       build: (ctx) => [
         if (reports.isEmpty)
           pw.Text('No site reports found.',
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                   fontSize: 10, color: PdfColors.grey600))
         else
           ReportService.buildTable(

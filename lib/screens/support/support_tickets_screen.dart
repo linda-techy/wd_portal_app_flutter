@@ -166,7 +166,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
             const SizedBox(height: 2),
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
                 color: AppTheme.textSecondary,
                 fontWeight: FontWeight.w500,
@@ -587,7 +587,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
         style: const TextStyle(fontSize: 11),
       ),
       backgroundColor: AppTheme.surfaceElevated,
-      side: BorderSide(color: AppTheme.borderLight),
+      side: const BorderSide(color: AppTheme.borderLight),
       padding: const EdgeInsets.symmetric(horizontal: 4),
       visualDensity: VisualDensity.compact,
     );

@@ -16,7 +16,7 @@ class FinancialReport {
       build: (ctx) => [
         pw.Text(
           'See detailed financial view in app',
-          style: pw.TextStyle(
+          style: const pw.TextStyle(
               fontSize: 11, color: PdfColors.grey600),
         ),
         pw.SizedBox(height: 12),

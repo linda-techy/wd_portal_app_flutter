@@ -338,12 +338,12 @@ class _BudgetaryRowChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Chip(
-      label: const Text("Budgetary",
+    return const Chip(
+      label: Text("Budgetary",
           style: TextStyle(color: Colors.white, fontSize: 10)),
       backgroundColor: Colors.blueGrey,
       padding: EdgeInsets.zero,
-      labelPadding: const EdgeInsets.symmetric(horizontal: 6),
+      labelPadding: EdgeInsets.symmetric(horizontal: 6),
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
@@ -354,13 +354,13 @@ class _CurrentRowChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Chip(
-      avatar: const Icon(Icons.check_circle, color: Colors.white, size: 12),
-      label: const Text("CURRENT",
+    return const Chip(
+      avatar: Icon(Icons.check_circle, color: Colors.white, size: 12),
+      label: Text("CURRENT",
           style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
       backgroundColor: Colors.deepPurple,
       padding: EdgeInsets.zero,
-      labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+      labelPadding: EdgeInsets.symmetric(horizontal: 4),
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }

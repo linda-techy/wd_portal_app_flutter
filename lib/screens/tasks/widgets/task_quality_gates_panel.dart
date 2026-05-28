@@ -113,7 +113,7 @@ class _TaskQualityGatesPanelState extends State<TaskQualityGatesPanel> {
           children: [
             Row(
               children: [
-                Icon(Icons.verified_outlined,
+                const Icon(Icons.verified_outlined,
                     size: 20, color: AppTheme.coralRed),
                 const SizedBox(width: 8),
                 const Text(
@@ -247,7 +247,7 @@ class _TaskQualityGatesPanelState extends State<TaskQualityGatesPanel> {
                   label: const Text('Fail'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppTheme.statusError,
-                    side: BorderSide(color: AppTheme.statusError),
+                    side: const BorderSide(color: AppTheme.statusError),
                   ),
                 ),
                 const SizedBox(width: 8),

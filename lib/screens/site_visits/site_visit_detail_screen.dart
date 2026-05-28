@@ -146,7 +146,7 @@ class _SiteVisitDetailScreenState extends State<SiteVisitDetailScreen> {
       if (!mounted) return;
       setState(() => _visit = updated);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Visit force-closed.'),
           backgroundColor: AppTheme.successGreen,
         ),

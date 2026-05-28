@@ -1,4 +1,3 @@
-import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:admin/services/report_service.dart';
 import 'package:admin/services/quality_check_service.dart';

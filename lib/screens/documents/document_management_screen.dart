@@ -52,7 +52,7 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
     {
       'title': 'Detailed Project Costing',
       'icon': Icons.receipt_long_outlined,
-      'color': Color(0xFFEF5D4A),
+      'color': const Color(0xFFEF5D4A),
     },
   ];
 
