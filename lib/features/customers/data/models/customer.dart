@@ -19,6 +19,10 @@ class Customer {
   final String? leadSource;
   final String? notes;
 
+  /// Business categorisation (individual / business / government / institution /
+  /// channel_partner / other). The DB column has a default of 'individual'.
+  final String customerType;
+
   Customer({
     this.id,
     required this.email,
@@ -37,6 +41,7 @@ class Customer {
     this.gstNumber,
     this.leadSource,
     this.notes,
+    this.customerType = 'individual',
   });
 
   String get fullName => '$firstName $lastName'.trim();
@@ -84,6 +89,7 @@ class Customer {
       gstNumber: json['gst_number'] ?? json['gstNumber'],
       leadSource: json['lead_source'] ?? json['leadSource'],
       notes: json['notes'],
+      customerType: json['customer_type'] ?? json['customerType'] ?? 'individual',
     );
   }
 
@@ -106,6 +112,7 @@ class Customer {
       if (leadSource != null && leadSource!.isNotEmpty)
         'lead_source': leadSource,
       if (notes != null && notes!.isNotEmpty) 'notes': notes,
+      'customer_type': customerType,
     };
   }
 
@@ -133,6 +140,7 @@ class Customer {
     String? gstNumber,
     String? leadSource,
     String? notes,
+    String? customerType,
   }) {
     return Customer(
       id: id ?? this.id,
@@ -152,6 +160,7 @@ class Customer {
       gstNumber: gstNumber ?? this.gstNumber,
       leadSource: leadSource ?? this.leadSource,
       notes: notes ?? this.notes,
+      customerType: customerType ?? this.customerType,
     );
   }
 }

@@ -30,6 +30,10 @@ class _EditPortalUserScreenState extends State<EditPortalUserScreen> {
   late final TextEditingController _lastNameController;
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _whatsappController;
+  late final TextEditingController _designationController;
+  late final TextEditingController _departmentController;
   late bool _enabled;
   int? _roleId;
   List<PortalRole> _roles = [];
@@ -45,6 +49,10 @@ class _EditPortalUserScreenState extends State<EditPortalUserScreen> {
     _lastNameController = TextEditingController(text: widget.user.lastName);
     _emailController = TextEditingController(text: widget.user.email);
     _passwordController = TextEditingController();
+    _phoneController = TextEditingController(text: widget.user.phone ?? '');
+    _whatsappController = TextEditingController(text: widget.user.whatsapp ?? '');
+    _designationController = TextEditingController(text: widget.user.designation ?? '');
+    _departmentController = TextEditingController(text: widget.user.department ?? '');
     _enabled = widget.user.enabled;
     _roleId = widget.user.roleId;
     _loadRoles();
@@ -78,6 +86,10 @@ class _EditPortalUserScreenState extends State<EditPortalUserScreen> {
     _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _phoneController.dispose();
+    _whatsappController.dispose();
+    _designationController.dispose();
+    _departmentController.dispose();
     super.dispose();
   }
 
@@ -103,6 +115,10 @@ class _EditPortalUserScreenState extends State<EditPortalUserScreen> {
             ? _passwordController.text.trim()
             : null,
         roleId: _roleId,
+        phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+        whatsapp: _whatsappController.text.trim().isEmpty ? null : _whatsappController.text.trim(),
+        designation: _designationController.text.trim().isEmpty ? null : _designationController.text.trim(),
+        department: _departmentController.text.trim().isEmpty ? null : _departmentController.text.trim(),
       );
 
       await _crmService.updatePortalUser(widget.user.id!, user);
@@ -344,6 +360,46 @@ class _EditPortalUserScreenState extends State<EditPortalUserScreen> {
                         _enabled = value;
                       });
                     },
+                  ),
+                ),
+                // Contact & role details — API accepts these on update; the form
+                // previously didn't expose them.
+                const SizedBox(height: AppTheme.spacingMD),
+                TextFormField(
+                  controller: _phoneController,
+                  decoration: const InputDecoration(
+                    labelText: 'Phone Number',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.phone_outlined),
+                  ),
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: AppTheme.spacingMD),
+                TextFormField(
+                  controller: _whatsappController,
+                  decoration: const InputDecoration(
+                    labelText: 'WhatsApp Number',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.chat_outlined),
+                  ),
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: AppTheme.spacingMD),
+                TextFormField(
+                  controller: _designationController,
+                  decoration: const InputDecoration(
+                    labelText: 'Designation',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.badge_outlined),
+                  ),
+                ),
+                const SizedBox(height: AppTheme.spacingMD),
+                TextFormField(
+                  controller: _departmentController,
+                  decoration: const InputDecoration(
+                    labelText: 'Department',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.business_outlined),
                   ),
                 ),
                 const SizedBox(height: AppTheme.spacingXL),

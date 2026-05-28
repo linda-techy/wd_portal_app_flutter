@@ -9,6 +9,14 @@ class PortalUser {
   final DateTime? updatedAt;
   final int? roleId;
 
+  // Contact + role details — the API accepts these on both create and update,
+  // but the portal admin forms previously didn't expose them, so admins could
+  // not set phone / WhatsApp / designation / department from the UI.
+  final String? phone;
+  final String? whatsapp;
+  final String? designation;
+  final String? department;
+
   PortalUser({
     this.id,
     required this.email,
@@ -19,6 +27,10 @@ class PortalUser {
     this.createdAt,
     this.updatedAt,
     this.roleId,
+    this.phone,
+    this.whatsapp,
+    this.designation,
+    this.department,
   });
 
   String get fullName => '$firstName $lastName'.trim();
@@ -49,10 +61,14 @@ class PortalUser {
               : int.tryParse(json['role_id']?.toString() ??
                   json['roleId']?.toString() ??
                   ''),
+      phone: json['phone'],
+      whatsapp: json['whatsapp'],
+      designation: json['designation'],
+      department: json['department'],
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> _baseJson() {
     return {
       'email': email,
       'enabled': enabled,
@@ -60,30 +76,23 @@ class PortalUser {
       'last_name': lastName,
       if (password != null && password!.isNotEmpty) 'password': password,
       if (roleId != null) 'role_id': roleId,
+      if (phone != null && phone!.isNotEmpty) 'phone': phone,
+      if (whatsapp != null && whatsapp!.isNotEmpty) 'whatsapp': whatsapp,
+      if (designation != null && designation!.isNotEmpty) 'designation': designation,
+      if (department != null && department!.isNotEmpty) 'department': department,
     };
   }
 
-  Map<String, dynamic> toCreateJson() {
-    return {
-      'email': email,
-      'enabled': enabled,
-      'first_name': firstName,
-      'last_name': lastName,
-      if (password != null && password!.isNotEmpty) 'password': password,
-      if (roleId != null) 'role_id': roleId,
-    };
-  }
+  Map<String, dynamic> toJson() => _baseJson();
+
+  Map<String, dynamic> toCreateJson() => _baseJson();
 
   Map<String, dynamic> toUpdateJson() {
-    return {
-      'email': email,
-      'enabled': enabled,
-      'first_name': firstName,
-      'last_name': lastName,
-      if (password != null && password!.isNotEmpty) 'password': password,
-      if (roleId != null)
-        'role_id': roleId is int ? roleId : int.tryParse(roleId.toString()),
-    };
+    final m = _baseJson();
+    if (roleId != null) {
+      m['role_id'] = roleId is int ? roleId : int.tryParse(roleId.toString());
+    }
+    return m;
   }
 
   PortalUser copyWith({
@@ -96,6 +105,10 @@ class PortalUser {
     DateTime? createdAt,
     DateTime? updatedAt,
     int? roleId,
+    String? phone,
+    String? whatsapp,
+    String? designation,
+    String? department,
   }) {
     return PortalUser(
       id: id ?? this.id,
@@ -107,6 +120,10 @@ class PortalUser {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       roleId: roleId ?? this.roleId,
+      phone: phone ?? this.phone,
+      whatsapp: whatsapp ?? this.whatsapp,
+      designation: designation ?? this.designation,
+      department: department ?? this.department,
     );
   }
 }

@@ -25,7 +25,13 @@ class _AddPortalUserScreenState extends State<AddPortalUserScreen> {
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _enabled = true;
+  final _phoneController = TextEditingController();
+  final _whatsappController = TextEditingController();
+  final _designationController = TextEditingController();
+  final _departmentController = TextEditingController();
+  // Removed: PortalUserCreateRequest has no `enabled` field, so the toggle's
+  // value was silently dropped server-side. Edit form keeps the toggle (the
+  // Update DTO does accept `enabled`).
   int? _roleId;
   List<PortalRole> _roles = [];
   bool _isLoadingRoles = false;
@@ -67,6 +73,10 @@ class _AddPortalUserScreenState extends State<AddPortalUserScreen> {
     _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _phoneController.dispose();
+    _whatsappController.dispose();
+    _designationController.dispose();
+    _departmentController.dispose();
     super.dispose();
   }
 
@@ -82,13 +92,18 @@ class _AddPortalUserScreenState extends State<AddPortalUserScreen> {
     setState(() => _isLoading = true);
 
     try {
+      String? trimOrNull(TextEditingController c) =>
+          c.text.trim().isEmpty ? null : c.text.trim();
       final user = PortalUser(
         email: _emailController.text.trim(),
-        enabled: _enabled,
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         password: _passwordController.text.trim(),
         roleId: _roleId,
+        phone: trimOrNull(_phoneController),
+        whatsapp: trimOrNull(_whatsappController),
+        designation: trimOrNull(_designationController),
+        department: trimOrNull(_departmentController),
       );
 
       await _crmService.createPortalUser(user);
@@ -325,20 +340,45 @@ class _AddPortalUserScreenState extends State<AddPortalUserScreen> {
                           },
                   ),
                 ),
+                // Contact & role details — the API already accepts these
+                // (phone / whatsapp / designation / department) but the form
+                // previously didn't expose them.
                 const SizedBox(height: AppTheme.spacingMD),
-
-                // Enabled Switch
-                EntranceAnimation(
-                  delay: const Duration(milliseconds: 350),
-                  child: SwitchListTile(
-                    title: const Text('Enabled'),
-                    subtitle: const Text('User account status'),
-                    value: _enabled,
-                    onChanged: (value) {
-                      setState(() {
-                        _enabled = value;
-                      });
-                    },
+                TextFormField(
+                  controller: _phoneController,
+                  decoration: const InputDecoration(
+                    labelText: 'Phone Number',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.phone_outlined),
+                  ),
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: AppTheme.spacingMD),
+                TextFormField(
+                  controller: _whatsappController,
+                  decoration: const InputDecoration(
+                    labelText: 'WhatsApp Number',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.chat_outlined),
+                  ),
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: AppTheme.spacingMD),
+                TextFormField(
+                  controller: _designationController,
+                  decoration: const InputDecoration(
+                    labelText: 'Designation',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.badge_outlined),
+                  ),
+                ),
+                const SizedBox(height: AppTheme.spacingMD),
+                TextFormField(
+                  controller: _departmentController,
+                  decoration: const InputDecoration(
+                    labelText: 'Department',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.business_outlined),
                   ),
                 ),
                 const SizedBox(height: AppTheme.spacingXL),

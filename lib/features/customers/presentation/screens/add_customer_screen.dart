@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:admin/constants.dart';
+import 'package:admin/constants/customer_type_constants.dart';
 import '../../data/models/customer.dart';
 import 'package:admin/models/customer_role.dart';
 import '../../data/services/customer_service.dart';
@@ -34,7 +35,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   final _leadSourceController = TextEditingController();
   final _notesController = TextEditingController();
 
-  bool _enabled = true;
+  String _customerType = CustomerTypeConstants.defaultValue;
   int? _roleId;
   List<CustomerRole> _customerRoles = [];
   bool _isLoadingRoles = false;
@@ -126,7 +127,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
 
       final customer = Customer(
         email: _emailController.text.trim(),
-        enabled: _enabled,
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         password: _passwordController.text.trim(),
@@ -138,6 +138,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
         gstNumber: _gstNumberController.text.trim().isEmpty ? null : _gstNumberController.text.trim(),
         leadSource: _leadSourceController.text.trim().isEmpty ? null : _leadSourceController.text.trim(),
         notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        customerType: _customerType,
       );
 
       await _customerService.createCustomer(customer);
@@ -312,13 +313,23 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                                 ),
                                 const SizedBox(width: defaultPadding),
                                 Expanded(
-                                  child: SwitchListTile(
-                                    title: const Text('Enabled'),
-                                    value: _enabled,
+                                  // The Enabled toggle was removed: CustomerCreateRequest
+                                  // has no `enabled` field, so the value was silently
+                                  // dropped server-side and the toggle was misleading.
+                                  // Replaced with Customer Type — the API already
+                                  // accepts customer_type but the form never set it.
+                                  child: DropdownButtonFormField<String>(
+                                    value: _customerType,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Customer Type',
+                                      border: OutlineInputBorder(),
+                                      prefixIcon: Icon(Icons.category_outlined),
+                                    ),
+                                    items: CustomerTypeConstants.dropdownItems,
                                     onChanged: (value) {
-                                      setState(() {
-                                        _enabled = value;
-                                      });
+                                      if (value != null) {
+                                        setState(() => _customerType = value);
+                                      }
                                     },
                                   ),
                                 ),

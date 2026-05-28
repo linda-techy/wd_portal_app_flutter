@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:admin/constants.dart';
+import 'package:admin/constants/customer_type_constants.dart';
 import '../../data/models/customer.dart';
 import 'package:admin/models/customer_role.dart';
 import '../../data/services/customer_service.dart';
@@ -34,6 +35,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
   late TextEditingController _notesController;
 
   late bool _enabled;
+  late String _customerType;
   int? _roleId;
   List<CustomerRole> _customerRoles = [];
   bool _isLoadingRoles = false;
@@ -65,6 +67,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
     _notesController = TextEditingController(text: customer.notes ?? '');
 
     _enabled = customer.enabled;
+    _customerType = customer.customerType;
     _roleId = customer.roleId;
     _loadCustomerRoles();
   }
@@ -170,6 +173,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
         gstNumber: _gstNumberController.text.trim().isEmpty ? null : _gstNumberController.text.trim(),
         leadSource: _leadSourceController.text.trim().isEmpty ? null : _leadSourceController.text.trim(),
         notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        customerType: _customerType,
       );
 
       await _customerService.updateCustomer(widget.customer.id!, customer);
@@ -375,6 +379,24 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                                   ),
                                 ),
                               ],
+                            ),
+                            const SizedBox(height: defaultPadding),
+                            // Customer Type — the API accepts customer_type but the
+                            // form previously never set it (all customers defaulted
+                            // to 'individual'). Now matches the Lead form's dropdown.
+                            DropdownButtonFormField<String>(
+                              value: _customerType,
+                              decoration: const InputDecoration(
+                                labelText: 'Customer Type',
+                                border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.category_outlined),
+                              ),
+                              items: CustomerTypeConstants.dropdownItems,
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() => _customerType = value);
+                                }
+                              },
                             ),
                           ],
                         ),
