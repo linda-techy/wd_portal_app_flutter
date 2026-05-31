@@ -714,7 +714,7 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
       BuildContext context, LeadEstimationDetail detail) async {
     final url = AppConfig.buildQuotationShareUrl(detail.publicViewToken);
     await Clipboard.setData(ClipboardData(text: url));
-    if (!mounted) return;
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Share link copied to clipboard')),
     );

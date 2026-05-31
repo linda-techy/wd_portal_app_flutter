@@ -360,6 +360,7 @@ class _GanttScreenState extends State<GanttScreen> {
     );
     if (created == true && mounted) {
       await _load();
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Task created.'),
