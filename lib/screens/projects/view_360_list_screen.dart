@@ -65,7 +65,7 @@ class _View360ListScreenState extends State<View360ListScreen> {
               builder: (context) => UploadView360Screen(projectId: widget.projectId),
             ),
           );
-          if (result == true) _fetchTours();
+          if (result == true) await _fetchTours();
         },
         label: const Text('New Tour'),
         icon: const Icon(Icons.add_a_photo),
@@ -262,7 +262,7 @@ class _View360ListScreenState extends State<View360ListScreen> {
                           'location': locationCtrl.text.trim(),
                         });
                         if (ctx.mounted) Navigator.pop(ctx);
-                        _fetchTours();
+                        await _fetchTours();
                       } catch (e) {
                         if (ctx.mounted) {
                           ScaffoldMessenger.of(ctx).showSnackBar(

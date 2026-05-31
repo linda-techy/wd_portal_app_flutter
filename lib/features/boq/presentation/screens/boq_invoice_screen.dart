@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -33,7 +35,7 @@ class _BoqInvoiceScreenState extends State<BoqInvoiceScreen> {
     final auth = Provider.of<PortalAuthProvider>(context, listen: false);
     if (!auth.isAuthenticated) {
       if (mounted) await ErrorHandler.handleAuthError(context);
-      if (mounted) Navigator.of(context).pushReplacementNamed('/login');
+      if (mounted) unawaited(Navigator.of(context).pushReplacementNamed('/login'));
       return;
     }
     await _load();
@@ -57,7 +59,7 @@ class _BoqInvoiceScreenState extends State<BoqInvoiceScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('Invoice sent')));
-        _load();
+        await _load();
       }
     } catch (e) {
       if (mounted) {
@@ -120,7 +122,7 @@ class _BoqInvoiceScreenState extends State<BoqInvoiceScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Payment confirmed')));
-        _load();
+        await _load();
       }
     } catch (e) {
       if (mounted) {

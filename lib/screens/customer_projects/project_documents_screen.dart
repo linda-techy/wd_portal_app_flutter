@@ -458,13 +458,13 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
               onSelected: (value) async {
                 switch (value) {
                   case 'download':
-                    _downloadDocument(doc);
+                    await _downloadDocument(doc);
                     break;
                   case 'view':
-                    _openDocument(doc);
+                    await _openDocument(doc);
                     break;
                   case 'delete':
-                    _confirmAndDeleteDocument(doc);
+                    await _confirmAndDeleteDocument(doc);
                     break;
                 }
               },
@@ -512,7 +512,7 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
     if (doc.downloadUrl.isEmpty) return;
     
     if (!mounted) return;
-    Navigator.push(
+    unawaited(Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => UniversalFileViewerScreen(
@@ -520,7 +520,7 @@ class _ProjectDocumentsScreenState extends State<ProjectDocumentsScreen> {
           filename: doc.filename,
         ),
       ),
-    );
+    ));
   }
 
   Future<void> _confirmAndDeleteDocument(ProjectDocument doc) async {

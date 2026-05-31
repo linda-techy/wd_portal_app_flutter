@@ -99,7 +99,7 @@ class _VODetailScreenState extends State<VODetailScreen>
       );
       if (!mounted) return;
       ErrorHandler.showSuccessSnackBar(context, 'Action recorded: $action');
-      _load();
+      await _load();
     } catch (e) {
       if (!mounted) return;
       ErrorHandler.showErrorSnackBar(context, e);

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:admin/features/scheduling/data/services/wbs_template_service.dart';
@@ -96,7 +98,7 @@ class WbsTemplateProvider extends ChangeNotifier {
       _editing = saved;
       // Refresh list in background
       // ignore: discarded_futures
-      loadList(projectType: _filterType);
+      unawaited(loadList(projectType: _filterType));
       return true;
     } on DioException catch (e) {
       _errorMessage = _humanize(e);

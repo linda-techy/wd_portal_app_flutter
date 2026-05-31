@@ -86,7 +86,7 @@ class _LeadTasksScreenState extends State<LeadTasksScreen> {
   Future<void> _updateTaskStatus(TaskModel task, String newStatus) async {
       try {
           await _taskService.updateTask(task.id, UpdateTaskRequest(status: newStatus));
-          _loadTasks();
+          await _loadTasks();
       } catch (e) {
           if (mounted) {
             await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to update task status');
@@ -121,7 +121,7 @@ class _LeadTasksScreenState extends State<LeadTasksScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Task deleted successfully')),
           );
-          _loadTasks();
+          await _loadTasks();
         }
       } catch (e) {
         if (mounted) {
@@ -217,7 +217,7 @@ class _LeadTasksScreenState extends State<LeadTasksScreen> {
                                     if (value == 'DELETE') {
                                         await _deleteTask(task);
                                     } else {
-                                        _updateTaskStatus(task, value);
+                                        await _updateTaskStatus(task, value);
                                     }
                                 },
                                 itemBuilder: (context) => [

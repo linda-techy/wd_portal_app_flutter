@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:admin/data/local/outbox_mutation_type.dart';
 import 'package:admin/features/delays/data/models/delay_log.dart';
 import 'package:admin/models/paginated_response.dart';
@@ -59,7 +61,7 @@ class DelayLogService {
       projectId: delay.projectId,
     );
     // ignore: discarded_futures
-    sync.triggerSyncNow();
+    unawaited(sync.triggerSyncNow());
     return DelayLogResultQueued(id);
   }
 

@@ -53,13 +53,13 @@ class _CctvManagementScreenState extends State<CctvManagementScreen> {
     );
     if (confirmed == true) {
       await _apiService.delete('/api/cctv-cameras/$id');
-      _loadCameras();
+      await _loadCameras();
     }
   }
 
   Future<void> _toggleActive(int id) async {
     await _apiService.dio.patch('/api/cctv-cameras/$id/toggle');
-    _loadCameras();
+    await _loadCameras();
   }
 
   @override
@@ -76,7 +76,7 @@ class _CctvManagementScreenState extends State<CctvManagementScreen> {
           await Navigator.push(context, MaterialPageRoute(
             builder: (_) => CctvCameraFormScreen(projectId: widget.projectId),
           ));
-          _loadCameras();
+          await _loadCameras();
         },
         child: const Icon(Icons.add, color: Colors.white),
       ),

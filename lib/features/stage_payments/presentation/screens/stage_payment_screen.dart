@@ -116,7 +116,7 @@ class _StagePaymentScreenState extends State<StagePaymentScreen> {
       if (!mounted) return;
       ErrorHandler.showSuccessSnackBar(
           context, 'Stage ${stage.stageNumber} certified');
-      _load();
+      await _load();
     } catch (e) {
       if (!mounted) return;
       ErrorHandler.showErrorSnackBar(context, e);

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -44,7 +46,7 @@ class _FeedbackScreenState extends State<FeedbackScreen>
         await ErrorHandler.handleAuthError(context);
       }
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/login');
+        unawaited(Navigator.of(context).pushReplacementNamed('/login'));
       }
       return;
     }

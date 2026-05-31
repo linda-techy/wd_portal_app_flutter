@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -53,7 +54,9 @@ class _SiteReportsScreenState extends State<SiteReportsScreen> {
     if (!authProvider.isAuthenticated) {
       if (mounted) {
         await ErrorHandler.handleAuthError(context);
-        if (mounted) Navigator.of(context).pushReplacementNamed('/login');
+        if (mounted) {
+          unawaited(Navigator.of(context).pushReplacementNamed('/login'));
+        }
       }
       return;
     }

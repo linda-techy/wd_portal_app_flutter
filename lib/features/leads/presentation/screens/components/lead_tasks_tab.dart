@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:admin/constants.dart';
@@ -50,8 +52,8 @@ class _LeadTasksTabState extends State<LeadTasksTab> {
           _isLoading = false;
           _error = 'Failed to load tasks: ${e.toString()}';
         });
-        ErrorHandler.handleApiError(context, e,
-            defaultMessage: 'Failed to load tasks');
+        unawaited(ErrorHandler.handleApiError(context, e,
+            defaultMessage: 'Failed to load tasks'));
       }
     }
   }

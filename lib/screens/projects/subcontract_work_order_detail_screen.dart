@@ -83,7 +83,7 @@ class _SubcontractWorkOrderDetailScreenState
   Future<void> _issueWorkOrder() async {
     try {
       await _service.issueWorkOrder(widget.workOrderId);
-      _loadData();
+      await _loadData();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -109,7 +109,7 @@ class _SubcontractWorkOrderDetailScreenState
 
     try {
       await _service.completeWorkOrder(widget.workOrderId, date);
-      _loadData();
+      await _loadData();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -154,7 +154,7 @@ class _SubcontractWorkOrderDetailScreenState
 
     try {
       await _service.terminateWorkOrder(widget.workOrderId, reason);
-      _loadData();
+      await _loadData();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Work order terminated')),
@@ -614,7 +614,7 @@ class _SubcontractWorkOrderDetailScreenState
     );
 
     if (result == true) {
-      _loadData();
+      await _loadData();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -679,7 +679,7 @@ class _SubcontractWorkOrderDetailScreenState
                   updates['paymentTerms'] = termsCtrl.text;
                 }
                 await _service.updateWorkOrder(widget.workOrderId, updates);
-                _loadData();
+                await _loadData();
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -732,7 +732,7 @@ class _SubcontractWorkOrderDetailScreenState
   Future<void> _approveMeasurement(int measurementId) async {
     try {
       await _service.approveMeasurementPatch(measurementId);
-      _loadData();
+      await _loadData();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -768,7 +768,7 @@ class _SubcontractWorkOrderDetailScreenState
               try {
                 await _service.rejectMeasurementPatch(
                     measurementId, reasonCtrl.text.trim());
-                _loadData();
+                await _loadData();
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Measurement rejected')),

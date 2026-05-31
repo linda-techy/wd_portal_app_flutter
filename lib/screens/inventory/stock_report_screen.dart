@@ -122,7 +122,7 @@ class _StockReportScreenState extends State<StockReportScreen> {
           );
           if (selectedProjectId != null && mounted) {
             // Use State's context property with mounted check
-            this.context.read<InventoryProvider>().fetchProjectStock(selectedProjectId);
+            await this.context.read<InventoryProvider>().fetchProjectStock(selectedProjectId);
           }
         },
         label: const Text("Adjust Stock"),

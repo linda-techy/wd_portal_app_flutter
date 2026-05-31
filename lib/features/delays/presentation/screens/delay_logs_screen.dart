@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/features/delays/data/models/delay_log.dart';
@@ -73,7 +75,7 @@ class _DelayLogsScreenState extends State<DelayLogsScreen> {
       if (!mounted) return;
       await ErrorHandler.handleAuthError(context);
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/login');
+      unawaited(Navigator.of(context).pushReplacementNamed('/login'));
       return;
     }
     await _loadData();
@@ -134,7 +136,7 @@ class _DelayLogsScreenState extends State<DelayLogsScreen> {
     if (picked != null) {
       try {
         await _service.closeDelay(widget.projectId, delay.id!, picked);
-        _loadData();
+        await _loadData();
       } catch (e) {
         if (mounted) {
           await ErrorHandler.handleApiError(context, e,

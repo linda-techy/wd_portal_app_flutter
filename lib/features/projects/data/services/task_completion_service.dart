@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:admin/data/local/outbox_mutation_type.dart';
 import 'package:admin/features/projects/data/models/pending_approval_row.dart';
 import 'package:admin/services/api_service.dart';
@@ -73,7 +75,7 @@ class TaskCompletionService {
     );
     // Best-effort kick. Doesn't await — the sync is fire-and-forget.
     // ignore: discarded_futures
-    sync.triggerSyncNow();
+    unawaited(sync.triggerSyncNow());
     return id;
   }
 

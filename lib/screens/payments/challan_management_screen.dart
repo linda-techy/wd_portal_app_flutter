@@ -158,7 +158,7 @@ class _ChallanManagementScreenState extends State<ChallanManagementScreen> {
                 );
                 if (range != null) {
                   setState(() => _dateRange = range);
-                  _loadChallans();
+                  await _loadChallans();
                 }
               },
               child: InputDecorator(

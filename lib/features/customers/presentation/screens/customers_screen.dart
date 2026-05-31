@@ -388,7 +388,7 @@ class CustomersScreen extends StatelessWidget {
     // Refresh the customer list if a customer was created
     if (result == true && context.mounted) {
       final provider = Provider.of<CustomerProvider>(context, listen: false);
-      provider.fetch();
+      await provider.fetch();
     }
   }
 
@@ -413,7 +413,7 @@ class CustomersScreen extends StatelessWidget {
     // Refresh the customer list if a customer was updated
     if (result == true && context.mounted) {
       final provider = Provider.of<CustomerProvider>(context, listen: false);
-      provider.fetch();
+      await provider.fetch();
     }
   }
 
@@ -455,7 +455,7 @@ class CustomersScreen extends StatelessWidget {
           backgroundColor: enabled ? Colors.green : Colors.orange.shade700,
         ),
       );
-      Provider.of<CustomerProvider>(context, listen: false).fetch();
+      await Provider.of<CustomerProvider>(context, listen: false).fetch();
     } catch (e) {
       if (!context.mounted) return;
       await ErrorHandler.handleApiError(

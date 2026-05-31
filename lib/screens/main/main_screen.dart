@@ -78,7 +78,7 @@ class MainScreenState extends State<MainScreen> {
       ),
     );
     // Refresh count after returning from notification screen
-    _refreshUnreadCount();
+    await _refreshUnreadCount();
   }
 
   final List<Widget> _screens = [

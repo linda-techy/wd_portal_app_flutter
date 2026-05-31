@@ -91,7 +91,7 @@ class _AclScreenState extends State<AclScreen> {
       });
       // Auto-select first role
       if (_roles.isNotEmpty) {
-        _selectRole(_roles.first);
+        await _selectRole(_roles.first);
       }
     } catch (e) {
       if (!mounted) return;

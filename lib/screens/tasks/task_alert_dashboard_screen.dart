@@ -59,7 +59,7 @@ class _TaskAlertDashboardScreenState extends State<TaskAlertDashboardScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Alert check triggered successfully')),
         );
-        _loadData(); // Refresh
+        await _loadData(); // Refresh
       }
     } catch (e) {
       if (mounted) {

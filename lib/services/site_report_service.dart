@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
@@ -100,8 +101,8 @@ class SiteReportService {
       taskId: taskId,
       photo: primaryPhoto,
     );
-    // ignore: discarded_futures
-    sync.triggerSyncNow();
+    // Fire-and-forget: kick a background sync without blocking the queued result.
+    unawaited(sync.triggerSyncNow());
     return SiteReportResultQueued(id);
   }
 

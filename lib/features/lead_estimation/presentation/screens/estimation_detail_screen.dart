@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -264,9 +266,9 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
                         ),
                       );
                       if (created != null && context.mounted) {
-                        Navigator.of(context).pushReplacement(MaterialPageRoute(
+                        unawaited(Navigator.of(context).pushReplacement(MaterialPageRoute(
                           builder: (_) => EstimationDetailScreen(estimationId: created.id),
-                        ));
+                        )));
                       }
                     },
                   ),
@@ -706,7 +708,7 @@ class _EstimationDetailScreenState extends State<EstimationDetailScreen> {
       ),
     );
     if (result != null && mounted) {
-      _provider.loadEstimation(widget.estimationId);
+      await _provider.loadEstimation(widget.estimationId);
     }
   }
 

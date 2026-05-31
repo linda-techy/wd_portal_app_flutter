@@ -65,7 +65,7 @@ class _QuotationManagementScreenState extends State<QuotationManagementScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Quotation Selected. PO Draft Created.')));
-      _loadQuotations();
+      await _loadQuotations();
     } catch (e) {
       if (!mounted) return;
       ErrorHandler.showErrorSnackBar(context, e);

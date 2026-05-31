@@ -400,8 +400,8 @@ class _PartnershipsAdminScreenState extends State<PartnershipsAdminScreen>
           content: Text('${partner.fullName} status updated to $newStatus'),
           backgroundColor: Colors.green,
         ));
-        _loadPartners();
-        _loadCounts();
+        await _loadPartners();
+        await _loadCounts();
       }
     } catch (e) {
       if (mounted) {

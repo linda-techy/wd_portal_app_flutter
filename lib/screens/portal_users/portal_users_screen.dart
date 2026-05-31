@@ -155,7 +155,7 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
             message: 'User deleted successfully',
             isError: false,
           );
-          _loadUsers();
+          await _loadUsers();
         }
       } catch (e) {
         if (mounted) {
@@ -200,7 +200,7 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
                         ),
                       );
                       if (result == true) {
-                        _loadUsers();
+                        await _loadUsers();
                       }
                     },
                     child: ElevatedButton.icon(
@@ -270,7 +270,7 @@ class _PortalUsersScreenState extends State<PortalUsersScreen> {
                             ),
                           );
                           if (result == true) {
-                            _loadUsers();
+                            await _loadUsers();
                           }
                         },
                         onDelete: _deleteUser,

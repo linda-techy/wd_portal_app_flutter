@@ -428,7 +428,7 @@ class DocumentsScreenState extends State<DocumentsScreen> {
     if (confirmed == true) {
       try {
         await _documentService.deleteDocument(_selectedProject!.id!, doc.id!);
-        _loadDocuments();
+        await _loadDocuments();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Document deleted'), backgroundColor: successColor),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -273,7 +274,7 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
 
   Future<void> _showPreview(ProjectDocument doc) async {
     if (!mounted) return;
-    Navigator.push(
+    unawaited(Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => UniversalFileViewerScreen(
@@ -281,7 +282,7 @@ class _ProjectDocumentListScreenState extends State<ProjectDocumentListScreen> {
           filename: doc.filename,
         ),
       ),
-    );
+    ));
   }
 
   Future<void> _confirmDelete(ProjectDocument doc) async {

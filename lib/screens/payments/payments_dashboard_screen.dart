@@ -635,7 +635,7 @@ class _PaymentsDashboardScreenState extends State<PaymentsDashboardScreen> {
                               const SnackBar(content: Text('Payment recorded successfully')),
                             );
                           }
-                          _loadPayments();
+                          await _loadPayments();
                         }
                       } catch (e) {
                         if (mounted && context.mounted) {

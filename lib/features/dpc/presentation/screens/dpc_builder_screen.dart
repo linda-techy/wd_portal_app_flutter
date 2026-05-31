@@ -131,7 +131,7 @@ class _DpcBuilderScreenState extends State<DpcBuilderScreen> {
       DpcDocument? doc = await _service.getLatest(widget.projectId);
       doc ??= await _service.create(widget.projectId);
       _hydrate(doc);
-      _loadPreview();
+      unawaited(_loadPreview());
     } catch (e) {
       final msg = ErrorHandler.getErrorMessage(e);
       // Backend signals a missing customer-approved BoQ via HTTP 422 with
@@ -400,7 +400,7 @@ class _DpcBuilderScreenState extends State<DpcBuilderScreen> {
       final issued = await _service.issue(doc.id);
       if (!mounted) return;
       setState(() => _hydrate(issued));
-      _loadPreview();
+      unawaited(_loadPreview());
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('DPC issued — saved to project documents'),
@@ -422,7 +422,7 @@ class _DpcBuilderScreenState extends State<DpcBuilderScreen> {
       final fresh = await _service.createNewRevision(doc.id);
       if (!mounted) return;
       setState(() => _hydrate(fresh));
-      _loadPreview();
+      unawaited(_loadPreview());
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('New revision r${fresh.revisionNumber} created'),

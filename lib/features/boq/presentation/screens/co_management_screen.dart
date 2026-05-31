@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -33,7 +35,7 @@ class _CoManagementScreenState extends State<CoManagementScreen> {
     final auth = Provider.of<PortalAuthProvider>(context, listen: false);
     if (!auth.isAuthenticated) {
       if (mounted) await ErrorHandler.handleAuthError(context);
-      if (mounted) Navigator.of(context).pushReplacementNamed('/login');
+      if (mounted) unawaited(Navigator.of(context).pushReplacementNamed('/login'));
       return;
     }
     await _load();
@@ -77,7 +79,7 @@ class _CoManagementScreenState extends State<CoManagementScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(successMsg)),
         );
-        _load();
+        await _load();
       }
     } catch (e) {
       if (mounted) {

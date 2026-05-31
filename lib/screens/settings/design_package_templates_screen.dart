@@ -58,7 +58,7 @@ class _DesignPackageTemplatesScreenState
       context: context,
       builder: (_) => _TemplateEditorDialog(existing: existing),
     );
-    if (saved == true) _load();
+    if (saved == true) await _load();
   }
 
   Future<void> _toggleActive(DesignPackageTemplate t) async {
@@ -70,7 +70,7 @@ class _DesignPackageTemplatesScreenState
               ? 'Template archived — customers will no longer see it'
               : 'Template re-activated',
           isError: false);
-      _load();
+      await _load();
     } catch (e) {
       if (!mounted) return;
       await ErrorHandler.handleApiError(context, e,
@@ -102,7 +102,7 @@ class _DesignPackageTemplatesScreenState
       if (!mounted) return;
       MotionToast.show(context,
           message: 'Template deleted', isError: false);
-      _load();
+      await _load();
     } catch (e) {
       if (!mounted) return;
       await ErrorHandler.handleApiError(context, e,

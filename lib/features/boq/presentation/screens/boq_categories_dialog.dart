@@ -91,7 +91,7 @@ class _BoqCategoriesDialogState extends State<BoqCategoriesDialog> {
         context,
         'Category "${created.name}" created',
       );
-      _load();
+      await _load();
     }
   }
 
@@ -111,7 +111,7 @@ class _BoqCategoriesDialogState extends State<BoqCategoriesDialog> {
         context,
         'Category "${saved.name}" updated',
       );
-      _load();
+      await _load();
     }
   }
 
@@ -145,7 +145,7 @@ class _BoqCategoriesDialogState extends State<BoqCategoriesDialog> {
       await _service.deleteCategory(cat.id);
       if (!mounted) return;
       ErrorHandler.showSuccessSnackBar(context, 'Category deleted');
-      _load();
+      await _load();
     } catch (e) {
       if (!mounted) return;
       // Backend returns 409 if items still reference this category.

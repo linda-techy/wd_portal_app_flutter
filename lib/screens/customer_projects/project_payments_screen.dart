@@ -519,7 +519,7 @@ class _ProjectPaymentsScreenState extends State<ProjectPaymentsScreen> {
                 
                 if (!mounted) return;
                 MotionToast.show(context, message: 'Payment recorded successfully', isError: false);
-                _loadPaymentData();
+                await _loadPaymentData();
               } catch (e) {
                 if (!mounted) return;
                 await ErrorHandler.handleApiError(context, e, defaultMessage: 'Failed to record payment');
@@ -541,7 +541,7 @@ class _ProjectPaymentsScreenState extends State<ProjectPaymentsScreen> {
       ),
     );
     if (created == true) {
-      _loadPaymentData();
+      await _loadPaymentData();
     }
   }
 }

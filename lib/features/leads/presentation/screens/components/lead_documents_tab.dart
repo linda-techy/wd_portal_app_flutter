@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
@@ -171,7 +172,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
                 backgroundColor: Colors.green,
               ),
             );
-            _fetchDocuments();
+            await _fetchDocuments();
           }
         } catch (e) {
           if (mounted) {
@@ -215,7 +216,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
             : 'other';
 
     if (fileType == 'other') {
-      _downloadDocument(doc);
+      await _downloadDocument(doc);
       return;
     }
 
@@ -233,7 +234,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        Navigator.push(
+        unawaited(Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => DocumentViewerScreen(
@@ -242,7 +243,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
               bytes: bytes,
             ),
           ),
-        );
+        ));
       } catch (e) {
         if (mounted) {
           ErrorHandler.showErrorSnackBar(context, e);
@@ -419,7 +420,7 @@ class _LeadDocumentsTabState extends State<LeadDocumentsTab> {
               backgroundColor: Colors.green,
             ),
           );
-          _fetchDocuments();
+          await _fetchDocuments();
         }
       } catch (e) {
         if (mounted) {

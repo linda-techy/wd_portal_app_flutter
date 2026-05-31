@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -70,7 +71,7 @@ class _ObservationsScreenState extends State<ObservationsScreen>
         await ErrorHandler.handleAuthError(context);
       }
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/login');
+        unawaited(Navigator.of(context).pushReplacementNamed('/login'));
       }
       return;
     }

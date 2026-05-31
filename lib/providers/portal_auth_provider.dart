@@ -131,12 +131,12 @@ class PortalAuthProvider extends ChangeNotifier {
       }
 
       // Initialize Firebase push notifications after successful login
-      NotificationService.initialize(
+      unawaited(NotificationService.initialize(
         onTokenReceived: (token) => PortalAuthService.registerFcmToken(token),
       ).catchError((e) {
         // FCM init failure must never break the login flow
         debugPrint('FCM init error: $e');
-      });
+      }));
 
       return true;
     } catch (e) {

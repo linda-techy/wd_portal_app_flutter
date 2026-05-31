@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:admin/utils/motion_toast.dart';
@@ -63,7 +65,7 @@ class ErrorHandler {
     if (shouldRedirectToLogin && context.mounted) {
       await Future.delayed(const Duration(seconds: 2));
       if (context.mounted) {
-        Navigator.of(context).pushReplacementNamed('/login');
+        unawaited(Navigator.of(context).pushReplacementNamed('/login'));
       }
     }
     
@@ -79,7 +81,7 @@ class ErrorHandler {
       );
       await Future.delayed(const Duration(seconds: 2));
       if (context.mounted) {
-        Navigator.of(context).pushReplacementNamed('/login');
+        unawaited(Navigator.of(context).pushReplacementNamed('/login'));
       }
     }
   }

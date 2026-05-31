@@ -95,7 +95,7 @@ class _VOListScreenState extends State<VOListScreen> {
               builder: (_) => VOCreateScreen(projectId: widget.projectId),
             ),
           );
-          if (created == true) _load();
+          if (created == true) await _load();
         },
       ),
       body: _isLoading

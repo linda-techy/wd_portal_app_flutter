@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -43,7 +45,9 @@ class _QualityChecksScreenState extends State<QualityChecksScreen>
     if (!authProvider.isAuthenticated) {
       if (mounted) {
         await ErrorHandler.handleAuthError(context);
-        if (mounted) Navigator.of(context).pushReplacementNamed('/login');
+        if (mounted) {
+          unawaited(Navigator.of(context).pushReplacementNamed('/login'));
+        }
       }
       return;
     }

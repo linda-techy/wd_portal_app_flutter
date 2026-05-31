@@ -113,7 +113,7 @@ class _DeductionRegisterScreenState extends State<DeductionRegisterScreen> {
       );
       if (!mounted) return;
       ErrorHandler.showSuccessSnackBar(context, 'Deduction added');
-      _load();
+      await _load();
     } catch (e) {
       if (!mounted) return;
       ErrorHandler.showErrorSnackBar(context, e);
@@ -217,7 +217,7 @@ class _DeductionRegisterScreenState extends State<DeductionRegisterScreen> {
       );
       if (!mounted) return;
       ErrorHandler.showSuccessSnackBar(context, 'Decision recorded');
-      _load();
+      await _load();
     } catch (e) {
       if (!mounted) return;
       ErrorHandler.showErrorSnackBar(context, e);

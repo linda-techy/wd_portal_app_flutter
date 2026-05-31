@@ -147,7 +147,7 @@ class _DpcCustomizationCatalogAdminScreenState
         context,
         'Catalog item created (${created.code})',
       );
-      _load();
+      await _load();
     }
   }
 
@@ -166,7 +166,7 @@ class _DpcCustomizationCatalogAdminScreenState
         context,
         'Catalog item updated',
       );
-      _load();
+      await _load();
     }
   }
 
@@ -178,7 +178,7 @@ class _DpcCustomizationCatalogAdminScreenState
         context,
         item.isActive ? 'Item disabled' : 'Item enabled',
       );
-      _load();
+      await _load();
     } catch (e) {
       if (mounted) ErrorHandler.showErrorSnackBar(context, e);
     }
@@ -215,7 +215,7 @@ class _DpcCustomizationCatalogAdminScreenState
       await _service.deleteCatalogItem(item.id);
       if (!mounted) return;
       ErrorHandler.showSuccessSnackBar(context, 'Catalog item deleted');
-      _load();
+      await _load();
     } catch (e) {
       if (mounted) ErrorHandler.showErrorSnackBar(context, e);
     }

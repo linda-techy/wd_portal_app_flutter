@@ -497,7 +497,7 @@ class TeamMembersScreenState extends State<TeamMembersScreen> {
                     await _crmService.saveTeamMember(tm);
                   }
                   if (ctx.mounted) Navigator.pop(ctx);
-                  _loadTeamMembers();
+                  await _loadTeamMembers();
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(isEdit ? 'Team member updated' : 'Team member added'), backgroundColor: successColor),
@@ -531,7 +531,7 @@ class TeamMembersScreenState extends State<TeamMembersScreen> {
               Navigator.pop(ctx);
               try {
                 await _crmService.deleteTeamMember(m.id!);
-                _loadTeamMembers();
+                await _loadTeamMembers();
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Team member deleted'), backgroundColor: successColor),
