@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:admin/constants.dart';
 import 'package:admin/features/leads/data/models/lead.dart';
@@ -265,11 +267,11 @@ class _LeadsScreenState extends State<LeadsScreen> {
   Future<void> _exportToExcel() async {
     try {
       // Show loading dialog
-      showDialog(
+      unawaited(showDialog(
         context: context,
         barrierDismissible: false,
         builder: (ctx) => const Center(child: CircularProgressIndicator()),
-      );
+      ));
 
       // Prepare filter parameters
       final bytes = await _leadService.exportLeadsToExcel(
@@ -396,7 +398,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                             const AddLeadScreen()),
                                   );
                                   if (result == true) {
-                                    _loadLeads();
+                                    await _loadLeads();
                                   }
                                 },
                                 icon: const Icon(Icons.add, size: 18),
@@ -464,7 +466,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
 
                             // Refresh the list if a new lead was added
                             if (result == true) {
-                              _loadLeads();
+                              await _loadLeads();
                             }
                           },
                           icon: const Icon(Icons.add),
@@ -1095,7 +1097,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Lead converted successfully!')));
-          _loadLeads(resetPage: false); // Refresh list to show updated status
+          await _loadLeads(resetPage: false); // Refresh list to show updated status
         }
 
         // B9 — offer to materialize a WBS from a template. Permission-gated

@@ -1,3 +1,6 @@
+import 'package:flutter/foundation.dart';
+
+@immutable
 class TeamMember {
   final String? id;
   final String? employeeId;
@@ -16,7 +19,7 @@ class TeamMember {
   final int? roleId;
   final String? roleName;
 
-  TeamMember({
+  const TeamMember({
     this.id,
     this.employeeId,
     this.firstName,

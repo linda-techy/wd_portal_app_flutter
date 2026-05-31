@@ -1,10 +1,13 @@
+import 'package:flutter/foundation.dart';
+
+@immutable
 class EnumValue {
   final String value;
   final String displayName;
   final String? description;
   final int? order;
 
-  EnumValue({
+  const EnumValue({
     required this.value,
     required this.displayName,
     this.description,

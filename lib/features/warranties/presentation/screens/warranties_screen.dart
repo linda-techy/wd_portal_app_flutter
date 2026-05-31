@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:admin/theme/app_theme.dart';
 import 'package:admin/features/warranties/data/models/project_warranty.dart';
@@ -33,7 +35,7 @@ class _WarrantiesScreenState extends State<WarrantiesScreen> {
       if (mounted) {
          await ErrorHandler.handleAuthError(context);
          if (mounted) {
-           Navigator.of(context).pushReplacementNamed('/login');
+           unawaited(Navigator.of(context).pushReplacementNamed('/login'));
          }
       }
       return;
